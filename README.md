@@ -3,6 +3,7 @@
 WORKFLOW-RS project is designed to provide a unified environment for development of **async Rust applications** that are able to run in **native** platforms (desktops/servers) as well as **in-browser**
 (by building to WASM32 browser-compatible target).
 
+[![Crates.io](https://img.shields.io/crates/l/workflow-rs.svg?maxAge=2592000)](https://crates.io/crates/workflow-rs)
 [![Crates.io](https://img.shields.io/crates/v/workflow-rs.svg?maxAge=2592000)](https://crates.io/crates/workflow-rs)
 
 ## Features
