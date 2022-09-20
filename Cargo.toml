@@ -3,4 +3,38 @@ name = "workflow-rs"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = ["log","core"]
+full = ["log","core","websocket","rpc","http","html","i18n","wasm","ux","terminal","dom","unistore"]
+log = ["dep:workflow-log"]
+core = ["dep:workflow-core"]
+websocket = ["dep:workflow-websocket"]
+rpc = ["dep:workflow-rpc"]
+http = ["dep:workflow-http"]
+html = ["dep:workflow-html"]
+dom = ["dep:workflow-dom"]
+i18n = ["dep:workflow-i18n"]
+wasm = ["dep:workflow-wasm"]
+ux = ["dep:workflow-ux"]
+terminal = ["dep:workflow-terminal"]
+unistore = ["dep:workflow-unistore"]
+# allocator = []
+
 [dependencies]
+
+workflow-log = { path = "../workflow-log", optional = true }
+workflow-core = { path = "../workflow-core", optional = true }
+workflow-websocket = { path = "../workflow-websocket", optional = true }
+workflow-rpc = { path = "../workflow-rpc", optional = true }
+workflow-http = { path = "../workflow-http", optional = true }
+workflow-html = { path = "../workflow-html", optional = true }
+workflow-dom = { path = "../workflow-dom", optional = true }
+workflow-i18n = { path = "../workflow-i18n", optional = true }
+workflow-wasm = { path = "../workflow-wasm", optional = true }
+workflow-ux = { path = "../workflow-ux", optional = true }
+workflow-terminal = { path = "../workflow-terminal", optional = true }
+workflow-unistore = { path = "../workflow-unistore", optional = true }
+
