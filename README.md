@@ -1,16 +1,16 @@
-# WORKFLOW-RS
+## WORKFLOW-RS
 
 WORKFLOW-RS project is designed to provide a unified environment for development of **async Rust applications** that are able to run in **native** platforms (desktops/servers) as well as **in-browser**
 (by building to WASM32 browser-compatible target).
 
 These crates contain a carefully curated collection of functions and crates (as well as re-exports) meant to provide a platform-neutral environment framework for Rust applications.
 
-# Features:
+## Features
 
 * Platform neutral crates that are able to function in, or provide abstractions for, running on bare metal as well as inside of a browser WASM-powered environment.
 * BPF-friendly environment that allows certain crates when building to the BPF targets.
 
-# Crates:
+## Crates
 
 This project is comprised of the following crates (exported as features):
 
@@ -32,7 +32,7 @@ supporting browser local-storage.
 
 *** 
 
-# Rationale:
+## Rationale
 
 There are multiple reasons behind the creation of this framework, here are the few use cases:
 
@@ -42,7 +42,7 @@ There are multiple reasons behind the creation of this framework, here are the f
 4) Ability to develop a Rust-centric async client-side applications that offer rich UX capabilities without relying on JavaScript dependencies.
 5) Creation of high-security applications intended for cryptocurrency and smart-contract development that are not a subject to upstream vendor injection attacks (i.e. do not rely on JavaScript package ecosystems such as NPM) where only Rust is used both server-side and client-side.
 
-# Design & Challenges:
+## Design & Challenges
 
 As of Q3 2022, Rust ecosystem supports WASM targets that are able to run in a single-threaded browser environment (async_std + wasm_bindgen etc.)
 as well on multi-threaded "bare metal" platforms (tokio etc.).  However, due to the fact that browser environment is
