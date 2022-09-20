@@ -1,14 +1,38 @@
 # WORKFLOW-RS
 
-
-WORKFLOW-RS project is designed to provide a unified environment for development
-of async Rust application that are able to run in **native** platforms as well as **in-browser**
+WORKFLOW-RS project is designed to provide a unified environment for development of **async Rust applications** that are able to run in **native** platforms (desktops/servers) as well as **in-browser**
 (by building to WASM32 browser-compatible target).
 
-These crates contain a carefully curated collection of functions and crates (as well as re-exports)
-meant to provide a platform-neutral environment framework for Rust applications.
+These crates contain a carefully curated collection of functions and crates (as well as re-exports) meant to provide a platform-neutral environment framework for Rust applications.
 
-## Rationale
+# Features:
+
+* Platform neutral crates that are able to function in, or provide abstractions for, running on bare metal as well as inside of a browser WASM-powered environment.
+* BPF-friendly environment that allows certain crates when building to the BPF targets.
+
+# Crates:
+
+This project is comprised of the following crates (exported as features):
+
+* [**WORKFLOW-DOM**](https://github.com/workflow-rs/workflow-dom) Crate for DOM utilities offering JavaScript injection functionality at runtime, allowing you to load JavaScript into the browser environment at Runtime using Rust.  (This allows you to embed JavaScript modules directly into your Rust crates.
+* [**WORKFLOW-WEBSOCKET**](https://github.com/workflow-rs/workflow-websocket) WebSocket crate with async Rust API that functions uniformly in the native environemnt (using Tokio) and within a browser using the native browser WebSockets.
+* [**WORKFLOW-RPC**](https://github.com/workflow-rs/workflow-rpc) RPC library based on top of WORKFLOW-WEBSOCKET that offers asynchronous Binary data relay over Workflow-WebSocket-based connections using Borsh serialization. 
+* [**WORKFLOW-CORE**](https://github.com/workflow-rs/workflow-core) Core utilities used by the Workflow framework.  These utilities implement as well as re-export curated implementations
+that are compatible with async Rust environment requiring `Send` markers.
+* [**WORKFLOW-LOG**](https://github.com/workflow-rs/workflow-log) Logging functionality that is Native, WASM (browser) and BPF-friendly.
+* [**WORKFLOW-WASM**](https://github.com/workflow-rs/workflow-wasm) A set of WASM helper modules and utility functions for accessing JavaScript object properties.
+* [**WORKFLOW-TERMINAL**](https://github.com/workflow-rs/workflow-terminal) A unified terminal implementation designed to offer a terminal user interface in a native shell (OS) as well as in-browser. This implementation is helpful for creating and testing crates that are meant to function in-browser and on native platforms.
+* [**WORKFLOW-HTML**](https://github.com/workflow-rs/workflow-html) HTML templating marco meant to offer an easy-to-use runtime html templating against DOM when using async Rust in-browser. This crate is a foundational pillar behind WORKFLOW-UX crate that offers Rust-based DOM-driven UX creation.
+* [**WORKFLOW-I18N**](https://github.com/workflow-rs/workflow-i18n) i18n framework for Workflow-UX Applications. This framework offers runtime translation of text based on a phrase-dictionary database.
+* [**WORKFLOW-HTTP**](https://github.com/workflow-rs/workflow-http) HTTP server crate based on Tide HTTP server meant for serving applications based on Workflow-UX user interface library.
+* [**WORKFLOW-UX**](https://github.com/workflow-rs/workflow-ux) Async Rust + HTML Web Component driven application user interface library.
+* [**WORKFLOW-UNISTORE**](https://github.com/workflow-rs/workflow-unistore) A crate offering a simple platform-neutral file (data) storage but resolving file paths at runtime based on the OS as well as
+supporting browser local-storage.
+* [**WORKFLOW-ALLOCATOR**](https://github.com/workflow-rs/workflow-allocator) A security-oriented framework for developing Solana Programs (Smart Contract) and Solana client-side applications using pure async Rust.
+
+*** 
+
+# Rationale:
 
 There are multiple reasons behind the creation of this framework, here are the few use cases:
 
@@ -18,7 +42,7 @@ There are multiple reasons behind the creation of this framework, here are the f
 4) Ability to develop a Rust-centric async client-side applications that offer rich UX capabilities without relying on JavaScript dependencies.
 5) Creation of high-security applications intended for cryptocurrency and smart-contract development that are not a subject to upstream vendor injection attacks (i.e. do not rely on JavaScript package ecosystems such as NPM) where only Rust is used both server-side and client-side.
 
-## Challenges
+# Design & Challenges:
 
 As of Q3 2022, Rust ecosystem supports WASM targets that are able to run in a single-threaded browser environment (async_std + wasm_bindgen etc.)
 as well on multi-threaded "bare metal" platforms (tokio etc.).  However, due to the fact that browser environment is
@@ -41,116 +65,3 @@ functionality and crates are compatible across different versions.
 
 Please note that some of the crates are also BPF-friendly (like `workflow-log`), making them compatible for use 
 with Solana Programs (Solana Smart Contracts).
-
----
-
-This project is comprised of the following crates (exported as features):
-
-## WORKFLOW-HTML
-HTML templating marco meant to offer an easy-to-use runtime html templating against DOM when using async Rust in-browser.
-This crate is a foundational pillar behind WORKFLOW-UX crate that offers Rust-based DOM-driven UX creation.
-
-One of the key features of this crate (as offered by workflow-ux crate) is the ability to create HTML links to primitives
-such as Rust functions (i.e. clicking on a link invokes a Rust function).  Please see Workflow-UX for more information. 
-
-## WORKFLOW-DOM
-Crate for DOM utilities offering JavaScript injection functionality at runtime, allowing you to load JavaScript into
-the environment at Runtime using Rust.  (This allows you to embed JavaScript(ES6) modules directly into your Rust crates.
-
-## WORKFLOW-WEBSOCKET
-Unified async WebSocket crate that functions symmetically in the native environemnt (using Tokio) and within a browser
-using native browser WebSockets.  You do not need to cate which environment you are running under to gain access to a
-websocket connection.
-
-## WORKFLOW-RPC
-
-RPC library based on top of WORKFLOW-WEBSOCKET that offers both synchronous and asynchronous Binary and JSON data relay over Workflow-WebSocket-based connections. 
-
-The goal of this crate is to reduce boilerplate as much as possible
-allowing remote function invocation using a single function with two generics `rpc.call<Req,Resp>()` where request and response must implement serlialization the respective serialization traits.
-
-Binary RPC uses Borsh serialization and JSON RPC uses Serde serialization.
-
-Current implementation status:
-- [x] Asynchronous Binary RPC Client
-- [x] Asynchronous Binary RPC Server
-- [ ] Asynchronous Binary RPC Server Notifications
-- [ ] Synchronous JSON RPC Client
-- [ ] Synchronous JSON RPC Server
-- [ ] Synchronous RPC Server Notifications
-
-## WORKFLOW-I18N
-
-i18n framework for Workflow-UX Applications (under development)
-
-This framework offers runtime translation of text based on a phrase-dictionary database.
-
-## WORKFLOW-CORE
-
-Core utilities used by the Workflow framework.  These utilities implement as well as re-export curated implementations
-that are async-Rust compatible.  Export of this (and other crates) is meant to provide LTS support:
-
-* `#[describe_enum]` macro attribute - offers conversion of enums to and from strings as well as associating a custom
-description attribute with each enum value.
-* `id` module offering a random 64-bit UUID-like base58-encodable identifier representation (useful for DOM element IDs) 
-* `task` module - offers `spawn()` functionality for async code as well as re-exports following modules:
-    * `async_std::channel` (offering unbounded and bounded channels)
-    * `channel::oneshot` (asias for `async_std::channel::bounded(1)`)
-    * `triggered` re-export of the Triggered crate
-* `utility` module functions for buffer manipulation
-
-## WORKFLOW-LOG
-
-Logging functionality that is Native, WASM (browser) and BPF-friendly.  On the native platforms, log functions will use Stdout,
-in WASM the logging functions will use browser `console.log()` output and on BPF targets they will use `solana.log()` a.k.a. `msg!()`.
-
-This crate also provides the following functionality:
-* This crate can be bound to redirect to the the standard Rust `log` crate
-* User can register a custom `sink` trait with the logger to capture the log output. (This is especially useful when using the workflow-terminal crate as it allows application log output redirection to a custom terminal)
-
-## WORKFLOW-WASM
-
-A set of WASM helper utility functions for accessing JavaScript object properties.  Also includes the following modules:
-* `timer` - wasm_bindgen-based timers and intervals that produce a handle, retention of which denotes
-the retention of the listener/callback closure and dropping of which denotes automatic destruction of the timer/interval. (This is 
-useful to prevent memory leaks when creating JavaScript Closures and using `closure.forget()` functionality)
-
-## WORKFLOW-TERMINAL
-
-A unified terminal implementation designed to offer a terminal user interface in a native shell (OS) as well as in-browser.
-This crate offers a single `Terminal` struct that wraps `XTermJS` in-browser and `Termion` on native platforms.  To interface
-with this terminal, user needs to simply implement a `Cli` on his struct and supply it as a command receiver to the terminal.
-
-This implementation is helpful for creating and testing crates that are meant to function in-browser and on native platforms.
-
-For example, if you have a control interface that resides on top of Workflow-WebSocket or Workflow-RPC, you can quickly
-prototype a series of functions using Workflow-Terminal that will run in all environments and only later, once ready, implement
-the UI wrapping this functionality.
-
-## WORKFLOW-UNISTORE
-
-A crate offering a simple platform-neutral file (data) storage but resolving file paths at runtime based on the OS as well as
-supporting browser local-storage.  The client application is meant to provide target paths based on the OS (for example: windows, macos, linux and browser) and then use the struct to read()/write() data in a binary `&[u8]` format.  The browser localstorage functionality uses base64 encoding.
-
-## WORKFLOW-HTTP
-
-HTTP server crate based on Tide HTTP server meant for serving applications based on Workflow-UX user interface library.
-This server provides a custom router making it possible to reference FlowUX Web Component libraries in-browser as ES6 modules.
-
-## WORKFLOW-UX
-
-Async Rust + HTML Web Component driven User Interface library.
-
-Please refer to the Workflow-UX README for more information.
-
-## FLOW-UX
-FlowUX module is a JavaScript library meant that offers a series of  Web Components based on top of Google's Lit-Html framework. This library internalizes all dependencies out of security considerations.
-
-Flow-UX is an external component that is integral to the Workflow-UX crate.
-
-## WORKFLOW-ALLOCATOR
-This crate is an intermadiate-level framework for development of Solana Programs.
-This crate is meant to address ergonomics of developing Solana Smart Contracts in Rust, in-browser, while offering
-Rust-centric functionality such as client-side account cache, instruction processing, a light-weight Solana Program Emulator and much more.
-
-

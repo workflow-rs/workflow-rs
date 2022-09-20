@@ -2,6 +2,14 @@
 name = "workflow-rs"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/workflow-rs/workflow-rs"
+keywords = ["wasm","framework","websocket","rpc","html","http","i18n","log","ux"]
+categories = ["web-programming::http-client","wasm"]
+exclude = ["/.*", "/test"]
+description = """
+Rust application development framework for native and web applications
+"""
 
 [lib]
 crate-type = ["cdylib", "lib"]
