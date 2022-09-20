@@ -42,7 +42,9 @@ functionality and crates are compatible across different versions.
 Please note that some of the crates are also BPF-friendly (like `workflow-log`), making them compatible for use 
 with Solana Programs (Solana Smart Contracts).
 
-Following crates are currently available:
+---
+
+This project is comprised of the following crates (exported as features):
 
 ## WORKFLOW-HTML
 HTML templating marco meant to offer an easy-to-use runtime html templating against DOM when using async Rust in-browser.
