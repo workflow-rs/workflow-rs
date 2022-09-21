@@ -16,7 +16,7 @@ WORKFLOW-RS project is designed to provide a unified environment for development
 This project is comprised of the following crates (exported as features). These crates contain a carefully curated collection of functions and crates (as well as re-exports) meant to provide a platform-neutral environment framework for Rust applications.
 
 
-* [**WORKFLOW-DOM**](https://github.com/workflow-rs/workflow-dom) Crate for DOM utilities offering JavaScript injection functionality at runtime, allowing you to load JavaScript into the browser environment at Runtime using Rust.  (This allows you to embed JavaScript modules directly into your Rust crates.
+* [**WORKFLOW-DOM**](https://github.com/workflow-rs/workflow-dom) DOM utilities offering JavaScript injection functionality at runtime, allowing you to load JavaScript into the browser environment at Runtime using Rust.  (This allows you to embed JavaScript modules directly into your Rust crates.
 * [**WORKFLOW-WEBSOCKET**](https://github.com/workflow-rs/workflow-websocket) WebSocket crate with async Rust API that functions uniformly in the native environemnt (using Tokio) and within a browser using the native browser WebSockets.
 * [**WORKFLOW-RPC**](https://github.com/workflow-rs/workflow-rpc) RPC library based on top of WORKFLOW-WEBSOCKET that offers asynchronous Binary data relay over Workflow-WebSocket-based connections using Borsh serialization. 
 * [**WORKFLOW-CORE**](https://github.com/workflow-rs/workflow-core) Core utilities used by the Workflow framework.  These utilities implement as well as re-export curated implementations
