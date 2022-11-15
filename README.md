@@ -30,7 +30,6 @@ that are compatible with async Rust environment requiring `Send` markers.
 * [**WORKFLOW-UX**](https://github.com/workflow-rs/workflow-ux) Async Rust + HTML Web Component driven application user interface library.
 * [**WORKFLOW-UNISTORE**](https://github.com/workflow-rs/workflow-unistore) A crate offering a simple platform-neutral file (data) storage but resolving file paths at runtime based on the OS as well as
 supporting browser local-storage.
-* [**WORKFLOW-ALLOCATOR**](https://github.com/workflow-rs/workflow-allocator) A security-oriented framework for developing Solana Programs (Smart Contract) and Solana client-side applications using pure async Rust.
 
 *** 
 
