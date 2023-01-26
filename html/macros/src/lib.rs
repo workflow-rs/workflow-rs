@@ -122,19 +122,17 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
                     //println!("meta-list.path: {:#?}", list.path.get_ident().unwrap().to_string());
                     //println!("nested: {:?}", list.nested);
                     for item in list.nested.iter() {
-                        if let NestedMeta::Meta(m) = item {
-                            if let Meta::NameValue(name_value) = m {
-                                let key = name_value.path.get_ident().unwrap().to_string();
-                                let value: String = match &name_value.lit {
-                                    syn::Lit::Int(v) => v.to_string(),
-                                    syn::Lit::Str(v) => v.value(),
-                                    syn::Lit::Bool(v) => v.value().to_string(),
-                                    _ => "".to_string(),
-                                };
-                                //println!("key: {}, value: {}", key, value);
-                                if key.eq("name") {
-                                    attr_name = value;
-                                }
+                        if let NestedMeta::Meta(Meta::NameValue(name_value)) = item {
+                            let key = name_value.path.get_ident().unwrap().to_string();
+                            let value: String = match &name_value.lit {
+                                syn::Lit::Int(v) => v.to_string(),
+                                syn::Lit::Str(v) => v.value(),
+                                syn::Lit::Bool(v) => v.value().to_string(),
+                                _ => "".to_string(),
+                            };
+                            //println!("key: {}, value: {}", key, value);
+                            if key.eq("name") {
+                                attr_name = value;
                             }
                         }
                     }
