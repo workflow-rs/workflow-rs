@@ -82,3 +82,21 @@ pub enum Encoding {
     Borsh,
     SerdeJson,
 }
+
+impl From<&Encoding> for String{
+    fn from(encoding: &Encoding) -> String {
+        match encoding {
+            Encoding::Borsh => "Borsh",
+            Encoding::SerdeJson => "SerdeJson"
+        }.to_string()
+    }
+}
+
+impl std::fmt::Display for Encoding{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name: String = self.into();
+        f.write_str(&name)
+    }
+}
+
+
