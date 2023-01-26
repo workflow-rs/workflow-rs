@@ -29,6 +29,9 @@ include = ["src/**/*.rs", "Cargo.toml"]
 repository = "https://github.com/workflow-rs/workflow-rs"
 
 [workspace.dependencies]
+
+# internal dependencies
+
 workflow-core = { path = "core" }
 workflow-core-macros = { path = "core/macros" }
 workflow-dom = { path = "dom" }
@@ -48,13 +51,7 @@ workflow-wasm = { path = "wasm" }
 workflow-wasm-macros = { path = "wasm/macros" }
 workflow-websocket = { path = "websocket" }
 
-################################################################
-
-nw-sys={path="../nw-sys"}
-
-################################################################
-getrandom = {version = "0.2.8", features=["js"]}
-################################################################
+# external dependencies
 
 ahash = "0.8.2"
 async-std = { version = "1.12.0", features = ['attributes'] }
@@ -64,10 +61,12 @@ borsh = "0.10.0"
 bs58 = "0.4.0"
 cfg-if = "1.0.0"
 console = "0.15.5"
+convert_case = "0.5.0"
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
 futures = "0.3.25"
 futures-util = { version = "0.3.25", default-features = false, features = ["sink", "std"] }
+getrandom = {version = "0.2.8", features=["js"]}
 hexplay = "0.2.1"
 home = "0.5.3"
 instant = { version ="0.1.12", features = ['wasm-bindgen'] }
@@ -78,11 +77,18 @@ manual_future = "0.1.1"
 node-child-process = "0.1.1"
 node-sys = "0.4.2"
 numtoa = "0.2.4"
+nw-sys="0.1.0"
+parse-variants = "0.1"
+proc-macro-error = { version = "1", default-features = false }
+proc-macro2 = { version = "1.0.43" }
+quote = "1.0.21"
 rand = { version = "0.8.5", features = ["getrandom"] }
 regex = "1.5.5"
 ritehash = "0.2.0"
 serde = { version = "1.0.152" , features = ["derive"] }
 serde_json = "1.0.91"
+sha2 = "0.10.2"
+syn = {version="1.0.99",features=["full","fold","extra-traits","parsing","proc-macro"]}
 termcolor="0.3.6"
 termion = "1.5.6"
 thiserror = "1.0.38"
@@ -92,11 +98,4 @@ triggered = "0.1.2"
 tungstenite = { version = "0.18.0", default-features = false }
 wasm-bindgen = "0.2.83"
 wasm-bindgen-futures = "0.4.33"
-web-sys = "0.3.56"
-syn = {version="1.0.99",features=["full","fold","extra-traits","parsing","proc-macro"]}
-quote = "1.0.21"
-proc-macro2 = { version = "1.0.43" }
-proc-macro-error = { version = "1", default-features = false }
-parse-variants = "0.1"
-convert_case = "0.5.0"
-sha2 = "0.10.2"
+web-sys = "0.3.60"

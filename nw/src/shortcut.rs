@@ -18,7 +18,8 @@
 //!
 
 use crate::application::app;
-use nw_sys::{prelude::*, result::Result};
+use crate::result::Result;
+use nw_sys::prelude::*;
 use wasm_bindgen::prelude::*;
 use workflow_wasm::prelude::*;
 
@@ -30,6 +31,12 @@ pub struct ShortcutBuilder {
     pub options: nw_sys::shortcut::Options,
     pub active_callback: Option<Callback<CallbackClosure<JsValue>>>,
     pub failed_callback: Option<Callback<CallbackClosure<JsValue>>>,
+}
+
+impl Default for ShortcutBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ShortcutBuilder {

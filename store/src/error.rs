@@ -14,9 +14,9 @@ pub enum Error {
     DecodeError(DecodeError),
 }
 
-impl Into<JsValue> for Error {
-    fn into(self) -> JsValue {
-        JsValue::from_str(&format!("{:?}", self))
+impl From<Error> for JsValue {
+    fn from(err: Error) -> Self {
+        JsValue::from_str(&err.to_string())
     }
 }
 

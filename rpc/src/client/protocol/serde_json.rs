@@ -39,35 +39,30 @@ where
     }
 }
 
+type MessageInfo<Ops, Id> = (Option<Id>, Option<Ops>, Result<Value>);
+
 impl<Ops, Id> SerdeJsonProtocol<Ops, Id>
 where
     Ops: OpsT,
     Id: IdT,
 {
-    fn decode<'l>(
-        &self,
-        server_message: &'l str,
-    ) -> Result<(Option<Id>, Option<Ops>, Result<Value>)> {
+    fn decode(&self, server_message: &str) -> Result<MessageInfo<Ops, Id>> {
         println!("incoming: server_message={}", server_message);
 
         let msg: SerdeJsonServerMessage<Ops, Id> = serde_json::from_str(server_message)?;
 
         if let Some(error) = msg.error {
             Ok((msg.id, None, Err(error.into())))
-        } else {
-            if msg.id.is_some() {
-                if let Some(result) = msg.params {
-                    Ok((msg.id, None, Ok(result)))
-                } else {
-                    Ok((msg.id, None, Err(Error::NoDataInSuccessResponse)))
-                }
+        } else if msg.id.is_some() {
+            if let Some(result) = msg.params {
+                Ok((msg.id, None, Ok(result)))
             } else {
-                if let Some(params) = msg.params {
-                    Ok((None, msg.method, Ok(params)))
-                } else {
-                    Ok((None, None, Err(Error::NoDataInNotificationMessage)))
-                }
+                Ok((msg.id, None, Err(Error::NoDataInSuccessResponse)))
             }
+        } else if let Some(params) = msg.params {
+            Ok((None, msg.method, Ok(params)))
+        } else {
+            Ok((None, None, Err(Error::NoDataInNotificationMessage)))
         }
     }
 
@@ -181,15 +176,13 @@ where
                 } else {
                     Err(Error::ResponseHandler(format!("{:?}", id))) // ("rpc callback with id {} not found", msg.id);
                 }
-            } else {
-                if let Some(method) = method {
-                    match result {
-                        Ok(data) => self.handle_notification(method, data).await,
-                        _ => Ok(()),
-                    }
-                } else {
-                    Err(Error::NotificationMethod)
+            } else if let Some(method) = method {
+                match result {
+                    Ok(data) => self.handle_notification(method, data).await,
+                    _ => Ok(()),
                 }
+            } else {
+                Err(Error::NotificationMethod)
             }
         } else {
             return Err(Error::WebSocketMessageType);

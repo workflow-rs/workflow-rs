@@ -118,7 +118,7 @@ where
                 .call_with_borsh(connection_ctx, self.server_ctx.clone(), payload)
                 .await
         } else {
-            return Err(ServerError::NotFound);
+            Err(ServerError::NotFound)
         }
     }
 
@@ -133,7 +133,7 @@ where
                 .call_with_serde_json(connection_ctx, self.server_ctx.clone(), payload)
                 .await
         } else {
-            return Err(ServerError::NotFound);
+            Err(ServerError::NotFound)
         }
     }
 
@@ -148,7 +148,7 @@ where
                 .call_with_borsh(connection_ctx, self.server_ctx.clone(), payload)
                 .await
         } else {
-            return Err(ServerError::NotFound);
+            Err(ServerError::NotFound)
         }
     }
 
@@ -163,7 +163,7 @@ where
                 .call_with_serde_json(connection_ctx, self.server_ctx.clone(), payload)
                 .await
         } else {
-            return Err(ServerError::NotFound);
+            Err(ServerError::NotFound)
         }
     }
 }

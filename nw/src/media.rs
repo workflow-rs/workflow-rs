@@ -41,9 +41,9 @@
 //! ```
 
 use crate::application::app;
+use crate::result::Result;
 use js_sys::Object;
-use nw_sys::prelude::OptionsExt;
-use nw_sys::result::Result;
+use nw_sys::prelude::OptionsTrait;
 use std::sync::Arc;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::MediaStream;
@@ -78,7 +78,7 @@ extern "C" {
     pub type VideoConstraints;
 }
 
-impl OptionsExt for VideoConstraints {}
+impl OptionsTrait for VideoConstraints {}
 
 impl VideoConstraints {
     /// Source Id
@@ -196,7 +196,7 @@ pub fn get_user_media(
     log_debug!("media_devices: {:?}", media_devices);
     log_debug!("video_constraints: {:?}", video_constraints);
 
-    let audio_constraints = audio_constraints.unwrap_or(JsValue::from(false));
+    let audio_constraints = audio_constraints.unwrap_or_else(|| JsValue::from(false));
 
     let mut constraints = web_sys::MediaStreamConstraints::new();
     constraints

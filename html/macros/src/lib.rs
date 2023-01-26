@@ -114,33 +114,30 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
             //println!("\n\n----->name: {}, \ntype: {:?}", field_name, field.ty);
             let mut attrs: Vec<_> = field.attrs.iter().collect();
 
-            if attrs.len() > 0 {
+            if !attrs.is_empty() {
                 let attr = attrs.remove(0);
                 let meta = attr.parse_meta().unwrap();
-                match meta {
-                    Meta::List(list) => {
-                        //println!("meta-list: {:#?}", list);
-                        //println!("meta-list.path: {:#?}", list.path.get_ident().unwrap().to_string());
-                        //println!("nested: {:?}", list.nested);
-                        for item in list.nested.iter() {
-                            if let NestedMeta::Meta(m) = item {
-                                if let Meta::NameValue(name_value) = m {
-                                    let key = name_value.path.get_ident().unwrap().to_string();
-                                    let value: String = match &name_value.lit {
-                                        syn::Lit::Int(v) => v.to_string(),
-                                        syn::Lit::Str(v) => v.value(),
-                                        syn::Lit::Bool(v) => v.value().to_string(),
-                                        _ => "".to_string(),
-                                    };
-                                    //println!("key: {}, value: {}", key, value);
-                                    if key.eq("name") {
-                                        attr_name = value;
-                                    }
+                if let Meta::List(list) = meta {
+                    //println!("meta-list: {:#?}", list);
+                    //println!("meta-list.path: {:#?}", list.path.get_ident().unwrap().to_string());
+                    //println!("nested: {:?}", list.nested);
+                    for item in list.nested.iter() {
+                        if let NestedMeta::Meta(m) = item {
+                            if let Meta::NameValue(name_value) = m {
+                                let key = name_value.path.get_ident().unwrap().to_string();
+                                let value: String = match &name_value.lit {
+                                    syn::Lit::Int(v) => v.to_string(),
+                                    syn::Lit::Str(v) => v.value(),
+                                    syn::Lit::Bool(v) => v.value().to_string(),
+                                    _ => "".to_string(),
+                                };
+                                //println!("key: {}, value: {}", key, value);
+                                if key.eq("name") {
+                                    attr_name = value;
                                 }
                             }
                         }
                     }
-                    _ => {}
                 }
             }
 
@@ -148,7 +145,7 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
                 syn::Type::Path(a) => match a.path.get_ident() {
                     Some(a) => a.to_string(),
                     None => {
-                        if a.path.segments.len() > 0 {
+                        if !a.path.segments.is_empty() {
                             a.path.segments[0].ident.to_string()
                         } else {
                             "".to_string()
@@ -159,7 +156,7 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
                     syn::Type::Path(a) => match a.path.get_ident() {
                         Some(a) => a.to_string(),
                         None => {
-                            if a.path.segments.len() > 0 {
+                            if !a.path.segments.is_empty() {
                                 a.path.segments[0].ident.to_string()
                             } else {
                                 "".to_string()
@@ -172,7 +169,7 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
 
             if field_type.eq("bool") {
-                let fmt_str = format!("{}", attr_name);
+                let fmt_str = attr_name.to_string();
                 attrs_ts_vec.push(quote!(
                     if self.#field_name{
                         attrs.push(#fmt_str.to_string());

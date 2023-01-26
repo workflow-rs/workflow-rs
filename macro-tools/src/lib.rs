@@ -6,7 +6,5 @@ use quote::ToTokens;
 use syn::Error;
 
 pub fn parse_error<T: ToTokens>(tokens: T, message: &str) -> TokenStream {
-    return Error::new_spanned(tokens, message)
-        .to_compile_error()
-        .into();
+    Error::new_spanned(tokens, message).to_compile_error()
 }

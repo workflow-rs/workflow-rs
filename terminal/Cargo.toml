@@ -9,9 +9,9 @@ keywords = ["wasm","browser","terminal","cli"]
 categories = ["command-line-interface","web-programming::http-client","wasm"]
 exclude = ["/.*", "/test"]
 description = """
-Terminal abstraction layer over `Xterm.js` and `termion` crates for 
+Terminal abstraction layer over Xterm.js and termion crates for 
 creating terminal applications that function uniformly in native
-(console) and in browser environments.
+(console) and in browser (WASM32) environments.
 """
 
 [lib]

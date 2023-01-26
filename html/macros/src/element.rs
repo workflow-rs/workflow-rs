@@ -26,7 +26,7 @@ impl TagNameString for TagName {
     }
     fn is_custom_element(&self) -> bool {
         let name = self.to_string();
-        if name.len() == 0 {
+        if name.is_empty() {
             return false;
         }
         let first = name.get(0..1).unwrap();
@@ -48,7 +48,7 @@ impl<'a> Parse for Element<'a> {
         let mut children = None;
         if !tag.self_closing {
             let nodes = input.parse::<Nodes>()?;
-            if nodes.list.len() > 0 {
+            if !nodes.list.is_empty() {
                 children = Some(nodes);
             }
             let closing_tag = input.parse::<ClosingTag>()?;
@@ -106,7 +106,7 @@ impl<'a> ToTokens for Element<'a> {
             if self.has_children() {
                 properties.push(children);
             }
-            if properties.len() == 0 {
+            if properties.is_empty() {
                 quote!(#name {
                     ..Default::default()
                 }#(#events)*)
@@ -119,7 +119,7 @@ impl<'a> ToTokens for Element<'a> {
         } else {
             let (attributes, events) = self.tag.attributes.to_token_stream();
             let tag = self.tag.name.to_string();
-            let is_fragment = tag.len() == 0;
+            let is_fragment = tag.is_empty();
             quote! {
                 workflow_html::Element {
                     is_fragment:#is_fragment,
@@ -194,11 +194,10 @@ impl Parse for ClosingTag {
                 name: get_fragment_tag_name(),
             });
         }
-        let name;
-        if input.peek(Token![>]) {
-            name = get_fragment_tag_name();
+        let name = if input.peek(Token![>]) {
+            get_fragment_tag_name()
         } else {
-            name = match TagName::parse_separated_nonempty_with(input, syn::Ident::parse_any) {
+            match TagName::parse_separated_nonempty_with(input, syn::Ident::parse_any) {
                 Ok(tag_name) => tag_name,
                 Err(_e) => {
                     //for closing tag validation making a empty close tag
@@ -206,8 +205,8 @@ impl Parse for ClosingTag {
                         name: get_fragment_tag_name(),
                     });
                 }
-            };
-        }
+            }
+        };
         if input.is_empty() || !input.peek(Token![>]) {
             return Ok(Self {
                 name: get_fragment_tag_name(),
@@ -237,8 +236,7 @@ impl<'a> Nodes<'a> {
                 group.push(quote! { ( #(#chunk),* ) });
                 if group.len() == 10 {
                     let combined = quote! { ( #(#group),* ) };
-                    group = vec![];
-                    group.push(combined);
+                    group = vec![combined];
                 }
             }
 

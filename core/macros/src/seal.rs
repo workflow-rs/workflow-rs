@@ -23,30 +23,30 @@ impl Parse for Seal {
         if parsed.len() != 2 {
             return Err(Error::new_spanned(
                 parsed,
-                format!("usage: seal!(<seal id>, {{ <code> }})"),
+                "usage: seal!(<seal id>, {{ <code> }})".to_string(),
             ));
         }
 
         let mut iter = parsed.iter();
 
-        let hash_expr = iter.next().clone().unwrap().clone();
+        let hash_expr = iter.next().unwrap().clone();
         let hash = match &hash_expr {
             Expr::Lit(lit) => lit,
             _ => {
                 return Err(Error::new_spanned(
                     hash_expr,
-                    format!("the first argument should be the seal number)"),
+                    "the first argument should be the seal number)".to_string(),
                 ));
             }
         };
 
-        let content_expr = iter.next().clone().unwrap().clone();
+        let content_expr = iter.next().unwrap().clone();
         let expr_block = match &content_expr {
             Expr::Block(expr_block) => expr_block, // .block,
             _ => {
                 return Err(Error::new_spanned(
                     content_expr,
-                    format!("the third argument must be an array of static functions"),
+                    "the third argument must be an array of static functions".to_string(),
                 ));
             }
         };

@@ -22,7 +22,7 @@ cfg_if! {
 /// specify different paths on various
 /// operating systems with fallbacks.
 ///
-pub struct Unistore {
+pub struct Store {
     // linux (fallsback to unix, generic)
     pub linux: Option<String>,
     // macos (fallsback to unix, generic)
@@ -37,9 +37,15 @@ pub struct Unistore {
     pub browser: Option<String>,
 }
 
-impl Unistore {
-    pub fn new() -> Unistore {
-        Unistore {
+impl Default for Store {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Store {
+    pub fn new() -> Store {
+        Store {
             linux: None,
             macos: None,
             unix: None,
@@ -49,32 +55,32 @@ impl Unistore {
         }
     }
 
-    pub fn with_linux(&mut self, linux: &str) -> &mut Unistore {
+    pub fn with_linux(&mut self, linux: &str) -> &mut Store {
         self.linux = Some(linux.to_string());
         self
     }
 
-    pub fn with_macos(&mut self, macos: &str) -> &mut Unistore {
+    pub fn with_macos(&mut self, macos: &str) -> &mut Store {
         self.macos = Some(macos.to_string());
         self
     }
 
-    pub fn with_unix(&mut self, unix: &str) -> &mut Unistore {
+    pub fn with_unix(&mut self, unix: &str) -> &mut Store {
         self.unix = Some(unix.to_string());
         self
     }
 
-    pub fn with_windows(&mut self, windows: &str) -> &mut Unistore {
+    pub fn with_windows(&mut self, windows: &str) -> &mut Store {
         self.windows = Some(windows.to_string());
         self
     }
 
-    pub fn with_generic(&mut self, generic: &str) -> &mut Unistore {
+    pub fn with_generic(&mut self, generic: &str) -> &mut Store {
         self.generic = Some(generic.to_string());
         self
     }
 
-    pub fn with_browser(&mut self, browser: &str) -> &mut Unistore {
+    pub fn with_browser(&mut self, browser: &str) -> &mut Store {
         self.browser = Some(browser.to_string());
         self
     }
@@ -145,9 +151,9 @@ cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
         pub fn parse(path : String) -> PathBuf {
 
-            if path.starts_with("~") {
+            if let Some(stripped) = path.strip_prefix('~') {
                 let home_dir: PathBuf = home::home_dir().unwrap().into();
-                home_dir.join(path[1..].to_string())
+                home_dir.join(stripped)
             } else {
                 PathBuf::from(path)
             }

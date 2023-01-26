@@ -9,11 +9,11 @@ keywords = ["websocket","rpc","wasm","browser"]
 categories = ["web-programming::websocket","web-programming::http-client"]
 exclude = ["/.*", "/test"]
 description = """
-Workflow RPC (wRPC) framework based on the `workflow-websocket` 
-crate offering native & in-browser clients as well as a 
-native-only server based on `tokio` & `tungstenite`. wRPC
-supports custom `borsh` and `JSON` protocols with heavy
-use of generics and derive-based borsh and serde serializers.
+Workflow RPC (wRPC) framework based on the workflow-websocket 
+crate offering native & in-browser (WASM32) clients and a 
+native server (based on tokio & tungstenite). wRPC
+supports custom Borsh and JSON protocols with use of
+generics for RPC method declarations.
 """
 
 [lib]

@@ -87,12 +87,11 @@
 //!
 //!
 //! ```
-
 pub mod application;
+pub mod error;
 pub mod media;
 pub mod menu;
 pub mod prelude;
+pub mod result;
 pub mod shortcut;
 pub mod tray;
-
-pub use workflow_wasm::prelude::*;

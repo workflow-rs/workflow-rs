@@ -59,15 +59,15 @@ impl Value {
     pub fn to_token_stream(&self) -> TokenStream {
         match self {
             Value::EvaluationValue(ev) => match ev {
-                EvaluationValue::Integer(lit_int) => lit_int.to_token_stream().into(),
-                EvaluationValue::String(lit_str) => lit_str.to_token_stream().into(),
-                EvaluationValue::Group(group) => group.stream().into(),
+                EvaluationValue::Integer(lit_int) => lit_int.to_token_stream(),
+                EvaluationValue::String(lit_str) => lit_str.to_token_stream(),
+                EvaluationValue::Group(group) => group.stream(),
             },
             Value::AssignmentValue(av) => match av {
-                AssignmentValue::String(lit_str) => lit_str.to_token_stream().into(),
-                AssignmentValue::Integer(lit_int) => lit_int.to_token_stream().into(),
-                AssignmentValue::Boolean(lit_bool) => lit_bool.to_token_stream().into(),
-                AssignmentValue::Group(group) => group.stream().into(),
+                AssignmentValue::String(lit_str) => lit_str.to_token_stream(),
+                AssignmentValue::Integer(lit_int) => lit_int.to_token_stream(),
+                AssignmentValue::Boolean(lit_bool) => lit_bool.to_token_stream(),
+                AssignmentValue::Group(group) => group.stream(),
             },
         }
     }
@@ -76,6 +76,12 @@ impl Value {
 #[derive(Debug)]
 pub struct Args {
     pub map: HashMap<Ident, Option<Value>>,
+}
+
+impl Default for Args {
+    fn default() -> Self {
+        Args::new()
+    }
 }
 
 impl Args {
@@ -118,14 +124,13 @@ impl Args {
                 Some(value) => {
                     let v = value.to_token_stream();
                     let expr: Expr = syn::parse(v.into()).unwrap();
-                    let value = match &expr {
+                    match &expr {
                         Expr::Lit(expr_lit) => match &expr_lit.lit {
                             Lit::Str(lit_str) => lit_str.value(),
                             _ => expr.to_token_stream().to_string(),
                         },
                         _ => expr.to_token_stream().to_string(),
-                    };
-                    value
+                    }
                 }
                 None => "".to_string(),
             };
@@ -222,7 +227,7 @@ impl Parse for Args {
                         println!("invalid attributes");
                         // TODO check error handling
                         let ident = Ident::new("", Span::call_site());
-                        return Err(Error::new_spanned(ident, format!("")));
+                        return Err(Error::new_spanned(ident, "invalid attributes".to_string()));
                     }
                 }
             }

@@ -10,6 +10,15 @@ where
     notifications: AHashMap<Ops, Box<dyn NotificationTrait>>,
 }
 
+impl<Ops> Default for Interface<Ops>
+where
+    Ops: OpsT,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<Ops> Interface<Ops>
 where
     Ops: OpsT,
@@ -35,7 +44,7 @@ where
         if let Some(notification) = self.notifications.get(op) {
             notification.call_with_borsh(payload).await
         } else {
-            return Err(ServerError::NotFound);
+            Err(ServerError::NotFound)
         }
     }
 
@@ -47,7 +56,7 @@ where
         if let Some(notification) = self.notifications.get(op) {
             notification.call_with_serde_json(payload).await
         } else {
-            return Err(ServerError::NotFound);
+            Err(ServerError::NotFound)
         }
     }
 }

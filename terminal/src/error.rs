@@ -67,9 +67,7 @@ where
 impl From<Error> for String {
     fn from(err: Error) -> String {
         match err {
-            Error::String(s) | Error::PoisonError(s) | Error::SendError(s) | Error::JsValue(s) => {
-                String::from(s)
-            }
+            Error::String(s) | Error::PoisonError(s) | Error::SendError(s) | Error::JsValue(s) => s,
             Error::RecvError => String::from(&format!("{}", err)),
             Error::DomError(e) => String::from(&format!("{}", e)),
         }

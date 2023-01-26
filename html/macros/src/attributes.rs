@@ -18,7 +18,7 @@ pub trait AttributeNameString {
 
 impl AttributeNameString for AttributeName {
     fn to_property_name(&self) -> Ident {
-        Ident::new(&self.to_string().replace("-", "_"), Span::call_site())
+        Ident::new(&self.to_string().replace('-', "_"), Span::call_site())
     }
     fn to_string(&self) -> String {
         let mut items = self.iter().map(|a| a.to_string());
@@ -161,8 +161,7 @@ impl<'a> Attributes<'a> {
                     #(#attrs)*
                     map
                 }
-            }
-            .into(),
+            },
             events,
         )
     }
@@ -260,7 +259,7 @@ impl<'a> Parse for Attribute<'a> {
                 //println!("input: {:#?}", input);
                 value = AttributeValue::Literal(input.parse::<Literal>()?);
             } else {
-                value = AttributeValue::Path(parser(&input)?); //AttributeValue::Literal(input.parse::<Literal>()?);
+                value = AttributeValue::Path(parser(input)?); //AttributeValue::Literal(input.parse::<Literal>()?);
             }
             return Ok(Attribute::new(name, attr_type, Some(value)));
         }

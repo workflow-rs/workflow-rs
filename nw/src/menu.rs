@@ -56,10 +56,9 @@
 //!
 
 use crate::application::app;
+use crate::result::Result;
 use js_sys::Function;
-use nw_sys::menu_item::Type as MenuItemType;
-use nw_sys::{prelude::*, result::Result};
-use nw_sys::{Menu, MenuItem};
+use nw_sys::prelude::*;
 use wasm_bindgen::prelude::*;
 use workflow_wasm::prelude::*;
 
@@ -131,6 +130,12 @@ impl MenubarBuilder {
 pub struct MenuItemBuilder {
     pub options: nw_sys::menu_item::Options,
     pub callback: Option<Callback<CallbackClosure<JsValue>>>,
+}
+
+impl Default for MenuItemBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MenuItemBuilder {

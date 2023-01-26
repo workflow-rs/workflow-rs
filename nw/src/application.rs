@@ -5,7 +5,8 @@
 //!
 
 use crate::media::MediaStreamTrackKind;
-use nw_sys::{prelude::*, result::Result, utils};
+use crate::result::Result;
+use nw_sys::{prelude::*, utils};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{MediaStream, MediaStreamTrack, MouseEvent};
@@ -181,7 +182,7 @@ impl Application {
             let mut stream_id = None;
             if value.is_string() {
                 if let Some(id) = value.as_string() {
-                    if id.len() > 0 {
+                    if !id.is_empty() {
                         stream_id = Some(id);
                     }
                 }

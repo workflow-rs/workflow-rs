@@ -38,15 +38,14 @@ where
     }
 }
 
+type MessageInfo<'l, Ops, Id> = (Option<Id>, Option<Ops>, Result<&'l [u8]>);
+
 impl<Ops, Id> BorshProtocol<Ops, Id>
 where
     Id: IdT,
     Ops: OpsT,
 {
-    fn decode<'l>(
-        &self,
-        server_message: &'l [u8],
-    ) -> ServerResult<(Option<Id>, Option<Ops>, Result<&'l [u8]>)> {
+    fn decode<'l>(&self, server_message: &'l [u8]) -> ServerResult<MessageInfo<'l, Ops, Id>> {
         match BorshServerMessage::try_from(server_message) {
             Ok(msg) => {
                 let header = msg.header;
@@ -123,7 +122,7 @@ where
     async fn handle_notification(&self, op: &Ops, payload: &[u8]) -> Result<()> {
         if let Some(interface) = &self.interface {
             interface
-                .call_notification_with_borsh(&op, payload)
+                .call_notification_with_borsh(op, payload)
                 .await
                 .unwrap_or_else(|err| log_trace!("error handling server notification {}", err));
         } else {
@@ -179,15 +178,13 @@ where
                 } else {
                     Err(Error::ResponseHandler(format!("{:?}", id)))
                 }
-            } else {
-                if let Some(op) = op {
-                    match result {
-                        Ok(data) => self.handle_notification(&op, data).await,
-                        _ => Ok(()),
-                    }
-                } else {
-                    Err(Error::NotificationMethod)
+            } else if let Some(op) = op {
+                match result {
+                    Ok(data) => self.handle_notification(&op, data).await,
+                    _ => Ok(()),
                 }
+            } else {
+                Err(Error::NotificationMethod)
             }
         } else {
             return Err(Error::WebSocketMessageType);

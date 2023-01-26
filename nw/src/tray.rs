@@ -40,8 +40,9 @@
 //!
 
 use crate::application::app;
+use crate::result::Result;
+use nw_sys::prelude::*;
 use nw_sys::{menu_item::MenuItem, tray::Options, Menu, Tray};
-use nw_sys::{prelude::*, result::Result};
 use wasm_bindgen::prelude::*;
 use web_sys::MouseEvent;
 use workflow_wasm::prelude::*;
@@ -55,6 +56,12 @@ pub struct TrayMenuBuilder {
     pub menu: Option<Menu>,
     pub tooltip: Option<String>,
     pub callback: Option<Callback<CallbackClosure<MouseEvent>>>,
+}
+
+impl Default for TrayMenuBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TrayMenuBuilder {

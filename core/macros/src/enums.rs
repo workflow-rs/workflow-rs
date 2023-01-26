@@ -18,9 +18,8 @@ impl ToTokens for Enum {
     }
 }
 
-// pub fn macro_handler(_attr: TokenStream, item: TokenStream) -> TokenStream {
 pub fn macro_handler(item: TokenStream) -> TokenStream {
-    let enum_decl_ast = item.clone();
+    let enum_decl_ast = item;
     let ast = parse_macro_input!(enum_decl_ast as DeriveInput);
 
     let _enum_attrs = &ast.attrs;
@@ -33,7 +32,7 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
     } else {
         return Error::new_spanned(
             enum_name,
-            format!("#[derive(Describe)] macro only supports enums"),
+            "#[derive(Describe)] macro only supports enums".to_string(),
         )
         .to_compile_error()
         .into();
@@ -70,20 +69,17 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
         let mut docs = Vec::new();
         for attr in variant.attrs.iter() {
             let path_seg = attr.path.segments.last();
-            if !path_seg.is_some() {
+            if path_seg.is_none() {
                 continue;
             }
             let segment = path_seg.unwrap();
             if segment.ident == "doc" {
                 let mut tokens = attr.tokens.clone().into_iter();
-                match tokens.next() {
-                    Some(TokenTree::Punct(_punct)) => match tokens.next() {
-                        Some(TokenTree::Literal(lit)) => {
-                            docs.push(lit.clone());
-                        }
-                        _ => {}
-                    },
-                    _ => {}
+
+                if let Some(TokenTree::Punct(_punct)) = tokens.next() {
+                    if let Some(TokenTree::Literal(lit)) = tokens.next() {
+                        docs.push(lit.clone());
+                    }
                 }
             }
         }
@@ -116,13 +112,6 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
         }
     }
 
-    // let enum_decl = quote! {
-    //     # (#enum_attrs) *
-    //     pub enum #enum_name {
-    //         #( #entries ),*
-    //     }
-    // };
-
     #[cfg(target_os = "solana")]
     let enum_impl = quote! {};
 
@@ -135,22 +124,26 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
             pub fn list() -> Vec<#enum_name> {
                 vec![#( #enum_name::#entries ),*]
             }
+
             pub fn as_str(&self)->&'static str{
                 match self {
                     #( #enum_name::#entries => { #strings.into() }),*
                 }
             }
+
             pub fn as_str_ns(&self)->&'static str{
                 match self {
                     #( #enum_name::#entries => { #strings_ns.into() }),*
                 }
             }
+
             pub fn from_str(str:&str)->Option<#enum_name>{
                 match str {
                     #( #strings => { Some(#enum_name::#entries) }),*
                     _ => None
                 }
             }
+
             pub fn from_str_ns(str:&str)->Option<#enum_name>{
                 match str {
                     #( #strings_ns => { Some(#enum_name::#entries) }),*
@@ -205,13 +198,8 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
 
     };
 
-    // #enum_decl
-    let result = quote! {
-
+    quote! {
         #enum_impl
-
     }
-    .into();
-
-    result
+    .into()
 }

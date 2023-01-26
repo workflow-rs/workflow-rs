@@ -39,6 +39,12 @@ pub struct Inner {
     history_index: usize,
 }
 
+impl Default for Inner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Inner {
     pub fn new() -> Self {
         Inner {
@@ -234,7 +240,7 @@ impl Terminal {
         let mut data = self.inner().unwrap();
         data.cursor = 0;
         data.buffer.clear();
-        self.term().write(format!("{}", self.get_prompt()));
+        self.term().write(self.get_prompt());
     }
 
     /// Output CRLF sequence
@@ -271,7 +277,7 @@ impl Terminal {
 
     /// Get a clone of Arc of the underlying terminal instance
     pub fn term(&self) -> Arc<Interface> {
-        return Arc::clone(&self.term);
+        Arc::clone(&self.term)
     }
 
     /// Execute the async terminal processing loop.
@@ -279,7 +285,7 @@ impl Terminal {
     /// [`Terminal::exit`]
     pub async fn run(&self) -> Result<()> {
         // self.prompt();
-        Ok(self.term().run().await?)
+        self.term().run().await
     }
 
     /// Exits the async terminal processing loop
@@ -294,7 +300,7 @@ impl Terminal {
     pub async fn ask(self: &Arc<Terminal>, secure: bool, prompt: &str) -> Result<String> {
         self.reset_line_buffer();
         self.term().write(prompt.to_string());
-        Ok(self.user_input.capture(secure, self).await?)
+        self.user_input.capture(secure, self).await
     }
 
     /// Inject a string into the current cursor position
@@ -308,7 +314,7 @@ impl Terminal {
         let len = text.len();
         data.buffer.insert_str(data.cursor, &text);
         self.trail(data.cursor, &data.buffer, true, false, len);
-        data.cursor = data.cursor + len;
+        data.cursor += len;
         Ok(())
     }
 
@@ -325,7 +331,7 @@ impl Terminal {
                     return Ok(());
                 }
                 self.write("\x08".to_string());
-                data.cursor = data.cursor - 1;
+                data.cursor -= 1;
                 let idx = data.cursor;
                 data.buffer.remove(idx);
                 self.trail(data.cursor, &data.buffer, true, true, 0);
@@ -343,7 +349,7 @@ impl Terminal {
                 } else {
                     data.history[index] = current_buffer;
                 }
-                data.history_index = data.history_index - 1;
+                data.history_index -= 1;
 
                 data.buffer = data.history[data.history_index].clone();
                 self.write(format!("{}{}{}", ClearLine, self.get_prompt(), data.buffer));
@@ -357,7 +363,7 @@ impl Terminal {
                 }
                 let index = data.history_index;
                 data.history[index] = data.buffer.clone();
-                data.history_index = data.history_index + 1;
+                data.history_index += 1;
                 if data.history_index == len {
                     data.buffer.clear();
                 } else {
@@ -372,13 +378,13 @@ impl Terminal {
                 if data.cursor == 0 {
                     return Ok(());
                 }
-                data.cursor = data.cursor - 1;
+                data.cursor -= 1;
                 self.write(Left(1));
             }
             Key::ArrowRight => {
                 let mut data = self.inner()?;
                 if data.cursor < data.buffer.len() {
-                    data.cursor = data.cursor + 1;
+                    data.cursor += 1;
                     self.write(Right(1));
                 }
             }
@@ -391,10 +397,10 @@ impl Terminal {
                     data.buffer.clear();
                     data.cursor = 0;
 
-                    if buffer.len() > 0 {
+                    if !buffer.is_empty() {
                         let cmd = buffer.clone();
 
-                        if length == 0 || data.history[length - 1].len() > 0 {
+                        if length == 0 || !data.history[length - 1].is_empty() {
                             data.history_index = length;
                         } else {
                             data.history_index = length - 1;
@@ -405,7 +411,7 @@ impl Terminal {
                         } else {
                             data.history[index] = buffer;
                         }
-                        data.history_index = data.history_index + 1;
+                        data.history_index += 1;
 
                         Some(cmd)
                     } else {
@@ -445,19 +451,19 @@ impl Terminal {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 
-    fn trail(&self, cursor: usize, buffer: &String, rewind: bool, erase_last: bool, offset: usize) {
+    fn trail(&self, cursor: usize, buffer: &str, rewind: bool, erase_last: bool, offset: usize) {
         let mut tail = buffer[cursor..].to_string();
         if erase_last {
-            tail = tail + " ";
+            tail += " ";
         }
         self.write(&tail);
         if rewind {
             let mut l = tail.len();
             if offset > 0 {
-                l = l - offset;
+                l -= offset;
             }
             for _ in 0..l {
                 self.write("\x08"); // backspace
