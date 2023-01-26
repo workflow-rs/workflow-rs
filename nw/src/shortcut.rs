@@ -23,9 +23,8 @@ use nw_sys::prelude::*;
 use wasm_bindgen::prelude::*;
 use workflow_wasm::prelude::*;
 
-
 /// Shortcut Info Object returned by [`ShortcutBuilder.finalize`](ShortcutBuilder#method.finalize) method
-pub struct ShortcutInfo{
+pub struct ShortcutInfo {
     pub shortcut: nw_sys::Shortcut,
     pub active_callback: Option<Callback<CallbackClosure<JsValue>>>,
     pub failed_callback: Option<Callback<CallbackClosure<JsValue>>>,
@@ -133,9 +132,9 @@ impl ShortcutBuilder {
         self
     }
 
-    /// create [nw_sys::Shortcut](nw_sys::Shortcut) and 
+    /// create [nw_sys::Shortcut](nw_sys::Shortcut) and
     /// return it
-    /// 
+    ///
     pub fn build(self) -> Result<nw_sys::Shortcut> {
         if let Some(callback) = self.active_callback {
             let app = match app() {
@@ -156,19 +155,17 @@ impl ShortcutBuilder {
         Ok(shortcut)
     }
 
-    /// create [nw_sys::Shortcut](nw_sys::Shortcut) and 
-    /// return it with 
+    /// create [nw_sys::Shortcut](nw_sys::Shortcut) and
+    /// return it with
     /// [active_callback](Self#structfield.active_callback),
     /// [failed_callback](Self#structfield.failed_callback) handlers
     ///
-    pub fn finalize(
-        self,
-    ) -> Result<ShortcutInfo> {
+    pub fn finalize(self) -> Result<ShortcutInfo> {
         let shortcut = nw_sys::Shortcut::new(&self.options);
-        Ok(ShortcutInfo{
+        Ok(ShortcutInfo {
             shortcut,
             active_callback: self.active_callback,
-            failed_callback: self.failed_callback
+            failed_callback: self.failed_callback,
         })
     }
 }
