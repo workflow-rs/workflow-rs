@@ -51,7 +51,6 @@ cfg_if! {
     }
 }
 
-#[cfg(feature = "wasm")]
 pub mod wasm {
     //! WASM implementation
     pub use super::*;
