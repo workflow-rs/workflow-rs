@@ -1,19 +1,15 @@
-use wasm_bindgen::prelude::*;
-use node_child_process::{
-    ChildProcess,
-    KillSignal,
-    SpawnOptions,
-    SpawnArgs,
-    spawn_with_args_and_options
-};
 use crate::error::Error;
 use crate::result::Result;
 use futures::{select, FutureExt};
+use node_child_process::{
+    spawn_with_args_and_options, ChildProcess, KillSignal, SpawnArgs, SpawnOptions,
+};
 use node_sys::*;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use wasm_bindgen::prelude::*;
 use workflow_core::channel::{Channel, Receiver};
 use workflow_core::task::*;
 use workflow_log::*;
@@ -164,9 +160,7 @@ impl Inner {
                     }));
                 }
 
-                Arc::new(spawn_with_args_and_options(
-                    &program, &args, &options,
-                ))
+                Arc::new(spawn_with_args_and_options(&program, &args, &options))
             };
 
             let exit = self.exit.sender.clone();
@@ -396,7 +390,10 @@ impl Process {
     }
 
     pub async fn get_version(&self) -> Result<Version> {
-        let text = self.exec_with_args(["--version"].as_slice(), None).await?.stdout;
+        let text = self
+            .exec_with_args(["--version"].as_slice(), None)
+            .await?
+            .stdout;
         let v = text
             .split('.')
             .flat_map(|v| v.parse::<u64>())
@@ -409,8 +406,6 @@ impl Process {
         Ok(Version::new(v[0], v[1], v[2]))
     }
 }
-
-
 
 #[wasm_bindgen]
 pub async fn test() {

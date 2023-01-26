@@ -1,18 +1,23 @@
 [workspace]
 members = [
-    "macro-tools",
-    "log",
     "core",
-    "wasm",
-    "panic-hook",
-    "node",
-    "nw",
-    "websocket",
-    "rpc",
+    "core/macros",
     "dom",
     "html",
+    "html/macros",
     "i18n",
+    "log",
+    "macro-tools",
+    "node",
+    "nw",
+    "panic-hook",
+    "rpc",
+    "rpc/macros",
+    "store",
     "terminal",
+    "wasm",
+    "wasm/macros",
+    "websocket",
 ]
 
 [workspace.package]
@@ -23,19 +28,24 @@ edition = "2021"
 include = ["src/**/*.rs", "Cargo.toml"]
 
 [workspace.dependencies]
-workflow-macro-tools = { path = "macro-tools" }
-workflow-log = { path = "log" }
 workflow-core = { path = "core" }
-workflow-wasm = { path = "wasm" }
-workflow-panic-hook = { path = "panic-hook" }
-workflow-node = { path = "node" }
-workflow-nw = { path = "nw" }
-workflow-websocket = { path = "websocket" }
-workflow-rpc = { path = "rpc" }
+workflow-core-macros = { path = "core/macros" }
 workflow-dom = { path = "dom" }
 workflow-html = { path = "html" }
+workflow-html-macros = { path = "html/macros" }
 workflow-i18n = { path = "i18n" }
+workflow-log = { path = "log" }
+workflow-macro-tools = { path = "macro-tools" }
+workflow-node = { path = "node" }
+workflow-nw = { path = "nw" }
+workflow-panic-hook = { path = "panic-hook" }
+workflow-rpc = { path = "rpc" }
+workflow-rpc-macros = { path = "rpc/macros" }
+workflow-store = { path = "store" }
 workflow-terminal = { path = "terminal" }
+workflow-wasm = { path = "wasm" }
+workflow-wasm-macros = { path = "wasm/macros" }
+workflow-websocket = { path = "websocket" }
 
 
 nw-sys={path="../nw-sys"}

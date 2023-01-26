@@ -1,8 +1,8 @@
 use wasm_bindgen::prelude::*;
 
 pub mod error;
-pub mod result;
 pub mod process;
+pub mod result;
 
 pub mod prelude {
     pub use crate::process::*;

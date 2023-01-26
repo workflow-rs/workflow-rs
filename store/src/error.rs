@@ -1,6 +1,6 @@
-use wasm_bindgen::prelude::*;
-use thiserror::Error;
 use base64::DecodeError;
+use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -14,7 +14,6 @@ pub enum Error {
     DecodeError(DecodeError),
 }
 
-
 impl Into<JsValue> for Error {
     fn into(self) -> JsValue {
         JsValue::from_str(&format!("{:?}", self))
@@ -23,7 +22,7 @@ impl Into<JsValue> for Error {
 
 impl From<JsValue> for Error {
     fn from(error: JsValue) -> Error {
-        Error::JsValue(format!("{:?}",error))
+        Error::JsValue(format!("{:?}", error))
     }
 }
 

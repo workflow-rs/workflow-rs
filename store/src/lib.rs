@@ -1,10 +1,10 @@
 pub mod error;
 pub mod result;
 
+use crate::result::Result;
+use cfg_if::cfg_if;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use cfg_if::cfg_if;
-use crate::result::Result;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
@@ -17,28 +17,27 @@ cfg_if! {
 
 ///
 /// # Unistore
-/// 
+///
 /// A simple file loader that allows user to
-/// specify different paths on various 
+/// specify different paths on various
 /// operating systems with fallbacks.
 ///
 pub struct Unistore {
     // linux (fallsback to unix, generic)
-    pub linux : Option<String>,
+    pub linux: Option<String>,
     // macos (fallsback to unix, generic)
-    pub macos : Option<String>,
+    pub macos: Option<String>,
     // unix (fallsback to generic)
-    pub unix : Option<String>,
+    pub unix: Option<String>,
     // windows (fallsback to generic)
-    pub windows : Option<String>,
+    pub windows: Option<String>,
     // fallback for all OSes
-    pub generic : Option<String>,
+    pub generic: Option<String>,
     // browser locastorage (fallsback to a hash of generic in hex)
-    pub browser : Option<String>,
+    pub browser: Option<String>,
 }
 
 impl Unistore {
-
     pub fn new() -> Unistore {
         Unistore {
             linux: None,
@@ -109,13 +108,13 @@ impl Unistore {
                 let filename = self.filename();
                 Ok(local_storage().get_item(&filename)?.is_some())
             }
-        
+
             pub async fn read(&self) -> Result<Vec<u8>> {
                 let filename = self.filename();
                 let v = local_storage().get_item(&filename)?.unwrap();
                 Ok(decode(v)?)
             }
-            
+
             pub async fn write(&self, data: &[u8]) -> Result<()> {
                 let filename = self.filename();
                 let v = encode(data);
@@ -128,25 +127,24 @@ impl Unistore {
                 let filename = parse(self.filename());
                 Ok(filename.exists().await)
             }
-        
+
             pub async fn read(&self) -> Result<Vec<u8>> {
                 let filename = parse(self.filename());
                 Ok(fs::read(&filename).await?)
             }
-            
+
             pub async fn write(&self, data: &[u8]) -> Result<()> {
                 let filename = parse(self.filename());
                 Ok(fs::write(&filename, data).await?)
             }
         }
     }
-
 }
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
         pub fn parse(path : String) -> PathBuf {
-        
+
             if path.starts_with("~") {
                 let home_dir: PathBuf = home::home_dir().unwrap().into();
                 home_dir.join(path[1..].to_string())
@@ -161,8 +159,7 @@ cfg_if! {
     }
 }
 
-
-pub fn find(paths : &[Option<&String>]) -> String {
+pub fn find(paths: &[Option<&String>]) -> String {
     for path in paths.iter() {
         if let Some(path) = *path {
             return path.clone();
@@ -171,7 +168,7 @@ pub fn find(paths : &[Option<&String>]) -> String {
     panic!("no path found for the current operating environment");
 }
 
-fn hash<T>(t: T) -> String
+pub fn hash<T>(t: T) -> String
 where
     T: Hash,
 {
@@ -180,4 +177,3 @@ where
     let v = hasher.finish();
     format!("{:x}", v)
 }
-

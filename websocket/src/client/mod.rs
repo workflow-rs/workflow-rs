@@ -26,9 +26,9 @@ pub use options::Options;
 pub use result::Result;
 
 use async_std::channel::{Receiver, Sender};
+use async_trait::async_trait;
 use std::pin::Pin;
 use std::sync::Arc;
-use async_trait::async_trait;
 use workflow_core::channel::{oneshot, Channel};
 use workflow_core::trigger::Listener;
 
