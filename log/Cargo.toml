@@ -16,26 +16,24 @@ crate-type = ["cdylib", "lib"]
 
 [features]
 default = ["sink"]
-full = ["external-logger","sink", "solana"]
+full = ["external-logger","sink","solana"]
 sink = []
 # ignored for BPF target
 external-logger = []
 solana=["dep:solana-program"]
 
 [dependencies]
-cfg-if = "1.0.0"
+cfg-if.workspace = true
+solana-program = {version = "1.14.13", optional = true}
 
-# [target.'cfg(not(target_os = "solana"))'.dependencies]
 [target.'cfg(not(target_os = "solana"))'.dependencies]
-hexplay = "0.2.1"
-termcolor="0.3.6"
-# termcolor="1.2.0"
-wasm-bindgen = { version = "0.2.83" }
-console = "0.15.5"
-log = "0.4.17"
-lazy_static = "1.4.0"
-downcast = "0.11.0"
+console.workspace = true
+downcast.workspace = true
+hexplay.workspace = true
+lazy_static.workspace = true
+log.workspace = true
+termcolor.workspace = true
+wasm-bindgen.workspace = true
 
 #[target.'cfg(target_os = "solana")'.dependencies]
-solana-program = {version = "1.14.13", optional = true}
 # solana-program = {path = "../solana/sdk/program"}

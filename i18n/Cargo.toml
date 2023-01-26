@@ -15,5 +15,5 @@ i18n layer for Workflow UX framework
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-thiserror = "1.0.32"
-ritehash = "0.2.0"
+ritehash.workspace = true
+thiserror.workspace = true

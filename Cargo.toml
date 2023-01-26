@@ -47,8 +47,48 @@ workflow-wasm = { path = "wasm" }
 workflow-wasm-macros = { path = "wasm/macros" }
 workflow-websocket = { path = "websocket" }
 
+################################################################
 
 nw-sys={path="../nw-sys"}
 
-# workflow-unistore = { path = "../workflow-unistore", optional = true }
+################################################################
+getrandom = {version = "0.2.8", features=["js"]}
+################################################################
 
+ahash = "0.8.2"
+async-std = { version = "1.12.0", features = ['attributes'] }
+async-trait = "0.1.61"
+base64 = "0.13.0"
+borsh = "0.10.0"
+bs58 = "0.4.0"
+cfg-if = "1.0.0"
+console = "0.15.5"
+downcast = "0.11.0"
+downcast-rs = "1.2.0"
+futures = "0.3.25"
+futures-util = { version = "0.3.25", default-features = false, features = ["sink", "std"] }
+hexplay = "0.2.1"
+home = "0.5.3"
+instant = { version ="0.1.12", features = ['wasm-bindgen'] }
+js-sys = "0.3.60"
+lazy_static = "1.4.0"
+log = "0.4.17"
+manual_future = "0.1.1"
+node-child-process = "0.1.1"
+node-sys = "0.4.2"
+numtoa = "0.2.4"
+rand = { version = "0.8.5", features = ["getrandom"] }
+regex = "1.5.5"
+ritehash = "0.2.0"
+serde = { version = "1.0.152" , features = ["derive"] }
+serde_json = "1.0.91"
+termcolor="0.3.6"
+termion = "1.5.6"
+thiserror = "1.0.38"
+tokio = { version = "1.24.2", default-features = false, features = ['io-util','time','sync','macros','rt','rt-multi-thread'] }
+tokio-tungstenite = "0.18.0"
+triggered = "0.1.2"
+tungstenite = { version = "0.18.0", default-features = false }
+wasm-bindgen = "0.2.83"
+wasm-bindgen-futures = "0.4.33"
+web-sys = "0.3.56"

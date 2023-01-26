@@ -15,9 +15,9 @@ WASM utilities for in-browser use (timers, event listeners etc.)
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-wasm-bindgen = "0.2.83"
-js-sys = "0.3.60"
-thiserror = "1.0"
-workflow-panic-hook.workspace = true
+js-sys.workspace = true
+thiserror.workspace = true
+wasm-bindgen.workspace = true
 workflow-core.workspace = true
-workflow-wasm-macros = {path="macros"}
+workflow-panic-hook.workspace = true
+workflow-wasm-macros.workspace = true

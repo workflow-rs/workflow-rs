@@ -147,7 +147,7 @@ mod tests {
     use std::time::Duration;
 
     use crate::task::sleep;
-    use async_channel::RecvError;
+    use async_std::channel::RecvError;
     use futures::join;
     use std::collections::HashMap;
 

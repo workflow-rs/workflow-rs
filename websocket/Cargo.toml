@@ -15,33 +15,31 @@ WebSocket crate (client and server) with a uniform native and in-browser async R
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
+async-std.workspace = true
+async-trait.workspace = true
+cfg-if.workspace = true
+downcast-rs.workspace = true
+futures-util.workspace = true
+futures.workspace = true
+thiserror.workspace = true
+triggered.workspace = true
+wasm-bindgen.workspace = true
 workflow-core.workspace = true
 workflow-log.workspace = true
 workflow-wasm.workspace = true
 
-cfg-if = "1.0.0"
-futures = "0.3.25"
-futures-util = { version = "0.3.25", default-features = false, features = ["sink", "std"] }
-manual_future = "0.1.1"
-async-std = { version = "1.12.0", features = ['attributes'] }
-thiserror = "1.0.38"
-triggered = "0.1.2"
-wasm-bindgen = "0.2.83"
-downcast-rs = "1.2.0"
-async-trait = "0.1.61"
-
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.24.2", default-features = false, features = ['io-util','time','sync','macros','rt-multi-thread'] }
-ahash = "0.8.2"
-tokio-tungstenite = "0.18.0"
-tungstenite = { version = "0.18.0", default-features = false }
+ahash.workspace = true
+tokio-tungstenite.workspace = true
+tokio.workspace = true
+tungstenite.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = "0.4.33"
-js-sys = "0.3.60"
+wasm-bindgen-futures.workspace = true
+js-sys.workspace = true
 
 [target.'cfg(not(target_os = "solana"))'.dependencies.web-sys]
-version = "0.3.60"
+workspace = true
 features = [
     "console",
     "BinaryType",

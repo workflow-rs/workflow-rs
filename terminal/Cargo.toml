@@ -15,25 +15,25 @@ Terminal abstraction layer crate for creating native and in-browser terminal app
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-cfg-if = "1.0.0"
-js-sys = "0.3.56"
-wasm-bindgen = "0.2.79"
-regex = "1.5.5"
+async-std.workspace = true
+async-trait.workspace = true
+cfg-if.workspace = true
+js-sys.workspace = true
+numtoa.workspace = true
+regex.workspace = true
+thiserror.workspace = true
+wasm-bindgen-futures.workspace = true
+wasm-bindgen.workspace = true
+workflow-core.workspace = true
+workflow-dom.workspace = true
 workflow-log.workspace = true
 workflow-wasm.workspace = true
-workflow-dom.workspace = true
-workflow-core.workspace = true
-thiserror = "1.0.32"
-numtoa = "0.2.4"
-wasm-bindgen-futures = "0.4.33"
-async-std = { version = "1.12.0"}
-async-trait = "0.1.57"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-termion = "1.5.6"
+termion.workspace = true
 
 [dependencies.web-sys]
-version = "0.3.56"
+workspace = true
 features = [
     'Window',
     'Document',

@@ -3,19 +3,16 @@ name = "workflow-nw"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-
-wasm-bindgen = "0.2.79"
-js-sys = "0.3.56"
+js-sys.workspace = true
 nw-sys.workspace = true
+wasm-bindgen.workspace = true
+workflow-dom.workspace = true
 workflow-log.workspace = true
 workflow-wasm.workspace = true
-workflow-dom.workspace = true
 
 [dependencies.web-sys]
-version = "0.3.60"
+workspace = true
 features = [
     'console',
     'Document',
