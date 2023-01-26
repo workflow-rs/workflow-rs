@@ -1,14 +1,15 @@
 [package]
 name = "workflow-wasm"
-version = "0.1.0"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-wasm"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["wasm","utilities","browser","buffer","array"]
 categories = ["wasm"]
 exclude = ["/.*", "/test"]
 description = """
-WASM utilities for in-browser use (timers, event listeners etc.)
+WASM utilities for in-browser use (timers, callbacks, etc.)
 """
 
 [lib]

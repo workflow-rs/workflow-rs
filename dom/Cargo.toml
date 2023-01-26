@@ -1,9 +1,10 @@
 [package]
 name = "workflow-dom"
-version = "0.2.0"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-dom"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["wasm","dom","inject","script","css"]
 categories = ["web-programming::http-client","wasm"]
 exclude = ["/.*", "/test"]

@@ -1,10 +1,10 @@
 [package]
 name = "workflow-node"
-version = "0.1.0"
-edition = "2021"
-license = "Apache-2.0 OR MIT"
-repository = "https://github.com/aspectron/node-child-process"
-authors = ["Anton Yemelyanov <anton.yemelyanov@gmail.com>", "Surinder Singh Matoo Mattaur <surinder83singh@gmail.com>"]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["node","nodejs"]
 categories = ["wasm","api-bindings"]
 description = """

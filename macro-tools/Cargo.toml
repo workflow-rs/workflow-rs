@@ -1,14 +1,15 @@
 [package]
 name = "workflow-macro-tools"
-version = "0.1.0"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-macro-tools"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["macro","attributes"]
 categories = []
 exclude = ["/.*", "/test"]
 description = """
-Macro utility functions used by the Workflow-RS project
+Macro utility functions used by the `workflow-rs` framework
 """
 
 [dependencies]

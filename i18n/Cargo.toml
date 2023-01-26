@@ -1,14 +1,15 @@
 [package]
 name = "workflow-i18n"
-version = "0.1.0"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-i18n"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["i18n","translation","language","internationalization"]
 categories = ["internationalization"]
 exclude = ["/.*", "/test"]
 description = """
-i18n layer for Workflow UX framework
+i18n layer for `workflow-rs` framework
 """
 
 [lib]

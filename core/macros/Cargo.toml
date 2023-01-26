@@ -1,9 +1,10 @@
 [package]
 name = "workflow-core-macros"
-version = "0.1.0"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-core"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["enum"]
 categories = []
 exclude = ["/.*", "/test"]

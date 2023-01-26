@@ -1,7 +1,16 @@
 [package]
 name = "workflow-panic-hook"
-version = "0.1.0"
-edition = "2021"
+authors = ["Nick Fitzgerald <fitzgen@gmail.com>","Anton Yemelyanov <anton.yemelyanov@gmail.com>", "Surinder Singh Matoo Mattaur <surinder83singh@gmail.com>"]
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+description = """
+Based on the `console_error_panic_hook` this crate provides additional
+functionality allowing panic hook to bring up an in-browser overlay
+displaying the panic hook stack trace. This is useful when debugging
+on mobile devices and have no access to the console.
+"""
 
 [dependencies]
 cfg-if.workspace = true

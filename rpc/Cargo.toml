@@ -1,14 +1,19 @@
 [package]
 name = "workflow-rpc"
-version = "0.1.2"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-rpc"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["websocket","rpc","wasm","browser"]
 categories = ["web-programming::websocket","web-programming::http-client"]
 exclude = ["/.*", "/test"]
 description = """
-RPC layer based on workflow-websocket crate offering native & in-browser clients as well as a native-only server
+Workflow RPC (wRPC) framework based on the `workflow-websocket` 
+crate offering native & in-browser clients as well as a 
+native-only server based on `tokio` & `tungstenite`. wRPC
+supports custom `borsh` and `JSON` protocols with heavy
+use of generics and derive-based borsh and serde serializers.
 """
 
 [lib]

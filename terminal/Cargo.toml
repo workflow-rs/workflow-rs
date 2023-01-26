@@ -1,14 +1,17 @@
 [package]
 name = "workflow-terminal"
-version = "0.2.0"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-terminal"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["wasm","browser","terminal","cli"]
 categories = ["command-line-interface","web-programming::http-client","wasm"]
 exclude = ["/.*", "/test"]
 description = """
-Terminal abstraction layer crate for creating native and in-browser terminal apps
+Terminal abstraction layer over `Xterm.js` and `termion` crates for 
+creating terminal applications that function uniformly in native
+(console) and in browser environments.
 """
 
 [lib]

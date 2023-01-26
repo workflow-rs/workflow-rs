@@ -1,14 +1,18 @@
 [package]
 name = "workflow-websocket"
-version = "0.1.2"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-websocket"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["wasm","websocket","browser","rpc"]
 categories = ["web-programming::websocket","web-programming::http-client","api-bindings"]
 exclude = ["/.*", "/test"]
 description = """
-WebSocket crate (client and server) with a uniform native and in-browser async Rust API
+WebSocket crate (client and server) providing an async Rust API
+that functions uniformly in native and in browser (WASM32)
+environments. This crate allows you to develop WebSocket-driven
+data exchange that function uniformly in web and desktop applications.
 """
 
 [lib]

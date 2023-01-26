@@ -1,7 +1,15 @@
 [package]
 name = "workflow-nw"
-version = "0.1.0"
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = ["nw","nwjs","node-webkit"]
+categories = ["wasm","api-bindings"]
+description = """
+Framework layer for NWJS desktop application development using async Rust.
+"""
 
 [dependencies]
 js-sys.workspace = true

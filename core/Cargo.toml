@@ -1,9 +1,10 @@
 [package]
 name = "workflow-core"
-version = "0.2.0"
-edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-core"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
 keywords = ["wasm","browser","channel"]
 categories = ["wasm"]
 exclude = ["/.*", "/test","/macros"]
