@@ -74,11 +74,6 @@ pub mod messages;
 pub mod result;
 pub mod types;
 
+pub mod encoding;
 #[cfg(not(any(target_arch = "wasm32", target_os = "solana")))]
 pub mod server;
-
-#[derive(Debug)]
-pub enum Encoding {
-    Borsh,
-    SerdeJson,
-}

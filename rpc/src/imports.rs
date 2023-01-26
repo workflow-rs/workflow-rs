@@ -1,5 +1,6 @@
 // pub use crate::client::error::Error;
 // pub use crate::client::result::Result;
+pub use crate::encoding::*;
 pub use crate::error::ServerError;
 pub use crate::id::*;
 pub use crate::result::ServerResult;
