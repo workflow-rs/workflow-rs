@@ -11,7 +11,6 @@ pub use crate::client::error::Error;
 pub use crate::client::result::Result;
 
 use crate::imports::*;
-use crate::Encoding;
 pub use interface::Interface;
 use protocol::ProtocolHandler;
 pub use protocol::{BorshProtocol, SerdeJsonProtocol};

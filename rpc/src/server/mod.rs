@@ -12,9 +12,10 @@ mod protocol;
 pub mod result;
 
 pub use super::error::*;
+pub use crate::encoding::Encoding;
 use crate::imports::*;
 pub use interface::{Interface, Method, Notification};
-pub use protocol::{BorshProtocol, Encoding, ProtocolHandler, SerdeJsonProtocol};
+pub use protocol::{BorshProtocol, ProtocolHandler, SerdeJsonProtocol};
 pub use std::net::SocketAddr;
 pub use tokio::sync::mpsc::UnboundedSender as TokioUnboundedSender;
 pub use workflow_websocket::server::{
@@ -121,7 +122,7 @@ pub trait RpcHandler: Send + Sync + 'static {
         Ok(())
     }
 
-    /// [`RpcHandler::handshake()`] is called right acter [`RpcHandler::connect()`]
+    /// [`RpcHandler::handshake()`] is called right after [`RpcHandler::connect()`]
     /// and is provided with a [`WebSocketSender`] and [`WebSocketReceiver`] channels
     /// which can be used to communicate with the underlying WebSocket connection
     /// to negotiate a connection. The function also receives the `&peer` ([`SocketAddr`])

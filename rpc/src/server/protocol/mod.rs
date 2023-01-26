@@ -13,7 +13,6 @@ use workflow_websocket::server::{Message, Result as WebSocketResult, WebSocketSi
 
 pub use self::borsh::*;
 pub use self::serde_json::*;
-pub use crate::Encoding;
 
 /// Base trait for [`BorshProtocol`] and [`SerdeJsonProtocol`] protocol handlers
 #[async_trait]
