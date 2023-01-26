@@ -1,0 +1,26 @@
+[package]
+name = "workflow-rpc-macros"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0/MIT"
+repository = "https://github.com/workflow-rs/workflow-rpc"
+keywords = ["rpc"]
+categories = []
+exclude = ["/.*", "/test"]
+description = """
+Macros for the workflow-rpc crate
+"""
+
+[lib]
+proc-macro = true
+
+[dependencies]
+workflow-macro-tools = "0.1.0"
+# workflow-macro-tools = { path = "../../workflow-macro-tools" }
+syn = {version="1.0.91",features=["full","fold","extra-traits"]}
+quote = "1.0.8"
+proc-macro2 = { version = "1.0.37" }
+proc-macro-error = { version = "1", default-features = false }
+parse-variants = "0.1"
+# convert_case = "0.5.0"
+# sha2 = "0.10.2"

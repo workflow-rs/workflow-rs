@@ -1,0 +1,14 @@
+[package]
+name = "workflow-wasm-macros"
+version = "0.1.0"
+description = "Macros for workflow-wasm"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = {version = "1.0.99", features = ["full", "parsing", "extra-traits"]}
+quote = "1.0.21"
+proc-macro2="1.0.43"
+proc-macro-error = { version = "1", default-features = false }

@@ -1,0 +1,16 @@
+[package]
+name = "workflow-html-macros"
+version = "0.1.0"
+description = "Workflow Macros for Html Rendering"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = {version = "1.0.99", features = ["full", "parsing", "extra-traits"]}
+quote = "1.0.21"
+proc-macro2="1.0.43"
+proc-macro-error = { version = "1", default-features = false }
+lazy_static="1.4.0"
+rand="0.8.5"

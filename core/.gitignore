@@ -1,0 +1,5 @@
+.DS_Store
+/target
+/Cargo.lock
+analyzer-target
+/test/workflow-core

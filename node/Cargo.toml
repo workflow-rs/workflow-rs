@@ -1,0 +1,25 @@
+[package]
+name = "workflow-node"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/aspectron/node-child-process"
+authors = ["Anton Yemelyanov <anton.yemelyanov@gmail.com>", "Surinder Singh Matoo Mattaur <surinder83singh@gmail.com>"]
+keywords = ["node","nodejs"]
+categories = ["wasm","api-bindings"]
+description = """
+Utilities and curated re-exports for Node.js APIs.
+"""
+
+[dependencies]
+node-sys = "0.4.2"
+js-sys = "*"
+wasm-bindgen = "0.2.83"
+wasm-bindgen-futures = "*"
+workflow-log.workspace = true
+workflow-wasm.workspace = true
+workflow-core.workspace = true
+thiserror = "1.0.38"
+futures = "0.3.25"
+node-child-process = "0.1.1"
+

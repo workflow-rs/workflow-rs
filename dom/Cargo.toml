@@ -1,0 +1,40 @@
+[package]
+name = "workflow-dom"
+version = "0.2.0"
+edition = "2021"
+license = "Apache-2.0/MIT"
+repository = "https://github.com/workflow-rs/workflow-dom"
+keywords = ["wasm","dom","inject","script","css"]
+categories = ["web-programming::http-client","wasm"]
+exclude = ["/.*", "/test"]
+description = """
+DOM injection utilities for run-time injection of JavaScript and CSS
+"""
+
+[lib]
+crate-type = ["cdylib","lib"]
+
+[dependencies]
+workflow-wasm.workspace = true
+workflow-log.workspace = true
+workflow-core.workspace = true
+wasm-bindgen = "0.2.79"
+js-sys = "0.3.56"
+regex = "1.5.5"
+thiserror = "1.0.38"
+futures = "0.3.25"
+
+[dependencies.web-sys]
+version = "0.3.56"
+features = [
+    'Window',
+    'Document',
+    'Element',
+    'Url',
+    'Blob',
+    'CustomEvent',
+    'Node',
+    'NodeList',
+    'HtmlCollection',
+    'BlobPropertyBag'
+]

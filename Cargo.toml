@@ -1,48 +1,44 @@
-[package]
-name = "workflow-rs"
-version = "0.1.0"
+[workspace]
+members = [
+    "macro-tools",
+    "log",
+    "core",
+    "wasm",
+    "panic-hook",
+    "node",
+    "nw",
+    "websocket",
+    "rpc",
+    "dom",
+    "html",
+    "i18n",
+    "terminal",
+]
+
+[workspace.package]
+version = "0.3.0"
+authors = ["https://aspectron.tech"]
+license = "MIT or Apache-2.0"
 edition = "2021"
-license = "Apache-2.0/MIT"
-repository = "https://github.com/workflow-rs/workflow-rs"
-keywords = ["wasm","framework","websocket","rpc","html","http","i18n","log","ux"]
-categories = ["web-programming::http-client","wasm"]
-exclude = ["/.*", "/test"]
-description = """
-Rust application development framework for native and web applications
-"""
+include = ["src/**/*.rs", "Cargo.toml"]
 
-[lib]
-crate-type = ["cdylib", "lib"]
+[workspace.dependencies]
+workflow-macro-tools = { path = "macro-tools" }
+workflow-log = { path = "log" }
+workflow-core = { path = "core" }
+workflow-wasm = { path = "wasm" }
+workflow-panic-hook = { path = "panic-hook" }
+workflow-node = { path = "node" }
+workflow-nw = { path = "nw" }
+workflow-websocket = { path = "websocket" }
+workflow-rpc = { path = "rpc" }
+workflow-dom = { path = "dom" }
+workflow-html = { path = "html" }
+workflow-i18n = { path = "i18n" }
+workflow-terminal = { path = "terminal" }
 
-[features]
-default = ["log","core"]
-full = ["log","core","websocket","rpc","http","html","i18n","wasm","ux","terminal","dom","unistore"]
-log = ["dep:workflow-log"]
-core = ["dep:workflow-core"]
-websocket = ["dep:workflow-websocket"]
-rpc = ["dep:workflow-rpc"]
-http = ["dep:workflow-http"]
-html = ["dep:workflow-html"]
-dom = ["dep:workflow-dom"]
-i18n = ["dep:workflow-i18n"]
-wasm = ["dep:workflow-wasm"]
-ux = ["dep:workflow-ux"]
-terminal = ["dep:workflow-terminal"]
-unistore = ["dep:workflow-unistore"]
-# allocator = []
 
-[dependencies]
+nw-sys={path="../nw-sys"}
 
-workflow-log = { path = "../workflow-log", optional = true }
-workflow-core = { path = "../workflow-core", optional = true }
-workflow-websocket = { path = "../workflow-websocket", optional = true }
-workflow-rpc = { path = "../workflow-rpc", optional = true }
-workflow-http = { path = "../workflow-http", optional = true }
-workflow-html = { path = "../workflow-html", optional = true }
-workflow-dom = { path = "../workflow-dom", optional = true }
-workflow-i18n = { path = "../workflow-i18n", optional = true }
-workflow-wasm = { path = "../workflow-wasm", optional = true }
-workflow-ux = { path = "../workflow-ux", optional = true }
-workflow-terminal = { path = "../workflow-terminal", optional = true }
-workflow-unistore = { path = "../workflow-unistore", optional = true }
+# workflow-unistore = { path = "../workflow-unistore", optional = true }
 
