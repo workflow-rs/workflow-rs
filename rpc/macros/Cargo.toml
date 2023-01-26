@@ -15,12 +15,9 @@ Macros for the workflow-rpc crate
 proc-macro = true
 
 [dependencies]
-workflow-macro-tools = "0.1.0"
-# workflow-macro-tools = { path = "../../workflow-macro-tools" }
-syn = {version="1.0.91",features=["full","fold","extra-traits"]}
-quote = "1.0.8"
-proc-macro2 = { version = "1.0.37" }
-proc-macro-error = { version = "1", default-features = false }
-parse-variants = "0.1"
-# convert_case = "0.5.0"
-# sha2 = "0.10.2"
+parse-variants.workspace = true
+proc-macro-error.workspace = true
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true
+workflow-macro-tools.workspace = true

@@ -92,3 +92,10 @@ tungstenite = { version = "0.18.0", default-features = false }
 wasm-bindgen = "0.2.83"
 wasm-bindgen-futures = "0.4.33"
 web-sys = "0.3.56"
+syn = {version="1.0.99",features=["full","fold","extra-traits","parsing","proc-macro"]}
+quote = "1.0.21"
+proc-macro2 = { version = "1.0.43" }
+proc-macro-error = { version = "1", default-features = false }
+parse-variants = "0.1"
+convert_case = "0.5.0"
+sha2 = "0.10.2"

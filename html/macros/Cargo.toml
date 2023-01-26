@@ -8,9 +8,9 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
-syn = {version = "1.0.99", features = ["full", "parsing", "extra-traits"]}
-quote = "1.0.21"
-proc-macro2="1.0.43"
-proc-macro-error = { version = "1", default-features = false }
-lazy_static="1.4.0"
-rand="0.8.5"
+lazy_static.workspace = true
+proc-macro-error.workspace = true
+proc-macro2.workspace = true
+quote.workspace = true
+rand.workspace = true
+syn.workspace = true

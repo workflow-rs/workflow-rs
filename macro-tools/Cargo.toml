@@ -12,10 +12,10 @@ Macro utility functions used by the Workflow-RS project
 """
 
 [dependencies]
-syn = {version="1.0.91",features=["full","fold","extra-traits","parsing","proc-macro"]}
-quote = "1.0.8"
-proc-macro2 = { version = "1.0.37" }
-parse-variants = "0.1"
-convert_case = "0.5.0"
+convert_case.workspace = true
+parse-variants.workspace = true
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true
 
 
