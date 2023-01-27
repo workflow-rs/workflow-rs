@@ -10,7 +10,7 @@ pub type NotificationFn<Msg> =
     Arc<Box<dyn Send + Sync + Fn(Msg) -> NotificationFnReturn<()> + 'static>>;
 
 pub type NotificationFnReturn<T> =
-    Pin<Box<(dyn Send + Sync + 'static + Future<Output = ServerResult<T>>)>>;
+    Pin<Box<(dyn Send + 'static + Future<Output = ServerResult<T>>)>>;
 
 pub struct Notification<Msg>
 where
