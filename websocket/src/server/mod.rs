@@ -63,7 +63,7 @@ where
     }
 
     /// Called upon websocket disconnection
-    async fn disconnect(self: &Arc<Self>, _ctx: Arc<Self::Context>, _result: Result<()>) {}
+    async fn disconnect(self: &Arc<Self>, _ctx: Self::Context, _result: Result<()>) {}
 
     /// Called after [`Self::connect()`], after creating the [`tokio::sync::mpsc`] sender `sink`
     /// channel, allowing the server to execute additional handshake communication phase,
@@ -74,13 +74,13 @@ where
         sender: &mut WebSocketSender,
         receiver: &mut WebSocketReceiver,
         sink: &WebSocketSink,
-    ) -> Result<Arc<Self::Context>>;
+    ) -> Result<Self::Context>;
 
     /// Called for every websocket message
     /// This function can return an error to terminate the connection
     async fn message(
         self: &Arc<Self>,
-        ctx: &Arc<Self::Context>,
+        ctx: &Self::Context,
         msg: Message,
         sink: &WebSocketSink,
     ) -> Result<()>;
@@ -143,7 +143,7 @@ where
 
     async fn connection_task(
         self: &Arc<Self>,
-        ctx: &Arc<T::Context>,
+        ctx: &T::Context,
         mut ws_sender: WebSocketSender,
         mut ws_receiver: WebSocketReceiver,
         sink_sender: TokioUnboundedSender<Message>,

@@ -14,29 +14,29 @@ use workflow_websocket::server::{
 };
 
 /// Server-side message serializer and dispatcher when using `SerdeJson` protocol.
-pub struct SerdeJsonProtocol<ConnectionContext, ServerContext, Ops, Id>
+pub struct SerdeJsonProtocol<ServerContext, ConnectionContext, Ops, Id>
 where
-    ConnectionContext: Send + Sync + 'static,
-    ServerContext: Send + Sync + 'static,
+    ServerContext: Clone + Send + Sync + 'static,
+    ConnectionContext: Clone + Send + Sync + 'static,
     Ops: OpsT,
     Id: IdT,
 {
     id: PhantomData<Id>,
     ops: PhantomData<Ops>,
-    interface: Arc<Interface<ConnectionContext, ServerContext, Ops>>,
+    interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
 }
 
 #[async_trait]
-impl<ConnectionContext, ServerContext, Ops, Id>
-    ProtocolHandler<ConnectionContext, ServerContext, Ops>
-    for SerdeJsonProtocol<ConnectionContext, ServerContext, Ops, Id>
+impl<ServerContext, ConnectionContext, Ops, Id>
+    ProtocolHandler<ServerContext, ConnectionContext, Ops>
+    for SerdeJsonProtocol<ServerContext, ConnectionContext, Ops, Id>
 where
-    ConnectionContext: Send + Sync + 'static,
-    ServerContext: Send + Sync + 'static,
+    ServerContext: Clone + Send + Sync + 'static,
+    ConnectionContext: Clone + Send + Sync + 'static,
     Ops: OpsT,
     Id: IdT,
 {
-    fn new(interface: Arc<Interface<ConnectionContext, ServerContext, Ops>>) -> Self
+    fn new(interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>) -> Self
     where
         Self: Sized,
     {
@@ -53,7 +53,7 @@ where
 
     async fn handle_message(
         &self,
-        connection_ctx: Arc<ConnectionContext>,
+        connection_ctx: ConnectionContext,
         msg: Message,
         sink: &WebSocketSink,
     ) -> WebSocketResult<()> {

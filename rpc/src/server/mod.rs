@@ -140,11 +140,11 @@ pub trait RpcHandler: Send + Sync + 'static {
         sender: &mut WebSocketSender,
         receiver: &mut WebSocketReceiver,
         messenger: Arc<Messenger>,
-    ) -> WebSocketResult<Arc<Self::Context>>;
+    ) -> WebSocketResult<Self::Context>;
 
     /// Disconnect notification, receives the context and the result containing
     /// the disconnection reason (can be success if the connection is closed gracefully)
-    async fn disconnect(self: Arc<Self>, _ctx: Arc<Self::Context>, _result: WebSocketResult<()>) {}
+    async fn disconnect(self: Arc<Self>, _ctx: Self::Context, _result: WebSocketResult<()>) {}
 }
 
 ///
@@ -197,12 +197,12 @@ impl Messenger {
 /// WebSocket processor in charge of managing
 /// WRPC Request/Response interactions.
 #[derive(Clone)]
-struct RpcWebSocketHandler<ConnectionContext, ServerContext, Protocol, Ops>
+struct RpcWebSocketHandler<ServerContext, ConnectionContext, Protocol, Ops>
 where
     Ops: OpsT,
-    ConnectionContext: Send + Sync + 'static,
-    ServerContext: Send + Sync + 'static,
-    Protocol: ProtocolHandler<ConnectionContext, ServerContext, Ops> + Send + Sync + 'static,
+    ServerContext: Clone + Send + Sync + 'static,
+    ConnectionContext: Clone + Send + Sync + 'static,
+    Protocol: ProtocolHandler<ServerContext, ConnectionContext, Ops> + Send + Sync + 'static,
 {
     rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
     protocol: Arc<Protocol>,
@@ -210,17 +210,17 @@ where
     _ops: PhantomData<Ops>,
 }
 
-impl<ConnectionContext, ServerContext, Protocol, Ops>
-    RpcWebSocketHandler<ConnectionContext, ServerContext, Protocol, Ops>
+impl<ServerContext, ConnectionContext, Protocol, Ops>
+    RpcWebSocketHandler<ServerContext, ConnectionContext, Protocol, Ops>
 where
     Ops: OpsT,
-    ConnectionContext: Send + Sync + 'static,
-    ServerContext: Send + Sync + 'static,
-    Protocol: ProtocolHandler<ConnectionContext, ServerContext, Ops> + Send + Sync + 'static,
+    ServerContext: Clone + Send + Sync + 'static,
+    ConnectionContext: Clone + Send + Sync + 'static,
+    Protocol: ProtocolHandler<ServerContext, ConnectionContext, Ops> + Send + Sync + 'static,
 {
     pub fn new(
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
-        interface: Arc<Interface<ConnectionContext, ServerContext, Ops>>,
+        interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
     ) -> Self {
         let protocol = Arc::new(Protocol::new(interface));
         Self {
@@ -233,13 +233,13 @@ where
 }
 
 #[async_trait]
-impl<ConnectionContext, ServerContext, Protocol, Ops> WebSocketHandler
-    for RpcWebSocketHandler<ConnectionContext, ServerContext, Protocol, Ops>
+impl<ServerContext, ConnectionContext, Protocol, Ops> WebSocketHandler
+    for RpcWebSocketHandler<ServerContext, ConnectionContext, Protocol, Ops>
 where
     Ops: OpsT,
-    ConnectionContext: Send + Sync + 'static,
-    ServerContext: Send + Sync + 'static,
-    Protocol: ProtocolHandler<ConnectionContext, ServerContext, Ops> + Send + Sync + 'static,
+    ServerContext: Clone + Send + Sync + 'static,
+    ConnectionContext: Clone + Send + Sync + 'static,
+    Protocol: ProtocolHandler<ServerContext, ConnectionContext, Ops> + Send + Sync + 'static,
 {
     type Context = ConnectionContext;
 
@@ -247,7 +247,7 @@ where
         self.rpc_handler.clone().connect(peer).await
     }
 
-    async fn disconnect(self: &Arc<Self>, ctx: Arc<Self::Context>, result: WebSocketResult<()>) {
+    async fn disconnect(self: &Arc<Self>, ctx: Self::Context, result: WebSocketResult<()>) {
         self.rpc_handler.clone().disconnect(ctx, result).await
     }
 
@@ -257,7 +257,7 @@ where
         sender: &mut WebSocketSender,
         receiver: &mut WebSocketReceiver,
         sink: &WebSocketSink,
-    ) -> WebSocketResult<Arc<Self::Context>> {
+    ) -> WebSocketResult<Self::Context> {
         let messenger = Arc::new(Messenger::new(self.protocol.encoding(), sink));
 
         self.rpc_handler
@@ -268,12 +268,12 @@ where
 
     async fn message(
         self: &Arc<Self>,
-        connection_ctx: &Arc<Self::Context>,
+        connection_ctx: &Self::Context,
         msg: Message,
         sink: &WebSocketSink,
     ) -> WebSocketResult<()> {
         self.protocol
-            .handle_message(connection_ctx.clone(), msg, sink)
+            .handle_message((*connection_ctx).clone(), msg, sink)
             .await
     }
 }
@@ -301,19 +301,19 @@ impl RpcServer {
     /// and deserialization (this can be omitted by using [`RpcServer::new_with_encoding`])
     /// - `Ops`: A data type (index or an `enum`) representing the RPC method
     /// or notification.
-    pub fn new<ConnectionContext, ServerContext, Protocol, Ops>(
+    pub fn new<ServerContext, ConnectionContext, Protocol, Ops>(
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
-        interface: Arc<Interface<ConnectionContext, ServerContext, Ops>>,
+        interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
     ) -> RpcServer
     where
-        ConnectionContext: Send + Sync + 'static,
-        ServerContext: Send + Sync + 'static,
-        Protocol: ProtocolHandler<ConnectionContext, ServerContext, Ops> + Send + Sync + 'static,
+        ServerContext: Clone + Send + Sync + 'static,
+        ConnectionContext: Clone + Send + Sync + 'static,
+        Protocol: ProtocolHandler<ServerContext, ConnectionContext, Ops> + Send + Sync + 'static,
         Ops: OpsT,
     {
         let ws_handler = Arc::new(RpcWebSocketHandler::<
-            ConnectionContext,
             ServerContext,
+            ConnectionContext,
             Protocol,
             Ops,
         >::new(rpc_handler, interface));
@@ -340,28 +340,28 @@ impl RpcServer {
     /// instantiate the corresponding protocol handler ([`BorshProtocol`] or
     /// [`SerdeJsonProtocol`] respectively).
     ///
-    pub fn new_with_encoding<ConnectionContext, ServerContext, Ops, Id>(
+    pub fn new_with_encoding<ServerContext, ConnectionContext, Ops, Id>(
         encoding: Encoding,
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
-        interface: Arc<Interface<ConnectionContext, ServerContext, Ops>>,
+        interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
     ) -> RpcServer
     where
-        ConnectionContext: Send + Sync + 'static,
-        ServerContext: Send + Sync + 'static,
+        ServerContext: Clone + Send + Sync + 'static,
+        ConnectionContext: Clone + Send + Sync + 'static,
         Ops: OpsT,
         Id: IdT,
     {
         match encoding {
             Encoding::Borsh => RpcServer::new::<
-                ConnectionContext,
                 ServerContext,
-                BorshProtocol<ConnectionContext, ServerContext, Ops, Id>,
+                ConnectionContext,
+                BorshProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
             >(rpc_handler, interface),
             Encoding::SerdeJson => RpcServer::new::<
-                ConnectionContext,
                 ServerContext,
-                SerdeJsonProtocol<ConnectionContext, ServerContext, Ops, Id>,
+                ConnectionContext,
+                SerdeJsonProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
             >(rpc_handler, interface),
         }

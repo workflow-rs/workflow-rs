@@ -13,28 +13,28 @@ pub use notification::*;
 /// [`Interface`] struct carries a mapping of RPC methods
 /// and notifications, used by protocols to dispatch calls
 /// to their respective handlers.
-pub struct Interface<ConnectionContext, ServerContext, Ops>
+pub struct Interface<ServerContext, ConnectionContext, Ops>
 where
-    ConnectionContext: Send + Sync + 'static,
-    ServerContext: Send + Sync + 'static,
+    ServerContext: Clone + Send + Sync + 'static,
+    ConnectionContext: Clone + Send + Sync + 'static,
     Ops: OpsT,
 {
-    server_ctx: Arc<ServerContext>,
-    methods: AHashMap<Ops, Box<dyn MethodTrait<ConnectionContext, ServerContext>>>,
-    notifications: AHashMap<Ops, Box<dyn NotificationTrait<ConnectionContext, ServerContext>>>,
+    server_ctx: ServerContext,
+    methods: AHashMap<Ops, Box<dyn MethodTrait<ServerContext, ConnectionContext>>>,
+    notifications: AHashMap<Ops, Box<dyn NotificationTrait<ServerContext, ConnectionContext>>>,
 }
 
-impl<ConnectionContext, ServerContext, Ops> Interface<ConnectionContext, ServerContext, Ops>
+impl<ServerContext, ConnectionContext, Ops> Interface<ServerContext, ConnectionContext, Ops>
 where
-    ConnectionContext: Send + Sync + 'static,
-    ServerContext: Send + Sync + 'static,
+    ServerContext: Clone + Send + Sync + 'static,
+    ConnectionContext: Clone + Send + Sync + 'static,
     Ops: OpsT,
 {
     /// Create an interface that will contain user-defined
     /// RPC message and notification handlers. This method
     /// accepts `server_ctx` argument that will be subsequently
     /// passed to each RPC method or notification invocation.
-    pub fn new(server_ctx: Arc<ServerContext>) -> Interface<ConnectionContext, ServerContext, Ops> {
+    pub fn new(server_ctx: ServerContext) -> Interface<ServerContext, ConnectionContext, Ops> {
         Interface {
             server_ctx,
             methods: AHashMap::new(),
@@ -62,7 +62,7 @@ where
     pub fn method<Req, Resp>(
         &mut self,
         op: Ops,
-        method: Method<ConnectionContext, ServerContext, Req, Resp>,
+        method: Method<ServerContext, ConnectionContext, Req, Resp>,
     )
     // -> Self
     where
@@ -70,7 +70,7 @@ where
         Req: MsgT,
         Resp: MsgT,
     {
-        let method: Box<dyn MethodTrait<ConnectionContext, ServerContext>> = Box::new(method);
+        let method: Box<dyn MethodTrait<ServerContext, ConnectionContext>> = Box::new(method);
         if self.methods.insert(op.clone(), method).is_some() {
             panic!("RPC method {:?} is declared multiple times", op)
         }
@@ -96,12 +96,12 @@ where
     pub fn notification<Msg>(
         &mut self,
         op: Ops,
-        method: Notification<ConnectionContext, ServerContext, Msg>,
+        method: Notification<ServerContext, ConnectionContext, Msg>,
     ) where
         Ops: Debug + Clone,
         Msg: MsgT,
     {
-        let method: Box<dyn NotificationTrait<ConnectionContext, ServerContext>> = Box::new(method);
+        let method: Box<dyn NotificationTrait<ServerContext, ConnectionContext>> = Box::new(method);
         if self.notifications.insert(op.clone(), method).is_some() {
             panic!("RPC notification {:?} is declared multiple times", op)
         }
@@ -110,12 +110,12 @@ where
     pub(crate) async fn call_method_with_borsh(
         &self,
         op: &Ops,
-        connection_ctx: Arc<ConnectionContext>,
+        connection_ctx: ConnectionContext,
         payload: &[u8],
     ) -> ServerResult<Vec<u8>> {
         if let Some(method) = self.methods.get(op) {
             method
-                .call_with_borsh(connection_ctx, self.server_ctx.clone(), payload)
+                .call_with_borsh(self.server_ctx.clone(), connection_ctx, payload)
                 .await
         } else {
             Err(ServerError::NotFound)
@@ -125,12 +125,12 @@ where
     pub(crate) async fn call_method_with_serde_json(
         &self,
         op: &Ops,
-        connection_ctx: Arc<ConnectionContext>,
+        connection_ctx: ConnectionContext,
         payload: Value,
     ) -> ServerResult<Value> {
         if let Some(method) = self.methods.get(op) {
             method
-                .call_with_serde_json(connection_ctx, self.server_ctx.clone(), payload)
+                .call_with_serde_json(self.server_ctx.clone(), connection_ctx, payload)
                 .await
         } else {
             Err(ServerError::NotFound)
@@ -140,12 +140,12 @@ where
     pub(crate) async fn call_notification_with_borsh(
         &self,
         op: &Ops,
-        connection_ctx: Arc<ConnectionContext>,
+        connection_ctx: ConnectionContext,
         payload: &[u8],
     ) -> ServerResult<()> {
         if let Some(notification) = self.notifications.get(op) {
             notification
-                .call_with_borsh(connection_ctx, self.server_ctx.clone(), payload)
+                .call_with_borsh(self.server_ctx.clone(), connection_ctx, payload)
                 .await
         } else {
             Err(ServerError::NotFound)
@@ -155,12 +155,12 @@ where
     pub(crate) async fn call_notification_with_serde_json(
         &self,
         op: &Ops,
-        connection_ctx: Arc<ConnectionContext>,
+        connection_ctx: ConnectionContext,
         payload: Value,
     ) -> ServerResult<()> {
         if let Some(notification) = self.notifications.get(op) {
             notification
-                .call_with_serde_json(connection_ctx, self.server_ctx.clone(), payload)
+                .call_with_serde_json(self.server_ctx.clone(), connection_ctx, payload)
                 .await
         } else {
             Err(ServerError::NotFound)

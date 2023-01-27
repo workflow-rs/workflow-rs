@@ -16,14 +16,14 @@ pub use self::serde_json::*;
 
 /// Base trait for [`BorshProtocol`] and [`SerdeJsonProtocol`] protocol handlers
 #[async_trait]
-pub trait ProtocolHandler<ConnectionContext, ServerContext, Ops>:
+pub trait ProtocolHandler<ServerContext, ConnectionContext, Ops>:
     DowncastSync + Sized + Send + Sync
 where
     Ops: OpsT,
-    ConnectionContext: Send + Sync + 'static,
-    ServerContext: Send + Sync + 'static,
+    ServerContext: Clone + Send + Sync + 'static,
+    ConnectionContext: Clone + Send + Sync + 'static,
 {
-    fn new(methods: Arc<Interface<ConnectionContext, ServerContext, Ops>>) -> Self
+    fn new(methods: Arc<Interface<ServerContext, ConnectionContext, Ops>>) -> Self
     where
         Self: Sized;
 
@@ -31,7 +31,7 @@ where
 
     async fn handle_message(
         &self,
-        connection_ctx: Arc<ConnectionContext>,
+        connection_ctx: ConnectionContext,
         message: Message,
         sink: &WebSocketSink,
     ) -> WebSocketResult<()>;
