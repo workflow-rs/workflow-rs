@@ -1,5 +1,5 @@
 //! # `console_error_panic_hook`
-//! 
+//!
 //! [<img alt="github" src="https://img.shields.io/badge/github-workflow--rs-8da0cb?style=for-the-badge&labelColor=555555&color=8da0cb&logo=github" height="20">](https://github.com/workflow-rs/workflow-rs)
 //! [<img alt="crates.io" src="https://img.shields.io/crates/v/workflow-panic-hook.svg?maxAge=2592000&style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/workflow-panic-hook)
 //! [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-workflow--panic--hook-56c2a5?maxAge=2592000&style=for-the-badge&logo=rust" height="20">](https://docs.rs/workflow-panic-hook)
@@ -11,7 +11,7 @@
 //! provides two configuration modes - console output and full-page output, where the panic will create
 //! a full-screen DIV element dumping the stack info in it.  This is useful when debugging on devices
 //! without access to console output.
-//! 
+//!
 //! This crate lets you debug panics on `wasm32-unknown-unknown` by providing a
 //! panic hook that forwards panic messages to
 //! [`console.error`](https://developer.mozilla.org/en-US/docs/Web/API/Console/error).

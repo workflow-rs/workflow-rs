@@ -4,7 +4,7 @@
 //! [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-workflow--dom-56c2a5?maxAge=2592000&style=for-the-badge&logo=rust" height="20">](https://docs.rs/workflow-dom)
 //! <img alt="license" src="https://img.shields.io/crates/l/workflow-dom.svg?maxAge=2592000&color=6ac&style=for-the-badge&logo=opensourceinitiative&logoColor=fff" height="20">
 //! <img src="https://img.shields.io/badge/platform- wasm32/browser -informational?style=for-the-badge&color=50a0f0" height="20">
-//! 
+//!
 //! DOM manipulation utilities.
 //!
 //! Provides DOM injection functionality allowing injecting

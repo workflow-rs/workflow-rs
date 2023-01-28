@@ -5,9 +5,9 @@
 //! <img alt="license" src="https://img.shields.io/crates/l/workflow-node.svg?maxAge=2592000&color=6ac&style=for-the-badge&logo=opensourceinitiative&logoColor=fff" height="20">
 //! <img src="https://img.shields.io/badge/platform- wasm32/node.js -informational?style=for-the-badge&color=50a0f0" height="20">
 //! <img src="https://img.shields.io/badge/platform- wasm32/Node Webkit -informational?style=for-the-badge&color=50a0f0" height="20">
-//! 
+//!
 //! Framework compoents for using Node.js and NWJS in WASM environment
-//! 
+//!
 use wasm_bindgen::prelude::*;
 
 pub mod error;

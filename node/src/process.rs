@@ -1,6 +1,6 @@
 //!
 //! Module encapsulating [`Process`] API for running child process daemons under Node.js and NWJS
-//! 
+//!
 use crate::error::Error;
 use crate::result::Result;
 use futures::{select, FutureExt};
@@ -256,7 +256,7 @@ impl Inner {
 }
 
 /// The [`Process`] class facilitating execution of a Child Process in Node.js or NWJS
-/// environments. This wrapper runs the child process as a daemon, restarting it if 
+/// environments. This wrapper runs the child process as a daemon, restarting it if
 /// it fails.  The process provides `stdout` and `stderr` output as channel [`Receiver`](workflow_core::channel::Receiver)
 /// channels, allowing for a passive capture of the process console output.
 #[derive(Clone)]
@@ -285,15 +285,15 @@ impl Process {
     pub fn stdout(&self) -> Receiver<String> {
         self.inner.stdout.receiver.clone()
     }
-    
+
     /// Obtain a clone of the [`Receiver`](workflow_core::channel::Receiver) that captures
     /// `stderr` output of the underlying process.
     pub fn stderr(&self) -> Receiver<String> {
         self.inner.stderr.receiver.clone()
     }
 
-    /// Run the process in the background.  Spawns an async task that 
-    /// monitors the process, capturing its output and restarting 
+    /// Run the process in the background.  Spawns an async task that
+    /// monitors the process, capturing its output and restarting
     /// the process if it exits prematurely.
     pub fn run(&self) -> Result<()> {
         log_info!("run...");

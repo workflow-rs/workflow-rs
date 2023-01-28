@@ -5,7 +5,7 @@
 //! <img alt="license" src="https://img.shields.io/crates/l/workflow-terminal.svg?maxAge=2592000&color=6ac&style=for-the-badge&logo=opensourceinitiative&logoColor=fff" height="20">
 //! <img src="https://img.shields.io/badge/platform- native -informational?style=for-the-badge&color=50a0f0" height="20">
 //! <img src="https://img.shields.io/badge/platform- wasm32/browser -informational?style=for-the-badge&color=50a0f0" height="20">
-//! 
+//!
 //! [`workflow-terminal`] is a terminal shell that functions uniformly in native
 //! Rust application command-line environment and in WASM-based browser environment.
 //!
@@ -18,7 +18,7 @@
 //! interface that will receive input from the underlying terminal.
 //!
 //! Workflow Terminal example can be found at
-//! [https://github.com/workflow-rs/workflow-terminal-example](https://github.com/workflow-rs/workflow-terminal-example)
+//! [https://github.com/workflow-rs/workflow-terminal-examples](https://github.com/workflow-rs/workflow-terminal-examples)
 //!
 //! Loading in both native and WASM-browser application environment:
 //! ```rust
@@ -31,6 +31,19 @@
 //! term.init().await?;
 //! term.writeln("Terminal example (type 'help' for list of commands)");
 //! term.run().await?;
+//! ```
+//!
+//! Loading terminal in specific element
+//! ```rust
+//! use workflow_terminal::{Terminal, Options, TargetElement};
+//!
+//! let options = Options::new()
+//!     .with_prompt("$ ")
+//!     .with_element(TargetElement::Id("terminal_container".to_string()));
+//!     //.with_element(TargetElement::Element(element));
+//!     //.with_element(TargetElement::Body);
+//!     //.with_element(TargetElement::TagName("body".to_string()));
+//! let term = Arc::new(Terminal::try_new_with_options(cli.clone(), options)?);
 //! ```
 //!
 
@@ -46,6 +59,7 @@ pub use cli::Cli;
 pub use result::Result;
 pub use terminal::parse;
 pub use terminal::Options;
+pub use terminal::TargetElement;
 pub use terminal::Terminal;
 
 #[cfg(target_arch = "wasm32")]
