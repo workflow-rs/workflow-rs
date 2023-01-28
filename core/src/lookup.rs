@@ -97,7 +97,7 @@ where
 
     /// Queue the request for key `K`. Returns [`RequestType::New`] if
     /// no other requests for the same key are pending and [`RequestType::Pending`]
-    /// if there are pending requests. Both [`RequestType`] values contain a [`async_channel::Receiver`]
+    /// if there are pending requests. Both [`RequestType`] values contain a [`async_std::channel::Receiver`]
     /// that can be listened to for lookup completion. Lookup completion
     /// can be signaled by [`LookupHandler::complete()`]
     pub async fn queue(&self, key: &K) -> RequestType<V, E> {
