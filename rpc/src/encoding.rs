@@ -5,7 +5,7 @@
 use std::fmt::{Debug, Display, Formatter};
 
 /// Helper enum representing the protocol encoding: `Borsh` or `SerdeJson`
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Encoding {
     Borsh,
     SerdeJson,

@@ -33,8 +33,7 @@ pub type MethodFn<ServerContext, ConnectionContext, Req, Resp> = Arc<
 >;
 
 /// RPC method function return type
-pub type MethodFnReturn<T> =
-    Pin<Box<(dyn Send + 'static + Future<Output = ServerResult<T>>)>>;
+pub type MethodFnReturn<T> = Pin<Box<(dyn Send + 'static + Future<Output = ServerResult<T>>)>>;
 
 /// RPC method wrapper. Contains the method closure function.
 pub struct Method<ServerContext, ConnectionContext, Req, Resp>
