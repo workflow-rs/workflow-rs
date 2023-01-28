@@ -238,7 +238,7 @@ pub mod impls {
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
-                    println!("{}",args);
+                    println!("{args}");
                 }
             }
         }
@@ -259,7 +259,7 @@ pub mod impls {
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
-                    println!("{}",args);
+                    println!("{args}");
                 }
             }
         }
@@ -280,7 +280,7 @@ pub mod impls {
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
-                    println!("{}", args);
+                    println!("{args}");
                 }
             }
         }
@@ -301,7 +301,7 @@ pub mod impls {
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
-                    println!("{}", args);
+                    println!("{args}");
                 }
             }
         }
@@ -322,7 +322,7 @@ pub mod impls {
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
-                    println!("{}",args);
+                    println!("{args}");
                 }
             }
         }
@@ -412,7 +412,7 @@ pub fn format_hex(data: &[u8]) -> String {
         .row_width(16)
         .finish();
 
-    format!("{}", view)
+    format!("{view}")
 }
 
 /// Formats a hex data dump to contain color ranges

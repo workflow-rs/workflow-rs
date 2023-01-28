@@ -86,10 +86,7 @@ pub trait OptionsExt {
                         }
                     }
                     Err(err) => {
-                        panic!(
-                            "OptionsExt::set(): unable to find property `{name}`, err: {:?}",
-                            err
-                        );
+                        panic!("OptionsExt::set(): unable to find property `{name}`, err: {err:?}");
                     }
                 }
             }

@@ -47,7 +47,7 @@ where
     Id: IdT,
 {
     fn decode(&self, server_message: &str) -> Result<MessageInfo<Ops, Id>> {
-        println!("incoming: server_message={}", server_message);
+        // println!("incoming: server_message={server_message}");
 
         let msg: SerdeJsonServerMessage<Ops, Id> = serde_json::from_str(server_message)?;
 
@@ -174,7 +174,7 @@ where
                 if let Some(pending) = self.pending.lock().unwrap().remove(&id) {
                     (pending.callback)(result, Some(&pending.timestamp.elapsed()))
                 } else {
-                    Err(Error::ResponseHandler(format!("{:?}", id))) // ("rpc callback with id {} not found", msg.id);
+                    Err(Error::ResponseHandler(format!("{id:?}"))) // ("rpc callback with id {} not found", msg.id);
                 }
             } else if let Some(method) = method {
                 match result {

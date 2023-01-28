@@ -153,7 +153,7 @@ cfg_if! {
         use std::io::{self, Write};
 
         fn hook(info: &panic::PanicInfo) {
-            let _ = writeln!(io::stderr(), "{}", info);
+            let _ = writeln!(io::stderr(), "{info}");
         }
 
         fn init(_logger_type:Type){

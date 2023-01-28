@@ -18,7 +18,7 @@ impl Parse for Callback {
                 let fn_name = if len == 1 {
                     Ident::new("new", Span::call_site())
                 } else {
-                    Ident::new(&format!("new_with_args_{}", len), Span::call_site())
+                    Ident::new(&format!("new_with_args_{len}"), Span::call_site())
                 };
 
                 quote! {workflow_wasm::callback::Callback::#fn_name(#closure)}

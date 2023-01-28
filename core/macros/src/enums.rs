@@ -50,8 +50,7 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
             return Error::new_spanned(
                 enum_name,
                 format!(
-                    "#[describe]: more than one #[describe()] attributes while processing {}",
-                    name
+                    "#[describe]: more than one #[describe()] attributes while processing {name}"
                 ),
             )
             .to_compile_error()
@@ -97,7 +96,7 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
     let strings: Vec<String> = entries.iter().map(|ident| ident.to_string()).collect();
     let strings_ns: Vec<String> = entries
         .iter()
-        .map(|ident| format!("{}::{}", enum_name, ident))
+        .map(|ident| format!("{enum_name}::{ident}"))
         .collect();
 
     let mut descr: Vec<String> = Vec::new();

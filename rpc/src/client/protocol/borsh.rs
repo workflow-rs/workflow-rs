@@ -176,7 +176,7 @@ where
                 if let Some(pending) = self.pending.lock().unwrap().remove(&id) {
                     (pending.callback)(result, Some(&pending.timestamp.elapsed()))
                 } else {
-                    Err(Error::ResponseHandler(format!("{:?}", id)))
+                    Err(Error::ResponseHandler(format!("{id:?}")))
                 }
             } else if let Some(op) = op {
                 match result {

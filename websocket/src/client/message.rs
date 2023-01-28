@@ -32,10 +32,7 @@ impl From<Message> for Vec<u8> {
             Message::Text(string) => string.into(),
             Message::Binary(vec) => vec,
             _ => {
-                panic!(
-                    "WebSocket - From<Message> for Vec<u8>: unsupported message type: {:?}",
-                    msg
-                );
+                panic!("WebSocket - From<Message> for Vec<u8>: unsupported message type: {msg:?}",);
             }
         }
     }
@@ -65,10 +62,7 @@ impl AsRef<[u8]> for Message {
             Message::Text(string) => string.as_ref(),
             Message::Binary(vec) => vec.as_ref(),
             _ => {
-                panic!(
-                    "WebSocket - AsRef<[u8]> for Message: unsupported message type: {:?}",
-                    self
-                );
+                panic!("WebSocket - AsRef<[u8]> for Message: unsupported message type: {self:?}",);
             }
         }
     }

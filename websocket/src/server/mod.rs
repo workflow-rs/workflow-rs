@@ -197,8 +197,7 @@ where
     async fn bind(self: &Arc<Self>, addr: &str) -> Result<TcpListener> {
         let listener = TcpListener::bind(&addr).await.map_err(|err| {
             Error::Listen(format!(
-                "WebSocket server unable to listen on `{}`: {}",
-                addr, err
+                "WebSocket server unable to listen on `{addr}`: {err}",
             ))
         })?;
         // log_trace!("WebSocket server listening on: {}", addr);

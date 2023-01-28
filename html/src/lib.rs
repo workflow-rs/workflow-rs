@@ -127,7 +127,7 @@ impl<T: Render + Clone + 'static> Render for Element<T> {
                 match value {
                     AttributeValue::Bool(v) => {
                         if *v {
-                            w.push(format!(" {}", key));
+                            w.push(format!(" {key}"));
                         }
                     }
                     AttributeValue::Str(v) => {

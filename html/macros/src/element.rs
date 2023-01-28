@@ -22,7 +22,7 @@ impl TagNameString for TagName {
             return "".to_string();
         }
         let first = items.next().unwrap();
-        items.fold(first, |a, b| format!("{}-{}", a, b))
+        items.fold(first, |a, b| format!("{a}-{b}"))
     }
     fn is_custom_element(&self) -> bool {
         let name = self.to_string();

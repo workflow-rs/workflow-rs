@@ -48,8 +48,7 @@ pub fn try_get_u64_from_prop(jsv: &JsValue, prop: &str) -> Result<u64, JsValue> 
     let v = js_sys::Reflect::get(jsv, &JsValue::from(prop))?;
     Ok(v.as_f64().ok_or_else(|| {
         JsValue::from(format!(
-            "try_get_u64(): error parsing property '{}' with value '{:?}'",
-            prop, v
+            "try_get_u64(): error parsing property '{prop}' with value '{v:?}'"
         ))
     })? as u64)
 }
@@ -59,8 +58,7 @@ pub fn try_get_f64_from_prop(jsv: &JsValue, prop: &str) -> Result<f64, JsValue> 
     let v = js_sys::Reflect::get(jsv, &JsValue::from(prop))?;
     v.as_f64().ok_or_else(|| {
         JsValue::from(format!(
-            "try_get_f64(): error parsing property '{}' with value '{:?}'",
-            prop, v
+            "try_get_f64(): error parsing property '{prop}' with value '{v:?}'",
         ))
     })
 }
@@ -70,8 +68,7 @@ pub fn try_get_u8_from_prop(jsv: &JsValue, prop: &str) -> Result<u8, JsValue> {
     let v = js_sys::Reflect::get(jsv, &JsValue::from(prop))?;
     Ok(v.as_f64().ok_or_else(|| {
         JsValue::from(format!(
-            "try_get_u8(): error parsing property '{}' with value '{:?}'",
-            prop, v
+            "try_get_u8(): error parsing property '{prop}' with value '{v:?}'",
         ))
     })? as u8)
 }
@@ -82,8 +79,7 @@ pub fn try_get_bool_from_prop(jsv: &JsValue, prop: &str) -> Result<bool, JsValue
         .as_bool()
         .ok_or_else(|| {
             JsValue::from(format!(
-                "try_get_bool(): property {} is missing or not a boolean",
-                prop
+                "try_get_bool(): property {prop} is missing or not a boolean",
             ))
         })
 }
@@ -117,8 +113,7 @@ pub fn try_get_string(jsv: &JsValue, prop: &str) -> Result<String, JsValue> {
     match str.as_string() {
         Some(str) => Ok(str),
         None => Err(JsValue::from(format!(
-            "Unable to find property '{}' on object '{:?}'",
-            prop, jsv
+            "Unable to find property '{prop}' on object '{jsv:?}'",
         ))),
     }
 }

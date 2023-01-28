@@ -223,8 +223,7 @@ pub fn get_user_media(
         Ok(b) => b,
         Err(err) => {
             return Err(format!(
-                "media::get_user_media(), callback_.closure() failed, error: {:?}",
-                err
+                "media::get_user_media(), callback_.closure() failed, error: {err:?}",
             )
             .into());
         }

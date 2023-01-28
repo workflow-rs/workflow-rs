@@ -72,7 +72,7 @@ where
     {
         let method: Box<dyn MethodTrait<ServerContext, ConnectionContext>> = Box::new(method);
         if self.methods.insert(op.clone(), method).is_some() {
-            panic!("RPC method {:?} is declared multiple times", op)
+            panic!("RPC method {op:?} is declared multiple times")
         }
     }
 
@@ -103,7 +103,7 @@ where
     {
         let method: Box<dyn NotificationTrait<ServerContext, ConnectionContext>> = Box::new(method);
         if self.notifications.insert(op.clone(), method).is_some() {
-            panic!("RPC notification {:?} is declared multiple times", op)
+            panic!("RPC notification {op:?} is declared multiple times")
         }
     }
 

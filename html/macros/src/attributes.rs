@@ -23,7 +23,7 @@ impl AttributeNameString for AttributeName {
     fn to_string(&self) -> String {
         let mut items = self.iter().map(|a| a.to_string());
         let first = items.next().unwrap();
-        items.fold(first, |a, b| format!("{}-{}", a, b))
+        items.fold(first, |a, b| format!("{a}-{b}"))
     }
 }
 
@@ -201,7 +201,7 @@ impl<'a> Attribute<'a> {
     pub fn get_name(&self) -> String {
         let mut items = self.name.iter().map(|a| a.to_string());
         let first = items.next().unwrap();
-        items.fold(first, |a, b| format!("{}-{}", a, b))
+        items.fold(first, |a, b| format!("{a}-{b}"))
     }
 
     pub fn get_value(&self) -> TokenStream {

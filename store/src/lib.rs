@@ -181,5 +181,5 @@ where
     let mut hasher = DefaultHasher::new();
     t.hash(&mut hasher);
     let v = hasher.finish();
-    format!("{:x}", v)
+    format!("{v:x}")
 }

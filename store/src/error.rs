@@ -22,7 +22,7 @@ impl From<Error> for JsValue {
 
 impl From<JsValue> for Error {
     fn from(error: JsValue) -> Error {
-        Error::JsValue(format!("{:?}", error))
+        Error::JsValue(format!("{error:?}"))
     }
 }
 

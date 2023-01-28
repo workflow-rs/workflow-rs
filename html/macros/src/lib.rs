@@ -69,7 +69,7 @@ impl Parse for RenderableAttributes {
 pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
     let renderable_attr = parse_macro_input!(attr as RenderableAttributes);
     let tag_name = renderable_attr.tag_name;
-    let format_str = format!("<{} {{}}>{{}}</{}>", tag_name, tag_name);
+    let format_str = format!("<{tag_name} {{}}>{{}}</{tag_name}>");
     //println!("renderable_attr: {:?}", tag_name);
     //let def:proc_macro2::TokenStream = item.clone().into();
     let ast = parse_macro_input!(item as DeriveInput);
@@ -174,7 +174,7 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
                     }
                 ));
             } else {
-                let fmt_str = format!("{}=\"{{}}\"", attr_name);
+                let fmt_str = format!("{attr_name}=\"{{}}\"");
                 let mut borrow = quote!();
                 if field_type.eq("String") {
                     borrow = quote!(&);

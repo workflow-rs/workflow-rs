@@ -78,7 +78,7 @@ pub enum Error {
 
 impl From<JsValue> for Error {
     fn from(error: JsValue) -> Error {
-        Error::JsValue(format!("{:?}", error))
+        Error::JsValue(format!("{error:?}"))
     }
 }
 

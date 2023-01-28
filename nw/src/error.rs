@@ -34,7 +34,7 @@ impl From<&str> for Error {
 
 impl From<JsValue> for Error {
     fn from(v: JsValue) -> Self {
-        Self::JsValue(format!("{:?}", v))
+        Self::JsValue(format!("{v:?}"))
     }
 }
 
@@ -43,7 +43,7 @@ where
     T: std::fmt::Debug,
 {
     fn from(err: PoisonError<T>) -> Error {
-        Error::PoisonError(format!("{:?}", err))
+        Error::PoisonError(format!("{err:?}"))
     }
 }
 

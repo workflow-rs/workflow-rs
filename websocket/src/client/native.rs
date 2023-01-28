@@ -24,10 +24,7 @@ impl From<Message> for tungstenite::Message {
             Message::Text(text) => text.into(),
             Message::Binary(data) => data.into(),
             _ => {
-                panic!(
-                    "From<Message> for tungstenite::Message - invalid message type: {:?}",
-                    message
-                )
+                panic!("From<Message> for tungstenite::Message - invalid message type: {message:?}",)
             }
         }
     }
@@ -40,8 +37,7 @@ impl From<tungstenite::Message> for Message {
             TsMessage::Binary(data) => Message::Binary(data),
             TsMessage::Close(_) => Message::Close,
             _ => panic!(
-                "TryFrom<tungstenite::Message> for Message - invalid message type: {:?}",
-                message
+                "TryFrom<tungstenite::Message> for Message - invalid message type: {message:?}",
             ),
         }
     }

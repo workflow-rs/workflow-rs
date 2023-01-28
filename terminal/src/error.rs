@@ -36,7 +36,7 @@ impl From<&str> for Error {
 
 impl From<JsValue> for Error {
     fn from(v: JsValue) -> Self {
-        Self::JsValue(format!("{:?}", v))
+        Self::JsValue(format!("{v:?}"))
     }
 }
 
@@ -45,7 +45,7 @@ where
     T: std::fmt::Debug,
 {
     fn from(err: PoisonError<T>) -> Error {
-        Error::PoisonError(format!("{:?}", err))
+        Error::PoisonError(format!("{err:?}"))
     }
 }
 
@@ -60,7 +60,7 @@ where
     T: std::fmt::Debug,
 {
     fn from(err: SendError<T>) -> Error {
-        Error::SendError(format!("{:?}", err))
+        Error::SendError(format!("{err:?}"))
     }
 }
 
@@ -68,8 +68,8 @@ impl From<Error> for String {
     fn from(err: Error) -> String {
         match err {
             Error::String(s) | Error::PoisonError(s) | Error::SendError(s) | Error::JsValue(s) => s,
-            Error::RecvError => String::from(&format!("{}", err)),
-            Error::DomError(e) => String::from(&format!("{}", e)),
+            Error::RecvError => String::from(&format!("{err}")),
+            Error::DomError(err) => String::from(&format!("{err}")),
         }
     }
 }

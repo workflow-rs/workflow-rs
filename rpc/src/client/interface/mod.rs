@@ -36,7 +36,7 @@ where
     {
         let method: Box<dyn NotificationTrait> = Box::new(method);
         if self.notifications.insert(op.clone(), method).is_some() {
-            panic!("RPC notification {:?} is declared multiple times", op)
+            panic!("RPC notification {op:?} is declared multiple times")
         }
     }
 

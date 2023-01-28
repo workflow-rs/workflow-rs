@@ -108,10 +108,10 @@ impl Content {
                 match kind {
                     Reference::Module => match what {
                         Some(detail) => {
-                            imports.push(format!("import {} from \"{}\";", detail, url));
+                            imports.push(format!("import {detail} from \"{url}\";"));
                         }
                         None => {
-                            imports.push(format!("import \"{}\";", url));
+                            imports.push(format!("import \"{url}\";"));
                         }
                     },
                     Reference::Export => {

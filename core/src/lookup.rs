@@ -131,7 +131,7 @@ where
                     .expect("Unable to complete lookup result");
             }
         } else {
-            panic!("Lookup handler failure while processing key {:?}", key)
+            panic!("Lookup handler failure while processing key {key:?}")
         }
     }
 }
