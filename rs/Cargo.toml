@@ -1,0 +1,49 @@
+[package]
+name = "workflow-rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository = "https://github.com/workflow-rs/workflow-rs"
+keywords = ["wasm","framework","websocket","rpc","html"]
+categories = ["web-programming::http-client","wasm"]
+exclude = ["/.*", "/test"]
+description = """
+Rust application development framework for native and web applications
+"""
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = ["log","core"]
+full = ["log","core","websocket","rpc","html","i18n","wasm","terminal","dom","store"]
+
+core = ["dep:workflow-core"]
+dom = ["dep:workflow-dom"]
+html = ["dep:workflow-html"]
+i18n = ["dep:workflow-i18n"]
+log = ["dep:workflow-log"]
+node = ["dep:workflow-node"]
+nw = ["dep:workflow-nw"]
+panic-hook = ["dep:workflow-panic-hook"]
+rpc = ["dep:workflow-rpc"]
+store = ["dep:workflow-store"]
+terminal = ["dep:workflow-terminal"]
+wasm = ["dep:workflow-wasm"]
+websocket = ["dep:workflow-websocket"]
+
+[dependencies]
+workflow-core = { workspace = true, optional = true }
+workflow-dom = { workspace = true, optional = true }
+workflow-html = { workspace = true, optional = true }
+workflow-i18n = { workspace = true, optional = true }
+workflow-log = { workspace = true, optional = true }
+workflow-node = { workspace = true, optional = true }
+workflow-nw = { workspace = true, optional = true }
+workflow-panic-hook = { workspace = true, optional = true }
+workflow-rpc = { workspace = true, optional = true }
+workflow-store = { workspace = true, optional = true }
+workflow-terminal = { workspace = true, optional = true }
+workflow-wasm = { workspace = true, optional = true }
+workflow-websocket = { workspace = true, optional = true }
+

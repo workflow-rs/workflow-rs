@@ -13,6 +13,7 @@ members = [
     "panic-hook",
     "rpc",
     "rpc/macros",
+    "rs",
     "store",
     "terminal",
     "wasm",
