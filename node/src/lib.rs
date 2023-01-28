@@ -1,3 +1,6 @@
+//!
+//! Framework compoents for using Node.js and NWJS in WASM environment
+//! 
 use wasm_bindgen::prelude::*;
 
 pub mod error;

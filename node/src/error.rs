@@ -1,3 +1,4 @@
+//! Errors produced by the the [`node`](super) crate
 use thiserror::Error;
 use workflow_core::channel::{RecvError, SendError, TryRecvError};
 

@@ -1,3 +1,6 @@
+//!
+//! Module encapsulating [`Process`] API for running child process daemons under Node.js and NWJS
+//! 
 use crate::error::Error;
 use crate::result::Result;
 use futures::{select, FutureExt};
@@ -15,6 +18,7 @@ use workflow_core::task::*;
 use workflow_log::*;
 use workflow_wasm::callback::*;
 
+/// Version struct for standard version extraction from executables via `--version` output
 pub struct Version {
     pub major: u64,
     pub minor: u64,
@@ -42,22 +46,29 @@ impl Version {
     }
 }
 
+/// Child process execution result
 pub struct ExecutionResult {
     pub exit_code: u32,
     pub stdout: String,
     pub stderr: String,
 }
 
+/// Options for [`Process`] daemon runner
 pub struct Options {
-    /// process arguments (first element is a process name)
+    /// Process arguments (the first element is the process binary file name / executable)
     argv: Vec<String>,
-    /// current working directory
+    /// Current working directory
     cwd: Option<PathBuf>,
-    /// restart on exit
+    /// Automatic restart on exit
     restart: bool,
-    /// delay
+    /// Delay between automatic restarts
     restart_delay: Duration,
+    /// This flag triggers forceful process termination after a given period of time.
+    /// At the termination, the process is issued a `SIGTERM` signal. If the process fails
+    /// to exit after a given period of time and `use_force` is enabled, the process
+    /// will be issued a `SIGKILL` signal, triggering it's immediat termination.
     use_force: bool,
+    /// Delay period after which to issue a `SIGKILL` signal.
     use_force_delay: Duration,
     // env : HashMap<String, String>,
 }
@@ -244,6 +255,10 @@ impl Inner {
     }
 }
 
+/// The [`Process`] class facilitating execution of a Child Process in Node.js or NWJS
+/// environments. This wrapper runs the child process as a daemon, restarting it if 
+/// it fails.  The process provides `stdout` and `stderr` output as channel [`Receiver`](workflow_core::channel::Receiver)
+/// channels, allowing for a passive capture of the process console output.
 #[derive(Clone)]
 pub struct Process {
     inner: Arc<Inner>,
@@ -251,6 +266,7 @@ pub struct Process {
 }
 
 impl Process {
+    /// Create new process instance
     pub fn new(options: &Options) -> Process {
         let inner = Arc::new(Inner::new(options));
 
@@ -264,14 +280,21 @@ impl Process {
         }
     }
 
+    /// Obtain a clone of the channel [`Receiver`](workflow_core::channel::Receiver) that captures
+    /// `stdout` output of the underlying process.
     pub fn stdout(&self) -> Receiver<String> {
         self.inner.stdout.receiver.clone()
     }
-
+    
+    /// Obtain a clone of the [`Receiver`](workflow_core::channel::Receiver) that captures
+    /// `stderr` output of the underlying process.
     pub fn stderr(&self) -> Receiver<String> {
         self.inner.stderr.receiver.clone()
     }
 
+    /// Run the process in the background.  Spawns an async task that 
+    /// monitors the process, capturing its output and restarting 
+    /// the process if it exits prematurely.
     pub fn run(&self) -> Result<()> {
         log_info!("run...");
         self.task.run(self.inner.clone())?;
@@ -279,6 +302,7 @@ impl Process {
         Ok(())
     }
 
+    /// Issue a `SIGKILL` signal, terminating the process immediately.
     pub fn kill(&self) -> Result<()> {
         if !self.inner.running.load(Ordering::SeqCst) {
             Err(Error::NotRunning)
@@ -291,6 +315,8 @@ impl Process {
         }
     }
 
+    /// Issue a `SIGTERM` signal causing the process to exit. The process
+    /// will be restarted by the monitoring task.
     pub fn restart(&self) -> Result<()> {
         if !self.inner.running.load(Ordering::SeqCst) {
             Err(Error::NotRunning)
@@ -302,28 +328,28 @@ impl Process {
         }
     }
 
+    /// Stop the process by disabling auto-restart and issuing
+    /// a `SIGTERM` signal.
     pub fn stop(&self) -> Result<()> {
         log_info!("running.load");
         if !self.inner.running.load(Ordering::SeqCst) {
             return Err(Error::NotRunning);
         }
 
-        log_info!("running.restart store");
         self.inner.restart.store(false, Ordering::SeqCst);
-        log_info!("last");
-
-        log_info!("kill");
         self.task.stop()?;
-        log_info!("stop is done");
 
         Ok(())
     }
 
+    /// Join the process like you would a thread - this async
+    /// function blocks until the process exits.
     pub async fn join(&self) -> Result<()> {
         self.task.join().await?;
         Ok(())
     }
 
+    /// Stop the process and block until it exits.
     pub async fn stop_and_join(&self) -> Result<()> {
         log_info!("calling stop();");
         self.stop()?;
@@ -332,6 +358,9 @@ impl Process {
         Ok(())
     }
 
+    /// Execute the process single time with custom command-line arguments.
+    /// Useful to obtain a verion via `--version` or perform single-task
+    /// executions - not as a daemon.
     pub async fn exec_with_args(
         &self,
         args: &[&str],
@@ -389,6 +418,7 @@ impl Process {
         })
     }
 
+    /// Obtain the process version information by running it with `--version` argument.
     pub async fn get_version(&self) -> Result<Version> {
         let text = self
             .exec_with_args(["--version"].as_slice(), None)
@@ -411,14 +441,8 @@ impl Process {
 pub async fn test() {
     log_info!("running rust test() fn");
     workflow_wasm::panic::init_console_panic_hook();
-    //log_info!("process.pid:{:?}", process.pid());
-    //let id = process.get_uid();
-    //log_info!("process.get_gid(): id:{}, {:?}", id, process.get_gid());
-    //process.kill(id.try_into().unwrap());
 
     let proc = Process::new(&Options::new(
-        // &["ls", "-m", "-s"],
-        // &["/Users/aspect/dev/kaspa-dev/kaspad"],
         &["/Users/aspect/dev/kaspa-dev/kaspad/kaspad"],
         None,
         true,
@@ -436,7 +460,6 @@ pub async fn test() {
                     }
                 },
                 _ = stop.recv().fuse() => {
-                    // if let Ok(v) = v {
                         log_info!("stop...");
                         break;
                     // }
@@ -460,47 +483,4 @@ pub async fn test() {
     task.stop_and_join()
         .await
         .expect("task.stop_and_join() failure");
-    // let args: SpawnArgs = ["-m", "-s"].as_slice().into(); // = SpawnArgs::from(&["-m", "-s"]);
-    //                                                                      // let args = SpawnArgs::from(["-m", "-s"].as_slice());
-    // let options = SpawnOptions::new();
-    // options.cwd("../");
-
-    // //let cp = spawn("ls");
-    // //let cp = spawn_with_args("ls", &args);
-    // let cp = spawn_with_args_and_options("ls", &args, &options);
-
-    // //log_info!("spawn('ls'): {:#?}", cp);
-
-    // // let close_callback = Closure::<dyn Fn(buffer::Buffer)>::new(move |data:buffer::Buffer|{
-    // //     log_info!("close: {}", data.to_string(None, None, None));
-    // // });
-    // // let data_callback = Closure::<dyn Fn(buffer::Buffer)>::new(move |data:buffer::Buffer|{
-    // //     log_info!("data: {}", data.to_string(None, None, None));
-    // // });
-
-    // let (sender, receiver) = oneshot();
-
-    // // cp.on("close", close_callback.as_ref().unchecked_ref());
-    // let close = callback!(move |data: buffer::Buffer| {
-    //     log_info!("close: {}", data.to_string(None, None, None));
-    //     sender
-    //         .try_send(())
-    //         .expect("unable to send close notification");
-    // });
-    // cp.on("close", close.as_ref());
-    // // cp.stdout().on("data", data_callback.as_ref().unchecked_ref());
-    // let data = callback!(move |data: buffer::Buffer| {
-    //     log_info!("data: {}", data.to_string(None, None, None));
-    // });
-    // cp.stdout().on("data", data.as_ref());
-
-    // receiver
-    //     .recv()
-    //     .await
-    //     .expect("error receiving close notification");
-    // // close_callback.forget();
-    // // data_callback.forget();
-
-    // //let p = require("process");
-    // //log_info!("process: {:?}", p);
 }
