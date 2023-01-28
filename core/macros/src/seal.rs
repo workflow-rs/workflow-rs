@@ -88,9 +88,11 @@ pub fn seal(input: TokenStream) -> TokenStream {
 
     let mut sha256 = Sha256::new();
     sha256.update(content_str);
-    let hash_nc: String = format!("0x{:X}", sha256.finalize());
+    let hash_nc: String = format!("{:X}", sha256.finalize());
     let hash_str = hash_nc.to_ascii_lowercase();
-    let hash: String = hash_str[0..6].into();
+    let hash_u32 = u32::from_str_radix(&hash_str[0..4], 16)
+        .unwrap_or_else(|err| panic!("Unable to parse hash: {err}"));
+    let hash: String = "0x".to_string() + hash_str[0..4].into();
 
     if seal.hash != hash {
         return Error::new_spanned(
@@ -103,6 +105,8 @@ pub fn seal(input: TokenStream) -> TokenStream {
 
     let output = quote! {
         #content
+
+        const SEAL: u32 = #hash_u32;
     };
 
     output.into()
