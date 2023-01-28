@@ -107,7 +107,7 @@ impl XtermImpl {
     }
 
     pub fn set_theme(&self, theme: js_sys::Object) {
-        self.set_option("theme", theme.clone());
+        self.set_option("theme", theme);
         //self.core().set_theme(theme);
     }
 }

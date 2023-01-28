@@ -404,10 +404,7 @@ impl TrySendMessage for WebSocket {
             Message::Binary(data) => self.send_with_u8_array(data).map_err(|e| e.into()),
             Message::Text(text) => self.send_with_str(text).map_err(|e| e.into()),
             _ => {
-                panic!(
-                    "WebSocket trying to convert unsupported message type: `{:?}`",
-                    message
-                );
+                panic!("WebSocket trying to convert unsupported message type: `{message:?}`");
             }
         }
     }

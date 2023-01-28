@@ -129,6 +129,19 @@ impl Sink {
 unsafe impl Send for Xterm {}
 unsafe impl Sync for Xterm {}
 
+pub struct ResizeObserverInfo {
+    #[allow(dead_code)]
+    observer: ResizeObserver,
+    #[allow(dead_code)]
+    callback: Callback<CallbackClosure<JsValue>>,
+}
+
+impl ResizeObserverInfo {
+    pub fn new(observer: ResizeObserver, callback: Callback<CallbackClosure<JsValue>>) -> Self {
+        Self { observer, callback }
+    }
+}
+
 ///
 /// # Xterm
 ///
@@ -143,7 +156,7 @@ pub struct Xterm {
     terminal: Arc<Mutex<Option<Arc<Terminal>>>>,
     listener: Arc<Mutex<Option<Callback<CallbackClosure<XtermEvent>>>>>,
     sink: Arc<Sink>,
-    resize: Arc<Mutex<Option<(ResizeObserver, Callback<CallbackClosure<JsValue>>)>>>,
+    resize: Arc<Mutex<Option<ResizeObserverInfo>>>,
     fit: Arc<Mutex<Option<FitAddon>>>,
     _web_links: Arc<Mutex<Option<WebLinksAddon>>>,
     clipboard_listerner: Arc<Mutex<Option<Callback<CallbackClosure<web_sys::KeyboardEvent>>>>>,
@@ -160,11 +173,11 @@ impl Xterm {
             TargetElement::Body => body().expect("Unable to get 'body' element"),
             TargetElement::Element(el) => el.clone(),
             TargetElement::TagName(tag) => document()
-                .get_elements_by_tag_name(&tag)
+                .get_elements_by_tag_name(tag)
                 .item(0)
                 .ok_or("Unable to locate parent element for terminal")?,
             TargetElement::Id(id) => document()
-                .get_element_by_id(&id)
+                .get_element_by_id(id)
                 .ok_or("Unable to locate parent element for terminal")?,
         };
         Self::try_new_with_element(&el, options)
@@ -283,7 +296,7 @@ impl Xterm {
 
     fn init_addons(&self, xterm: &XtermImpl) -> Result<()> {
         let fit = FitAddon::new();
-        xterm.load_addon(fit.clone().into());
+        xterm.load_addon(fit.clone());
         *self.fit.lock().unwrap() = Some(fit);
         Ok(())
     }
@@ -344,7 +357,8 @@ impl Xterm {
         });
         let resize_observer = ResizeObserver::new(resize_callback.as_ref())?;
         resize_observer.observe(&self.element);
-        *self.resize.lock().unwrap() = Some((resize_observer, resize_callback));
+        *self.resize.lock().unwrap() =
+            Some(ResizeObserverInfo::new(resize_observer, resize_callback));
 
         Ok(())
     }
@@ -443,12 +457,10 @@ impl Xterm {
                 if let Some(c) = e.key.chars().next() {
                     if e.ctrl_key {
                         Key::Ctrl(c)
+                    } else if e.alt_key {
+                        Key::Alt(c)
                     } else {
-                        if e.alt_key {
-                            Key::Alt(c)
-                        } else {
-                            Key::Char(c)
-                        }
+                        Key::Char(c)
                     }
                 } else {
                     return Ok(());
@@ -490,6 +502,15 @@ impl Xterm {
 
     pub fn resize(&self) -> Result<()> {
         //self.measure()?;
+        if let Some(xterm) = self.xterm.lock().unwrap().as_ref() {
+            let el = xterm.get_element();
+            let height = el.client_height();
+            if height < 1 {
+                return Ok(());
+            }
+        } else {
+            return Ok(());
+        }
 
         let fit = self.fit.lock().unwrap();
         let fit = fit.as_ref().unwrap();

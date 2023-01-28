@@ -4,8 +4,7 @@ use web_sys::{Document, Element};
 
 pub fn document() -> Document {
     let window = web_sys::window().expect("no global `window` exists");
-    let document = window.document().expect("unable to get `document` node");
-    document
+    window.document().expect("unable to get `document` node")
 }
 struct Logger {
     element: Element,
