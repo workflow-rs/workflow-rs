@@ -37,7 +37,7 @@
 use js_sys::Object;
 use wasm_bindgen::prelude::*;
 
-pub trait OptionsExt {
+pub trait OptionsTrait {
     /// "Construct a new `Options`.
     ///
     fn new() -> Self
