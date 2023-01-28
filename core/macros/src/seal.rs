@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use sha2::{Digest, Sha256};
 use std::convert::Into;
@@ -19,11 +19,18 @@ struct Seal {
 
 impl Parse for Seal {
     fn parse(input: ParseStream) -> Result<Self> {
-        let parsed = Punctuated::<Expr, Token![,]>::parse_terminated(input).unwrap();
+        let parsed = Punctuated::<Expr, Token![,]>::parse_terminated(input);
+        if parsed.is_err() {
+            return Err(Error::new(
+                Span::call_site(),
+                "usage: seal!(<seal id>, { <code> })".to_string(),
+            ));
+        }
+        let parsed = parsed.unwrap();
         if parsed.len() != 2 {
             return Err(Error::new_spanned(
                 parsed,
-                "usage: seal!(<seal id>, {{ <code> }})".to_string(),
+                "usage: seal!(<seal id>, { <code> })".to_string(),
             ));
         }
 
@@ -35,18 +42,25 @@ impl Parse for Seal {
             _ => {
                 return Err(Error::new_spanned(
                     hash_expr,
-                    "the first argument should be the seal number)".to_string(),
+                    "the first argument should be the seal number".to_string(),
                 ));
             }
         };
 
-        let content_expr = iter.next().unwrap().clone();
+        let content_expr = iter.next();
+        if content_expr.is_none() {
+            return Err(Error::new_spanned(
+                parsed,
+                "usage: seal!(<seal id>, { <code> })".to_string(),
+            ));
+        }
+        let content_expr = content_expr.unwrap().clone();
         let expr_block = match &content_expr {
             Expr::Block(expr_block) => expr_block, // .block,
             _ => {
                 return Err(Error::new_spanned(
                     content_expr,
-                    "the third argument must be an array of static functions".to_string(),
+                    "the second argument must be code block { <code> }".to_string(),
                 ));
             }
         };
