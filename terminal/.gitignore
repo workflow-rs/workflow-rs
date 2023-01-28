@@ -1,6 +1,12 @@
 **/target
 /Cargo.lock
-/extern/*
+!extern
+extern/*
+!extern/resources
+extern/resources/*
+!extern/resources/.resources
+!extern/build
+!extern/package.json
 /root
 /root/workflow-terminal
 analyzer-target

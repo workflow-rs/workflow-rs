@@ -1,0 +1,5 @@
+npm install --omit=dev
+cp node_modules/xterm/lib/xterm.js resources/
+cp node_modules/xterm/css/xterm.css resources/
+cp node_modules/xterm-addon-fit/lib/xterm-addon-fit.js resources/
+cp node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js resources/
