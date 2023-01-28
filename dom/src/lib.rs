@@ -13,7 +13,7 @@
 //! ```rust
 //! let DATA: &[u8] = include_bytes!("source.js");
 //! ...
-//! inject_blob(Content::Script(DATA))?;
+//! inject_blob(Content::Script(None, DATA))?;
 //! ```
 
 pub mod error;
