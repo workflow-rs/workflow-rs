@@ -2,7 +2,7 @@ pub mod notification;
 use crate::imports::*;
 pub use notification::*;
 
-/// Collection of server-siede notification handlers
+/// Collection of server-side notification handlers
 pub struct Interface<Ops>
 where
     Ops: OpsT,
