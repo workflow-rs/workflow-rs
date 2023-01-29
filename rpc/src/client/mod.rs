@@ -11,7 +11,7 @@ pub use crate::client::error::Error;
 pub use crate::client::result::Result;
 
 use crate::imports::*;
-pub use interface::Interface;
+pub use interface::{Interface, Notification};
 use protocol::ProtocolHandler;
 pub use protocol::{BorshProtocol, SerdeJsonProtocol};
 use std::fmt::Debug;
