@@ -1,0 +1,13 @@
+[package]
+name = "workflow-websocket-example-server"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+workflow-log.workspace = true
+workflow-websocket.workspace = true
+async-trait.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio.workspace = true

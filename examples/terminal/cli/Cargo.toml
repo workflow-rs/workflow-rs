@@ -1,0 +1,15 @@
+[package]
+name = "terminal-example-cli"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+workflow-log.workspace = true
+workflow-core.workspace = true
+workflow-terminal.workspace = true
+async-trait.workspace = true
+

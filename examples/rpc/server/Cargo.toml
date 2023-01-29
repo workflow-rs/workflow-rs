@@ -1,0 +1,19 @@
+[package]
+name = "rpc-example-server"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+rpc-example-messages = { path = "../messages" }
+workflow-log.workspace = true
+workflow-rpc.workspace = true
+workflow-core.workspace = true
+async-trait.workspace = true
+borsh.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+tungstenite.workspace = true
+tokio-tungstenite.workspace = true
+clap = { workspace = true, features = ["derive"] }

@@ -1,0 +1,17 @@
+[package]
+name = "websocket-example-client-common"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+workflow-core.workspace = true
+workflow-log.workspace = true
+workflow-websocket.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { workspace = true, default-features = false, features = ['io-util','time','sync','macros','rt-multi-thread'] }
+async-std = { workspace = true, features = ['attributes'] }

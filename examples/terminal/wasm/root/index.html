@@ -1,0 +1,11 @@
+<html>
+    <head>
+        <script type="module">
+            import * as workflow from './workflow-terminal/workflow-terminal.js';
+            (async () => {
+                const wasm = await workflow.default('./workflow-terminal/workflow-terminal_bg.wasm');
+            })();
+        </script>
+    </head>
+    <body></body>
+</html>

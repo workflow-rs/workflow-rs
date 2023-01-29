@@ -1,0 +1,12 @@
+[package]
+name = "websocket-example-client-native"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+websocket-example-client-common = { path = "../client-common" }
+workflow-log.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { workspace = true, default-features = false, features = ['rt-multi-thread'] }

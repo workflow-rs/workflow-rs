@@ -1,0 +1,14 @@
+[package]
+name = "rpc-example-messages"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+borsh.workspace = true
+workflow-core.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true

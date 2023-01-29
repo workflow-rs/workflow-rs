@@ -19,6 +19,18 @@ members = [
     "wasm",
     "wasm/macros",
     "websocket",
+    "examples/rpc/client-browser/wasm",
+    "examples/rpc/client-native",
+    "examples/rpc/client-common",
+    "examples/rpc/messages",
+    "examples/rpc/server",
+    "examples/websocket/client-browser/wasm",
+    "examples/websocket/client-common",
+    "examples/websocket/client-native",
+    "examples/websocket/server",
+    "examples/terminal/cli",
+    "examples/terminal/native",
+    "examples/terminal/wasm",
 ]
 
 [workspace.package]
@@ -63,6 +75,7 @@ bs58 = "0.4.0"
 cfg-if = "1.0.0"
 console = "0.15.5"
 convert_case = "0.5.0"
+clap = { version = "4.1.4", features = ["derive","cargo"] }
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
 futures = "0.3.25"

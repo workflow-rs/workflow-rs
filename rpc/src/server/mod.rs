@@ -6,7 +6,7 @@
 //!
 
 pub mod error;
-pub mod interface;
+mod interface;
 pub mod prelude;
 mod protocol;
 pub mod result;

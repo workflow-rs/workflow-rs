@@ -1,0 +1,5 @@
+cargo fmt --all
+cargo clippy
+if [ $? -eq 0 ]; then
+    cargo clippy --target wasm32-unknown-unknown
+fi

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Code+Pro">
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: "Source Code Pro"; font-size: 16px; }
+        #content { padding: 16px; }
+    </style>
+    <script type="module">
+        import * as workflow from '/workflow/workflow.js';
+        const wasm = await workflow.default('/workflow/workflow_bg.wasm');
+    </script>
+</head>
+<body>  
+    <div id="content"></div>
+</body>

@@ -1,0 +1,26 @@
+[package]
+name = "websocket-example-client-browser"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+websocket-example-client-common = { path = "../../client-common" }
+
+workflow-log.workspace = true
+workflow-html.workspace = true
+workflow-websocket.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
+
+[dependencies.web-sys]
+workspace = true
+features = [
+    'Window',
+    'Document',
+    'Element',
+    'Text',
+]
