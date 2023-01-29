@@ -16,6 +16,7 @@ use wasm_bindgen::prelude::*;
 use workflow_core::channel::{Channel, Receiver};
 use workflow_core::task::*;
 use workflow_log::*;
+use workflow_task::*;
 use workflow_wasm::callback::*;
 
 /// Version struct for standard version extraction from executables via `--version` output

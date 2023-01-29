@@ -1,10 +1,6 @@
 use proc_macro::TokenStream;
-use proc_macro_error::proc_macro_error;
-use quote::{quote, ToTokens};
-use syn::parse_macro_input;
 mod enums;
 mod seal;
-mod task;
 
 ///
 /// Attribute macro for automatic conversion of enums to their string representation
@@ -40,22 +36,4 @@ pub fn describe_enum(item: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn seal(input: TokenStream) -> TokenStream {
     seal::seal(input)
-}
-
-#[proc_macro]
-#[proc_macro_error]
-pub fn task(input: TokenStream) -> TokenStream {
-    let result = parse_macro_input!(input as task::Task);
-    let ts = quote! {
-        workflow_core::task::Task::new(#result)
-    };
-    ts.into()
-}
-
-#[proc_macro]
-#[proc_macro_error]
-pub fn set_task(input: TokenStream) -> TokenStream {
-    let result = parse_macro_input!(input as task::SetTask);
-    let ts = result.to_token_stream();
-    ts.into()
 }

@@ -33,6 +33,7 @@ serde.workspace = true
 thiserror.workspace = true
 wasm-bindgen.workspace = true
 workflow-core.workspace = true
+workflow-task.workspace = true
 workflow-log.workspace = true
 workflow-rpc-macros.workspace = true
 workflow-websocket.workspace = true

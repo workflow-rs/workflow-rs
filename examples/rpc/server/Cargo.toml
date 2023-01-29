@@ -9,6 +9,7 @@ rpc-example-messages = { path = "../messages" }
 workflow-log.workspace = true
 workflow-rpc.workspace = true
 workflow-core.workspace = true
+workflow-task.workspace = true
 async-trait.workspace = true
 borsh.workspace = true
 

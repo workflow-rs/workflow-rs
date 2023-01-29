@@ -17,7 +17,7 @@ pub enum Error {
     #[error("{0:?}")]
     TryRecv(#[from] TryRecvError),
     #[error(transparent)]
-    Task(#[from] workflow_core::task::TaskError),
+    Task(#[from] workflow_task::TaskError),
     #[error(transparent)]
     Callback(#[from] workflow_wasm::callback::CallbackError),
 }

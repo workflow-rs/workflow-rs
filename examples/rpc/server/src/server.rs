@@ -8,6 +8,7 @@ use workflow_core::task::*;
 use workflow_log::*;
 use workflow_rpc::server::prelude::*;
 use workflow_rpc::server::result::Result as RpcServerResult;
+use workflow_task::*;
 
 #[derive(Debug)]
 pub struct ConnectionContext {

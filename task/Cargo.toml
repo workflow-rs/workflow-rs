@@ -1,0 +1,24 @@
+[package]
+name = "workflow-task"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = ["wasm","browser","channel"]
+categories = ["wasm"]
+exclude = ["/.*", "/test","/macros"]
+description = """
+
+"""
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+workflow-core.workspace = true
+workflow-task-macros.workspace = true
+
+[target.'cfg(not(target_os = "solana"))'.dependencies]
+futures.workspace = true
+thiserror.workspace = true

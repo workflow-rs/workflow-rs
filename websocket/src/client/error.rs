@@ -52,7 +52,7 @@ pub enum Error {
     Callback(#[from] workflow_wasm::callback::CallbackError),
 
     #[error(transparent)]
-    Task(#[from] workflow_core::task::TaskError),
+    Task(#[from] workflow_task::TaskError),
 
     #[cfg(not(target_arch = "wasm32"))]
     #[error("WebSocket error: {0}")]

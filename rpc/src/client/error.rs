@@ -91,7 +91,7 @@ pub enum Error {
     SerdeJSON(#[from] serde_json::Error),
 
     #[error(transparent)]
-    Task(#[from] workflow_core::task::TaskError),
+    Task(#[from] workflow_task::TaskError),
 
     #[error("{0}")]
     ServerError(ServerError),

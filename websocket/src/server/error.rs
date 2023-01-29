@@ -68,3 +68,9 @@ pub enum Error {
     // #[error(transparent)]
     // ChannelSendError(#[from] tokio::sync::mpsc::error::SendError<tungstenite::Message>),
 }
+
+impl From<String> for Error {
+    fn from(value: String) -> Self {
+        Error::Other(value)
+    }
+}

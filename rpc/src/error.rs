@@ -18,7 +18,7 @@ pub enum Error {
     Io(#[from] std::io::Error),
 
     #[error(transparent)]
-    Task(#[from] workflow_core::task::TaskError),
+    Task(#[from] workflow_task::TaskError),
 }
 
 ///

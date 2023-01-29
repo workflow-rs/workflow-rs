@@ -22,4 +22,4 @@ wasm-bindgen.workspace = true
 workflow-core.workspace = true
 workflow-log.workspace = true
 workflow-wasm.workspace = true
-
+workflow-task.workspace = true
