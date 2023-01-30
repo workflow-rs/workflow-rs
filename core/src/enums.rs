@@ -37,17 +37,20 @@ pub enum TryFromError {
 ///
 /// Example:
 /// ```rust
+/// use workflow_core::enums::u32_try_from;
+///
 /// u32_try_from!{
+///     #[derive(Debug, Clone, PartialEq)]
 ///     enum MyEnum {
 ///         A,  // 0u32
 ///         B,  // 1u32
 ///         C,  // 2u32
 ///     }
 /// }
-/// ...
+///
 /// let v1 = MyEnum::B;
-/// let n: u32 = v.into();
-/// let v2 = MyEnum::try_from(n);
+/// let n = v1.clone() as u32;
+/// let v2 = MyEnum::try_from(n).unwrap();
 /// assert_eq!(v1, v2);
 /// ```
 ///
@@ -85,17 +88,20 @@ pub use u32_try_from;
 ///
 /// Example:
 /// ```rust
+/// use workflow_core::enums::u16_try_from;
+///
 /// u16_try_from!{
+///     #[derive(Debug, Clone, PartialEq)]
 ///     enum MyEnum {
 ///         A,  // 0u16
 ///         B,  // 1u16
 ///         C,  // 2u16
 ///     }
 /// }
-/// ...
+///
 /// let v1 = MyEnum::B;
-/// let n: u16 = v.into();
-/// let v2 = MyEnum::try_from(n);
+/// let n: u16 = v1.clone() as u16;
+/// let v2 = MyEnum::try_from(n).unwrap();
 /// assert_eq!(v1, v2);
 /// ```
 ///
@@ -140,17 +146,20 @@ pub use u16_try_from;
 ///
 /// Example:
 /// ```rust
+/// use workflow_core::enums::u8_try_from;
+///
 /// u8_try_from!{
+///     #[derive(Debug, Clone, PartialEq)]
 ///     enum MyEnum {
 ///         A,  // 0u8
 ///         B,  // 1u8
 ///         C,  // 2u8
 ///     }
 /// }
-/// ...
+///
 /// let v1 = MyEnum::B;
-/// let n: u8 = v.into();
-/// let v2 = MyEnum::try_from(n);
+/// let n: u8 = v1.clone() as u8;
+/// let v2 = MyEnum::try_from(n).unwrap();
 /// assert_eq!(v1, v2);
 /// ```
 ///
@@ -189,17 +198,20 @@ pub use u8_try_from;
 ///
 /// Example:
 /// ```rust
+/// use workflow_core::enums::usize_try_from;
+///
 /// usize_try_from!{
+///     #[derive(Debug, Clone, PartialEq)]
 ///     enum MyEnum {
 ///         A,  // 0usize
 ///         B,  // 1usize
 ///         C,  // 2usize
 ///     }
 /// }
-/// ...
+///
 /// let v1 = MyEnum::B;
-/// let n: usize = v.into();
-/// let v2 = MyEnum::try_from(n);
+/// let n: usize = v1.clone() as usize;
+/// let v2 = MyEnum::try_from(n).unwrap();
 /// assert_eq!(v1, v2);
 /// ```
 ///
@@ -220,7 +232,7 @@ macro_rules! usize_try_from {
                 match v {
                     $(x if x == $name::$vname as usize => Ok($name::$vname),)*
                     _ => {
-                        Err(workflow_core::enums::TryFromError::u32(stringify!($name),v))
+                        Err(workflow_core::enums::TryFromError::usize(stringify!($name),v))
                     },
                 }
             }

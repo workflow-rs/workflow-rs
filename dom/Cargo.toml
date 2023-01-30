@@ -39,3 +39,6 @@ features = [
     'HtmlCollection',
     'BlobPropertyBag'
 ]
+
+[dev-dependencies]
+tokio.workspace = true

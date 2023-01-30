@@ -10,7 +10,7 @@ mod seal;
 ///
 /// This macro implements the following methods:
 ///
-/// ```rust
+/// ```rust ignore
 ///     // returns a Vec of all enum permutations
 ///     fn list() -> Vec<enum>;
 ///     // returns the `rustdoc` description of the enum

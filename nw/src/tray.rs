@@ -3,6 +3,8 @@
 //!
 //! # Synopsis
 //! ```rust
+//! use workflow_nw::tray::TrayMenuBuilder;
+//! 
 //! // create Tray icon menu without submenus
 //! TrayMenuBuilder::new()
 //!     .icon("resources/icons/tray-icon@2x.png")

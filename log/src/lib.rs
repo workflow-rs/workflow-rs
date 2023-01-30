@@ -43,16 +43,25 @@
 //!
 //! ```
 //! use workflow_log::*;
+//! use std::sync::Arc;
+//!
 //! pub struct MyStruct;
 //! impl Sink for MyStruct {
-//!     fn write(&self, _level:Level, args : &std::fmt::Arguments<'_>) -> bool {
+//!     fn write(&self, target: Option<&str>, level:Level, args : &std::fmt::Arguments<'_>) -> bool {
+//!         
+//!         println!("target: {target:?}");
+//!         println!("level: {level:?}");
+//!         println!("args: {args:?}");
+//!
 //!         // return true to continue output
 //!         // return false to prevent further output
+//!         true
 //!     }
 //! }
-//! ...
+//!
 //! let my_struct = Arc::new(MyStruct{});
 //! workflow_log::pipe(Some(my_struct));
+//! log_trace!("test msg");
 //! ```
 //!
 //! To can disable the sink by supplying [`Option::None`] to [`workflow_log::pipe`].  
@@ -72,4 +81,32 @@ pub mod prelude {
     pub use super::console::*;
     pub use super::levels::*;
     pub use super::log::*;
+}
+
+#[cfg(test)]
+mod test {
+    use crate::*;
+    use std::sync::Arc;
+
+    #[test]
+    fn log_sink_test() {
+        pub struct MyStruct;
+        impl Sink for MyStruct {
+            fn write(
+                &self,
+                target: Option<&str>,
+                level: Level,
+                args: &std::fmt::Arguments<'_>,
+            ) -> bool {
+                println!("target: {target:?}");
+                println!("level: {level:?}");
+                println!("args: {args:?}");
+                true
+            }
+        }
+
+        let my_struct = Arc::new(MyStruct {});
+        workflow_log::pipe(Some(my_struct));
+        log_trace!("test msg");
+    }
 }

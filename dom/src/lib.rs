@@ -16,10 +16,11 @@
 //!
 //! Example:
 //!
-//! ```rust
+//! ```rust ignore
+//! use workflow_dom::inject::{inject_blob, Content};
+//!
 //! let DATA: &[u8] = include_bytes!("source.js");
-//! ...
-//! inject_blob(Content::Script(None, DATA))?;
+//! inject_blob(Content::Script(None, data)).await?;
 //! ```
 
 pub mod error;

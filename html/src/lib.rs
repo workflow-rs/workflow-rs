@@ -107,7 +107,7 @@ impl<T: Render + Clone + 'static> Render for Element<T> {
                     }
                 }
                 AttributeValue::Str(v) => {
-                    el.set_attribute(key, v)?;
+                    el.set_attribute(key, &escape_attr(v))?;
                 }
             }
         }
@@ -137,11 +137,12 @@ impl<T: Render + Clone + 'static> Render for Element<T> {
                         }
                     }
                     AttributeValue::Str(v) => {
-                        w.push(format!(" {}=\"{}\"", key, (*v)));
+                        w.push(format!(" {}=\"{}\"", key, escape_attr(v)));
                     }
                 }
             }
             w.push(">".to_string());
+
             if let Some(children) = &self.children {
                 children.render(w)?;
             }
@@ -163,25 +164,22 @@ impl<T: Render + Clone + 'static> Render for Element<T> {
 mod test {
     //cargo test -- --nocapture --test-threads=1
     use crate as workflow_html;
-    use crate::tree;
-    use crate::Render;
-    //use crate::renderable;
-    //use crate::ElementDefaults;
+    use crate::*;
     #[test]
     pub fn simple_html() {
         self::print_hr("simple_html");
+        let active = "true";
         let tree = tree! {
             <p>
-                <div class="xyz abc active">"some inner html"</div>
-                <div class={"abc"}></div>
+                <div class="xyz abc active" active>{"some inner html"}</div>
+                <div class={"abc"}>"xyz"</div>
             </p>
         };
         let result = tree.html();
-        println!("tag: {:#?}", tree.tag);
         println!("html: {}", result);
         assert_eq!(
             result,
-            "<p><div class=\"xyz abc active\">some inner html</div><div class=\"abc\"></div></p>"
+            "<p><div active=\"true\" class=\"xyz abc active\">some inner html</div><div class=\"abc\">xyz</div></p>"
         );
     }
     #[test]
@@ -189,12 +187,11 @@ mod test {
         self::print_hr("simple_html");
         let tree = tree! {
             <flow-select>
-                <flow-menu-item class={"xyz"} />
+                <flow-menu-item class="xyz" />
                 <flow-menu-item class={"abc"} />
             </flow-select>
         };
         let result = tree.html();
-        println!("tag: {:#?}", tree.tag);
         println!("html: {}", result);
         assert_eq!(result, "<flow-select><flow-menu-item class=\"xyz\"></flow-menu-item><flow-menu-item class=\"abc\"></flow-menu-item></flow-select>");
     }
@@ -202,7 +199,7 @@ mod test {
     pub fn without_root_element() {
         self::print_hr("without_root_element");
         let tree = tree! {
-            <div class={"xyz"}></div>
+            <div class="xyz"></div>
             <div class={"abc"}></div>
         };
         let result = tree.html();
@@ -212,66 +209,39 @@ mod test {
     #[test]
     pub fn complex_html() {
         self::print_hr("complex_html");
-        /*let world  = "world";
-        let num  = 123;
-        let string  = "123".to_string();
-        let string2  = "string2 value".to_string();
+        let world = "world";
+        let num = 123;
+        let string = "123".to_string();
+        let string2 = "string2 value".to_string();
         let user = "123";
         let active = true;
         let disabled = false;
         let selected = "1";
 
-
-        #[renderable(flow-select)]
-        #[allow(unused_variables)]
-        struct FlowSelect{
-            #[attr(name="is-active")]
-            pub active:bool,
-            pub selected:String,
-            pub name:String,
-            pub children:Option<Vec<std::sync::Arc<dyn Render>>>,
-            pub label:Option<String>
-        }
-
         #[renderable(flow-menu-item)]
-        struct FlowMenuItem<'a, R:Render>{
-            pub text:&'a str,
-            pub value:&'a str,
-            pub children:Option<R>
+        struct FlowMenuItem {
+            pub text: String,
+            pub value: String,
+            pub children: Option<std::sync::Arc<dyn Render>>,
         }
 
-
-        //overries
-        /*
-        impl<'a> FlowSelect<'a>{
-
-            fn get_attributes(&self)->String{
-                format!("class=\"xxxxxxx\" active")
-            }
-            fn get_children(&self)->String{
-                format!("<flow-menu-item value=\"sss\">xyz</flow-menu-item>")
-            }
-        }
-        */
-        //let name = "abc".to_string();
-        //let selected = "1".to_string();
         let name2 = "aaa".to_string();
         let name3 = "bbb".to_string();
-        let tree = tree!{
-            <div class={"abc"} ?active ?disabled ?active2={false} user data-user-name={"test-node"} &string2>
-                {123} {"hello"} {world} {num} {num} {num} {string} {true}
+        let tree = tree! {
+            <div class={"abc"} ?active ?disabled ?active2={false} user data-user-name="test-node" string2>
+                123 "hello" {world} {num} {num} {num} {string} {true}
                 {1.2 as f64}
-                <h1>{"hello 123"} {num}</h1>
-                {"10"}
-                {11}
-                {12} {13} {14}
-                <h3>{"single child"}</h3>
-                <FlowSelect active name={name2} selected={"<1&2>\"3"} />
-                <div class={"abc"}></div>
-                <FlowSelect active name={name3} &selected>
-                    <flow text={"abc"} />
-                    <FlowMenuItem text={"abc"} value={"abc"} />
-                </FlowSelect>
+                <h1>"hello 123" {num}</h1>
+                "10"
+                11
+                12 13 14
+                <h3>"single child"</h3>
+                <flow-select ?active name=name2 selected="<1&2>\"3" />
+                <div class="abc"></div>
+                <flow-select ?active name=name3 selected>
+                    <flow text="abc" />
+                    <FlowMenuItem text="abc" value="abc" />
+                </flow-select>
             </div>
         };
 
@@ -280,9 +250,8 @@ mod test {
         println!("html: {}", result);
         assert_eq!(
             result,
-            "<div active class=\"abc\" data-user-name=\"test-node\" string2=\"string2 value\" user=\"123\">123helloworld123123123123true1.2<h1>hello 123123</h1>1011121314<h3>single child</h3><flow-select is-active selected=\"&lt;1&amp;2&gt;&quot;3\" name=\"aaa\"></flow-select><div class=\"abc\"></div><flow-select is-active selected=\"1\" name=\"bbb\"><flow text=\"abc\"></flow><flow-menu-item text=\"abc\" value=\"abc\"></flow-menu-item></flow-select></div>"
+            "<div active class=\"abc\" data-user-name=\"test-node\" string2=\"string2 value\" user=\"123\">123helloworld123123123123true1.2<h1>hello 123123</h1>1011121314<h3>single child</h3><flow-select active name=\"aaa\" selected=\"&lt;1&amp;2&gt;&quot;3\"></flow-select><div class=\"abc\"></div><flow-select active name=\"bbb\" selected=\"1\"><flow text=\"abc\"></flow><flow-menu-item text=\"abc\" value=\"abc\"></flow-menu-item></flow-select></div>"
         );
-        */
     }
 
     fn print_hr<'a>(_title: &'a str) {

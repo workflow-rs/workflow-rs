@@ -81,7 +81,8 @@ impl Render for () {
 }
 
 impl Render for &str {
-    fn render(&self, _w: &mut Vec<String>) -> ElementResult<()> {
+    fn render(&self, w: &mut Vec<String>) -> ElementResult<()> {
+        w.push(self.to_string());
         Ok(())
     }
     fn render_node(
@@ -116,6 +117,28 @@ impl<T: Render + Clone> Render for Vec<T> {
         Ok(())
     }
 }
+/*
+impl<T: Render + Clone> Render for Arc<Vec<T>> {
+    fn render(&self, list: &mut Vec<std::string::String>) -> ElementResult<()> {
+        for item in self.iter() {
+            item.render(list)?;
+        }
+        Ok(())
+    }
+
+    fn render_node(
+        self,
+        parent: &mut Element,
+        map: &mut Hooks,
+        renderables: &mut Renderables,
+    ) -> ElementResult<()> {
+        for item in self.iter() {
+            item.clone().render_node(parent, map, renderables)?;
+        }
+        Ok(())
+    }
+}
+*/
 
 impl<T: Render + Clone> Render for Option<T> {
     fn render_node(

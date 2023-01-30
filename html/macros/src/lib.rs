@@ -206,7 +206,7 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     //set_attributes(struct_name.to_string(), field_names);
     let ts = quote!(
-        #[derive(Debug, Clone, Default)]
+        #[derive(Clone, Default)]
         pub struct #struct_name #struct_params #where_clause {
             #( #field_visibility_vec #field_ident_vec : #field_type_vec ),*,
             //#children_field_ts

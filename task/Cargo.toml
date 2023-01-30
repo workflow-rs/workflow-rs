@@ -22,3 +22,6 @@ workflow-task-macros.workspace = true
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 futures.workspace = true
 thiserror.workspace = true
+
+[dev-dependencies]
+tokio="*"
