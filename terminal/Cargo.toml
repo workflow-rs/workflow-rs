@@ -53,3 +53,6 @@ features = [
     'ResizeObserver',
     'CssStyleDeclaration'
 ]
+
+[dev-dependencies]
+tokio.workspace = true

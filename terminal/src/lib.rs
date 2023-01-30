@@ -22,28 +22,68 @@
 //!
 //! Loading in both native and WASM-browser application environment:
 //! ```rust
+//! use async_trait::async_trait;
+//! use std::sync::Arc;
+//! use workflow_terminal::Cli;
+//! use workflow_terminal::Terminal;
+//! use workflow_terminal::result::Result;
+//!
 //! struct ExampleCli;
 //! #[async_trait]
-//! impl Cli for ExampleCli { ... }
-//! ...
-//! let cli = Arc::new(ExampleCli::new());
+//! impl Cli for ExampleCli {
+//!     async fn digest(&self, _term: Arc<Terminal>, _cmd: String) -> Result<()>{
+//!         Ok(())
+//!     }
+//!     async fn complete(&self, _term: Arc<Terminal>, _cmd: String) -> Result<Vec<String>>{
+//!         Ok(vec![])
+//!     }
+//! }
+//!
+//! #[tokio::test]
+//! # async fn test()->Result<()>{
+//! let cli = Arc::new(ExampleCli{});
 //! let term = Arc::new(Terminal::try_new(cli.clone(),"$ ")?);
 //! term.init().await?;
 //! term.writeln("Terminal example (type 'help' for list of commands)");
 //! term.run().await?;
+//! # Ok(())
+//! # }
+//!
 //! ```
 //!
 //! Loading terminal in specific element
 //! ```rust
-//! use workflow_terminal::{Terminal, Options, TargetElement};
+//! use async_trait::async_trait;
+//! use std::sync::Arc;
+//! use workflow_terminal::Cli;
+//! use workflow_terminal::Terminal;
+//! use workflow_terminal::result::Result;
+//! use workflow_terminal::{Options, TargetElement};
 //!
+//! #[derive(Clone)]
+//! struct ExampleCli;
+//! #[async_trait]
+//! impl Cli for ExampleCli {
+//!     async fn digest(&self, _term: Arc<Terminal>, _cmd: String) -> Result<()>{
+//!         Ok(())
+//!     }
+//!     async fn complete(&self, _term: Arc<Terminal>, _cmd: String) -> Result<Vec<String>>{
+//!         Ok(vec![])
+//!     }
+//! }
+//!
+//! # fn test(){
+//!
+//! let cli = Arc::new(ExampleCli{});
 //! let options = Options::new()
 //!     .with_prompt("$ ")
 //!     .with_element(TargetElement::Id("terminal_container".to_string()));
 //!     //.with_element(TargetElement::Element(element));
 //!     //.with_element(TargetElement::Body);
 //!     //.with_element(TargetElement::TagName("body".to_string()));
-//! let term = Arc::new(Terminal::try_new_with_options(cli.clone(), options)?);
+//! let term = Arc::new(Terminal::try_new_with_options(cli.clone(), options).unwrap());
+//!
+//! # }
 //! ```
 //!
 
