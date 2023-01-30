@@ -13,6 +13,14 @@
 //! # Synopsis
 //!
 //! ```rust
+//! use workflow_nw::prelude::*;
+//! use workflow_nw::result::Result;
+//! use workflow_log::log_info;
+//! use wasm_bindgen::JsValue;
+//! use workflow_dom::utils::window;
+//! use nw_sys::prelude::OptionsTrait;
+//!
+//! # fn test()->Result<()>{
 //!
 //! // create Application instance
 //! let app = Application::new()?;
@@ -63,7 +71,7 @@
 //! // choose desktop media
 //! app.choose_desktop_media(
 //!     nw_sys::screen::MediaSources::ScreenAndWindow,
-//!     move |stream_id: Option<String>|->nw_sys::result::Result<()>{
+//!     move |stream_id: Option<String>|->Result<()>{
 //!         if let Some(stream_id) = stream_id{
 //!             render_media(stream_id)?;
 //!         }
@@ -83,7 +91,7 @@
 //!         video_element_id,
 //!         video_constraints,
 //!         None,
-//!         move |stream|->nw_sys::result::Result<()>{
+//!         move |stream|->Result<()>{
 //!             workflow_nw::application::app().unwrap().set_media_stream(stream)?;
 //!             Ok(())
 //!         }
@@ -92,7 +100,8 @@
 //!     Ok(())
 //! }
 //!
-//!
+//! # Ok(())
+//! # }
 //!
 //! ```
 pub mod application;

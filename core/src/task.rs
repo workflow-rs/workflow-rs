@@ -9,7 +9,7 @@
 //! - [`yield_now()`] - yields rust executor
 //! - [`yield_executor()`] - yields to top-level executor (browser async loop)
 //!
-//! A [`Task`] struct is also available and allows spawning an async closures while
+//! A [`Task`](workflow_task::Task) struct is also available and allows spawning an async closures while
 //! providing it with an argument, a return value and a channel that signals termination.
 //! Once started, the task can be externally terminated and/or waited until completion.
 //!

@@ -165,18 +165,23 @@ where
     }
 }
 
-/// [`Task`] struct allows you to spawn an async fn that can run
+/// [`Task`]{self::Task} struct allows you to spawn an async fn that can run
 /// in a loop as a task (similar to a thread), checking for a
 /// termination signal (so that execution can be aborted),
 /// upon completion returning a value to the creator.
 ///
-/// You can pass a [`channel`](crate::channel) as an argument to the async
+/// You can pass a [`channel`](workflow_core::channel::Receiver) as an argument to the async
 /// function if you wish to communicate with the task.
 ///
 /// NOTE: You should always call `task.join().await` to await
 /// for the task completion if re-using the task.
 ///
 /// ```rust
+/// use workflow_task::{task, TaskResult};
+///
+/// # #[tokio::test]
+/// # async fn test()->TaskResult<()>{
+///
 /// let task = task!(
 ///     |args : (), stop : Receiver<()>| async move {
 ///         let mut index = args;
@@ -194,7 +199,6 @@ where
 /// // spawn the task instance ...
 /// // passing 256 as the `args` argument
 /// task.run(256)?;
-/// ...
 ///
 /// // signal termination ...
 /// task.stop()?;
@@ -205,6 +209,9 @@ where
 ///
 /// // rinse and repeat if needed
 /// task.run(256)?;
+///
+/// # Ok(())
+/// # }
 ///
 /// ```
 ///
@@ -233,13 +240,15 @@ where
     T: Send + 'static,
 {
     ///
-    /// Create a new [`Task`] instance by supplying it with
+    /// Create a new [`Task`](self::Task) instance by supplying it with
     /// an async closure that has 2 arguments:
     /// ```rust
-    /// task!(|args, signal| async move {
+    /// use workflow_task::task;
+    ///
+    /// task!(|args:bool, signal| async move {
     ///     // ...
-    ///     return v;
-    /// })
+    ///     return true;
+    /// });
     /// ```
     pub fn new<FN>(task_fn: FN) -> Task<A, T>
     where

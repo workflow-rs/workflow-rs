@@ -38,34 +38,27 @@
 //!
 //! ## Usage
 //!
-//! There are two ways to install this panic hook.
-//!
-//! First, you can set the hook yourself by calling `std::panic::set_hook` in
-//! some initialization function:
-//!
-//! ```
-//! extern crate console_error_panic_hook;
-//! use std::panic;
-//!
-//! fn my_init_function() {
-//!     panic::set_hook(Box::new(console_error_panic_hook::hook));
-//!
-//!     // ...
-//! }
-//! ```
-//!
-//! Alternatively, use `set_once` on some common code path to ensure that
+//! use `set_once` on some common code path to ensure that
 //! `set_hook` is called, but only the one time. Under the hood, this uses
 //! `std::sync::Once`.
 //!
 //! ```
-//! extern crate console_error_panic_hook;
+//! extern crate workflow_panic_hook;
 //!
 //! struct MyBigThing;
 //!
 //! impl MyBigThing {
 //!     pub fn new() -> MyBigThing {
-//!         console_error_panic_hook::set_once();
+//!         use workflow_panic_hook::{set_once, Type};
+//! 
+//!         // Browser: log in console
+//!         // set_once(Type::Console);
+//!
+//!         // Browser: log in a popup dialog(floating container on top) 
+//!         // set_once(Type::Popup);
+//! 
+//!         // Native log
+//!         set_once(Type::Native);
 //!
 //!         MyBigThing
 //!     }

@@ -2,6 +2,16 @@
 //!  Builder for application menus.
 //!
 //! ```rust
+//! use workflow_nw::prelude::*;
+//! use workflow_nw::result::Result;
+//! use workflow_dom::utils::window;
+//! use wasm_bindgen::JsValue;
+//!
+//! # fn test()->Result<()>{
+//!
+//! // create Application instance
+//! let app = Application::new()?;
+//!
 //! // create context menu
 //! let item_1 = MenuItemBuilder::new()
 //!     .label("Sub Menu 1")
@@ -52,6 +62,8 @@
 //!     .append(item)
 //!     .build(true)?;
 //!
+//! # Ok(())
+//! # }
 //! ```
 //!
 

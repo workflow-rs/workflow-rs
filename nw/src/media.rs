@@ -2,7 +2,7 @@
 //! Media control helpers
 //!
 //! # Synopsis
-//! ```rust ignore
+//! ```
 //! use workflow_log::log_info;
 //! use workflow_nw::prelude::*;
 //! use workflow_nw::result::Result;
@@ -11,7 +11,7 @@
 //! fn choose_desktop_media()->Result<()>{
 //!     // create Application instance
 //!     let app = Application::new()?;
-//! 
+//!
 //!     // choose desktop media
 //!     app.choose_desktop_media(
 //!         nw_sys::screen::MediaSources::ScreenAndWindow,
@@ -38,7 +38,7 @@
 //!         video_element_id,
 //!         video_constraints,
 //!         None,
-//!         move |stream|->nw_sys::result::Result<()>{
+//!         move |stream|->Result<()>{
 //!             workflow_nw::application::app().unwrap().set_media_stream(stream)?;
 //!             Ok(())
 //!         }
@@ -286,41 +286,39 @@ where
     Ok(())
 }
 
-
-#[cfg(all(test, target_arch="wasm32"))]
-mod test{
+#[cfg(all(test, target_arch = "wasm32"))]
+mod test {
     use crate as workflow_nw;
     use workflow_nw::result::Result;
     #[test]
-    fn nw_media_test()->Result<()>{
-        
+    fn nw_media_test() -> Result<()> {
+        use nw_sys::prelude::OptionsTrait;
         use workflow_log::log_info;
         use workflow_nw::prelude::*;
         use workflow_nw::result::Result;
-        use nw_sys::prelude::OptionsTrait;
 
         choose_desktop_media().unwrap();
 
-        fn choose_desktop_media()->Result<()>{
+        fn choose_desktop_media() -> Result<()> {
             // create Application instance
             let app = Application::new()?;
 
             // choose desktop media
             app.choose_desktop_media(
                 nw_sys::screen::MediaSources::ScreenAndWindow,
-                move |stream_id: Option<String>|->Result<()>{
-                    if let Some(stream_id) = stream_id{
+                move |stream_id: Option<String>| -> Result<()> {
+                    if let Some(stream_id) = stream_id {
                         render_media(stream_id)?;
                     }
                     Ok(())
-                }
+                },
             )?;
             Ok(())
         }
 
-        fn render_media(stream_id:String)->Result<()>{
+        fn render_media(stream_id: String) -> Result<()> {
             log_info!("stream_id: {:?}", stream_id);
-            
+
             let video_element_id = "video_el".to_string();
             let video_constraints = VideoConstraints::new()
                 .source_id(&stream_id)
@@ -330,12 +328,14 @@ mod test{
                 video_element_id,
                 video_constraints,
                 None,
-                move |stream|->Result<()>{
-                    workflow_nw::application::app().unwrap().set_media_stream(stream)?;
+                move |stream| -> Result<()> {
+                    workflow_nw::application::app()
+                        .unwrap()
+                        .set_media_stream(stream)?;
                     Ok(())
-                }
+                },
             )?;
-            
+
             Ok(())
         }
         Ok(())

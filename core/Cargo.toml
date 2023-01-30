@@ -40,3 +40,6 @@ tokio.workspace = true
 js-sys.workspace = true
 wasm-bindgen-futures.workspace = true
 wasm-bindgen.workspace = true
+
+[dev-dependencies]
+workflow-task.workspace = true

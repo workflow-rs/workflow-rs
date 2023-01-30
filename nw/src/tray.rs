@@ -3,8 +3,13 @@
 //!
 //! # Synopsis
 //! ```rust
+//! use workflow_nw::prelude::*;
+//! use workflow_nw::result::Result;
 //! use workflow_nw::tray::TrayMenuBuilder;
-//! 
+//! use workflow_dom::utils::window;
+//! use wasm_bindgen::JsValue;
+//!
+//! # fn test()->Result<()>{
 //! // create Tray icon menu without submenus
 //! TrayMenuBuilder::new()
 //!     .icon("resources/icons/tray-icon@2x.png")
@@ -37,6 +42,9 @@
 //!     .icons_are_templates(false)
 //!     .submenus(vec![submenu_1, menu_separator(), exit_menu])
 //!     .build()?;
+//!
+//! # Ok(())
+//! # }
 //!
 //! ```
 //!

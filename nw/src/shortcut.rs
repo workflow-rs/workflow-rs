@@ -3,6 +3,12 @@
 //!
 //! # Synopsis
 //! ```rust
+//! use workflow_nw::prelude::*;
+//! use workflow_nw::result::Result;
+//! use workflow_dom::utils::window;
+//!
+//! # fn test()->Result<()>{
+//!
 //! let shortcut = ShortcutBuilder::new()
 //!     .key("Ctrl+Shift+Q")
 //!     .active(|_|{
@@ -14,6 +20,9 @@
 //!     .build()?;
 //!     
 //! nw_sys::app::register_global_hot_key(&shortcut);
+//!
+//! # Ok(())
+//! # }
 //! ```
 //!
 
