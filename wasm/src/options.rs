@@ -1,26 +1,29 @@
 //!
 //! Helper trait for managing options struct which extends [Object](js_sys::Object)
-//! ```
+//! ```ignore
+//! # use wasm_bindgen::JsValue;
+//! # use crate::workflow_wasm::options::OptionsTrait;
 //! // create MyOptions struct
 //!
 //! #[wasm_bindgen]
 //! extern "C" {
-//!     #[wasm_bindgen(extends = js_sys::Object)]
 //!     #[derive(Debug, Clone, PartialEq, Eq)]
+//!     #[wasm_bindgen(extends = js_sys::Object)]
 //!     pub type MyOptions;
 //! }
 //!
-//! impl workflow_wasm::options::OptionsExt for MyOptions{}
+//!
+//! impl OptionsTrait for MyOptions{}
 //!
 //! //impl methods as you need
 //! impl MyOptions{
 //!     /// Set title
-//!     pub fn title(mut self, title:&str)->Self{
+//!     pub fn title(self, title:&str)->Self{
 //!         self.set("title", JsValue::from(title))
 //!     }
 //!
 //!     /// Set active
-//!     pub fn active(mut self, active:bool)->Self{
+//!     pub fn active(self, active:bool)->Self{
 //!         self.set("active", JsValue::from(active))
 //!     }
 //! }
@@ -104,3 +107,42 @@ pub trait OptionsTrait {
         self
     }
 }
+
+/*
+#[cfg(test)]
+mod test{
+    use super::*;
+    use crate as workflow_wasm;
+    #[test]
+    fn test(){
+        #[wasm_bindgen]
+        extern "C" {
+            #[wasm_bindgen(extends = js_sys::Object)]
+            #[derive(Debug, Clone, PartialEq, Eq)]
+            pub type MyOptions;
+        }
+
+        impl workflow_wasm::options::OptionsTrait for MyOptions{}
+
+        //impl methods as you need
+        impl MyOptions{
+            /// Set title
+            pub fn title(self, title:&str)->Self{
+                self.set("title", JsValue::from(title))
+            }
+
+            /// Set active
+            pub fn active(self, active:bool)->Self{
+                self.set("active", JsValue::from(active))
+            }
+        }
+
+        // use MyOptions
+
+        let options = MyOptions::new()
+            .title("title text")
+            .active(true);
+    }
+}
+
+*/

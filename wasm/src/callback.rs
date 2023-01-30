@@ -338,14 +338,14 @@ impl CallbackMap {
 /// </pre></div>
 ///
 /// - #### If passing closure as variable, it will accept only 1 argument:
-/// ```
+/// ```no_compile
 /// let closure_as_variable = |value:bool|{
 ///     ...
 /// };
 /// let callback = callback!(closure_as_variable);
 /// ```
 /// The above code will create callback like this:
-/// ```
+/// ```no_compile
 /// let callback = Callback::new(closure_as_variable);
 /// ```
 ///
@@ -354,7 +354,7 @@ impl CallbackMap {
 /// ```compile_fail
 /// // 2 arguments
 /// let closure_as_variable = |arg1:bool, arg2:u16|{
-///     ...
+///     //...
 /// };
 /// let callback = callback!(closure_as_variable);
 /// ```
@@ -362,7 +362,7 @@ impl CallbackMap {
 /// ```compile_fail
 /// // no arguments
 /// let closure_as_variable = ||{
-///     ...
+///     //...
 /// };
 /// let callback = callback!(closure_as_variable);
 /// ```
@@ -379,25 +379,25 @@ impl CallbackMap {
 ///     - [Callback::new_with_args_8]
 ///
 /// - #### A closure supplied directly to the [`callback`] macro can accept 0-8 arguments:
-///     ```
+///     ```no_compile
 ///     let callback = callback!(|value:bool|{
 ///         //
 ///     });
 ///     ```
 ///     Output will be as follows:
-///     ```
+///     ```no_compile
 ///     let callback = Callback::new_with_args_1(|value:bool|{
 ///         //
 ///     });
 ///     ```
 /// - ##### Example of a closure with 2 arguments:
-///     ```
+///     ```no_compile
 ///     let callback = callback!(|arg1:u16, value:bool|{
 ///         //
 ///     });
 ///     ```
 ///     Output will be as follows:
-///     ```
+///     ```no_compile
 ///     let callback = Callback::new_with_args_2(|arg1:u16, value:bool|{
 ///        //
 ///     });
