@@ -272,8 +272,29 @@ where
 /// as follows:
 ///
 /// ```rust
-/// let server: Arc<dyn WebSocketServerTrait>
-///     = server.downcast_arc::<WebSocketServerTrait>();
+/// use std::sync::Arc;
+/// use async_trait::async_trait;
+/// use workflow_websocket::server::{Result,WebSocketServerTrait};
+///
+/// struct Server{}
+///
+/// #[async_trait]
+/// impl WebSocketServerTrait for Server{
+///     async fn listen(self: Arc<Self>, addr: &str) -> Result<()>{
+///         Ok(())
+///     }
+///     fn stop(&self) -> Result<()>{
+///         Ok(())
+///     }
+///     async fn join(&self) -> Result<()>{
+///         Ok(())
+///     }
+///     async fn stop_and_join(&self) -> Result<()>{
+///         Ok(())
+///     }
+/// }
+/// let server_trait: Arc<dyn WebSocketServerTrait> = Arc::new(Server{});
+/// let server = server_trait.downcast_arc::<Server>();
 /// ```
 /// This can help simplify web socket handling in case the supplied
 /// `T` generic contains complex generic types that typically
