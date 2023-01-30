@@ -5,7 +5,7 @@
 use std::sync::PoisonError;
 use thiserror::Error;
 use wasm_bindgen::JsValue;
-use workflow_core::channel::{RecvError, SendError};
+use workflow_core::channel::{ChannelError, RecvError, SendError, TrySendError};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -19,8 +19,12 @@ pub enum Error {
     RecvError,
     #[error("Channel Send Error: {0}")]
     SendError(String),
+    #[error("Channel TrySend Error: {0}")]
+    TrySendError(String),
     #[error(transparent)]
     DomError(#[from] workflow_dom::error::Error),
+    #[error("Channel error: {0}")]
+    ChannelError(String),
 }
 
 impl From<String> for Error {
@@ -55,6 +59,15 @@ impl From<RecvError> for Error {
     }
 }
 
+impl<T> From<TrySendError<T>> for Error
+where
+    T: std::fmt::Debug,
+{
+    fn from(err: TrySendError<T>) -> Error {
+        Error::TrySendError(format!("{err:?}"))
+    }
+}
+
 impl<T> From<SendError<T>> for Error
 where
     T: std::fmt::Debug,
@@ -67,9 +80,14 @@ where
 impl From<Error> for String {
     fn from(err: Error) -> String {
         match err {
-            Error::String(s) | Error::PoisonError(s) | Error::SendError(s) | Error::JsValue(s) => s,
-            Error::RecvError => String::from(&format!("{err}")),
-            Error::DomError(err) => String::from(&format!("{err}")),
+            Error::String(s)
+            | Error::PoisonError(s)
+            | Error::SendError(s)
+            | Error::JsValue(s)
+            | Error::ChannelError(s) => s,
+            Error::TrySendError(s) => s,
+            Error::RecvError => err.to_string(),
+            Error::DomError(err) => err.to_string(),
         }
     }
 }
@@ -78,5 +96,11 @@ impl From<Error> for JsValue {
     fn from(err: Error) -> JsValue {
         let s: String = err.into();
         JsValue::from_str(&s)
+    }
+}
+
+impl<T> From<ChannelError<T>> for Error {
+    fn from(err: ChannelError<T>) -> Error {
+        Error::ChannelError(err.to_string())
     }
 }

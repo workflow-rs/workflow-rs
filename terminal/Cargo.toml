@@ -21,6 +21,7 @@ crate-type = ["cdylib", "lib"]
 async-std.workspace = true
 async-trait.workspace = true
 cfg-if.workspace = true
+futures.workspace = true
 js-sys.workspace = true
 numtoa.workspace = true
 regex.workspace = true

@@ -81,6 +81,18 @@ impl<T> From<PoisonError<T>> for ServerError {
     }
 }
 
+impl From<String> for ServerError {
+    fn from(error: String) -> Self {
+        ServerError::Text(error)
+    }
+}
+
+impl From<&str> for ServerError {
+    fn from(error: &str) -> Self {
+        ServerError::Text(error.to_string())
+    }
+}
+
 // impl From<serde_json::Error> for ServerError
 
 // impl de::Error for Error {

@@ -71,10 +71,11 @@ workflow-websocket = { path = "websocket" }
 # external dependencies
 
 ahash = "0.8.2"
+async-channel = "1.8.0"
 async-std = { version = "1.12.0", features = ['attributes'] }
 async-trait = "0.1.61"
 base64 = "0.13.0"
-borsh = "0.10.0"
+borsh = { version = "0.10.0", features = ["rc"] }
 bs58 = "0.4.0"
 cfg-if = "1.0.0"
 console = "0.15.5"
@@ -103,7 +104,7 @@ quote = "1.0.21"
 rand = { version = "0.8.5", features = ["getrandom"] }
 regex = "1.5.5"
 ritehash = "0.2.0"
-serde = { version = "1.0.152" , features = ["derive"] }
+serde = { version = "1.0.152" , features = ["derive","rc"] }
 serde_json = "1.0.91"
 sha2 = "0.10.2"
 syn = {version="1.0.99",features=["full","fold","extra-traits","parsing","proc-macro"]}

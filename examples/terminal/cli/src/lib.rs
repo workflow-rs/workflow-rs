@@ -92,7 +92,7 @@ impl Cli for ExampleCli {
             }
             "exit" => {
                 term.writeln("bye!");
-                term.exit();
+                term.exit().await;
             }
             _ => return Err(format!("command not found: {cmd}").into()),
         }

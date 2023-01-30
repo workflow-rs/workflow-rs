@@ -1,5 +1,5 @@
 //!
-//! Module implementing terminal abstraction
+//! Module implementing the terminal interface abstraction
 //!
 
 use crate::clear::*;
@@ -8,10 +8,13 @@ use crate::cursor::*;
 use crate::keys::Key;
 use crate::result::Result;
 use cfg_if::cfg_if;
+use futures::*;
 use regex::Regex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LockResult, Mutex, MutexGuard};
-use workflow_core::channel::{unbounded, Receiver, Sender};
+use workflow_core::channel::{unbounded, Channel, DuplexChannel, Receiver, Sender};
+use workflow_core::task::spawn;
+use workflow_log::log_error;
 
 mod options;
 pub use options::Options;
@@ -131,7 +134,7 @@ impl UserInput {
         match key {
             Key::Ctrl('c') => {
                 self.close()?;
-                term.exit();
+                term.abort();
             }
             Key::Char(ch) => {
                 self.buffer.lock().unwrap().push(ch);
@@ -166,6 +169,9 @@ pub struct Terminal {
     pub handler: Arc<dyn Cli>,
     pub terminate: Arc<AtomicBool>,
     user_input: UserInput,
+    pub pipe_raw: Channel<String>,
+    pub pipe_crlf: Channel<String>,
+    pub pipe_ctl: DuplexChannel<()>,
 }
 
 impl Terminal {
@@ -181,6 +187,9 @@ impl Terminal {
             handler,
             terminate: Arc::new(AtomicBool::new(false)),
             user_input: UserInput::new(),
+            pipe_raw: Channel::unbounded(),
+            pipe_crlf: Channel::unbounded(),
+            pipe_ctl: DuplexChannel::oneshot(),
         };
 
         Ok(terminal)
@@ -203,6 +212,9 @@ impl Terminal {
             handler,
             terminate: Arc::new(AtomicBool::new(false)),
             user_input: UserInput::new(),
+            pipe_raw: Channel::unbounded(),
+            pipe_crlf: Channel::unbounded(),
+            pipe_ctl: DuplexChannel::oneshot(),
         };
 
         Ok(terminal)
@@ -280,17 +292,65 @@ impl Terminal {
         Arc::clone(&self.term)
     }
 
+    async fn pipe_start(self: &Arc<Self>) -> Result<()> {
+        let self_ = self.clone();
+        spawn(async move {
+            loop {
+                select! {
+                    _ = self_.pipe_ctl.request.receiver.recv().fuse() => {
+                        break;
+                    },
+                    raw = self_.pipe_raw.receiver.recv().fuse() => {
+                        raw.map(|text|self_.write(text)).unwrap_or_else(|err|log_error!("Error writing from raw pipe: {err}"));
+                    },
+                    text = self_.pipe_crlf.receiver.recv().fuse() => {
+                        text.map(|text|self_.writeln(text)).unwrap_or_else(|err|log_error!("Error writing from crlf pipe: {err}"));
+                    },
+                }
+            }
+
+            self_
+                .pipe_ctl
+                .response
+                .sender
+                .send(())
+                .await
+                .unwrap_or_else(|err| log_error!("Error posting shutdown ctl: {err}"));
+        });
+        Ok(())
+    }
+
+    async fn pipe_stop(self: &Arc<Self>) -> Result<()> {
+        self.pipe_ctl.signal(()).await?;
+        Ok(())
+    }
+
+    fn pipe_abort(self: &Arc<Self>) -> Result<()> {
+        self.pipe_ctl.request.try_send(())?;
+        Ok(())
+    }
+
     /// Execute the async terminal processing loop.
     /// Once started, it should be stopped using
     /// [`Terminal::exit`]
-    pub async fn run(&self) -> Result<()> {
+    pub async fn run(self: &Arc<Self>) -> Result<()> {
         // self.prompt();
+
+        self.pipe_start().await?;
         self.term().run().await
     }
 
-    /// Exits the async terminal processing loop
-    pub fn exit(&self) {
+    /// Exits the async terminal processing loop (async fn)
+    pub async fn exit(self: &Arc<Self>) {
         self.terminate.store(true, Ordering::SeqCst);
+        self.pipe_stop().await.unwrap_or_else(|err| panic!("{err}"));
+        self.term.exit();
+    }
+
+    /// Exits the async terminal processing loop (sync fn)
+    pub fn abort(self: &Arc<Self>) {
+        self.terminate.store(true, Ordering::SeqCst);
+        self.pipe_abort().unwrap_or_else(|err| panic!("{err}"));
         self.term.exit();
     }
 
@@ -435,7 +495,7 @@ impl Terminal {
             Key::Ctrl('c') => {
                 cfg_if! {
                     if #[cfg(not(target_arch = "wasm32"))] {
-                        self.exit();
+                        self.exit().await;
                     }
                 }
                 return Ok(());

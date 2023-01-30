@@ -217,6 +217,16 @@ where
     inner: Arc<TaskInner<A, T>>,
 }
 
+impl<A, T> Default for Task<A, T>
+where
+    A: Send + Sync + 'static,
+    T: Send + Sync + 'static,
+{
+    fn default() -> Self {
+        Task::blank()
+    }
+}
+
 impl<A, T> Task<A, T>
 where
     A: Send + Sync + 'static,

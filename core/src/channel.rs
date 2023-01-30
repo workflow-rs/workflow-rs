@@ -1,5 +1,5 @@
 //! [`async_std::channel`] re-exports and shims
-pub use async_std::channel::*;
+pub use async_channel::*;
 use thiserror::Error;
 
 #[derive(Error)]
