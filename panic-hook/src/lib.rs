@@ -50,13 +50,13 @@
 //! impl MyBigThing {
 //!     pub fn new() -> MyBigThing {
 //!         use workflow_panic_hook::{set_once, Type};
-//! 
+//!
 //!         // Browser: log in console
 //!         // set_once(Type::Console);
 //!
-//!         // Browser: log in a popup dialog(floating container on top) 
+//!         // Browser: log in a popup dialog(floating container on top)
 //!         // set_once(Type::Popup);
-//! 
+//!
 //!         // Native log
 //!         set_once(Type::Native);
 //!

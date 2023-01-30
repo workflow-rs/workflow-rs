@@ -24,7 +24,7 @@ mod seal;
 /// // get enum value from the namespaced value name i.e. `MyEnum::Value`
 /// fn from_str_ns(str:&str)->Option<#enum_name>;
 /// ```
-/// 
+///
 ///
 // #[proc_macro_attribute]
 #[proc_macro_derive(Describe, attributes(descr, describe))]
