@@ -25,7 +25,7 @@ use std::fmt::Debug;
 /// and its result must be *Pin*ned, resulting in the following
 /// syntax:
 ///
-/// ```rust
+/// ```ignore
 ///
 /// interface.notification(Box::new(Notification::new(|msg: MyMsg|
 ///     Box::pin(
@@ -41,7 +41,7 @@ use std::fmt::Debug;
 /// The notification macro adds the required Box and Pin syntax,
 /// simplifying the declaration as follows:
 ///
-/// ```rust
+/// ```ignore
 /// interface.notification(notification!(|msg: MyMsg| async move {
 ///     // ...
 ///     Ok(())

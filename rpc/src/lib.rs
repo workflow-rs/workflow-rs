@@ -28,7 +28,7 @@
 //!
 //!
 //! ### Client-side
-//! ```rust
+//! ```ignore
 //!     interface.notification(
 //!         TestOps::Notify,
 //!         notification!(|notification: TestNotify| async move {
@@ -40,7 +40,7 @@
 //!     let resp: MyResponse = rpc.call(MyOps::MyMethod, MethodRequest { ... }).await?;
 //! ```
 //! ### Server-side
-//! ```rust
+//! ```ignore
 //!     interface.method(
 //!         TestOps::SomeRequest,
 //!         method!(|connection_ctx, server_ctx, request: TestReq| async move {

@@ -37,7 +37,7 @@ use crate::server::result::Result;
 /// and its result must be *Pin*ned, resulting in the following
 /// syntax:
 ///
-/// ```rust
+/// ```ignore
 ///
 /// interface.method(Box::new(MyOps::Method, Method::new(|req: MyReq|
 ///     Box::pin(
@@ -53,7 +53,7 @@ use crate::server::result::Result;
 /// The method macro adds the required Box and Pin syntax,
 /// simplifying the declaration as follows:
 ///
-/// ```rust
+/// ```ignore
 /// interface.method(MyOps::Method, method!(
 ///   | connection_ctx: ConnectionCtx,
 ///     server_ctx: ServerContext,
@@ -75,7 +75,7 @@ pub use workflow_rpc_macros::server_method as method;
 /// and its result must be *Pin*ned, resulting in the following
 /// syntax:
 ///
-/// ```rust
+/// ```ignore
 ///
 /// interface.notification(MyOps::Notify,Box::new(Notification::new(|msg: MyMsg|
 ///     Box::pin(
@@ -91,7 +91,7 @@ pub use workflow_rpc_macros::server_method as method;
 /// The notification macro adds the required Box and Pin syntax,
 /// simplifying the declaration as follows:
 ///
-/// ```rust
+/// ```ignore
 /// interface.notification(MyOps::Notify, notification!(|msg: MyMsg| async move {
 ///     // ...
 ///     Ok(())
