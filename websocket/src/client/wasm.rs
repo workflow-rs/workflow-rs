@@ -5,14 +5,14 @@ use super::{
     Handshake, Options,
 };
 use futures::{select, select_biased, FutureExt};
-use js_sys::{ArrayBuffer, Uint8Array};
+use js_sys::{ArrayBuffer, Uint8Array,Function};
 use std::ops::Deref;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
 };
 use triggered::{trigger, Listener, Trigger};
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast,JsValue};
 use web_sys::{
     CloseEvent as WsCloseEvent, ErrorEvent as WsErrorEvent, MessageEvent as WsMessageEvent,
     WebSocket as WebSysWebSocket,
@@ -23,6 +23,7 @@ use workflow_core::{
 };
 use workflow_log::*;
 use workflow_wasm::callback::*;
+use workflow_core::runtime::*;
 
 impl TryFrom<WsMessageEvent> for Message {
     type Error = Error;
@@ -107,6 +108,9 @@ impl WebSocketInterface {
         receiver_channel: Channel<Message>,
         options: Options,
     ) -> Result<WebSocketInterface> {
+
+        do_sanity_check()?;
+
         let settings = Settings {
             url: url.to_string(),
         };
@@ -408,4 +412,46 @@ impl TrySendMessage for WebSocket {
             }
         }
     }
+}
+
+static mut W3C_WEBSOCKET_AVAILABLE: Option<bool> = None; 
+fn w3c_websocket_available() -> Result<bool> {
+    if let Some(available) = unsafe { W3C_WEBSOCKET_AVAILABLE } {
+        Ok(available)
+    } else {
+
+        let result = Function::new_no_args("
+            !!this.WebSocket
+        ").call0(&JsValue::undefined());
+        let available = result?.as_bool().unwrap_or(false);
+        unsafe { W3C_WEBSOCKET_AVAILABLE = Some(available) };
+        Ok(available)
+    }
+}
+
+fn do_sanity_check() -> Result<()> {
+    if !w3c_websocket_available()? {
+        if is_node() {
+            log_info!("");
+            log_info!("+------------------------------------------------------------");
+            log_info!("|");
+            log_info!("| w3c websocket is not available");
+            log_info!("|");
+            log_info!("| Please include `WebSocket` module as a project dependency");
+            log_info!("| and add the following line to your Node.js script:");
+            log_info!("|");
+            log_info!("| `globalThis.WebSocket = require(\"websocket\").w3cwebsocket;`");
+            log_info!("|");
+            log_info!("| (or use any other w3c-compatible module)");
+            log_info!("|");
+            log_info!("+------------------------------------------------------------");
+            log_info!("");
+        } else {
+            log_info!("");
+            log_error!("w3c websocket is not available");
+            log_info!("");
+        }
+        panic!("w3c websocket is not available");
+    }
+    Ok(())
 }
