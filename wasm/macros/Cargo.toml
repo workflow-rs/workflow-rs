@@ -1,8 +1,8 @@
 [package]
 name = "workflow-wasm-macros"
-version = "0.3.1"
 description = "Macros for workflow-wasm"
 edition = "2021"
+version.workspace = true
 
 [lib]
 proc-macro = true
