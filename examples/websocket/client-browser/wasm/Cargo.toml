@@ -19,8 +19,8 @@ wasm-bindgen-futures.workspace = true
 [dependencies.web-sys]
 workspace = true
 features = [
-    'Window',
     'Document',
     'Element',
     'Text',
+    'Window',
 ]

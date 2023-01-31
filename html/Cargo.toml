@@ -25,11 +25,11 @@ workflow-html-macros.workspace = true
 workspace = true
 features = [
     'console',
-    'Window',
+    'CustomEvent',
     'Document',
     'Element',
-    'Text',
     'HtmlCollection',
     'MouseEvent',
-    'CustomEvent'
+    'Text',
+    'Window',
 ]

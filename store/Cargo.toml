@@ -28,6 +28,6 @@ home.workspace = true
 [dependencies.web-sys]
 workspace = true
 features = [
-    'Window',
     'Storage',
+    'Window',
 ]

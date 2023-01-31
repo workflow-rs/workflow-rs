@@ -50,11 +50,11 @@ features = [
     "console",
     "BinaryType",
     "Blob",
+    "CloseEvent",
+    "DomException",
     "ErrorEvent",
     "FileReader",
-    "CloseEvent",
     "MessageEvent",
     "ProgressEvent",
     "WebSocket",
-    "DomException",
 ]

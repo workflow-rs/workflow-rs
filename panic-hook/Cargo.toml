@@ -20,8 +20,8 @@ wasm-bindgen.workspace = true
 workspace = true
 features = [
     'console',
-    'Window',
     'Document',
     'Element',
     'HtmlElement',
+    'Window',
 ]

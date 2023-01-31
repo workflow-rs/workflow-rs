@@ -24,15 +24,15 @@ workflow-wasm.workspace = true
 workspace = true
 features = [
     'console',
+    'CustomEvent',
     'Document',
-    'Window',
     'HtmlElement',
     'HtmlVideoElement',
-    'CustomEvent',
+    'MediaDevices',
+    'MediaStream',
+    'MediaStreamConstraints',
+    'MediaStreamTrack',
     'MouseEvent',
     'Navigator',
-    'MediaDevices',
-    'MediaStreamConstraints',
-    'MediaStream',
-    'MediaStreamTrack'
+    'Window',
 ]

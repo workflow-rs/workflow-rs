@@ -39,19 +39,19 @@ termion.workspace = true
 [dependencies.web-sys]
 workspace = true
 features = [
-    'Window',
+    'Blob',
+    'CssStyleDeclaration',
+    'CustomEvent',
     'Document',
     'Element',
-    'Url',
-    'Blob',
-    'CustomEvent',
     'EventTarget',
+    'HtmlCollection',
     'KeyboardEvent',
     'Node',
     'NodeList',
-    'HtmlCollection',
     'ResizeObserver',
-    'CssStyleDeclaration'
+    'Url',
+    'Window',
 ]
 
 [dev-dependencies]

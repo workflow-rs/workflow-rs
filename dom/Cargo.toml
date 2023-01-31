@@ -28,16 +28,17 @@ workflow-wasm.workspace = true
 [dependencies.web-sys]
 workspace = true
 features = [
-    'Window',
+    'Blob',
+    'BlobPropertyBag',
+    'CustomEvent',
     'Document',
     'Element',
-    'Url',
-    'Blob',
-    'CustomEvent',
+    'HtmlCollection',
+    'Location',
     'Node',
     'NodeList',
-    'HtmlCollection',
-    'BlobPropertyBag'
+    'Url',
+    'Window',
 ]
 
 [dev-dependencies]
