@@ -41,8 +41,8 @@ pub enum Error {
     #[error("Dispatch channel ack error")]
     DispatchChannelAck,
 
-    #[error("Dispatch channel send error")]
-    DispatchChannelSend,
+    #[error("Channel send error")]
+    ChannelSend,
 
     #[error("Dispatch channel try_send error")]
     DispatchChannelTrySend, //(TrySendError<DispatchMessage>)
@@ -84,7 +84,13 @@ impl<T> From<PoisonError<T>> for Error {
 
 impl<T> From<SendError<T>> for Error {
     fn from(_error: SendError<T>) -> Error {
-        Error::DispatchChannelSend //(error)
+        Error::ChannelSend //(error)
+    }
+}
+
+impl<T> From<TrySendError<T>> for Error {
+    fn from(_error: TrySendError<T>) -> Error {
+        Error::ChannelSend
     }
 }
 

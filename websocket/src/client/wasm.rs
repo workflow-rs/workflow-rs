@@ -388,7 +388,7 @@ impl WebSocketInterface {
         }
 
         if self.is_open.load(Ordering::SeqCst) {
-            self.event_channel.send(Message::Close).await?;
+            self.event_channel.try_send(Message::Close)?;
         }
 
         Ok(())
