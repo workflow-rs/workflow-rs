@@ -23,5 +23,5 @@ workflow-task-macros.workspace = true
 futures.workspace = true
 thiserror.workspace = true
 
-[dev-dependencies]
-tokio="*"
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+tokio.workspace = true
