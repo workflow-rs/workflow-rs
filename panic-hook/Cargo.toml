@@ -4,7 +4,7 @@ authors = ["Nick Fitzgerald <fitzgen@gmail.com>","Anton Yemelyanov <anton.yemely
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-version= "0.3.2"
+version.workspace = true
 description = """
 Based on the `console_error_panic_hook` this crate provides additional
 functionality allowing panic hook to bring up an in-browser overlay
