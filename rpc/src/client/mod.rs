@@ -114,14 +114,13 @@ where
     pub fn start(self: &Arc<Self>) -> Result<()> {
         self.clone().timeout_task();
         self.clone().receiver_task();
-
         Ok(())
     }
 
     pub async fn shutdown(self: &Arc<Self>) -> Result<()> {
         self.stop_timeout().await?;
         self.stop_receiver().await?;
-
+        self.ws.disconnect().await?;
         Ok(())
     }
 
