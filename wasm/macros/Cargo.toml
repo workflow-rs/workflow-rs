@@ -1,8 +1,11 @@
 [package]
 name = "workflow-wasm-macros"
-description = "Macros for workflow-wasm"
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 version.workspace = true
+description = "Macros for workflow-wasm"
 
 [lib]
 proc-macro = true
