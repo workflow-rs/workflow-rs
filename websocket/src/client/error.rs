@@ -1,4 +1,3 @@
-// use super::message::DispatchMessage;
 use std::sync::PoisonError;
 use thiserror::Error;
 use wasm_bindgen::JsValue;
@@ -8,22 +7,32 @@ use workflow_core::channel::*;
 pub enum Error {
     #[error("JsValue {0:?}")]
     JsValue(String),
+
     #[error("PoisonError")]
     PoisonError,
+
+    #[error("WebSocket URL must start with ws:// or wss:// - supplied argument:`{0}`")]
+    AddressSchema(String),
 
     #[error("Invalid message type")]
     InvalidMessageType,
 
     #[error("InvalidState")]
     InvalidState(u16),
+
     #[error("DataEncoding")]
     DataEncoding,
+
     #[error("DataType")]
     DataType,
+
     #[error("WebSocket connection already initialized")]
     AlreadyInitialized,
+
     #[error("WebSocket is already connected")]
+
     AlreadyConnected,
+
     #[error("WebSocket is not connected")]
     NotConnected,
 
@@ -32,8 +41,10 @@ pub enum Error {
 
     #[error("Dispatch channel ack error")]
     DispatchChannelAck,
+
     #[error("Dispatch channel send error")]
     DispatchChannelSend,
+
     #[error("Dispatch channel try_send error")]
     DispatchChannelTrySend, //(TrySendError<DispatchMessage>)
 
@@ -46,8 +57,6 @@ pub enum Error {
     #[error("Connect channel error")]
     ConnectChannel,
 
-    // #[error("Channel error")]
-    // Channel(ChannelError)
     #[error(transparent)]
     Callback(#[from] workflow_wasm::callback::CallbackError),
 
@@ -57,24 +66,12 @@ pub enum Error {
     #[cfg(not(target_arch = "wasm32"))]
     #[error("WebSocket error: {0}")]
     Tungstenite(#[from] tokio_tungstenite::tungstenite::Error),
-    // Tungstenite(#[from] tokio_tungstenite::tungstenite::Error),
+
     #[error("Unable to send ctl to receiver")]
     ReceiverCtlSend(SendError<super::message::Message>),
-    // #[error("Unable to send ctl to receiver: {0}")]
-    // ReceiverCtlSend(#[from] SendError<super::message::Message>),
+
 }
 
-// impl From<tokio_tungstenite::tungstenite::Error> for Error {
-//     fn from(error: tokio_tungstenite::tungstenite::Error) -> Error {
-//         Error::JsValue(error)
-//     }
-// }
-
-// impl Into<JsValue> for Error {
-//     fn into(self) -> JsValue {
-//         JsValue::from_str(&format!("{:?}", self))
-//     }
-// }
 
 impl From<JsValue> for Error {
     fn from(error: JsValue) -> Error {
@@ -99,15 +96,3 @@ impl From<RecvError> for Error {
         Error::ReceiveChannel
     }
 }
-
-// impl From<SendError<DispatchMessage>> for Error {
-//     fn from(_error: SendError<DispatchMessage>) -> Error {
-//         Error::DispatchChannelSend //(error)
-//     }
-// }
-
-// impl From<TrySendError<DispatchMessage>> for Error {
-//     fn from(_error: TrySendError<DispatchMessage>) -> Error {
-//         Error::DispatchChannelTrySend //(error)
-//     }
-// }
