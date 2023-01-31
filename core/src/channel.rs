@@ -102,6 +102,14 @@ impl<T> Channel<T> {
         self.receiver.is_empty()
     }
 
+    pub fn receiver_count(&self) -> usize {
+        self.sender.receiver_count()
+    }
+
+    pub fn sender_count(&self) -> usize {
+        self.sender.sender_count()
+    }
+
     pub fn iter(&self) -> ChannelIterator<T> {
         ChannelIterator::new(self.receiver.clone())
     }
