@@ -5,25 +5,25 @@ use super::{
     Handshake, Options,
 };
 use futures::{select, select_biased, FutureExt};
-use js_sys::{ArrayBuffer, Uint8Array,Function};
+use js_sys::{ArrayBuffer, Function, Uint8Array};
 use std::ops::Deref;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
 };
 use triggered::{trigger, Listener, Trigger};
-use wasm_bindgen::{JsCast,JsValue};
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{
     CloseEvent as WsCloseEvent, ErrorEvent as WsErrorEvent, MessageEvent as WsMessageEvent,
     WebSocket as WebSysWebSocket,
 };
+use workflow_core::runtime::*;
 use workflow_core::{
     channel::{oneshot, unbounded, Channel, DuplexChannel},
     task::spawn,
 };
 use workflow_log::*;
 use workflow_wasm::callback::*;
-use workflow_core::runtime::*;
 
 impl TryFrom<WsMessageEvent> for Message {
     type Error = Error;
@@ -108,8 +108,8 @@ impl WebSocketInterface {
         receiver_channel: Channel<Message>,
         options: Options,
     ) -> Result<WebSocketInterface> {
-
-        do_sanity_check()?;
+        
+        sanity_checks()?;
 
         let settings = Settings {
             url: url.to_string(),
@@ -145,7 +145,7 @@ impl WebSocketInterface {
     pub async fn connect(self: &Arc<Self>, block: bool) -> Result<Option<Listener>> {
         let (connect_trigger, connect_listener) = trigger();
 
-        self.connect_impl(connect_trigger)?;
+        self.connect_impl(Some(connect_trigger))?;
 
         match block {
             true => {
@@ -156,13 +156,13 @@ impl WebSocketInterface {
         }
     }
 
-    fn connect_impl(self: &Arc<Self>, connect_trigger: Trigger) -> Result<()> {
+    fn connect_impl(self: &Arc<Self>, connect_trigger: Option<Trigger>) -> Result<()> {
         let mut inner = self.inner.lock().unwrap();
         if inner.is_some() {
             return Err(Error::AlreadyInitialized);
         }
 
-        let connect_trigger = Arc::new(Mutex::new(Some(connect_trigger)));
+        let connect_trigger = Arc::new(Mutex::new(connect_trigger));
 
         self.reconnect.store(true, Ordering::SeqCst);
         let ws = WebSocket::new(&self.url())?;
@@ -180,7 +180,7 @@ impl WebSocketInterface {
 
         // - Error
         let onerror = callback!(move |_event: WsErrorEvent| {
-            // log_trace!("error event: {:?}", event);
+            // log_trace!("error event: {:?}", _event);
         });
         ws.set_onerror(Some(onerror.as_ref()));
 
@@ -214,7 +214,6 @@ impl WebSocketInterface {
         *inner = Some(Inner {
             ws: ws.clone(),
             callbacks,
-            // dispatcher_task,
         });
 
         let self_ = self.clone();
@@ -233,16 +232,22 @@ impl WebSocketInterface {
         Ok(())
     }
 
-    #[allow(dead_code)]
-    fn ws(self: &Arc<Self>) -> Result<WebSocket> {
-        Ok(self.inner.lock().unwrap().as_ref().unwrap().ws.clone())
+    fn ws(self: &Arc<Self>) -> Option<WebSocket> {
+        self.inner
+            .lock()
+            .expect("WebSocket:: inner lock failure")
+            .as_ref()
+            .map(|inner| inner.ws.clone())
     }
 
     #[allow(dead_code)]
     pub fn try_send(self: &Arc<Self>, message: &Message) -> Result<()> {
-        let ws = self.ws()?;
-        ws.try_send(message)?;
-        Ok(())
+        if let Some(ws) = self.ws() {
+            ws.try_send(message)?;
+            Ok(())
+        } else {
+            Err(Error::NotConnected)
+        }
     }
 
     async fn handshake(self: &Arc<Self>, ws: &WebSocket) -> Result<()> {
@@ -313,7 +318,7 @@ impl WebSocketInterface {
                             },
                             Message::Close => {
                                 self.is_open.store(false, Ordering::SeqCst);
-                                self.cleanup_ws();
+                                self.cleanup_ws(&None);
                                 self.receiver_channel.sender.send(msg).await.unwrap();
                                 break;
                             }
@@ -348,15 +353,20 @@ impl WebSocketInterface {
         }
 
         Ok(())
-        // log_trace!("signaling SHUTDOWN...");
     }
 
-    fn cleanup_ws(self: &Arc<Self>) {
-        let ws = self.ws().unwrap();
-        ws.set_onopen(None);
-        ws.set_onclose(None);
-        ws.set_onerror(None);
-        ws.set_onmessage(None);
+    fn cleanup_ws(self: &Arc<Self>, inner: &Option<Inner>) {
+        let ws = inner
+            .as_ref()
+            .map(|inner| inner.ws.clone())
+            .or_else(|| self.ws());
+
+        if let Some(ws) = ws {
+            ws.set_onopen(None);
+            ws.set_onclose(None);
+            ws.set_onerror(None);
+            ws.set_onmessage(None);
+        }
     }
 
     async fn _shutdown(self: &Arc<Self>) -> Result<()> {
@@ -370,6 +380,7 @@ impl WebSocketInterface {
 
     pub async fn close(self: &Arc<Self>) -> Result<()> {
         let mut inner = self.inner.lock().unwrap();
+        self.cleanup_ws(&inner);
         if let Some(inner_) = &mut *inner {
             inner_.ws.close()?;
             *inner = None;
@@ -377,13 +388,15 @@ impl WebSocketInterface {
             log_trace!("WebSocket error: disconnecting from non-initialized connection");
         }
 
+        if self.is_open.load(Ordering::SeqCst) {
+            self.event_channel.send(Message::Close).await?;
+        }
+
         Ok(())
     }
     async fn reconnect(self: &Arc<Self>) -> Result<()> {
-        // log_trace!("... starting reconnect");
-
         self.close().await?;
-        self.connect(false).await?;
+        self.connect_impl(None)?;
 
         Ok(())
     }
@@ -414,22 +427,20 @@ impl TrySendMessage for WebSocket {
     }
 }
 
-static mut W3C_WEBSOCKET_AVAILABLE: Option<bool> = None; 
+static mut W3C_WEBSOCKET_AVAILABLE: Option<bool> = None;
 fn w3c_websocket_available() -> Result<bool> {
     if let Some(available) = unsafe { W3C_WEBSOCKET_AVAILABLE } {
         Ok(available)
     } else {
-
-        let result = Function::new_no_args("
-            !!this.WebSocket
-        ").call0(&JsValue::undefined());
+        let result = Function::new_no_args("return (typeof this.WebSocket != 'undefined');")
+            .call0(&JsValue::undefined());
         let available = result?.as_bool().unwrap_or(false);
         unsafe { W3C_WEBSOCKET_AVAILABLE = Some(available) };
         Ok(available)
     }
 }
 
-fn do_sanity_check() -> Result<()> {
+fn sanity_checks() -> Result<()> {
     if !w3c_websocket_available()? {
         if is_node() {
             log_info!("");
