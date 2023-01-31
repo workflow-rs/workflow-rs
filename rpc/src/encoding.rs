@@ -5,7 +5,7 @@
 use std::fmt::{Debug, Display, Formatter};
 use wasm_bindgen::prelude::*;
 
-/// Helper enum representing the protocol encoding: `Borsh` or `SerdeJson`
+/// RPC protocol encoding: `Borsh` or `SerdeJson`
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum Encoding {
