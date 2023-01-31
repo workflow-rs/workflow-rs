@@ -17,3 +17,4 @@ pub mod panic;
 pub mod prelude;
 pub mod timers;
 pub mod utils;
+pub mod promise;
