@@ -27,6 +27,7 @@ pub use result::Result;
 
 use async_std::channel::{Receiver, Sender};
 use async_trait::async_trait;
+use regex::Regex;
 use std::pin::Pin;
 use std::sync::Arc;
 use workflow_core::channel::{oneshot, Channel};
@@ -74,7 +75,11 @@ pub struct WebSocket {
 impl WebSocket {
     /// Create a new WebSocket instance connecting to the given URL.
     pub fn new(url: &str, options: Options) -> Result<WebSocket> {
-        // let (receiver_tx, receiver_rx)
+        let schema = Regex::new(r"^wss?://").unwrap();
+        if !schema.is_match(url) {
+            return Err(Error::AddressSchema(url.to_string()));
+        }
+
         let receiver_channel = if let Some(cap) = options.receiver_channel_cap {
             Channel::bounded(cap)
         } else {
@@ -86,17 +91,6 @@ impl WebSocket {
         } else {
             Channel::<(Message, Ack)>::unbounded()
         };
-        // let (sender_tx, sender_tx_rx) = {
-        //     if let Some(cap) = options.sender_channel_cap {
-        //         let tx_rx = bounded::<DispatchMessage>(cap);
-        //         let tx = tx_rx.0.clone();
-        //         (tx, tx_rx)
-        //     } else {
-        //         let tx_rx = unbounded::<DispatchMessage>();
-        //         let tx = tx_rx.0.clone();
-        //         (tx, tx_rx)
-        //     }
-        // };
 
         let client = Arc::new(WebSocketInterface::new(
             url,

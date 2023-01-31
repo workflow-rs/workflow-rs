@@ -25,13 +25,14 @@ cfg-if.workspace = true
 downcast-rs.workspace = true
 futures-util.workspace = true
 futures.workspace = true
+regex.workspace = true
 thiserror.workspace = true
 triggered.workspace = true
 wasm-bindgen.workspace = true
 workflow-core.workspace = true
 workflow-log.workspace = true
-workflow-wasm.workspace = true
 workflow-task.workspace = true
+workflow-wasm.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 ahash.workspace = true
