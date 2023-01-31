@@ -23,11 +23,18 @@ cfg_if! {
             unsafe { DETECT }.unwrap_or_else(||{
 
                 let result = Function::new_no_args("
-                    let is_node_js = (typeof process !== 'undefined' && typeof require == 'function');
+                    let is_node_js = (
+                        typeof process === 'object' && 
+                        typeof process.versions === 'object' && 
+                        typeof process.versions.node !== 'undefined' && 
+                        typeof window == 'undefined'
+                    );
+
                     let is_node_webkit = false;
                     if(is_node_js) {
                         is_node_webkit = (typeof nw !== 'undefined' && typeof nw.Window !== 'undefined');
                     }
+                    
                     return {
                         is_node_js,
                         is_node_webkit
