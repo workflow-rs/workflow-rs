@@ -5,8 +5,8 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 version.workspace = true
-keywords = ["wasm","framework","storage","browser","localstorage","file","io"]
-categories = []
+keywords = ["wasm","framework","storage","browser","localstorage"]
+categories = ["wasm"]
 exclude = ["/.*", "/test"]
 description = """
 File storage access crate abstracting file I/O and browser localstorage
