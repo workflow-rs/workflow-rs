@@ -98,6 +98,9 @@ pub enum Error {
 
     #[error("{0}")]
     SerdeJsonServerError(SerdeJsonServerError),
+
+    #[error("{0}")]
+    RegexError(#[from] regex::Error),
 }
 
 impl From<ServerError> for Error {

@@ -122,7 +122,7 @@ where
     ) -> Result<()> {
         let ws_stream = accept_async(stream).await?;
         self.handler.connect(&peer).await?;
-        log_trace!("WebSocket connected: {}", peer);
+        // log_trace!("WebSocket connected: {}", peer);
 
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
         let (sink_sender, sink_receiver) = tokio::sync::mpsc::unbounded_channel::<Message>();
@@ -136,7 +136,7 @@ where
             .connection_task(&ctx, ws_sender, ws_receiver, sink_sender, sink_receiver)
             .await;
         self.handler.disconnect(ctx, result).await;
-        log_trace!("WebSocket disconnected: {}", peer);
+        // log_trace!("WebSocket disconnected: {}", peer);
 
         Ok(())
     }

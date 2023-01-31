@@ -64,8 +64,6 @@ pub trait NotificationHandler: Send + Sync + 'static {
 #[derive(Default)]
 pub struct Options<'url> {
     pub ctl_channel: Option<Channel<Ctl>>,
-    // pub notification_handler: Option<Arc<dyn NotificationHandler>>,
-    // pub interface : Option<Interface>,
     pub handshake: Option<Arc<dyn Handshake>>,
     pub url: &'url str,
 }
@@ -296,7 +294,7 @@ where
     }
 
     ///
-    /// Create new wRPC client connecting to the supplied URL
+    /// Create new wRPC client connecting to the supplied URL.
     ///
     /// This function accepts a generic denoting the underlying
     /// protocol that will be used by the client. Current protocols
@@ -318,7 +316,11 @@ where
             ..WebSocketOptions::default()
         };
 
-        let ws = Arc::new(WebSocket::new(options.url, ws_options)?);
+        let url = options.url;
+        let url = Regex::new(r"^wrpc://")?.replace(url, "ws://");
+        let url = Regex::new(r"^wrpcs://")?.replace(&url, "wss://");
+
+        let ws = Arc::new(WebSocket::new(&url, ws_options)?);
         let protocol: Arc<dyn ProtocolHandler<Ops>> = Arc::new(T::new(ws.clone(), interface));
         let inner = Arc::new(Inner::new::<T>(ws, protocol.clone(), options)?);
 
