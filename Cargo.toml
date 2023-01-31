@@ -3,6 +3,7 @@ members = [
     "core",
     "core/macros",
     "dom",
+    "features",
     "html",
     "html/macros",
     "i18n",
@@ -13,7 +14,6 @@ members = [
     "panic-hook",
     "rpc",
     "rpc/macros",
-    "rs",
     "store",
     "task",
     "task/macros",
@@ -60,6 +60,7 @@ workflow-nw = { version = "0.3.2", path = "nw" }
 workflow-panic-hook = { version = "0.3.2", path = "panic-hook" }
 workflow-rpc = { version = "0.3.2", path = "rpc" }
 workflow-rpc-macros = { version = "0.3.2", path = "rpc/macros" }
+workflow-rs = { version = "0.3.2", path = "features" }
 workflow-store = { version = "0.3.2", path = "store" }
 workflow-task = { version = "0.3.2", path = "task" }
 workflow-task-macros = { version = "0.3.2", path = "task/macros" }
