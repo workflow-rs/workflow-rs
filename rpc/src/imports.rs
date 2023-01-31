@@ -19,7 +19,7 @@ pub use std::marker::PhantomData;
 pub use std::pin::Pin;
 pub use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 pub use std::sync::{Arc, Mutex};
-pub use workflow_core::channel::{oneshot,Channel, DuplexChannel, Receiver, Sender};
+pub use workflow_core::channel::{oneshot, Channel, DuplexChannel, Receiver, Sender};
 pub use workflow_core::time::Instant;
 pub use workflow_core::trigger::Listener;
 pub use workflow_log::*;

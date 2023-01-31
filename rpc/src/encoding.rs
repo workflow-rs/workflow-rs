@@ -2,8 +2,11 @@
 //! Module containing a helper [`Encoding`] enum use in RPC server constructors.
 //!
 
-use std::{fmt::{Debug, Display, Formatter}, str::FromStr};
 use serde::Deserialize;
+use std::{
+    fmt::{Debug, Display, Formatter},
+    str::FromStr,
+};
 use wasm_bindgen::prelude::*;
 
 /// RPC protocol encoding: `Borsh` or `SerdeJson`
@@ -32,7 +35,10 @@ impl FromStr for Encoding {
             "borsh" => Ok(Encoding::Borsh),
             "json" => Ok(Encoding::SerdeJson),
             "serde-json" => Ok(Encoding::SerdeJson),
-            _ => Err(format!("invalid encoding: {} (must be: 'borsh' or 'json')", s)),
+            _ => Err(format!(
+                "invalid encoding: {} (must be: 'borsh' or 'json')",
+                s
+            )),
         }
     }
 }

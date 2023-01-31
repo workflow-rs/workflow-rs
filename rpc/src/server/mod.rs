@@ -369,7 +369,8 @@ impl RpcServer {
 
     /// Start listening for incoming RPC connections on the `addr`
     pub async fn listen(&self, addr: &str) -> WebSocketResult<()> {
-        self.ws_server.clone().listen(addr).await
+        let addr = Regex::new(r"^wrpc://")?.replace(addr, "");
+        self.ws_server.clone().listen(&addr).await
     }
 
     /// Signal the listening task to stop
