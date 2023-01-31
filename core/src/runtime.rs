@@ -65,13 +65,13 @@ cfg_if! {
         }
 
         /// Helper to test whether the application is running under
-        /// NodeJs or in a regular browser environment.
+        /// NodeJs-compatible environment.
         pub fn is_node() -> bool {
             detect().0
         }
 
         /// Helper to test whether the application is running under
-        /// Node Webkit or in a regular browser environment.
+        /// Node Webkit environment.
         pub fn is_nw() -> bool {
             detect().1
         }
@@ -85,13 +85,13 @@ cfg_if! {
     }else{
 
         /// Helper to test whether the application is running under
-        /// NodeJs or in a regular browser environment.
+        /// NodeJs-compatible environment.
         pub fn is_node() -> bool {
             false
         }
 
         /// Helper to test whether the application is running under
-        /// Node Webkit or in a regular browser environment.
+        /// Node Webkit environment.
         pub fn is_nw() -> bool {
             false
         }
@@ -105,7 +105,7 @@ cfg_if! {
 }
 
 /// Helper to test whether the application is running under
-/// solana os.
+/// Solana OS.
 pub fn is_solana() -> bool {
     cfg_if! {
         if #[cfg(target_os = "solana")]{
@@ -117,7 +117,7 @@ pub fn is_solana() -> bool {
 }
 
 /// Helper to test whether the application is running under
-/// wasm arch.
+/// WASM32 architecture.
 pub fn is_wasm() -> bool {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")]{
@@ -129,7 +129,7 @@ pub fn is_wasm() -> bool {
 }
 
 /// Helper to test whether the application is running under
-/// native runtime which is non-solana os and architecture is not wasm32
+/// native runtime which is not a Solana OS and architecture is not WASM32
 pub fn is_native() -> bool {
     cfg_if! {
         if #[cfg(any(target_os = "solana", target_arch = "wasm32"))] {
