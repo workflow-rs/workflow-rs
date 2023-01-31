@@ -4,7 +4,7 @@ cfg_if! {
     if #[cfg(target_arch = "wasm32")]{
         use js_sys::{Function, Object};
         use wasm_bindgen::prelude::*;
-        //use workflow_log::log_trace;
+
         #[wasm_bindgen]
         extern "C" {
             #[wasm_bindgen(extends = Object)]
@@ -45,11 +45,7 @@ cfg_if! {
                         if value.is_undefined() {
                             (false, false)
                         } else {
-                            //log_trace!("value: {:?}", value);
                             let info: __NodeJsNodeWebkitInfo__ = value.into();
-                            //log_trace!("info: {:?}", info);
-                            //log_trace!("is_node_js: {:?}", info.is_node_js());
-                            //log_trace!("is_node_webkit: {:?}", info.is_node_webkit());
                             (info.is_node_js(), info.is_node_webkit())
                         }
                     }

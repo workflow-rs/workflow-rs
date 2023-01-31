@@ -6,7 +6,8 @@ use wasm_bindgen::prelude::*;
 /// functions that can be called outside of the promise body.
 #[wasm_bindgen]
 pub fn defer() -> Promise {
-    Function::new_no_args(r###"
+    Function::new_no_args(
+        r###"
         let resolve, reject;
         const p = new Promise((resolve_, reject_) => {
             resolve = resolve_;
@@ -15,5 +16,9 @@ pub fn defer() -> Promise {
         p.resolve = resolve;
         p.reject = reject;
         return p;
-    "###).call0(&JsValue::undefined()).unwrap().into()
+    "###,
+    )
+    .call0(&JsValue::undefined())
+    .unwrap()
+    .into()
 }

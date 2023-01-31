@@ -15,6 +15,6 @@ pub mod init;
 pub mod options;
 pub mod panic;
 pub mod prelude;
+pub mod promise;
 pub mod timers;
 pub mod utils;
-pub mod promise;
