@@ -26,15 +26,14 @@ cfg_if! {
                     let is_node_js = (
                         typeof process === 'object' && 
                         typeof process.versions === 'object' && 
-                        typeof process.versions.node !== 'undefined' && 
-                        typeof window == 'undefined'
+                        typeof process.versions.node !== 'undefined'
                     );
 
                     let is_node_webkit = false;
                     if(is_node_js) {
                         is_node_webkit = (typeof nw !== 'undefined' && typeof nw.Window !== 'undefined');
                     }
-                    
+
                     return {
                         is_node_js,
                         is_node_webkit
