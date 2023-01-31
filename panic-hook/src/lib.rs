@@ -12,59 +12,6 @@
 //! a full-screen DIV element dumping the stack info in it.  This is useful when debugging on devices
 //! without access to console output.
 //!
-//! This crate lets you debug panics on `wasm32-unknown-unknown` by providing a
-//! panic hook that forwards panic messages to
-//! [`console.error`](https://developer.mozilla.org/en-US/docs/Web/API/Console/error).
-//!
-//! When an error is reported with `console.error`, browser devtools and node.js
-//! will typically capture a stack trace and display it with the logged error
-//! message.
-//!
-//! Without `console_error_panic_hook` you just get something like *RuntimeError: Unreachable executed*
-//!
-//! Browser:
-//! ![Console without panic hook](without_panic_hook.png)
-//!
-//! Node:
-//! ![Node console without panic hook](without_panic_hook_node.png)
-//!
-//! With this panic hook installed you will see the panic message
-//!
-//! Browser:
-//! ![Console with panic hook set up](with_panic_hook.png)
-//!
-//! Node:
-//! ![Node console with panic hook set up](with_panic_hook_node.png)
-//!
-//! ## Usage
-//!
-//! use `set_once` on some common code path to ensure that
-//! `set_hook` is called, but only the one time. Under the hood, this uses
-//! `std::sync::Once`.
-//!
-//! ```
-//! extern crate workflow_panic_hook;
-//!
-//! struct MyBigThing;
-//!
-//! impl MyBigThing {
-//!     pub fn new() -> MyBigThing {
-//!         use workflow_panic_hook::{set_once, Type};
-//!
-//!         // Browser: log in console
-//!         // set_once(Type::Console);
-//!
-//!         // Browser: log in a popup dialog(floating container on top)
-//!         // set_once(Type::Popup);
-//!
-//!         // Native log
-//!         set_once(Type::Native);
-//!
-//!         MyBigThing
-//!     }
-//! }
-//! ```
-//!
 //! ## Error.stackTraceLimit
 //!
 //! Many browsers only capture the top 10 frames of a stack trace. In rust programs this is less likely to be enough. To see more frames, you can set the non-standard value `Error.stackTraceLimit`. For more information see the [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Microsoft_Extensions/Error.stackTraceLimit) or [v8 docs](https://v8.dev/docs/stack-trace-api).

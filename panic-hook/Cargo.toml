@@ -6,10 +6,9 @@ license.workspace = true
 repository.workspace = true
 version.workspace = true
 description = """
-Based on the `console_error_panic_hook` this crate provides additional
+Based on the console_error_panic_hook this crate provides additional
 functionality allowing panic hook to bring up an in-browser overlay
-displaying the panic hook stack trace. This is useful when debugging
-on mobile devices and have no access to the console.
+displaying the panic hook stack trace.
 """
 
 [dependencies]

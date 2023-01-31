@@ -2,3 +2,4 @@
 target
 Cargo.lock
 analyzer-target
+tree
