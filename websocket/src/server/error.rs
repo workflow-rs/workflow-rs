@@ -61,12 +61,15 @@ pub enum Error {
 
     #[error("Error signaling listener shutdown: {0}")]
     Stop(String),
+
     #[error("Error signaling listener shutdown: {0}")]
     Done(String),
+
     #[error("Error waiting for listener shutdown: {0}")]
     Join(String),
-    // #[error(transparent)]
-    // ChannelSendError(#[from] tokio::sync::mpsc::error::SendError<tungstenite::Message>),
+
+    #[error(transparent)]
+    Regex(#[from] regex::Error),
 }
 
 impl From<String> for Error {
