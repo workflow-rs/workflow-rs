@@ -30,7 +30,6 @@ pub enum Error {
     AlreadyInitialized,
 
     #[error("WebSocket is already connected")]
-
     AlreadyConnected,
 
     #[error("WebSocket is not connected")]
@@ -69,9 +68,7 @@ pub enum Error {
 
     #[error("Unable to send ctl to receiver")]
     ReceiverCtlSend(SendError<super::message::Message>),
-
 }
-
 
 impl From<JsValue> for Error {
     fn from(error: JsValue) -> Error {

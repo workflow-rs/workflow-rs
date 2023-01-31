@@ -108,7 +108,6 @@ impl WebSocketInterface {
         receiver_channel: Channel<Message>,
         options: Options,
     ) -> Result<WebSocketInterface> {
-        
         sanity_checks()?;
 
         let settings = Settings {
