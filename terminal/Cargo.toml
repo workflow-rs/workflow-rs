@@ -4,11 +4,12 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-version.workspace = true
+# version.workspace = true
+version = "0.3.3"
 keywords = ["wasm","browser","terminal","cli"]
 categories = ["command-line-interface","web-programming::http-client","wasm"]
-exclude = ["/.*", "/test"]
-include = ["/resources/*.js","/resources/*.css"]
+include = ["src/**/*.rs", "Cargo.toml","README.md","/resources/*.js","/resources/*.css"]
+
 description = """
 Terminal abstraction layer over Xterm.js and termion crates for 
 creating terminal applications that function uniformly in native
