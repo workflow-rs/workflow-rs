@@ -5,10 +5,10 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 # version.workspace = true
-version = "0.3.4"
+version = "0.3.5"
 keywords = ["wasm","browser","terminal","cli"]
 categories = ["command-line-interface","web-programming::http-client","wasm"]
-include = ["src/**/*.rs", "Cargo.toml","README.md","resources/*.js","resources/*.css"]
+include = [    "src/**/*.rs","Cargo.toml","README.md","extern/resources/*.js","extern/resources/*.css"]
 
 description = """
 Terminal abstraction layer over Xterm.js and termion crates for 
