@@ -2,8 +2,8 @@
 /target
 /Cargo.lock
 .DS_Store
-extern/resources/node_modules
-extern/resources/package-lock.json
-extern/resources/package.json
+extern/node_modules
+extern/package-lock.json
+extern/package.json
+extern/build
 extern/resources/.resources
-extern/resources/build
