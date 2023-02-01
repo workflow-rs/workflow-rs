@@ -1,1 +1,1 @@
-# workflow-rpc-example
+# Example for `workflow-rpc`

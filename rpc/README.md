@@ -1,14 +1,15 @@
-## WORKFLOW-RPC (wRPC)
+## `workflow-rpc` `(wRPC)`
 
-Part of the [WORKFLOW-RS](https://github.com/workflow-rs) application framework.
+Part of the [`workflow-rs`](https://github.com/workflow-rs) application framework.
 
 ***
 [<img alt="github" src="https://img.shields.io/badge/github-workflow--rs-8da0cb?style=for-the-badge&labelColor=555555&color=8da0cb&logo=github" height="20">](https://github.com/workflow-rs/workflow-rpc)
 [<img alt="crates.io" src="https://img.shields.io/crates/v/workflow-rpc.svg?maxAge=2592000&style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/workflow-rpc)
 [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-workflow--rpc-56c2a5?maxAge=2592000&style=for-the-badge&logo=rust" height="20">](https://docs.rs/workflow-rpc)
-<img alt="license" src="https://img.shields.io/crates/l/workflow-rpc.svg?maxAge=2592000&color=6ac&style=for-the-badge&logo=opensourceinitiative&logoColor=fff" height="20">
+<img alt="license" src="https://img.shields.io/crates/l/workflow-rpc.svg?maxAge=2592000&color=6ac&style=for-the-badge&logoColor=fff" height="20">
 <img src="https://img.shields.io/badge/platform: client-native-informational?style=for-the-badge&color=50a0f0" height="20">
-<img src="https://img.shields.io/badge/platform: client-wasm32 (web) -informational?style=for-the-badge&color=50a0f0" height="20">
+<img src="https://img.shields.io/badge/platform: client-wasm32/browser -informational?style=for-the-badge&color=50a0f0" height="20">
+<img src="https://img.shields.io/badge/platform: client-wasm32/node.js -informational?style=for-the-badge&color=50a0f0" height="20">
 <img src="https://img.shields.io/badge/platform: server-native-informational?style=for-the-badge&color=50a0f0" height="20">
 
 RPC functionality built on top of the [`workflow-websocket`](https://crates.io/crates/workflow-websocket) crate offering asynchronous data relay over WebSocket connections supporting a custom high-performance `Borsh` and an extended `JSON-RPC` protocols.
@@ -79,3 +80,16 @@ Differences between JSON-RPC and JSON-wRPC:
 - JSON-RPC response returns `result` property in the response. wRPC returns `params` property in case of both response and notification.
 - JSON-RPC 2.0 specification does not support server-side (server-to-client) notification.
 - JSON-RPC 2.0 contains a `json-rpc="2.0"` property in every message. This is redundant for wRPC - wRPC handshake can be used to describe protocol version.
+
+## Node.js compatibility
+
+NOTE: `workflow-rpc` is built on top of the [`workflow-websocket`](https://crates.io/crates/workflow-websocket) crate. To use `workflow-rpc` in the Node.js environment, you need to introduce a W3C WebSocket object before loading the WASM32 library.
+You can use any Node.js module that exposes a W3C-compatible WebSocket implementation. Two of such modules are [WebSocket](https://www.npmjs.com/package/websocket) (provides a custom implementation) and [isomorphic-ws](https://www.npmjs.com/package/isomorphic-ws) (built on top of the [`ws`](https://www.npmjs.com/package/ws) WebSocket module).
+
+You can use the following shims:
+```
+// WebSocket
+globalThis.WebSocket = require('websocket').w3cwebsocket;
+// isomorphic-ws
+globalThis.WebSocket = require('isomorphic-ws');
+```

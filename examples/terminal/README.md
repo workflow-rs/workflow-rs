@@ -1,1 +1,1 @@
-# workflow-terminal-examples
+# Example for `workflow-terminal`

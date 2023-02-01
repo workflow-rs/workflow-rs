@@ -3,7 +3,7 @@
 ***
 
 [<img alt="github" src="https://img.shields.io/badge/github-workflow--rs-8da0cb?style=for-the-badge&labelColor=555555&color=8da0cb&logo=github" height="20">](https://github.com/workflow-rs/workflow-rs)
-<img alt="license" src="https://img.shields.io/crates/l/workflow-dom.svg?maxAge=2592000&color=6ac&style=for-the-badge&logo=opensourceinitiative&logoColor=fff" height="20">
+<img alt="license" src="https://img.shields.io/crates/l/workflow-dom.svg?maxAge=2592000&color=6ac&style=for-the-badge&logoColor=fff" height="20">
 
 WORKFLOW-RS project is designed to provide a unified environment for development of **async Rust applications** that are able to run in *native* platforms (desktops and servers), and via WASM32 in *Web Browsers*, in *Node.js* and in *NWJS (Node Webkit)*.
 

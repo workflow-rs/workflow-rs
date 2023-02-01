@@ -1,11 +1,11 @@
-## WORKFLOW-MACRO-TOOLS
+## `workflow-macro-tools`
 
-Part of the [WORKFLOW-RS](https://github.com/workflow-rs) application framework.
+Part of the [`workflow-rs`](https://github.com/workflow-rs) application framework.
 
 ***
 
-Functionality used by Workflow project macros.
+Functionality used by the `workflow-rs` project macros.
 
-Currently includes:
+## Features
 
-* Attributes - functionality to parse and extract macro attributes
+* Attributes - helper functionality to parse and extract macro attributes

@@ -1,6 +1,6 @@
 ## WORKFLOW-CORE-MACROS
 
-Part of the [WORKFLOW-RS](https://github.com/workflow-rs) application framework.
+Part of the [`workflow-rs`](https://github.com/workflow-rs) application framework.
 
 ***
 
