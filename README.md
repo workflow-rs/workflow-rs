@@ -1,21 +1,21 @@
-## WORKFLOW-RS
+## `workflow-rs`
 
 ***
 
 [<img alt="github" src="https://img.shields.io/badge/github-workflow--rs-8da0cb?style=for-the-badge&labelColor=555555&color=8da0cb&logo=github" height="20">](https://github.com/workflow-rs/workflow-rs)
 <img alt="license" src="https://img.shields.io/crates/l/workflow-dom.svg?maxAge=2592000&color=6ac&style=for-the-badge&logoColor=fff" height="20">
 
-WORKFLOW-RS project is designed to provide a unified environment for development of **async Rust applications** that are able to run in *native* platforms (desktops and servers), and via WASM32 in *Web Browsers*, in *Node.js* and in *NWJS (Node Webkit)*.
+WORKFLOW-RS project is designed to provide a unified environment for development of **async Rust applications** that are able to run in *native* platforms (desktops and servers), and `WASM32` environments such as *Web Browsers*, *Node.js* *NWJS (Node Webkit)* and *Electron*.
 
 
 ## Features
 
 * Platform neutral crates that are able to function in, or provide abstractions for, running on bare metal (native) as well as inside of a browser, Node.js or NWJS WASM-powered environments.
-* BPF-friendly environment that allows certain crates when building to the BPF targets.
+* BPF-friendly (Solana OS) environment that allows certain crates when building to the BPF targets.
 
 ## Crates
 
-This project is comprised of the following crates (exported as features). These crates contain a carefully curated collection of functions and crates (as well as re-exports) meant to provide a platform-neutral environment framework for Rust applications.
+This project is comprised of the following crates. These crates contain a carefully curated collection of functions and re-exports meant to provide a platform-neutral environment framework for Rust applications.
 
 
 * [`workflow-dom`](https://github.com/workflow-rs/workflow-rs/tree/master/dom) - DOM utilities offering JavaScript injection functionality at runtime, allowing you to load JavaScript into the browser environment at Runtime using Rust.  (This allows you to embed JavaScript modules directly into your Rust crates.
@@ -36,4 +36,12 @@ Crates that are a part of this project but are currently outside of this reposit
 * [`workflow-async-trait`](https://github.com/workflow-rs/workflow-async-trait) Customized `async_trait` macro that exposes `#[async_trait(?Send)]` as a `#[async_trait_no_send]`.
 
 
+## Examples
+
+Examples for `workflow-websocket`, `workflow-rpc` and `workflow-terminal` are available in the [/examples](https://github.com/workflow-rs/workflow-rs/tree/master/examples) folder.
+
 *** 
+
+## Contributing
+
+This project is under heavy development. Any contributions, ideas or feedback would be very welcome. 
