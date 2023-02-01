@@ -1,6 +1,7 @@
 //! [`enum@Error`] declarations for the [`server`](super) module
 
 use thiserror::Error;
+pub use workflow_websocket::server::Error as WebSocketError;
 
 #[derive(Debug, Error)]
 pub enum Error {
