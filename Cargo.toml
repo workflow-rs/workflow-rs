@@ -84,13 +84,13 @@ convert_case = "0.5.0"
 clap = { version = "4.1.4", features = ["derive","cargo"] }
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
-futures = "0.3.65"
-futures-util = { version = "0.3.65", default-features = false, features = ["sink", "std"] }
+futures = "0.3.25"
+futures-util = { version = "0.3.25", default-features = false, features = ["sink", "std"] }
 getrandom = {version = "0.2.8", features=["js"]}
 hexplay = "0.2.1"
 home = "0.5.3"
 instant = { version ="0.1.12", features = ['wasm-bindgen'] }
-js-sys = "0.3.60"
+js-sys = "0.3.61"
 lazy_static = "1.4.0"
 log = "0.4.17"
 manual_future = "0.1.1"
