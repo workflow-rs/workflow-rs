@@ -36,8 +36,7 @@ impl FromStr for Encoding {
             "json" => Ok(Encoding::SerdeJson),
             "serde-json" => Ok(Encoding::SerdeJson),
             _ => Err(format!(
-                "invalid encoding: {} (must be: 'borsh' or 'json')",
-                s
+                "invalid encoding: {s} (must be: 'borsh' or 'json')",
             )),
         }
     }
