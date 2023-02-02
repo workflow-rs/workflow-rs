@@ -76,7 +76,8 @@ async-channel = "1.8.0"
 async-std = { version = "1.12.0", features = ['attributes'] }
 async-trait = "0.1.64"
 base64 = "0.21.0"
-borsh = { version = "0.10.0", features = ["rc"] }
+# borsh = { version = "0.10.0", features = ["rc"] }
+borsh = { version = "0.9.1", features = ["rc"] }
 bs58 = "0.4.0"
 cfg-if = "1.0.0"
 console = "0.15.5"
@@ -120,3 +121,4 @@ tungstenite = { version = "0.18.0", default-features = false }
 wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.34"
 web-sys = "0.3.61"
+workflow-async-trait = "0.1.68"

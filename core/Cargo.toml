@@ -32,6 +32,7 @@ rand.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 triggered.workspace = true
+workflow-async-trait.workspace = true
 
 [target.'cfg(not(any(target_os = "solana", target_arch = "wasm32")))'.dependencies]
 tokio.workspace = true
