@@ -60,12 +60,6 @@ cfg_if! {
         /// restriction in WASM builds.
         #[cfg(not(target_arch = "wasm32"))]
         pub use workflow_async_trait::async_trait_with_send as workflow_async_trait;
-
-        // /// async_trait that supports (?Send) restriction as a parameter
-        // pub use workflow_async_trait::async_trait;
-        // /// async_trait that imposes `Send` restriction
-        // pub use workflow_async_trait::async_trait_with_send;
-        // /// async_trait that ignores `Send` restriction
-        // pub use workflow_async_trait::async_trait_without_send;
+        
     }
 }
