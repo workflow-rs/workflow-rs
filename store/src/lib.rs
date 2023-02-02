@@ -28,7 +28,7 @@ cfg_if! {
         use async_std::path::PathBuf;
         use async_std::fs;
     } else {
-        use base64::{encode, decode};
+        use base64::{Engine as _, engine::general_purpose};
     }
 }
 
@@ -135,12 +135,12 @@ impl Store {
             pub async fn read(&self) -> Result<Vec<u8>> {
                 let filename = self.filename();
                 let v = local_storage().get_item(&filename)?.unwrap();
-                Ok(decode(v)?)
+                Ok(general_purpose::STANDARD.decode(v)?)
             }
 
             pub async fn write(&self, data: &[u8]) -> Result<()> {
                 let filename = self.filename();
-                let v = encode(data);
+                let v = general_purpose::STANDARD.encode(data);
                 local_storage().set_item(&filename, &v)?;
                 Ok(())
             }
