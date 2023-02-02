@@ -60,6 +60,6 @@ cfg_if! {
         /// restriction in WASM builds.
         #[cfg(not(target_arch = "wasm32"))]
         pub use workflow_async_trait::async_trait_with_send as workflow_async_trait;
-        
+
     }
 }
