@@ -25,6 +25,8 @@ pub enum Error {
     DomError(#[from] workflow_dom::error::Error),
     #[error("Channel error: {0}")]
     ChannelError(String),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 }
 
 impl From<String> for Error {
@@ -87,6 +89,7 @@ impl From<Error> for String {
             | Error::ChannelError(s) => s,
             Error::TrySendError(s) => s,
             Error::RecvError => err.to_string(),
+            Error::Io(err) => err.to_string(),
             Error::DomError(err) => err.to_string(),
         }
     }

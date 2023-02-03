@@ -19,6 +19,9 @@ creating terminal applications that function uniformly in native
 [lib]
 crate-type = ["cdylib", "lib"]
 
+[features]
+termion = ["dep:termion"]
+
 [dependencies]
 async-std.workspace = true
 async-trait.workspace = true
@@ -36,7 +39,8 @@ workflow-log.workspace = true
 workflow-wasm.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-termion.workspace = true
+crossterm.workspace = true
+termion = { workspace = true, optional = true }
 
 [dependencies.web-sys]
 workspace = true

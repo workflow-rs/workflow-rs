@@ -82,6 +82,7 @@ bs58 = "0.4.0"
 cfg-if = "1.0.0"
 console = "0.15.5"
 convert_case = "0.6.0"
+crossterm = "0.26.0"
 clap = { version = "4.1.4", features = ["derive","cargo"] }
 downcast = "0.11.0"
 downcast-rs = "1.2.0"

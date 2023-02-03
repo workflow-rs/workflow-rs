@@ -27,10 +27,12 @@ cfg_if! {
         use crate::terminal::xterm::Xterm as Interface;
         pub use xterm::{Theme, ThemeOption};
 
-
-    } else {
+    } else if #[cfg(termion)] {
         mod termion;
         use crate::terminal::termion::Termion as Interface;
+    } else {
+        mod crossterm;
+        use crate::terminal::crossterm::Crossterm as Interface;
     }
 }
 
