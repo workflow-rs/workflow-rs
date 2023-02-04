@@ -65,12 +65,13 @@ impl Crossterm {
             let event = event::read()?;
             // println!("{:?}",event);
             if let Event::Key(key) = event {
-                if matches!(key.kind,KeyEventKind::Press|KeyEventKind::Repeat) {
+                if matches!(key.kind, KeyEventKind::Press | KeyEventKind::Repeat) {
                     let key = match key.code {
                         KeyCode::Char(c) => {
                             if key.modifiers & KeyModifiers::ALT == KeyModifiers::ALT {
                                 Key::Alt(c)
-                            } else if key.modifiers & KeyModifiers::CONTROL == KeyModifiers::CONTROL {
+                            } else if key.modifiers & KeyModifiers::CONTROL == KeyModifiers::CONTROL
+                            {
                                 Key::Ctrl(c)
                             } else {
                                 Key::Char(c)
