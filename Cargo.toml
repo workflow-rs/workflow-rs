@@ -64,7 +64,7 @@ workflow-rs = { version = "0.3.7", path = "features" }
 workflow-store = { version = "0.3.7", path = "store" }
 workflow-task = { version = "0.3.7", path = "task" }
 workflow-task-macros = { version = "0.3.7", path = "task/macros" }
-workflow-terminal = { version = "0.3.8", path = "terminal" }
+workflow-terminal = { version = "0.3.9", path = "terminal" }
 workflow-wasm = { version = "0.3.7", path = "wasm" }
 workflow-wasm-macros = { version = "0.3.7", path = "wasm/macros" }
 workflow-websocket = { version = "0.3.7", path = "websocket" }
