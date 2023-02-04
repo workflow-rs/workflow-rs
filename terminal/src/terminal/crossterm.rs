@@ -2,6 +2,7 @@ use crate::keys::Key;
 use crate::terminal::Options;
 use crate::terminal::Terminal;
 use crate::Result;
+use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
 use crossterm::{
     event::{self, Event, KeyCode},
@@ -62,34 +63,37 @@ impl Crossterm {
     pub async fn intake(&self, terminate: &Arc<AtomicBool>) -> Result<()> {
         loop {
             let event = event::read()?;
+            // println!("{:?}",event);
             if let Event::Key(key) = event {
-                let key = match key.code {
-                    KeyCode::Char(c) => {
-                        if key.modifiers & KeyModifiers::ALT == KeyModifiers::ALT {
-                            Key::Alt(c)
-                        } else if key.modifiers & KeyModifiers::CONTROL == KeyModifiers::CONTROL {
-                            Key::Ctrl(c)
-                        } else {
-                            Key::Char(c)
+                if matches!(key.kind,KeyEventKind::Press|KeyEventKind::Repeat) {
+                    let key = match key.code {
+                        KeyCode::Char(c) => {
+                            if key.modifiers & KeyModifiers::ALT == KeyModifiers::ALT {
+                                Key::Alt(c)
+                            } else if key.modifiers & KeyModifiers::CONTROL == KeyModifiers::CONTROL {
+                                Key::Ctrl(c)
+                            } else {
+                                Key::Char(c)
+                            }
                         }
-                    }
-                    KeyCode::Enter => Key::Enter,
-                    KeyCode::Esc => Key::Esc,
-                    KeyCode::Left => Key::ArrowLeft,
-                    KeyCode::Right => Key::ArrowRight,
-                    KeyCode::Up => Key::ArrowUp,
-                    KeyCode::Down => Key::ArrowDown,
-                    KeyCode::Backspace => Key::Backspace,
-                    _ => {
-                        continue;
-                    }
-                };
+                        KeyCode::Enter => Key::Enter,
+                        KeyCode::Esc => Key::Esc,
+                        KeyCode::Left => Key::ArrowLeft,
+                        KeyCode::Right => Key::ArrowRight,
+                        KeyCode::Up => Key::ArrowUp,
+                        KeyCode::Down => Key::ArrowDown,
+                        KeyCode::Backspace => Key::Backspace,
+                        _ => {
+                            continue;
+                        }
+                    };
 
-                self.terminal().ingest(key, "".to_string()).await?;
-                self.flush();
+                    self.terminal().ingest(key, "".to_string()).await?;
+                    self.flush();
 
-                if terminate.load(Ordering::SeqCst) {
-                    break;
+                    if terminate.load(Ordering::SeqCst) {
+                        break;
+                    }
                 }
             }
         }
