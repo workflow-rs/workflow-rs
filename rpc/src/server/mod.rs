@@ -224,7 +224,6 @@ impl Messenger {
     pub fn sink(&self) -> &WebSocketSink {
         &self.sink
     }
-
 }
 
 /// WebSocket processor in charge of managing
