@@ -10,6 +10,9 @@ pub fn init_workflow(workflow: &JsValue, modules: &JsValue) -> std::result::Resu
     js_sys::Reflect::set(&js_sys::global(), &"$workflow$".into(), &global)?;
     js_sys::Reflect::set(&global, &"workflow".into(), workflow)?;
     js_sys::Reflect::set(&global, &"modules".into(), modules)?;
+
+    workflow_log::set_colors_enabled(true);
+
     Ok(())
 }
 
