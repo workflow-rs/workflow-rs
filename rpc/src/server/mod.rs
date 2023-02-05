@@ -169,11 +169,15 @@ impl Messenger {
         }
     }
 
+    /// Close the WebSocket connection. The server checks for the connection channel
+    /// for the dispatch of this message and relays it to the client as well as
+    /// proactively terminates the connection.
     pub fn close(&self) -> Result<()> {
         self.sink.send(Message::Close(None))?;
         Ok(())
     }
 
+    /// Post notification message to the WebSocket connection
     pub async fn notify<Ops, Msg>(&self, op: Ops, msg: Msg) -> Result<()>
     where
         Ops: OpsT,
@@ -192,6 +196,35 @@ impl Messenger {
 
         Ok(())
     }
+
+    /// Serialize message into a [`tungstenite::Message`] for direct websocket delivery.
+    /// Once serialized it can be relayed using [`send_raw_message()`].
+    pub fn serialize_notification_message<Ops, Msg>(
+        &self,
+        op: Ops,
+        msg: Msg,
+    ) -> Result<tungstenite::Message>
+    where
+        Ops: OpsT,
+        Msg: BorshSerialize + BorshDeserialize + Serialize + Send + Sync + 'static,
+    {
+        match self.encoding {
+            Encoding::Borsh => Ok(protocol::create_notify_message_with_borsh(op, msg)?),
+            Encoding::SerdeJson => Ok(protocol::create_notify_message_with_serde_json(op, msg)?),
+        }
+    }
+
+    /// Send a raw [`tungstenite::Message`] via the websocket tokio channel.
+    pub fn send_raw_message(&self, msg: tungstenite::Message) -> Result<()> {
+        self.sink.send(msg)?;
+        Ok(())
+    }
+
+    /// Provides direct access to the underlying tokio channel.
+    pub fn sink(&self) -> &WebSocketSink {
+        &self.sink
+    }
+
 }
 
 /// WebSocket processor in charge of managing
