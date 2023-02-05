@@ -25,7 +25,6 @@ use cfg_if::cfg_if;
 extern crate self as workflow_core;
 
 pub mod enums;
-pub mod lookup;
 pub mod runtime;
 pub mod utils;
 
@@ -41,6 +40,8 @@ cfg_if! {
         pub mod task;
         // channel re-exports and shims
         pub mod channel;
+        // async object lookup combinator
+        pub mod lookup;
 
         /// trigger re-exports and shims
         pub mod trigger;

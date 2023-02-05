@@ -25,7 +25,7 @@ solana=["dep:solana-program"]
 
 [dependencies]
 cfg-if.workspace = true
-solana-program = {version = "1.14.13", optional = true}
+solana-program = { version = "1.15.0", optional = true }
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 console.workspace = true
@@ -36,5 +36,5 @@ log.workspace = true
 termcolor.workspace = true
 wasm-bindgen.workspace = true
 
-#[target.'cfg(target_os = "solana")'.dependencies]
-# solana-program = {path = "../solana/sdk/program"}
+# [target.'cfg(target_os = "solana")'.dependencies]
+# solana-program = "0.15.0"

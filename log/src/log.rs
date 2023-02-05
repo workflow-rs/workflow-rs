@@ -224,6 +224,7 @@ pub mod impls {
     use super::*;
 
     #[inline(always)]
+    #[allow(unused_variables)]
     pub fn error_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Error) {
             #[cfg(all(not(target_os = "solana"), feature = "sink"))]
@@ -245,6 +246,7 @@ pub mod impls {
     }
 
     #[inline(always)]
+    #[allow(unused_variables)]
     pub fn warn_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Warn) {
             #[cfg(all(not(target_os = "solana"), feature = "sink"))]
@@ -266,6 +268,7 @@ pub mod impls {
     }
 
     #[inline(always)]
+    #[allow(unused_variables)]
     pub fn info_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Info) {
             #[cfg(all(not(target_os = "solana"), feature = "sink"))]
@@ -287,6 +290,7 @@ pub mod impls {
     }
 
     #[inline(always)]
+    #[allow(unused_variables)]
     pub fn debug_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Debug) {
             #[cfg(all(not(target_os = "solana"), feature = "sink"))]
@@ -308,6 +312,7 @@ pub mod impls {
     }
 
     #[inline(always)]
+    #[allow(unused_variables)]
     pub fn trace_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Trace) {
             #[cfg(all(not(target_os = "solana"), feature = "sink"))]
@@ -389,11 +394,11 @@ macro_rules! log_trace {
     )
 }
 
-use log_debug;
-use log_error;
-use log_info;
-use log_trace;
-use log_warning;
+pub use log_debug;
+pub use log_error;
+pub use log_info;
+pub use log_trace;
+pub use log_warning;
 
 /// Prints (using [`log_trace`]) a data slice
 /// formatted as a hex data dump.
