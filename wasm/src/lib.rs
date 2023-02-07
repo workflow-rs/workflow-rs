@@ -10,6 +10,7 @@
 //! This crate provides utilities for WASM32 environment
 //!
 
+pub mod abi;
 pub mod callback;
 pub mod init;
 pub mod options;
