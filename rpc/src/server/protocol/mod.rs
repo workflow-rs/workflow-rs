@@ -4,15 +4,16 @@
 //! RPC method and notification dispatch.
 //!
 
-mod borsh;
-mod serde_json;
+pub mod borsh;
+pub mod serde_json;
 
 use crate::imports::*;
+pub use crate::server::result::Result;
 use crate::server::Interface;
 use workflow_websocket::server::{Message, Result as WebSocketResult, WebSocketSink};
 
-pub use self::borsh::*;
-pub use self::serde_json::*;
+pub use self::borsh::BorshProtocol;
+pub use self::serde_json::SerdeJsonProtocol;
 
 /// Base trait for [`BorshProtocol`] and [`SerdeJsonProtocol`] protocol handlers
 #[async_trait]
@@ -35,4 +36,12 @@ where
         message: Message,
         sink: &WebSocketSink,
     ) -> WebSocketResult<()>;
+
+    fn serialize_notification_message<Msg>(
+        &self,
+        op: Ops,
+        msg: Msg,
+    ) -> Result<tungstenite::Message>
+    where
+        Msg: BorshSerialize + Serialize + Send + Sync + 'static;
 }

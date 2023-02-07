@@ -8,7 +8,7 @@
 pub mod error;
 mod interface;
 pub mod prelude;
-mod protocol;
+pub mod protocol;
 pub mod result;
 
 pub use super::error::*;
@@ -186,11 +186,13 @@ impl Messenger {
         match self.encoding {
             Encoding::Borsh => {
                 self.sink
-                    .send(protocol::create_notify_message_with_borsh(op, msg)?)?;
+                    .send(protocol::borsh::create_serialized_notification_message(
+                        op, msg,
+                    )?)?;
             }
             Encoding::SerdeJson => {
                 self.sink
-                    .send(protocol::create_notify_message_with_serde_json(op, msg)?)?;
+                    .send(protocol::serde_json::create_serialized_notification_message(op, msg)?)?;
             }
         }
 
@@ -206,11 +208,15 @@ impl Messenger {
     ) -> Result<tungstenite::Message>
     where
         Ops: OpsT,
-        Msg: BorshSerialize + BorshDeserialize + Serialize + Send + Sync + 'static,
+        Msg: MsgT,
     {
         match self.encoding {
-            Encoding::Borsh => Ok(protocol::create_notify_message_with_borsh(op, msg)?),
-            Encoding::SerdeJson => Ok(protocol::create_notify_message_with_serde_json(op, msg)?),
+            Encoding::Borsh => Ok(protocol::borsh::create_serialized_notification_message(
+                op, msg,
+            )?),
+            Encoding::SerdeJson => {
+                Ok(protocol::serde_json::create_serialized_notification_message(op, msg)?)
+            }
         }
     }
 
@@ -310,6 +316,39 @@ where
     }
 }
 
+// trait Encoder<Ops> : DowncastSync + Sized + Send + Sync {
+//     fn serialize_notification_message<Msg>(
+//         &self,
+//         op: Ops,
+//         msg: Msg,
+//     ) -> Result<tungstenite::Message>
+//     where
+//         Msg: BorshSerialize + BorshDeserialize + Serialize + Send + Sync + 'static;
+// }
+
+// // impl_downcast!(sync Encoder<Ops> where Ops: Send + Sync + 'static);
+
+// impl<ServerContext, ConnectionContext, Protocol, Ops> Encoder<Ops>
+//     for RpcWebSocketHandler<ServerContext, ConnectionContext, Protocol, Ops>
+// where
+//     Ops: OpsT,
+//     ServerContext: Clone + Send + Sync + 'static,
+//     ConnectionContext: Clone + Send + Sync + 'static,
+//     Protocol: ProtocolHandler<ServerContext, ConnectionContext, Ops> + Send + Sync + 'static,
+// {
+//     fn serialize_notification_message<Msg>(
+//         &self,
+//         op: Ops,
+//         msg: Msg,
+//     ) -> Result<tungstenite::Message>
+//     where
+//         Ops: OpsT,
+//         Msg: BorshSerialize + BorshDeserialize + Serialize + Send + Sync + 'static
+//     {
+//         self.protocol.serialize_notification_message(op, msg)
+//     }
+// }
+
 /// [`RpcServer`] - a server-side object that listens
 /// for incoming websocket connections and delegates interaction
 /// with them to the supplied interfaces: [`RpcHandler`] (for RPC server
@@ -349,6 +388,9 @@ impl RpcServer {
             Protocol,
             Ops,
         >::new(rpc_handler, interface));
+
+        // let encoder = ws_handler.clone().downcast_arc::<Encoder<Ops>>();
+
         let ws_server = WebSocketServer::new(ws_handler);
         RpcServer { ws_server }
     }
@@ -398,6 +440,8 @@ impl RpcServer {
             >(rpc_handler, interface),
         }
     }
+
+    // pub fn
 
     /// Start listening for incoming RPC connections on the `addr`
     pub async fn listen(&self, addr: &str) -> WebSocketResult<()> {

@@ -109,9 +109,16 @@ where
         }
         Ok(())
     }
+
+    fn serialize_notification_message<Msg>(&self, op: Ops, msg: Msg) -> Result<tungstenite::Message>
+    where
+        Msg: Serialize + Send + Sync + 'static,
+    {
+        create_serialized_notification_message(op, msg)
+    }
 }
 
-pub fn create_notify_message_with_serde_json<Ops, Msg>(op: Ops, msg: Msg) -> Result<Message>
+pub fn create_serialized_notification_message<Ops, Msg>(op: Ops, msg: Msg) -> Result<Message>
 where
     Ops: OpsT,
     Msg: Serialize + Send + Sync + 'static,
