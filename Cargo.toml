@@ -58,7 +58,7 @@ workflow-macro-tools = { version = "0.3.10", path = "macro-tools" }
 workflow-node = { version = "0.3.10", path = "node" }
 workflow-nw = { version = "0.3.10", path = "nw" }
 workflow-panic-hook = { version = "0.3.10", path = "panic-hook" }
-workflow-rpc = { version = "0.3.10", path = "rpc" }
+workflow-rpc = { version = "0.3.11", path = "rpc" }
 workflow-rpc-macros = { version = "0.3.10", path = "rpc/macros" }
 workflow-rs = { version = "0.3.10", path = "features" }
 workflow-store = { version = "0.3.10", path = "store" }

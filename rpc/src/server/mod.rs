@@ -230,6 +230,11 @@ impl Messenger {
     pub fn sink(&self) -> &WebSocketSink {
         &self.sink
     }
+
+    /// Get encoding of the current messenger.
+    pub fn encoding(&self) -> Encoding {
+        self.encoding
+    }
 }
 
 /// WebSocket processor in charge of managing
