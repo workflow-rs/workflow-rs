@@ -11,11 +11,16 @@
 //!
 
 pub mod abi;
-pub mod callback;
-pub mod init;
-pub mod options;
-pub mod panic;
-pub mod prelude;
-pub mod promise;
-pub mod timers;
-pub mod utils;
+
+cfg_if::cfg_if! {
+    if #[cfg(not(target_os = "solana"))] {
+        pub mod callback;
+        pub mod init;
+        pub mod options;
+        pub mod panic;
+        pub mod prelude;
+        pub mod promise;
+        pub mod timers;
+        pub mod utils;
+    }
+}

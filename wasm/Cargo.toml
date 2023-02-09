@@ -16,6 +16,7 @@ WASM utilities for in-browser use (timers, callbacks, etc.)
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
+cfg-if.workspace = true
 js-sys.workspace = true
 thiserror.workspace = true
 wasm-bindgen-futures.workspace = true
