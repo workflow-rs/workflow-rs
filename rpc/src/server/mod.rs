@@ -200,7 +200,7 @@ impl Messenger {
     }
 
     /// Serialize message into a [`tungstenite::Message`] for direct websocket delivery.
-    /// Once serialized it can be relayed using [`send_raw_message()`].
+    /// Once serialized it can be relayed using [`Messenger::send_raw_message()`].
     pub fn serialize_notification_message<Ops, Msg>(
         &self,
         op: Ops,

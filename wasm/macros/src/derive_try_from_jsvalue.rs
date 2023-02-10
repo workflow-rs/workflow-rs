@@ -2,7 +2,7 @@
 This module is based on [`wasm-bindgen-derive`](https://crates.io/crates/wasm-bindgen-derive) crate
 with customizations to use `std::result::Result` (otherwise it may conflict with a local `Result` declaration).
 
-This is a specialized module exporting a derive macro [`TryFromJsValue`]
+This is a specialized module exporting a derive macro `TryFromJsValue`
 that serves as a basis for workarounds for some lapses of functionality in
 [`wasm-bindgen`](https://crates.io/crates/wasm-bindgen).
 
@@ -107,6 +107,7 @@ pub fn foo(val: &MyTypeArray) -> Result<MyTypeArray, Error> {
 }
 ```
 */
+#![warn(missing_docs, unused_qualifications)]
 
 extern crate alloc;
 

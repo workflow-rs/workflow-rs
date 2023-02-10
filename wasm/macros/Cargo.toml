@@ -15,3 +15,5 @@ syn = {version = "1.0.99", features = ["full", "parsing", "extra-traits"]}
 quote = "1.0.21"
 proc-macro2="1.0.43"
 proc-macro-error = { version = "1", default-features = false }
+js-sys.workspace = true
+wasm-bindgen.workspace = true
