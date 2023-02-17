@@ -17,6 +17,7 @@ data exchange that function uniformly in web and desktop applications.
 
 [lib]
 crate-type = ["cdylib", "lib"]
+doctest = false
 
 [dependencies]
 async-std.workspace = true

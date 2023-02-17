@@ -14,6 +14,7 @@ i18n layer for `workflow-rs` framework
 
 [lib]
 crate-type = ["cdylib", "lib"]
+doctest = false
 
 [dependencies]
 ritehash.workspace = true

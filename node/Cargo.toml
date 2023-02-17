@@ -11,6 +11,9 @@ description = """
 Utilities and curated re-exports for Node.js APIs.
 """
 
+[lib]
+doctest = false
+
 [dependencies]
 futures.workspace = true
 js-sys.workspace = true

@@ -9,6 +9,7 @@ description = "Macros for workflow-wasm"
 
 [lib]
 proc-macro = true
+doctest = false
 
 [dependencies]
 syn = {version = "1.0.99", features = ["full", "parsing", "extra-traits"]}

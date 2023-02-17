@@ -14,6 +14,7 @@ File storage access crate abstracting file I/O and browser localstorage
 
 [lib]
 crate-type = ["cdylib", "lib"]
+doctest = false
 
 [dependencies]
 base64.workspace = true

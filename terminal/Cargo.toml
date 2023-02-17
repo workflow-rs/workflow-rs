@@ -18,6 +18,7 @@ creating terminal applications that function uniformly in native
 
 [lib]
 crate-type = ["cdylib", "lib"]
+doctest = false
 
 [features]
 termion = ["dep:termion"]

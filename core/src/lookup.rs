@@ -37,7 +37,7 @@ pub type SenderList<V, E> = Vec<Sender<LookupResult<V, E>>>;
 /// resolve all pending futures for the specifc key.
 ///
 /// Example:
-/// ```rust ignore
+/// ```no_run
 /// ...
 /// pub lookup_handler : LookupHandler<Pubkey,Arc<Data>,Error>
 /// ...

@@ -14,6 +14,7 @@ Log macros & utilities abstracting native & in-browser logging interfaces
 
 [lib]
 crate-type = ["cdylib", "lib"]
+doctest = false
 
 [features]
 default = ["sink"]

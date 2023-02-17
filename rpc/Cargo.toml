@@ -19,6 +19,7 @@ generics for RPC method declarations.
 
 [lib]
 crate-type = ["cdylib", "lib"]
+doctest = false
 
 [dependencies]
 ahash.workspace = true

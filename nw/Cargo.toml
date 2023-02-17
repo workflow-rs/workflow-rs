@@ -11,6 +11,9 @@ description = """
 Framework layer for NWJS desktop application development.
 """
 
+[lib]
+doctest = false
+
 [dependencies]
 js-sys.workspace = true
 nw-sys.workspace = true

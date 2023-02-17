@@ -47,7 +47,7 @@ where
     /// macro to declare the method as follows:
     ///
     ///
-    /// ```rust ignore
+    /// ```no_run
     /// interface.method(MyOps::Method, method!(
     ///   | connection_ctx: ConnectionCtx,
     ///     server_ctx: ServerContext,
@@ -81,7 +81,7 @@ where
     /// macro to declare the notification as follows:
     ///
     ///
-    /// ```rust ignore
+    /// ```
     /// interface.notification(MyOps::Notify, notification!(
     ///   | connection_ctx: ConnectionCtx,
     ///     server_ctx: ServerContext,
