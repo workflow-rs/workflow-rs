@@ -23,8 +23,9 @@ application meant to run natively on bare metal and in the browser. This crate i
 and testing wasm32 browser-compatible platform-neutral applications and crates.
 
 This functionality is achieved by creating a terminal struct `Terminal` that simultaneously wraps:
-* [Termion](https://crates.io/crates/termion) - for Native
+* [Crossterm](https://crates.io/crates/crossterm) - for Native
 * [XtermJS](https://github.com/xtermjs/xterm.js) - for Web (Browser)
+* [Termion](https://crates.io/crates/termion) (for Native) is also available as a crate feature, but Termion does not support Windows OS.
 
 This crate only depends on a minimal set of other crates and has no external (JavaScript) dependencies.
 XtermJS es6 modules are injected directly into DOM during the Terminal initialization phase. This allows the terminal to be loaded using any http server without any additional configuration. (due to browser restrictions, WASM can not be loaded into a static page)
