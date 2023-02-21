@@ -2,9 +2,11 @@
 //! 64-bit random identifier struct [`Id`] that renders its value as a base58 string
 //!
 
-use serde::{Deserialize, Serialize};
+use borsh::{BorshDeserialize, BorshSerialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{fmt, str::FromStr};
 use thiserror::Error;
+use wasm_bindgen::JsValue;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -12,13 +14,17 @@ pub enum Error {
     Base58Decode(#[from] bs58::decode::Error),
     #[error("Invalid buffer size")]
     InvalidBufferSize,
+    #[error("Unabel to decode id: JsValue must be a string")]
+    JsValueNotString,
 }
 
 /// 64-bit identifier that renders the value as a base58 string.
 /// This struct is useful for general-purpose random id generation
 /// for use with DOM elements and for other similar purposes.
 #[repr(transparent)]
-#[derive(Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Default, Eq, Hash, Ord, PartialEq, PartialOrd, BorshSerialize, BorshDeserialize,
+)]
 pub struct Id(pub(crate) [u8; 8]);
 
 impl Id {
@@ -85,5 +91,38 @@ impl TryFrom<&str> for Id {
     type Error = Error;
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Id::from_str(s)
+    }
+}
+
+impl TryFrom<JsValue> for Id {
+    type Error = Error;
+    fn try_from(value: JsValue) -> Result<Self, Self::Error> {
+        let value_str = value.as_string().ok_or(Error::JsValueNotString)?;
+        FromStr::from_str(&value_str)
+    }
+}
+
+impl From<Id> for JsValue {
+    fn from(id: Id) -> Self {
+        JsValue::from_str(&id.to_string())
+    }
+}
+
+impl Serialize for Id {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for Id {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = <std::string::String as Deserialize>::deserialize(deserializer)?;
+        FromStr::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
