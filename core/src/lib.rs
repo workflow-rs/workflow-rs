@@ -21,7 +21,6 @@
 //! - dynamic async_trait attribute macros
 //!
 
-use cfg_if::cfg_if;
 extern crate self as workflow_core;
 
 pub mod enums;
@@ -32,7 +31,7 @@ pub mod utils;
 // pub use workflow_core_macros::Describe;
 pub use workflow_core_macros::seal;
 
-cfg_if! {
+cfg_if::cfg_if! {
     if #[cfg(not(target_os = "solana"))] {
         // Generic 8-byte identifier
         pub mod id;
@@ -50,6 +49,9 @@ cfg_if! {
             //! re-export of [`instant`] crate supporting native and WASM implementations
             pub use instant::*;
         }
+
+        /// re-export of [`cfg_if`] crate
+        pub use ::cfg_if::cfg_if;
 
         /// dynamically configured re-export of async_trait as workflow_async_trait
         /// that imposes `Send` restriction in native (non-WASM) and removes `Send`
