@@ -21,6 +21,8 @@ cfg_if::cfg_if! {
         pub mod prelude;
         pub mod promise;
         pub mod timers;
+        pub mod object;
+        pub mod sendable;
         pub mod utils;
     }
 }

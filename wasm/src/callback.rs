@@ -3,6 +3,7 @@
 //! Rust closures as JavaScript callbacks.
 //!
 
+use js_sys::Function;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex, MutexGuard},
@@ -70,6 +71,7 @@ pub type CallbackClosureWithoutResult<T> = dyn FnMut(T);
 /// with a [`CallbackId`] identifier.
 pub trait AsCallback: Send + Sync {
     fn get_id(&self) -> CallbackId;
+    fn get_fn(&self) -> &Function;
 }
 
 ///
@@ -97,6 +99,11 @@ where
 {
     fn get_id(&self) -> CallbackId {
         self.id
+    }
+
+    fn get_fn(&self) -> &Function {
+        let f: &Function = self.as_ref();
+        f //.clone()
     }
 }
 
