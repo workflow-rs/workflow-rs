@@ -17,9 +17,10 @@ crate-type = ["cdylib", "lib"]
 doctest = false
 
 [dependencies]
-workflow-core-macros.workspace = true
-cfg-if.workspace = true
 borsh.workspace = true
+cfg-if.workspace = true
+wasm-bindgen.workspace = true
+workflow-core-macros.workspace = true
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 # getrandom = {version = "^0.2", features=["js"]}
@@ -41,4 +42,3 @@ tokio.workspace = true
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 js-sys.workspace = true
 wasm-bindgen-futures.workspace = true
-wasm-bindgen.workspace = true
