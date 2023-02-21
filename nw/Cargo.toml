@@ -14,11 +14,19 @@ Framework layer for NWJS desktop application development.
 [lib]
 doctest = false
 
+[features]
+serde-json-ipc = []
+
 [dependencies]
+ahash.workspace = true
+borsh.workspace = true
 js-sys.workspace = true
 nw-sys.workspace = true
+serde-wasm-bindgen.workspace = true
+serde.workspace = true
 thiserror.workspace = true
 wasm-bindgen.workspace = true
+workflow-core.workspace = true
 workflow-dom.workspace = true
 workflow-log.workspace = true
 workflow-wasm.workspace = true
@@ -27,6 +35,7 @@ workflow-wasm.workspace = true
 workspace = true
 features = [
     'console',
+    'BroadcastChannel',
     'CustomEvent',
     'Document',
     'HtmlElement',
@@ -35,6 +44,7 @@ features = [
     'MediaStream',
     'MediaStreamConstraints',
     'MediaStreamTrack',
+    'MessageEvent',
     'MouseEvent',
     'Navigator',
     'Window',

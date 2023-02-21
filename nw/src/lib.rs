@@ -106,6 +106,7 @@
 //! ```
 pub mod application;
 pub mod error;
+pub mod ipc;
 pub mod media;
 pub mod menu;
 pub mod prelude;
