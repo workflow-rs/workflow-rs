@@ -75,7 +75,6 @@ where
     {
         let payload = req.try_to_vec().map_err(|_| Error::BorshSerialize)?;
 
-        // let id = u64::from_le_bytes(rand::random::<[u8; 8]>());
         let id = Id::generate();
         let (sender, receiver) = oneshot();
 
@@ -88,7 +87,6 @@ where
                     Ok(())
                 }))),
             );
-            drop(pending);
         }
 
         // TODO - post error into sender if ws.send() fails
@@ -108,8 +106,6 @@ where
         Msg: BorshSerialize + Send + Sync + 'static,
     {
         let payload = payload.try_to_vec().map_err(|_| Error::BorshSerialize)?;
-        // let op: u32 = op.into();
-        // let id = None;
         self.ws
             .post(to_ws_msg(
                 BorshReqHeader::<Ops, Id>::new(None, op),

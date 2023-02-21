@@ -47,7 +47,6 @@ where
     Id: IdT,
 {
     fn decode(&self, server_message: &str) -> Result<MessageInfo<Ops, Id>> {
-        // println!("incoming: server_message={server_message}");
 
         let msg: SerdeJsonServerMessage<Ops, Id> = serde_json::from_str(server_message)?;
 
@@ -66,23 +65,11 @@ where
         }
     }
 
-    // pub async fn request(&self, op: Value, data: Value) -> Result<Receiver<Result<Value>>> {
-
     pub async fn request<Req, Resp>(&self, op: Ops, req: Req) -> Result<Resp>
     where
         Req: MsgT,
         Resp: MsgT,
     {
-        // let op: Value = serde_json::to_value(op)?;
-
-        // let op = serde_json::to_value(op)?;
-        // let payload = serde_json::to_value(req)?;
-        // let receiver = protocol.request(op, payload).await?;
-        // let resp = receiver.recv().await??;
-        // <Resp as Deserialize>::deserialize(resp)
-        //     .map_err(|e| Error::SerdeDeserialize(e.to_string()))
-
-        // let id = u64::from_le_bytes(rand::random::<[u8; 8]>());
         let id = Id::generate();
         let (sender, receiver) = oneshot();
 
@@ -95,7 +82,6 @@ where
                     Ok(())
                 }))),
             );
-            drop(pending);
         }
 
         let payload = serde_json::to_value(req)?;
@@ -110,16 +96,12 @@ where
             .map_err(|e| Error::SerdeDeserialize(e.to_string()))?;
         Ok(resp)
 
-        // Ok(receiver)
     }
 
-    // pub async fn notify(&self, op: Value, data: Value) -> Result<()> {
     pub async fn notify<Msg>(&self, op: Ops, data: Msg) -> Result<()>
     where
         Msg: Serialize + Send + Sync + 'static,
     {
-        // let id = None;
-        // let op: Value = serde_json::to_value(op)?;
         let payload = serde_json::to_value(data)?;
         let client_message = SerdeJsonClientMessage::<Ops, Id>::new(None, op, payload);
         let json = serde_json::to_string(&client_message)?;
@@ -174,7 +156,7 @@ where
                 if let Some(pending) = self.pending.lock().unwrap().remove(&id) {
                     (pending.callback)(result, Some(&pending.timestamp.elapsed()))
                 } else {
-                    Err(Error::ResponseHandler(format!("{id:?}"))) // ("rpc callback with id {} not found", msg.id);
+                    Err(Error::ResponseHandler(format!("{id:?}")))
                 }
             } else if let Some(method) = method {
                 match result {
@@ -198,12 +180,4 @@ where
 
         Ok(())
     }
-
-    // async fn handle_notification(&self, msg: WebSocketMessage) -> Result<()> {
-    //     Ok(())
-    // }
-
-    // async fn notification(&self,op: Self::Op, data : Self::Data) -> Result<()> {
-    //     Ok(())
-    // }
 }
