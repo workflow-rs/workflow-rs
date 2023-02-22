@@ -3,7 +3,7 @@
 //!
 
 use crate::utils::*;
-use js_sys::{Object, Reflect};
+use js_sys::{Array, Object, Reflect};
 use wasm_bindgen::prelude::*;
 
 /// Custom trait implementing simplified property accessor functions for [`Object`].
@@ -18,6 +18,8 @@ pub trait ObjectTrait {
     fn get_f64(&self, prop: &str) -> Result<f64, JsValue>;
     /// get `Boolean` property as `bool`
     fn get_bool(&self, prop: &str) -> Result<bool, JsValue>;
+    /// get property as `Vec<JsValue>`
+    fn get_vec(&self, prop: &str) -> Result<Vec<JsValue>, JsValue>;
     /// get `Uint8Array` property as `Vec<u8>`
     fn get_vec_u8(&self, prop: &str) -> Result<Vec<u8>, JsValue>;
     /// set `JsValue` property
@@ -43,6 +45,12 @@ impl ObjectTrait for Object {
 
     fn get_bool(&self, prop: &str) -> Result<bool, JsValue> {
         try_get_bool_from_prop(self, prop)
+    }
+
+    fn get_vec(&self, prop: &str) -> Result<Vec<JsValue>, JsValue> {
+        let v = Reflect::get(self, &JsValue::from(prop))?;
+        let array = v.dyn_into::<Array>()?;
+        Ok(array.to_vec())
     }
 
     fn get_vec_u8(&self, prop: &str) -> Result<Vec<u8>, JsValue> {
