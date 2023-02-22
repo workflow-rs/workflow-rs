@@ -47,7 +47,6 @@ where
     Id: IdT,
 {
     fn decode(&self, server_message: &str) -> Result<MessageInfo<Ops, Id>> {
-
         let msg: SerdeJsonServerMessage<Ops, Id> = serde_json::from_str(server_message)?;
 
         if let Some(error) = msg.error {
@@ -95,7 +94,6 @@ where
         let resp = <Resp as Deserialize>::deserialize(data)
             .map_err(|e| Error::SerdeDeserialize(e.to_string()))?;
         Ok(resp)
-
     }
 
     pub async fn notify<Msg>(&self, op: Ops, data: Msg) -> Result<()>
