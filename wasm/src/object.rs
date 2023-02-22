@@ -24,10 +24,12 @@ pub trait ObjectTrait {
     fn get_vec_u8(&self, prop: &str) -> Result<Vec<u8>, JsValue>;
     /// set `JsValue` property
     fn set(&self, prop: &str, value: &JsValue) -> Result<bool, JsValue>;
-    /// delete property
-    fn delete(&self, prop: &str) -> Result<bool, JsValue>;
+    /// set `Array` property from `&[JsValue]`
+    fn set_vec(&self, prop: &str, values: &[JsValue]) -> Result<bool, JsValue>;
     /// set multiple `JsValue` properties
     fn set_properties(&self, props: &[(&str, &JsValue)]) -> Result<(), JsValue>;
+    /// delete property
+    fn delete(&self, prop: &str) -> Result<bool, JsValue>;
 }
 
 impl ObjectTrait for Object {
@@ -65,8 +67,12 @@ impl ObjectTrait for Object {
         Reflect::set(self, &JsValue::from(prop), value)
     }
 
-    fn delete(&self, prop: &str) -> Result<bool, JsValue> {
-        Reflect::delete_property(self, &JsValue::from(prop))
+    fn set_vec(&self, prop: &str, values: &[JsValue]) -> Result<bool, JsValue> {
+        let array = js_sys::Array::new();
+        for v in values {
+            array.push(v);
+        }
+        Reflect::set(self, &JsValue::from(prop), &array)
     }
 
     fn set_properties(&self, props: &[(&str, &JsValue)]) -> Result<(), JsValue> {
@@ -74,5 +80,9 @@ impl ObjectTrait for Object {
             Reflect::set(self, &JsValue::from(*k), v)?;
         }
         Ok(())
+    }
+
+    fn delete(&self, prop: &str) -> Result<bool, JsValue> {
+        Reflect::delete_property(self, &JsValue::from(prop))
     }
 }
