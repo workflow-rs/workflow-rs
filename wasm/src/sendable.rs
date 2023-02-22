@@ -5,8 +5,8 @@
 use std::ops::Deref;
 
 pub mod wasm {
-    pub use wasm_bindgen::JsValue;
     pub use js_sys::Function;
+    pub use wasm_bindgen::JsValue;
 }
 
 /// NewType wrapper for JsValue implementing `Send` trait
