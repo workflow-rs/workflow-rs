@@ -1,6 +1,6 @@
 //!
 //! Cross-window IPC (message posting and function execution across multiple NWJS windows)
-//! 
+//!
 
 use crate::error::Error;
 use crate::result::Result;
@@ -11,7 +11,7 @@ use nw_sys::prelude::*;
 pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_wasm_bindgen::*;
 use wasm_bindgen::prelude::*;
-use web_sys::{BroadcastChannel,MessageEvent, Window};
+use web_sys::{BroadcastChannel, MessageEvent, Window};
 use workflow_core::channel::{oneshot, Channel};
 use workflow_core::id::Id;
 use workflow_log::*;
@@ -112,9 +112,8 @@ type PendingMap<Id, F> = Arc<Mutex<AHashMap<Id, Pending<F>>>>;
 pub type ResponseFn =
     Arc<Box<(dyn Fn(std::result::Result<JsValueSend, JsValueSend>) -> Result<()> + Sync + Send)>>;
 
-pub type __RequestFn<Req,Resp> = dyn Fn(Req) -> Result<Resp> + Sync + Send;
-pub type RequestFn<Req,Resp> =
-    Arc<Box<(dyn Fn(Req) -> Result<Resp> + Sync + Send)>>;
+pub type __RequestFn<Req, Resp> = dyn Fn(Req) -> Result<Resp> + Sync + Send;
+pub type RequestFn<Req, Resp> = Arc<Box<(dyn Fn(Req) -> Result<Resp> + Sync + Send)>>;
 
 pub struct RouterInner {
     id: Id,
@@ -146,14 +145,14 @@ impl Router {
         let global = Object::try_from(&global_jsv).ok_or(Error::GlobalObjectNotFound)?;
 
         let map = Object::try_from(&global.get("__workflow_ipc")?)
-        .cloned()
-        .unwrap_or_else(|| {
-            let map = Object::new();
-            global
-                .set("__workflow_ipc", &map)
-                .expect("Unable to register `__workflow_ipc` property");
-            map
-        });
+            .cloned()
+            .unwrap_or_else(|| {
+                let map = Object::new();
+                global
+                    .set("__workflow_ipc", &map)
+                    .expect("Unable to register `__workflow_ipc` property");
+                map
+            });
 
         map.set(id.to_string().as_str(), &window)
             .expect("Unable to assign to `__workflow_ipc` property");
@@ -719,7 +718,7 @@ impl SerdeIpc {
 
 pub struct BroadcastIpc {
     router: Router,
-    handler : Arc<Mutex<Option<Arc<dyn HandlerTrait>>>>,
+    handler: Arc<Mutex<Option<Arc<dyn HandlerTrait>>>>,
 }
 
 impl Drop for BroadcastIpc {
@@ -731,7 +730,10 @@ impl Drop for BroadcastIpc {
 impl BroadcastIpc {
     pub fn try_new(meta: JsValue) -> Result<Self> {
         let router = router::acquire(meta)?;
-        let ipc = BroadcastIpc { router, handler : Arc::new(Mutex::new(None)) };
+        let ipc = BroadcastIpc {
+            router,
+            handler: Arc::new(Mutex::new(None)),
+        };
         Ok(ipc)
     }
 
@@ -750,9 +752,10 @@ impl BroadcastIpc {
         self.router.call_with_broadcast_serde(target, req).await
     }
 
-    pub fn handler<Req, Resp>(&self, handler : RequestFn<Req,Resp>) -> Result<()> 
-    where Req : DeserializeOwned + Send + Sync + 'static, 
-    Resp : Serialize + Send + Sync + 'static,
+    pub fn handler<Req, Resp>(&self, handler: RequestFn<Req, Resp>) -> Result<()>
+    where
+        Req: DeserializeOwned + Send + Sync + 'static,
+        Resp: Serialize + Send + Sync + 'static,
     {
         let handler_: Arc<dyn HandlerTrait> = Arc::new(SerdeHandler { handler });
         self.handler.lock().unwrap().replace(handler_);
@@ -764,20 +767,22 @@ pub trait HandlerTrait {
     fn handle(&self, req: JsValue) -> Result<JsValue>;
 }
 
-pub struct SerdeHandler<Req,Resp> 
-where Req: DeserializeOwned,
-Resp: Serialize {
-    handler : RequestFn<Req,Resp>
+pub struct SerdeHandler<Req, Resp>
+where
+    Req: DeserializeOwned,
+    Resp: Serialize,
+{
+    handler: RequestFn<Req, Resp>,
 }
 
-impl<Req,Resp> HandlerTrait for SerdeHandler<Req,Resp> 
-where Req: DeserializeOwned,
-Resp: Serialize,
+impl<Req, Resp> HandlerTrait for SerdeHandler<Req, Resp>
+where
+    Req: DeserializeOwned,
+    Resp: Serialize,
 {
     fn handle(&self, req: JsValue) -> Result<JsValue> {
-        let req : Req = from_value(req)?;
+        let req: Req = from_value(req)?;
         let resp = (self.handler)(req)?;
         Ok(to_value(&resp)?)
     }
-
 }
