@@ -53,7 +53,7 @@ impl TryFrom<JsValue> for Ctl {
         let origin: Id = from_value(origin)?;
         match kind.as_str() {
             "attach" => {
-                let meta = Reflect::get(&value, &JsValue::from("meta"))?;
+                let meta = object.get("meta")?;
                 Ok(Ctl::Attach { origin, meta })
             }
             "detach" => Ok(Ctl::Detach { origin }),
@@ -112,17 +112,19 @@ type PendingMap<Id, F> = Arc<Mutex<AHashMap<Id, Pending<F>>>>;
 pub type ResponseFn =
     Arc<Box<(dyn Fn(std::result::Result<JsValueSend, JsValueSend>) -> Result<()> + Sync + Send)>>;
 
+pub type __RequestFn<Req,Resp> = dyn Fn(Req) -> Result<Resp> + Sync + Send;
+pub type RequestFn<Req,Resp> =
+    Arc<Box<(dyn Fn(Req) -> Result<Resp> + Sync + Send)>>;
+
 pub struct RouterInner {
     id: Id,
     map: Object,
     broadcast_ctl_channel: BroadcastChannel,
     ctl_channel: Channel<Ctl>,
-    #[allow(dead_code)]
     broadcast_msg_channel: BroadcastChannel,
     msg_channel: Channel<Message>,
     callbacks: CallbackMap,
     handlers: CallbackMap,
-    // pending : HashMap<Id,
     pending: PendingMap<Id, ResponseFn>,
 }
 
@@ -134,8 +136,6 @@ const IPC_PROXY_CALL_WITH_SERDE: &str = "__ipc_call_serde";
 #[derive(Clone)]
 pub struct Router {
     inner: Arc<RouterInner>,
-    // proxy_post: &'static str,
-    // proxy_call: &'static str,
 }
 
 impl Router {
@@ -145,24 +145,18 @@ impl Router {
         let global_jsv = js_sys::Reflect::get(&window, &JsValue::from("global"))?;
         let global = Object::try_from(&global_jsv).ok_or(Error::GlobalObjectNotFound)?;
 
-        let map = Object::try_from(&js_sys::Reflect::get(
-            global,
-            &JsValue::from("__workflow_ipc"),
-        )?)
+        let map = Object::try_from(&global.get("__workflow_ipc")?)
         .cloned()
         .unwrap_or_else(|| {
             let map = Object::new();
             global
                 .set("__workflow_ipc", &map)
                 .expect("Unable to register `__workflow_ipc` property");
-            // js_sys::Reflect::set(global, &JsValue::from÷("__workflow_ipc"), &map)
             map
         });
 
         map.set(id.to_string().as_str(), &window)
             .expect("Unable to assign to `__workflow_ipc` property");
-        // js_sys::Reflect::set(&map, &JsValue::from(id.to_string()), &window)
-        //     .expect("Unable to assign to `__workflow_ipc` property");
 
         let broadcast_ctl_channel = BroadcastChannel::new("__workflow_ipc_ctl")?;
         let broadcast_msg_channel = BroadcastChannel::new("__workflow_ipc_msg")?;
@@ -179,18 +173,8 @@ impl Router {
             pending: PendingMap::default(),
         };
 
-        // let proxy_post = "__ipc_post";
-        // let proxy_call = "__ipc_call";
-        // let (proxy_post,proxy_call) = match encoding {
-        //     Encoding::Borsh => ("__ipc_borsh_post","__ipc_borsh_call"),
-        //     Encoding::Serde => ("__ipc_serde_post","__ipc_borsh_call"),
-        // };
-
         let router = Router {
             inner: Arc::new(inner),
-            // encoding,
-            // proxy_post,
-            // proxy_call,
         };
 
         let router_ = router.clone();
@@ -274,12 +258,9 @@ impl Router {
         Ok(handler.dyn_into::<Function>()?)
     }
 
-    // pub fn serde_serialize(&self, data: &T) -> Result<JsValue> where T : Serialize {
-
-    // }
-
     pub fn detach(&self) {
         self.inner.broadcast_ctl_channel.set_onmessage(None);
+        self.inner.broadcast_msg_channel.set_onmessage(None);
 
         if let Err(err) = self.broadcast_ctl(Ctl::Detach { origin: self.id() }) {
             log_error!("IPC router is unable to broadcast detach ctl: {}", err);
@@ -293,6 +274,7 @@ impl Router {
         }
 
         let window = web_sys::window().unwrap();
+
         [
             IPC_PROXY_CALL_WITH_BORSH,
             IPC_PROXY_CALL_WITH_SERDE,
@@ -616,27 +598,37 @@ impl Drop for Router {
     }
 }
 
-pub enum IpcMode {
-    /// relay IPC messages or calls using function invocation (supports same instance windows only)
-    Direct,
-    /// post IPC messages using transfers (supports same instance windows only)
-    Transfer,
-    /// post IPC messages using broadcast channels (supports posting between different instances)
-    Broadcast,
-}
-
 pub mod router {
     use super::*;
-    pub static mut ROUTER: Option<Arc<Router>> = None;
-    pub fn acquire(meta: JsValue) -> Result<Arc<Router>> {
-        let router = Arc::new(Router::try_new(meta)?);
-        Ok(router)
+    pub static mut ROUTER: Option<(usize, Router)> = None;
+    pub fn acquire(meta: JsValue) -> Result<Router> {
+        if let Some(r) = unsafe { ROUTER.as_mut() } {
+            r.0 += 1;
+            Ok(r.1.clone())
+        } else {
+            let router = Router::try_new(meta)?;
+            unsafe { ROUTER = Some((0, router.clone())) };
+            Ok(router)
+        }
     }
-    pub fn release() {}
+    pub fn release() {
+        if let Some(r) = unsafe { ROUTER.as_mut() } {
+            r.0 -= 1;
+            if r.0 == 0 {
+                unsafe { ROUTER = None };
+            }
+        }
+    }
 }
 
 pub struct BorshIpc {
-    router: Arc<Router>,
+    router: Router,
+}
+
+impl Drop for BorshIpc {
+    fn drop(&mut self) {
+        router::release();
+    }
 }
 
 impl BorshIpc {
@@ -646,26 +638,29 @@ impl BorshIpc {
         Ok(ipc)
     }
 
-    pub fn post<Msg>(&self, id: &Id, msg: &Msg) -> Result<()>
+    pub async fn post<Msg>(&self, id: &Id, msg: &Msg) -> Result<()>
     where
         Msg: BorshSerialize,
     {
-        // match self.mode {
-        //     IpcMode::Direct => {
-        self.router.post_with_proxy_borsh(id, msg)?;
-        //     },
-        //     IpcMode::Transfer => {
-        //         self.router.post_with_transfer(id, msg)?;
-        //     },
-        //     IpcMode::Broadcast => {
-        //         todo!();
-        //         // self.router.post_with_broadcast(id, msg);
-        //     },
-        // }
-        Ok(())
+        self.router.post_with_proxy_borsh(id, msg)
     }
 
-    pub fn call<Req, Resp>(&self, id: &Id, req: &Req) -> Result<Resp>
+    pub fn try_post<Msg>(&self, id: &Id, msg: &Msg) -> Result<()>
+    where
+        Msg: BorshSerialize,
+    {
+        self.router.post_with_proxy_borsh(id, msg)
+    }
+
+    pub async fn call<Req, Resp>(&self, id: &Id, req: &Req) -> Result<Resp>
+    where
+        Req: BorshSerialize,
+        Resp: BorshDeserialize,
+    {
+        self.router.call_with_proxy_borsh(id, req)
+    }
+
+    pub fn try_call<Req, Resp>(&self, id: &Id, req: &Req) -> Result<Resp>
     where
         Req: BorshSerialize,
         Resp: BorshDeserialize,
@@ -675,7 +670,13 @@ impl BorshIpc {
 }
 
 pub struct SerdeIpc {
-    router: Arc<Router>,
+    router: Router,
+}
+
+impl Drop for SerdeIpc {
+    fn drop(&mut self) {
+        router::release();
+    }
 }
 
 impl SerdeIpc {
@@ -685,28 +686,29 @@ impl SerdeIpc {
         Ok(ipc)
     }
 
-    pub fn post<Msg>(&self, id: &Id, msg: &Msg) -> Result<()>
+    pub async fn post<Msg>(&self, id: &Id, msg: &Msg) -> Result<()>
     where
         Msg: Serialize,
     {
-        // match self.mode {
-        // IpcMode::Direct => {
-        self.router.post_with_proxy_serde(id, msg)?;
-        // },
-        // IpcMode::Transfer => {
-        //     todo!();
-        //     // self.router.post_with_transfer(id, msg);
-        // },
-        // IpcMode::Broadcast => {
-        //     todo!();
-        //     // self.router.post_with_broadcast(id, msg);
-        // },
-        // }
-
-        Ok(())
+        self.router.post_with_proxy_serde(id, msg)
     }
 
-    pub fn call<Req, Resp>(&self, id: &Id, req: &Req) -> Result<Resp>
+    pub fn try_post<Msg>(&self, id: &Id, msg: &Msg) -> Result<()>
+    where
+        Msg: Serialize,
+    {
+        self.router.post_with_proxy_serde(id, msg)
+    }
+
+    pub async fn call<Req, Resp>(&self, id: &Id, req: &Req) -> Result<Resp>
+    where
+        Req: Serialize,
+        Resp: DeserializeOwned,
+    {
+        self.router.call_with_proxy_serde(id, req)
+    }
+
+    pub fn try_call<Req, Resp>(&self, id: &Id, req: &Req) -> Result<Resp>
     where
         Req: Serialize,
         Resp: DeserializeOwned,
@@ -716,13 +718,20 @@ impl SerdeIpc {
 }
 
 pub struct BroadcastIpc {
-    router: Arc<Router>,
+    router: Router,
+    handler : Arc<Mutex<Option<Arc<dyn HandlerTrait>>>>,
+}
+
+impl Drop for BroadcastIpc {
+    fn drop(&mut self) {
+        router::release();
+    }
 }
 
 impl BroadcastIpc {
     pub fn try_new(meta: JsValue) -> Result<Self> {
         let router = router::acquire(meta)?;
-        let ipc = BroadcastIpc { router };
+        let ipc = BroadcastIpc { router, handler : Arc::new(Mutex::new(None)) };
         Ok(ipc)
     }
 
@@ -740,4 +749,35 @@ impl BroadcastIpc {
     {
         self.router.call_with_broadcast_serde(target, req).await
     }
+
+    pub fn handler<Req, Resp>(&self, handler : RequestFn<Req,Resp>) -> Result<()> 
+    where Req : DeserializeOwned + Send + Sync + 'static, 
+    Resp : Serialize + Send + Sync + 'static,
+    {
+        let handler_: Arc<dyn HandlerTrait> = Arc::new(SerdeHandler { handler });
+        self.handler.lock().unwrap().replace(handler_);
+        Ok(())
+    }
+}
+
+pub trait HandlerTrait {
+    fn handle(&self, req: JsValue) -> Result<JsValue>;
+}
+
+pub struct SerdeHandler<Req,Resp> 
+where Req: DeserializeOwned,
+Resp: Serialize {
+    handler : RequestFn<Req,Resp>
+}
+
+impl<Req,Resp> HandlerTrait for SerdeHandler<Req,Resp> 
+where Req: DeserializeOwned,
+Resp: Serialize,
+{
+    fn handle(&self, req: JsValue) -> Result<JsValue> {
+        let req : Req = from_value(req)?;
+        let resp = (self.handler)(req)?;
+        Ok(to_value(&resp)?)
+    }
+
 }
