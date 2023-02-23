@@ -2,51 +2,57 @@
 //! Send trait implementation for JsValue
 //!
 
-use std::ops::Deref;
+use workflow_wasm_macros::build_sendable_types;
+// use std::ops::Deref;
 
-pub mod wasm {
-    pub use js_sys::Function;
+pub mod non_sendable {
+    pub use js_sys::*;
     pub use wasm_bindgen::JsValue;
 }
 
+build_sendable_types!([
+    // JsValue,
+    Object, Function,
+]);
+
+pub struct Sendable<T>(pub T);
+unsafe impl<T> Send for Sendable<T> {}
+
+impl<T> std::ops::Deref for Sendable<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+impl<T> AsRef<T> for Sendable<T> {
+    fn as_ref(&self) -> &T {
+        &self.0
+    }
+}
+
+// impl<T> From<Sendable<T>> for T {
+//     fn from(value: Sendable<T>) -> Self {
+//         value.0
+//     }
+// }
+
 /// NewType wrapper for JsValue implementing `Send` trait
-pub struct JsValue(pub wasm::JsValue);
+pub struct JsValue(pub non_sendable::JsValue);
 unsafe impl Send for JsValue {}
 
-impl Deref for JsValue {
-    type Target = wasm::JsValue;
-    fn deref(&self) -> &wasm::JsValue {
+impl std::ops::Deref for JsValue {
+    type Target = non_sendable::JsValue;
+    fn deref(&self) -> &non_sendable::JsValue {
         &self.0
     }
 }
-impl AsRef<wasm::JsValue> for JsValue {
-    fn as_ref(&self) -> &wasm::JsValue {
+impl AsRef<non_sendable::JsValue> for JsValue {
+    fn as_ref(&self) -> &non_sendable::JsValue {
         &self.0
     }
 }
-impl From<JsValue> for wasm::JsValue {
+impl From<JsValue> for non_sendable::JsValue {
     fn from(value: JsValue) -> Self {
-        value.0
-    }
-}
-
-/// NewType wrapper for Function implementing `Send` trait
-pub struct Function(pub wasm::Function);
-unsafe impl Send for Function {}
-
-impl Deref for Function {
-    type Target = wasm::Function;
-    fn deref(&self) -> &wasm::Function {
-        &self.0
-    }
-}
-impl AsRef<wasm::Function> for Function {
-    fn as_ref(&self) -> &wasm::Function {
-        &self.0
-    }
-}
-impl From<Function> for wasm::Function {
-    fn from(value: Function) -> Self {
         value.0
     }
 }
