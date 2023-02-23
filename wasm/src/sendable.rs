@@ -10,7 +10,6 @@
 /// across "thread boundaries". In reality, this allows JS primitives to be
 /// used safely within a single-threaded WASM async environment (browser).
 ///
-
 #[derive(Clone)]
 pub struct Sendable<T>(pub T)
 where
