@@ -111,7 +111,7 @@ type PendingMap<Id, F> = Arc<Mutex<AHashMap<Id, Pending<F>>>>;
 
 pub type ResponseFn = Arc<
     Box<
-        (dyn Fn(std::result::Result<sendable::JsValue, sendable::JsValue>) -> Result<()>
+        (dyn Fn(std::result::Result<Sendable<JsValue>, Sendable<JsValue>>) -> Result<()>
              + Sync
              + Send),
     >,
@@ -379,7 +379,7 @@ impl Router {
                 let id: Id = data.get("id")?.try_into()?;
                 if let Some(pending) = self.inner.pending.lock().unwrap().remove(&id) {
                     let payload = data.get("payload")?;
-                    if let Err(err) = (pending.callback)(Ok(sendable::JsValue(payload))) {
+                    if let Err(err) = (pending.callback)(Ok(Sendable(payload))) {
                         log_error!("Error while handling IPC response: {}", err);
                     }
                 }
