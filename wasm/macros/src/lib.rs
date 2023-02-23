@@ -6,7 +6,6 @@ mod callback;
 use callback::Callback;
 mod derive_try_from_jsvalue;
 mod ref_from_abi;
-mod sendable;
 
 #[proc_macro]
 #[proc_macro_error]
@@ -26,10 +25,4 @@ pub fn derive_try_from_jsvalue(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn ref_from_abi(input: TokenStream) -> TokenStream {
     ref_from_abi::ref_from_abi(input)
-}
-
-#[proc_macro]
-#[proc_macro_error]
-pub fn build_sendable_types(input: TokenStream) -> TokenStream {
-    sendable::build_sendable_types(input)
 }

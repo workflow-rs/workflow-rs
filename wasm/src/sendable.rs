@@ -1,58 +1,55 @@
 //!
-//! Send trait implementation for JsValue
+//! Sendable NewType for automatic Send marker tagging of JS primitives.
 //!
 
-// use workflow_wasm_macros::build_sendable_types;
-// use std::ops::Deref;
+///
+/// Senable wrapper for JS primitives.
+///
+/// Wrapping any JS primitive (JsValue, JsString, JsArray, JsObject, etc.) in
+/// Sendable<T> wraps the value with the Send marker, making it transportable
+/// across "thread boundaries". In reality, this allows JS primitives to be
+/// used safely within a single-threaded WASM async environment (browser).
+///
 
-// pub mod non_sendable {
-//     pub use js_sys::*;
-//     pub use wasm_bindgen::JsValue;
-// }
+#[derive(Clone)]
+pub struct Sendable<T>(pub T)
+where
+    T: Clone;
+unsafe impl<T> Send for Sendable<T> where T: Clone {}
 
-// build_sendable_types!([
-//     // JsValue,
-//     Object, Function,
-// ]);
-
-pub struct Sendable<T>(pub T);
-unsafe impl<T> Send for Sendable<T> {}
-
-impl<T> std::ops::Deref for Sendable<T> {
+impl<T> std::ops::Deref for Sendable<T>
+where
+    T: Clone,
+{
     type Target = T;
     fn deref(&self) -> &T {
         &self.0
     }
 }
-impl<T> AsRef<T> for Sendable<T> {
+
+impl<T> AsRef<T> for Sendable<T>
+where
+    T: Clone,
+{
     fn as_ref(&self) -> &T {
         &self.0
     }
 }
 
-// impl<T: ?Sized> From<Sendable<T>> for T {
-//     fn from(value: Sendable<T>) -> Self {
-//         value.0
-//     }
-// }
+impl<T> AsMut<T> for Sendable<T>
+where
+    T: Clone,
+{
+    fn as_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
 
-// NewType wrapper for JsValue implementing `Send` trait
-// pub struct JsValue(pub non_sendable::JsValue);
-// unsafe impl Send for JsValue {}
-
-// impl std::ops::Deref for JsValue {
-//     type Target = non_sendable::JsValue;
-//     fn deref(&self) -> &non_sendable::JsValue {
-//         &self.0
-//     }
-// }
-// impl AsRef<non_sendable::JsValue> for JsValue {
-//     fn as_ref(&self) -> &non_sendable::JsValue {
-//         &self.0
-//     }
-// }
-// impl From<JsValue> for non_sendable::JsValue {
-//     fn from(value: JsValue) -> Self {
-//         value.0
-//     }
-// }
+impl<T> From<T> for Sendable<T>
+where
+    T: Clone,
+{
+    fn from(t: T) -> Self {
+        Sendable(t)
+    }
+}

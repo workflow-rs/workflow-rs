@@ -379,7 +379,7 @@ impl Router {
                 let id: Id = data.get("id")?.try_into()?;
                 if let Some(pending) = self.inner.pending.lock().unwrap().remove(&id) {
                     let payload = data.get("payload")?;
-                    if let Err(err) = (pending.callback)(Ok(Sendable(payload))) {
+                    if let Err(err) = (pending.callback)(Ok(payload.into())) {
                         log_error!("Error while handling IPC response: {}", err);
                     }
                 }
