@@ -2,7 +2,7 @@
 
 use wasm_bindgen::convert::RefFromWasmAbi;
 use wasm_bindgen::prelude::*;
-pub use workflow_wasm_macros::{ref_from_abi, ref_from_abi_option, TryFromJsValue};
+pub use workflow_wasm_macros::{ref_from_abi, ref_from_abi_as_option, TryFromJsValue};
 
 /// Create a reference to a Rust object from a WASM ABI.
 /// # Safety
@@ -76,4 +76,22 @@ where
     ))? as u32;
     let instance_ref = unsafe { T::ref_from_abi(ptr_u32) };
     Ok(instance_ref.clone())
+}
+
+
+/// Create a reference to a Rust object from a WASM ABI.
+/// Returns None is the supplied value is `null` or `undefined`, otherwise tries to cast the object.
+/// Casting validates the supplied object by comparing its `constructor.name` value to the supplied
+/// `class` name. You can use this function in two forms: `ref_from_abi_safe_as_option("SomeStruct", jsvalue)` or
+/// via a macro `ref_from_abi_as_option!(SomeStruct,jsvalue)`.
+pub fn ref_from_abi_safe_as_option<T>(class: &str, js: &JsValue) -> std::result::Result<Option<T>, JsValue>
+where
+    T: RefFromWasmAbi<Abi = u32> + Clone,
+{
+    if !js.is_undefined() && !js.is_null(){
+        Ok(Some(ref_from_abi_safe::<T>(class, js)?))
+    }else{
+        Ok(None)
+    }
+
 }

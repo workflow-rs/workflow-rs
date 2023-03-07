@@ -29,6 +29,6 @@ pub fn ref_from_abi(input: TokenStream) -> TokenStream {
 
 /// Create a Rust Option<object> from a WASM ABI.
 #[proc_macro]
-pub fn ref_from_abi_option(input: TokenStream) -> TokenStream {
-    ref_from_abi::ref_from_abi_option(input)
+pub fn ref_from_abi_as_option(input: TokenStream) -> TokenStream {
+    ref_from_abi::ref_from_abi_as_option(input)
 }

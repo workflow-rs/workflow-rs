@@ -53,32 +53,28 @@ pub fn ref_from_abi(input: TokenStream) -> TokenStream {
 }
 
 #[derive(Debug)]
-struct RefFromWasmAbiOptionArgs {
+struct RefFromWasmAbiAsOptionArgs {
     inner: RefFromWasmAbiArgs,
 }
-impl Parse for RefFromWasmAbiOptionArgs {
+impl Parse for RefFromWasmAbiAsOptionArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         let inner = RefFromWasmAbiArgs::parse(input)?;
         Ok(Self { inner })
     }
 }
-impl ToTokens for RefFromWasmAbiOptionArgs {
+impl ToTokens for RefFromWasmAbiAsOptionArgs {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let RefFromWasmAbiArgs { class, jsvalue } = &self.inner;
         let name = class.to_token_stream().to_string();
         quote! {
-            if !#jsvalue.is_undefined() && !#jsvalue.is_null(){
-                Some(workflow_wasm::abi::ref_from_abi_safe::<#class>(#name, #jsvalue)?)
-            }else{
-                None
-            }
+            workflow_wasm::abi::ref_from_abi_safe_as_option::<#class>(#name, #jsvalue)
         }
         .to_tokens(tokens);
     }
 }
 
-pub fn ref_from_abi_option(input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(input as RefFromWasmAbiOptionArgs);
+pub fn ref_from_abi_as_option(input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(input as RefFromWasmAbiAsOptionArgs);
     let ts = args.to_token_stream();
     // println!("MACRO: {}", ts.to_string());
     ts.into()
