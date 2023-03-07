@@ -78,20 +78,21 @@ where
     Ok(instance_ref.clone())
 }
 
-
 /// Create a reference to a Rust object from a WASM ABI.
 /// Returns None is the supplied value is `null` or `undefined`, otherwise tries to cast the object.
 /// Casting validates the supplied object by comparing its `constructor.name` value to the supplied
 /// `class` name. You can use this function in two forms: `ref_from_abi_safe_as_option("SomeStruct", jsvalue)` or
 /// via a macro `ref_from_abi_as_option!(SomeStruct,jsvalue)`.
-pub fn ref_from_abi_safe_as_option<T>(class: &str, js: &JsValue) -> std::result::Result<Option<T>, JsValue>
+pub fn ref_from_abi_safe_as_option<T>(
+    class: &str,
+    js: &JsValue,
+) -> std::result::Result<Option<T>, JsValue>
 where
     T: RefFromWasmAbi<Abi = u32> + Clone,
 {
-    if !js.is_undefined() && !js.is_null(){
+    if !js.is_undefined() && !js.is_null() {
         Ok(Some(ref_from_abi_safe::<T>(class, js)?))
-    }else{
+    } else {
         Ok(None)
     }
-
 }
