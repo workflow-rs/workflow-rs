@@ -2,7 +2,7 @@
 
 use wasm_bindgen::convert::RefFromWasmAbi;
 use wasm_bindgen::prelude::*;
-pub use workflow_wasm_macros::{ref_from_abi, TryFromJsValue};
+pub use workflow_wasm_macros::{ref_from_abi, ref_from_abi_option, TryFromJsValue};
 
 /// Create a reference to a Rust object from a WASM ABI.
 /// # Safety

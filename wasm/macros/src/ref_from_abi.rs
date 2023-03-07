@@ -39,7 +39,7 @@ impl ToTokens for RefFromWasmAbiArgs {
         let RefFromWasmAbiArgs { class, jsvalue } = self;
         let name = class.to_token_stream().to_string();
         quote! {
-            workflow_wasm::abi::ref_from_abi_safe(#name, #jsvalue)
+            workflow_wasm::abi::ref_from_abi_safe::<#class>(#name, #jsvalue)
         }
         .to_tokens(tokens);
     }
@@ -47,6 +47,38 @@ impl ToTokens for RefFromWasmAbiArgs {
 
 pub fn ref_from_abi(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as RefFromWasmAbiArgs);
+    let ts = args.to_token_stream();
+    // println!("MACRO: {}", ts.to_string());
+    ts.into()
+}
+
+#[derive(Debug)]
+struct RefFromWasmAbiOptionArgs {
+    inner: RefFromWasmAbiArgs,
+}
+impl Parse for RefFromWasmAbiOptionArgs {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let inner = RefFromWasmAbiArgs::parse(input)?;
+        Ok(Self { inner })
+    }
+}
+impl ToTokens for RefFromWasmAbiOptionArgs {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let RefFromWasmAbiArgs { class, jsvalue } = &self.inner;
+        let name = class.to_token_stream().to_string();
+        quote! {
+            if !#jsvalue.is_undefined() && !#jsvalue.is_null(){
+                Some(workflow_wasm::abi::ref_from_abi_safe::<#class>(#name, #jsvalue)?)
+            }else{
+                None
+            }
+        }
+        .to_tokens(tokens);
+    }
+}
+
+pub fn ref_from_abi_option(input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(input as RefFromWasmAbiOptionArgs);
     let ts = args.to_token_stream();
     // println!("MACRO: {}", ts.to_string());
     ts.into()
