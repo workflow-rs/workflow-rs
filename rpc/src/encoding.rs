@@ -11,7 +11,7 @@ use wasm_bindgen::prelude::*;
 
 /// RPC protocol encoding: `Borsh` or `SerdeJson`
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Hash, Eq, PartialEq)]
 pub enum Encoding {
     Borsh,
     SerdeJson,
