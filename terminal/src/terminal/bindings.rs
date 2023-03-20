@@ -96,7 +96,7 @@ extern "C" {
 
 impl Debug for XtermImpl {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        write!(f, "TODO::")?;
+        write!(f, "Workflow Xterm")?;
         Ok(())
     }
 }

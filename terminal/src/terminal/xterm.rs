@@ -233,7 +233,7 @@ impl Xterm {
         }
 
         let term = XtermImpl::new(options);
-        log_trace!("term: {:?}", term);
+        // log_trace!("term: {:?}", term);
 
         Ok(term)
     }
@@ -258,7 +258,7 @@ impl Xterm {
             let theme_obj = js_sys::Object::new();
             for (key, css_var) in keys {
                 if let Ok(value) = css.get_property_value(css_var) {
-                    log_trace!("workflow-terminal: {} var: {:?}", key, value);
+                    log_trace!("workflow-terminal: `{}`: {:?}", key, value);
                     js_sys::Reflect::set(
                         &theme_obj,
                         &JsValue::from(key),
