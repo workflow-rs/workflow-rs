@@ -50,6 +50,9 @@ pub enum Error {
 
     #[error("Broadcast data is not an object")]
     BroadcastDataNotObject,
+
+    #[error(transparent)]
+    Wasm(#[from] workflow_wasm::error::Error),
 }
 
 impl From<String> for Error {
