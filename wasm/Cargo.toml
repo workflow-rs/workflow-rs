@@ -18,6 +18,7 @@ doctest = false
 
 [dependencies]
 cfg-if.workspace = true
+faster-hex.workspace = true
 js-sys.workspace = true
 thiserror.workspace = true
 wasm-bindgen-futures.workspace = true

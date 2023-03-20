@@ -10,10 +10,10 @@
 //! This crate provides utilities for WASM32 environment
 //!
 
-pub mod abi;
-
 cfg_if::cfg_if! {
     if #[cfg(not(target_os = "solana"))] {
+        pub mod abi;
+        pub mod error;
         pub mod callback;
         pub mod init;
         pub mod options;
@@ -21,6 +21,7 @@ cfg_if::cfg_if! {
         pub mod prelude;
         pub mod promise;
         pub mod timers;
+        pub mod jsvalue;
         pub mod object;
         pub mod sendable;
         pub mod utils;
