@@ -86,6 +86,7 @@ crossterm = "0.26.0"
 clap = { version = "4.1.4", features = ["derive","cargo"] }
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
+faster-hex = "0.6.1"
 futures = "0.3.26"
 futures-util = { version = "0.3.26", default-features = false, features = ["sink", "std"] }
 getrandom = {version = "0.2.8", features=["js"]}
