@@ -1,13 +1,23 @@
 //! [`async_std::channel`] re-exports and shims
-pub use async_channel::*;
+use crate::id::Id;
+pub use async_channel::{
+    bounded, unbounded, Receiver, RecvError, SendError, Sender, TryRecvError, TrySendError,
+};
+use std::{
+    collections::HashMap,
+    marker::PhantomData,
+    sync::{Arc, Mutex},
+};
 use thiserror::Error;
 
-#[derive(Error)]
+#[derive(Error, Debug)]
 pub enum ChannelError<T> {
     #[error(transparent)]
     SendError(#[from] SendError<T>),
     #[error(transparent)]
     RecvError(#[from] RecvError),
+    #[error(transparent)]
+    SerdeWasmBindgen(#[from] serde_wasm_bindgen::Error),
 }
 
 /// Creates a oneshot channel (bounded channel with a limit of 1 message)
@@ -133,5 +143,65 @@ impl<T> Iterator for ChannelIterator<T> {
         } else {
             self.receiver.try_recv().ok()
         }
+    }
+}
+
+/// A simple channel Multiplexer that broadcasts to multiple registered receivers.
+#[derive(Clone)]
+pub struct Multiplexer<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    pub channels: Arc<Mutex<HashMap<Id, Sender<T>>>>,
+    t: PhantomData<T>,
+}
+
+impl<T> Default for Multiplexer<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> Multiplexer<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    pub fn new() -> Multiplexer<T> {
+        Multiplexer {
+            channels: Arc::new(Mutex::new(HashMap::default())),
+            t: PhantomData,
+        }
+    }
+
+    pub fn register_event_channel(&self) -> (Id, Sender<T>, Receiver<T>) {
+        let (sender, receiver) = unbounded();
+        let id = Id::new();
+        self.channels.lock().unwrap().insert(id, sender.clone());
+        (id, sender, receiver)
+    }
+
+    pub fn unregister_event_channel(&self, id: Id) {
+        self.channels.lock().unwrap().remove(&id);
+    }
+
+    pub async fn broadcast(&self, event: T) -> Result<(), ChannelError<T>> {
+        let channels = self.channels.lock().unwrap();
+        for (_, sender) in channels.iter() {
+            match sender.try_send(event.clone()) {
+                Ok(_) => {}
+                Err(err) => {
+                    (
+                        "Transport Reflector: error reflecting event {:?}: {:?}",
+                        event.clone(),
+                        err,
+                    );
+                }
+            }
+        }
+
+        Ok(())
     }
 }

@@ -19,11 +19,14 @@ doctest = false
 [dependencies]
 cfg-if.workspace = true
 faster-hex.workspace = true
+futures.workspace = true
 js-sys.workspace = true
+serde.workspace = true
 thiserror.workspace = true
 wasm-bindgen-futures.workspace = true
 wasm-bindgen.workspace = true
-workflow-log.workspace = true
 workflow-core.workspace = true
+workflow-log.workspace = true
 workflow-panic-hook.workspace = true
 workflow-wasm-macros.workspace = true
+serde-wasm-bindgen.workspace = true
