@@ -14,6 +14,7 @@ cfg_if::cfg_if! {
     if #[cfg(not(target_os = "solana"))] {
         pub mod abi;
         pub mod error;
+        pub mod result;
         pub mod callback;
         pub mod init;
         pub mod options;
@@ -24,6 +25,7 @@ cfg_if::cfg_if! {
         pub mod jsvalue;
         pub mod object;
         pub mod sendable;
+        // pub mod channel;
         pub mod utils;
     }
 }
