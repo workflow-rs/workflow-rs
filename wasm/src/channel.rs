@@ -3,16 +3,16 @@
 //!
 
 use crate::result::Result;
+use crate::sendable::Sendable;
 use futures::{select, FutureExt};
 use js_sys::Function;
+use serde::Serialize;
+use serde_wasm_bindgen::*;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use wasm_bindgen::prelude::*;
 use workflow_core::channel::{DuplexChannel, Multiplexer};
 use workflow_core::task::*;
-use crate::sendable::Sendable;
-use serde::Serialize;
-use serde_wasm_bindgen::*;
 use workflow_log::log_error;
 
 ///
@@ -34,7 +34,6 @@ impl Default for MultiplexerClient {
 }
 
 impl MultiplexerClient {
-
     pub async fn start_notification_task<T>(&self, multiplexer: &Arc<Multiplexer<T>>) -> Result<()>
     where
         T: Clone + Serialize + Send + Sync + 'static,

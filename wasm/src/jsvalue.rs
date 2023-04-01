@@ -70,9 +70,9 @@ impl JsValueTrait for JsValue {
             let vec: Vec<u8> = array.to_vec();
             Ok(vec)
         } else {
-            Err(Error::WrongType(format!(
-                "value is not a hex string or an array"
-            )))
+            Err(Error::WrongType(
+                "value is not a hex string or an array".to_string(),
+            ))
         }
     }
 }

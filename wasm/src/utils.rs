@@ -79,9 +79,9 @@ pub fn try_get_f64_from_prop(jsv: &JsValue, prop: &str) -> Result<f64, Error> {
 pub fn try_get_u8_from_prop(jsv: &JsValue, prop: &str) -> Result<u8, Error> {
     let v = Reflect::get(jsv, &JsValue::from(prop))
         .map_err(|_| Error::MissingProperty(prop.to_string()))?;
-    Ok(v.try_as_u8().map_err(|err| {
+    v.try_as_u8().map_err(|err| {
         Error::WrongType(format!("unable to convert property `{prop}` to u8: {err}"))
-    })?)
+    })
 }
 
 /// Obtain `u16` value from the object property `prop`.
@@ -90,9 +90,8 @@ pub fn try_get_u16_from_prop(jsv: &JsValue, prop: &str) -> Result<u16, Error> {
     let v = Reflect::get(jsv, &JsValue::from(prop))
         .map_err(|_| Error::MissingProperty(prop.to_string()))?;
 
-    Ok(v.try_as_u16().map_err(|err| {
-        Error::Convert(format!("unable to convert property `{prop}` to u16: {err}"))
-    })?)
+    v.try_as_u16()
+        .map_err(|err| Error::Convert(format!("unable to convert property `{prop}` to u16: {err}")))
 }
 
 /// Obtain `u32` value from the object property `prop`.
@@ -100,9 +99,8 @@ pub fn try_get_u32_from_prop(jsv: &JsValue, prop: &str) -> Result<u32, Error> {
     let v = Reflect::get(jsv, &JsValue::from(prop))
         .map_err(|_| Error::MissingProperty(prop.to_string()))?;
 
-    Ok(v.try_as_u32().map_err(|err| {
-        Error::Convert(format!("unable to convert property `{prop}` to u32: {err}"))
-    })?)
+    v.try_as_u32()
+        .map_err(|err| Error::Convert(format!("unable to convert property `{prop}` to u32: {err}")))
 }
 
 /// Obtain a `bool` value from the object property `prop`

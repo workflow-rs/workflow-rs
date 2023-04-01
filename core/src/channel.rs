@@ -18,6 +18,8 @@ pub enum ChannelError<T> {
     RecvError(#[from] RecvError),
     #[error(transparent)]
     SerdeWasmBindgen(#[from] serde_wasm_bindgen::Error),
+    #[error("try_send() error during multiplexer broadcast")]
+    BroadcastTrySendError,
 }
 
 /// Creates a oneshot channel (bounded channel with a limit of 1 message)
@@ -192,12 +194,13 @@ where
         for (_, sender) in channels.iter() {
             match sender.try_send(event.clone()) {
                 Ok(_) => {}
-                Err(err) => {
-                    (
-                        "Transport Reflector: error reflecting event {:?}: {:?}",
-                        event.clone(),
-                        err,
-                    );
+                Err(_err) => {
+                    // log_error!(
+                    //     "Multiplexer: error multiplexing the event {:?}: {:?}",
+                    //     event.clone(),
+                    //     err,
+                    // );
+                    return Err(ChannelError::BroadcastTrySendError);
                 }
             }
         }
