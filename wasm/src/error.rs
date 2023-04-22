@@ -1,3 +1,4 @@
+use crate::sendable::*;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
@@ -24,8 +25,8 @@ pub enum Error {
     #[error(transparent)]
     FasterHex(#[from] faster_hex::Error),
 
-    #[error("JsValue: {0:?}")]
-    JsValue(JsValue),
+    #[error("JsValue error: {0:?}")]
+    JsValue(Sendable<JsValue>),
 
     #[error("WASM ABI: {0}")]
     Abi(String),
@@ -60,6 +61,6 @@ impl From<Error> for JsValue {
 
 impl From<JsValue> for Error {
     fn from(value: JsValue) -> Self {
-        Error::JsValue(value)
+        Error::JsValue(Sendable::from(value))
     }
 }
