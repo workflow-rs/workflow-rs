@@ -20,6 +20,8 @@ cfg_if! {
         mod prelude;
         pub mod error;
         pub mod result;
+        pub mod fs;
+        pub mod store;
         pub use prelude::*;
     }
 }

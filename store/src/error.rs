@@ -12,6 +12,15 @@ pub enum Error {
 
     #[error("Base64 decode error: {0}")]
     DecodeError(DecodeError),
+
+    #[error("Not found: {0}")]
+    NotFound(String),
+    
+    #[error("Not a string: {0}")]
+    DataIsNotAString(String),
+
+    #[error(transparent)]
+    SerdeJson(#[from] serde_json::Error),
 }
 
 impl From<Error> for JsValue {

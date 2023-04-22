@@ -2,7 +2,7 @@ use cfg_if::cfg_if;
 
 cfg_if! {
     if #[cfg(target_arch = "wasm32")]{
-        use js_sys::{Function, Object};
+        use js_sys::Object;
         use wasm_bindgen::prelude::*;
 
         #[wasm_bindgen]
@@ -22,7 +22,7 @@ cfg_if! {
         fn detect() -> (bool, bool) {
             unsafe { DETECT }.unwrap_or_else(||{
 
-                let result = Function::new_no_args("
+                let result = js_sys::Function::new_no_args("
                     let is_node_js = (
                         typeof process === 'object' && 
                         typeof process.versions === 'object' && 
@@ -38,7 +38,7 @@ cfg_if! {
                         is_node_js,
                         is_node_webkit
                     }
-                ").call0(&JsValue::undefined());
+                ").call0(&wasm_bindgen::JsValue::undefined());
 
                 let flags = match result {
                     Ok(value) => {
@@ -183,4 +183,143 @@ impl Runtime {
             Runtime::Native
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Platform {
+    Windows,
+    MacOS,
+    Linux,
+    FreeBSD,
+    OpenBSD,
+    NetBSD,
+    Web,
+    Other(String),
+}
+
+impl Platform {
+    #[cfg(target_arch = "wasm32")]
+    pub fn from_node() -> Self {
+        let result = js_sys::Function::new_no_args(
+            "
+            return process.platform;
+        ",
+        )
+        .call0(&wasm_bindgen::JsValue::undefined())
+        .expect("Unable to get nodejs process.platform");
+
+        let platform = match result
+            .as_string()
+            .expect("nodejs process.platform is not a string")
+            .as_str()
+        {
+            "win32" => Platform::Windows,
+            "darwin" => Platform::MacOS,
+            "linux" => Platform::Linux,
+            "openbsd" => Platform::OpenBSD,
+            "freebsd" => Platform::FreeBSD,
+            v => Platform::Other(v.to_string()),
+        };
+
+        platform
+    }
+}
+
+static mut PLATFORM: Option<Platform> = None;
+
+pub fn platform() -> Platform {
+    if let Some(platform) = unsafe { PLATFORM.as_ref() } {
+        return platform.clone();
+    } else {
+        cfg_if! {
+            if #[cfg(target_os = "windows")] {
+                let platform = Platform::Windows;
+            } else if #[cfg(target_os = "macos")] {
+                let platform = Platform::MacOS;
+            } else if #[cfg(target_os = "linux")] {
+                let platform = Platform::Linux;
+            } else if #[cfg(target_arch = "wasm32")] {
+                let platform = if is_node() {
+                    Platform::from_node()
+                } else {
+                    Platform::Web
+                };
+            }
+        }
+
+        unsafe { PLATFORM.replace(platform.clone()) };
+        platform
+    }
+}
+
+pub fn is_windows() -> bool {
+    cfg_if! {
+        if #[cfg(target_os = "windows")] {
+            true
+        } else {
+            platform() == Platform::Windows
+        }
+    }
+}
+
+pub fn is_macos() -> bool {
+    cfg_if! {
+        if #[cfg(target_os = "macos")] {
+            true
+        } else {
+            platform() == Platform::MacOS
+        }
+    }
+}
+
+pub fn is_linux() -> bool {
+    cfg_if! {
+        if #[cfg(target_os = "linux")] {
+            true
+        } else {
+            platform() == Platform::Linux
+        }
+    }
+}
+
+pub fn is_freebsd() -> bool {
+    cfg_if! {
+        if #[cfg(target_os = "freebsd")] {
+            true
+        } else {
+            platform() == Platform::FreeBSD
+        }
+    }
+}
+
+pub fn is_openbsd() -> bool {
+    cfg_if! {
+        if #[cfg(target_os = "openbsd")] {
+            true
+        } else {
+            platform() == Platform::OpenBSD
+        }
+    }
+}
+
+pub fn is_netbsd() -> bool {
+    cfg_if! {
+        if #[cfg(target_os = "netbsd")] {
+            true
+        } else {
+            platform() == Platform::NetBSD
+        }
+    }
+}
+
+pub fn is_unix() -> bool {
+    is_macos() || is_linux() || is_freebsd() || is_openbsd() || is_netbsd()
+}
+
+pub fn is_ios() -> bool {
+    unimplemented!()
+}
+
+pub fn is_android() -> bool {
+    unimplemented!()
 }

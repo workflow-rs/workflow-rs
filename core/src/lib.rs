@@ -42,6 +42,9 @@ cfg_if::cfg_if! {
         // async object lookup combinator
         pub mod lookup;
 
+        // environment variable access (native and Node.js abstraction)
+        pub mod env;
+
         /// trigger re-exports and shims
         pub mod trigger;
 
