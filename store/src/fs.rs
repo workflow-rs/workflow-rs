@@ -117,7 +117,7 @@ cfg_if! {
             Ok(())
         }
 
-        pub async fn create_dir(filename: &Path) -> Result<()> {
+        pub async fn create_dir_all(filename: &Path) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let options = Object::new();
                 Reflect::set(&options, &JsValue::from("recursive"), &JsValue::from_bool(true))?;
@@ -149,8 +149,8 @@ cfg_if! {
             Ok(())
         }
 
-        pub async fn create_dir(dir: &Path) -> Result<()> {
-            std::fs::create_dir(dir)?;
+        pub async fn create_dir_all(dir: &Path) -> Result<()> {
+            std::fs::create_dir_all(dir)?;
             Ok(())
         }
 
