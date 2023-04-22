@@ -15,7 +15,7 @@ pub enum Error {
 
     #[error("Not found: {0}")]
     NotFound(String),
-    
+
     #[error("Not a string: {0}")]
     DataIsNotAString(String),
 
