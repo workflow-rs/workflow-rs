@@ -206,7 +206,7 @@ where
 }
 
 pub fn resolve_path(path: &str) -> PathBuf {
-    if let Some(_stripped) = path.strip_prefix('~') {
+    if let Some(_stripped) = path.strip_prefix("~/") {
         if runtime::is_web() {
             PathBuf::from(path)
         } else if runtime::is_node() || runtime::is_nw() {
