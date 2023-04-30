@@ -229,7 +229,7 @@ static mut PLATFORM: Option<Platform> = None;
 
 pub fn platform() -> Platform {
     if let Some(platform) = unsafe { PLATFORM.as_ref() } {
-        return platform.clone();
+        platform.clone()
     } else {
         cfg_if! {
             if #[cfg(target_os = "windows")] {

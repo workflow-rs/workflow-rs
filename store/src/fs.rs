@@ -81,7 +81,7 @@ cfg_if! {
                 Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
                 // options.set("encoding", "utf-8");
                 let js_value = read_file_sync(&filename, options);
-                let text = js_value.as_string().ok_or(Error::DataIsNotAString(filename.to_string()))?;
+                let text = js_value.as_string().ok_or(Error::DataIsNotAString(filename))?;
                 Ok(text)
             } else {
                 let key_name = options.local_storage_key(filename);
@@ -97,10 +97,10 @@ cfg_if! {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.to_string_lossy().to_string();
                 let options = Object::new();
-                write_file_sync(&filename, &text, options);
+                write_file_sync(&filename, text, options);
             } else {
                 let key_name = options.local_storage_key(filename);
-                local_storage().set_item(&key_name, &text)?;
+                local_storage().set_item(&key_name, text)?;
             }
             Ok(())
         }

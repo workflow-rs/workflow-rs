@@ -122,7 +122,7 @@ impl Store {
             pub async fn write_string(&self, data: &str) -> Result<()> {
                 let filename = self.filename();
                 // let v = general_purpose::STANDARD.encode(data);
-                local_storage().set_item(&filename, &data)?;
+                local_storage().set_item(&filename, data)?;
                 Ok(())
             }
 

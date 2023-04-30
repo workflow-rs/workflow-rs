@@ -13,9 +13,9 @@ pub fn var(key: &str) -> Result<String, VarError> {
         if #[cfg(target_arch = "wasm32")] {
             if crate::runtime::is_node() {
                 match get_nodejs_env_var(key)? {
-                    Some(v) => return Ok(v),
+                    Some(v) => Ok(v),
                     None => {
-                        return Err(VarError::NotPresent)
+                        Err(VarError::NotPresent)
                     }
                 }
             } else {
