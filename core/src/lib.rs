@@ -53,7 +53,7 @@ cfg_if::cfg_if! {
             pub use instant::*;
         }
 
-        /// re-export of [`cfg_if`] crate
+        /// re-export of [`mod@cfg_if`] crate
         pub use ::cfg_if::cfg_if;
 
         /// dynamically configured re-export of async_trait as workflow_async_trait

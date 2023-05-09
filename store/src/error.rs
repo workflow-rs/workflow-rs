@@ -1,3 +1,7 @@
+//!
+//!  Errors produced by this crate.
+//! 
+
 use base64::DecodeError;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
