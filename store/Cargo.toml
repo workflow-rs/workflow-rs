@@ -25,6 +25,7 @@ serde.workspace = true
 thiserror.workspace = true
 wasm-bindgen.workspace = true
 workflow-core.workspace = true
+workflow-wasm.workspace = true
 
 [target.'cfg(not(any(target_arch = "wasm32", target_os="solana")))'.dependencies]
 async-std.workspace = true

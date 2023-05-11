@@ -1,18 +1,19 @@
 //!
 //!  Errors produced by this crate.
-//! 
+//!
 
 use base64::DecodeError;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
+use workflow_wasm::sendable::Sendable;
 
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
 
-    #[error("JavaScript error: {0}")]
-    JsValue(String),
+    #[error("JavaScript error: {0:?}")]
+    JsValue(Sendable<JsValue>),
 
     #[error("Base64 decode error: {0}")]
     DecodeError(DecodeError),
@@ -35,7 +36,7 @@ impl From<Error> for JsValue {
 
 impl From<JsValue> for Error {
     fn from(error: JsValue) -> Error {
-        Error::JsValue(format!("{error:?}"))
+        Error::JsValue(error.into())
     }
 }
 

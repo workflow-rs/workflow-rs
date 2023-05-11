@@ -2,6 +2,8 @@
 //! Sendable NewType for automatic Send marker tagging of JS primitives.
 //!
 
+use std::fmt::Display;
+
 ///
 /// Senable wrapper for JS primitives.
 ///
@@ -50,5 +52,14 @@ where
 {
     fn from(t: T) -> Self {
         Sendable(t)
+    }
+}
+
+impl<T> Display for &Sendable<T>
+where
+    T: Clone + Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
