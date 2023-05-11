@@ -39,7 +39,10 @@ pub struct Fs {
     pub unlink_sync: Function,
 }
 
+#[allow(dead_code)]
 static mut FS: Option<Fs> = None;
+
+#[allow(dead_code)]
 #[inline]
 fn fs() -> &'static Fs {
     unsafe {
@@ -63,6 +66,7 @@ fn fs() -> &'static Fs {
 
 #[inline]
 pub fn exists_sync(file: &str) -> Result<bool> {
+    // Ok(fs_exists_sync(file))
     let Fs {
         ctx, exists_sync, ..
     } = fs();
@@ -72,6 +76,7 @@ pub fn exists_sync(file: &str) -> Result<bool> {
 
 #[inline]
 pub fn write_file_sync(file: &str, data: &str, options: Object) -> Result<()> {
+    // Ok(fs_write_file_sync(file, data, options))
     let Fs {
         ctx,
         write_file_sync,
@@ -88,6 +93,7 @@ pub fn write_file_sync(file: &str, data: &str, options: Object) -> Result<()> {
 
 #[inline]
 pub fn read_file_sync(file: &str, options: Object) -> Result<JsValue> {
+    // Ok(fs_read_file_sync(file, options))
     let Fs {
         ctx,
         read_file_sync,
@@ -99,6 +105,7 @@ pub fn read_file_sync(file: &str, options: Object) -> Result<JsValue> {
 
 #[inline]
 pub fn mkdir_sync(dir: &str, options: Object) -> Result<()> {
+    // Ok(fs_mkdir_sync(dir, options))
     let Fs {
         ctx, mkdir_sync, ..
     } = fs();
@@ -108,6 +115,7 @@ pub fn mkdir_sync(dir: &str, options: Object) -> Result<()> {
 
 #[inline]
 pub fn unlink_sync(file: &str) -> Result<()> {
+    // Ok(fs_unlink_sync(file))
     let Fs {
         ctx, unlink_sync, ..
     } = fs();
@@ -126,15 +134,15 @@ pub fn unlink_sync(file: &str) -> Result<()> {
 // #[wasm_bindgen(module = "fs")]
 // extern "C" {
 //     #[wasm_bindgen(js_name = existsSync)]
-//     pub fn exists_sync(file: &str) -> bool;
+//     pub fn fs_exists_sync(file: &str) -> bool;
 //     #[wasm_bindgen(js_name = writeFileSync)]
-//     pub fn write_file_sync(file: &str, data: &str, options: Object);
+//     pub fn fs_write_file_sync(file: &str, data: &str, options: Object);
 //     #[wasm_bindgen(js_name = readFileSync)]
-//     pub fn read_file_sync(file: &str, options: Object) -> JsValue;
+//     pub fn fs_read_file_sync(file: &str, options: Object) -> JsValue;
 //     #[wasm_bindgen(js_name = mkdirSync)]
-//     pub fn mkdir_sync(dir: &str, options: Object);
+//     pub fn fs_mkdir_sync(dir: &str, options: Object);
 //     #[wasm_bindgen(js_name = unlinkSync)]
-//     pub fn unlink_sync(file: &str);
+//     pub fn fs_unlink_sync(file: &str);
 // }
 //
 
