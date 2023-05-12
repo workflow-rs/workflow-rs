@@ -57,7 +57,9 @@ impl JsValueTrait for JsValue {
         if self.is_string() {
             let hex_str = self.as_string().unwrap();
             if hex_str.len() > 16 {
-                Err(Error::WrongSize("try_as_u64(): supplied string must be < 16 chars".to_string()))
+                Err(Error::WrongSize(
+                    "try_as_u64(): supplied string must be < 16 chars".to_string(),
+                ))
             } else {
                 let mut out = [0u8; 8];
                 let mut input = [b'0'; 16];
@@ -73,11 +75,11 @@ impl JsValueTrait for JsValue {
                 ))
             })?)
         } else {
-            Ok(self.as_f64()
+            Ok(self
+                .as_f64()
                 .ok_or_else(|| Error::WrongType(format!("value is not a number ({self:?})")))?
                 as u64)
         }
-    
     }
 
     fn try_as_vec_u8(&self) -> Result<Vec<u8>, Error> {
