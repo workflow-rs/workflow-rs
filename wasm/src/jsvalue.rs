@@ -6,6 +6,7 @@ pub trait JsValueTrait {
     fn try_as_u8(&self) -> Result<u8, Error>;
     fn try_as_u16(&self) -> Result<u16, Error>;
     fn try_as_u32(&self) -> Result<u32, Error>;
+    fn try_as_u64(&self) -> Result<u64, Error>;
     fn try_as_vec_u8(&self) -> Result<Vec<u8>, Error>;
 }
 
@@ -50,6 +51,33 @@ impl JsValueTrait for JsValue {
         } else {
             Ok(f as u32)
         }
+    }
+
+    fn try_as_u64(&self) -> Result<u64, Error> {
+        if self.is_string() {
+            let hex_str = self.as_string().unwrap();
+            if hex_str.len() > 16 {
+                Err(Error::WrongSize("try_as_u64(): supplied string must be < 16 chars".to_string()))
+            } else {
+                let mut out = [0u8; 8];
+                let mut input = [b'0'; 16];
+                let start = input.len() - hex_str.len();
+                input[start..].copy_from_slice(hex_str.as_bytes());
+                faster_hex::hex_decode(&input, &mut out)?;
+                Ok(u64::from_be_bytes(out))
+            }
+        } else if self.is_bigint() {
+            Ok(self.clone().try_into().map_err(|err| {
+                Error::Convert(format!(
+                    "try_as_u64(): unable to convert BigInt value to u64: `{self:?}`: {err:?}"
+                ))
+            })?)
+        } else {
+            Ok(self.as_f64()
+                .ok_or_else(|| Error::WrongType(format!("value is not a number ({self:?})")))?
+                as u64)
+        }
+    
     }
 
     fn try_as_vec_u8(&self) -> Result<Vec<u8>, Error> {
