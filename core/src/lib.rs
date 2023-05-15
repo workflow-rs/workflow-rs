@@ -23,6 +23,7 @@
 
 extern crate self as workflow_core;
 
+pub mod abortable;
 pub mod enums;
 pub mod runtime;
 pub mod utils;
