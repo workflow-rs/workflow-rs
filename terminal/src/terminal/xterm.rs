@@ -488,10 +488,10 @@ impl Xterm {
     pub fn measure(&self) -> Result<()> {
         let xterm = self.xterm.lock().unwrap();
         let xterm = xterm.as_ref().unwrap();
-        let core = try_get_js_value(xterm, "_core").expect("Unable to get xterm core");
-        let char_size_service = try_get_js_value(&core, "_charSizeService")
+        let core = try_get_js_value_prop(xterm, "_core").expect("Unable to get xterm core");
+        let char_size_service = try_get_js_value_prop(&core, "_charSizeService")
             .expect("Unable to get xterm charSizeService");
-        let has_valid_size = try_get_js_value(&char_size_service, "hasValidSize")
+        let has_valid_size = try_get_js_value_prop(&char_size_service, "hasValidSize")
             .expect("Unable to get xterm charSizeService::hasValidSize");
         if has_valid_size.is_falsy() {
             apply_with_args0(&char_size_service, "measure")?;

@@ -4,7 +4,7 @@
 
 use crate::utils::*;
 use crate::{error::Error, jsvalue::JsValueTrait};
-use js_sys::{Array, Object, Reflect};
+use js_sys::{Object, Reflect};
 use wasm_bindgen::prelude::*;
 
 /// Custom trait implementing simplified property accessor functions for [`Object`].
@@ -73,9 +73,7 @@ impl ObjectTrait for Object {
     }
 
     fn get_vec(&self, prop: &str) -> Result<Vec<JsValue>, Error> {
-        let v = Reflect::get(self, &JsValue::from(prop))?;
-        let array = v.dyn_into::<Array>()?;
-        Ok(array.to_vec())
+        try_get_vec_from_prop(self, prop)
     }
 
     fn get_vec_u8(&self, prop: &str) -> Result<Vec<u8>, Error> {

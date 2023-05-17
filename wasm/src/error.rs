@@ -4,14 +4,20 @@ use wasm_bindgen::prelude::*;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("{0}")]
+    Custom(String),
+
     #[error("type error: {0}")]
     WrongType(String),
 
     #[error("size error: {0}")]
     WrongSize(String),
 
-    #[error("missing property: `{0}`")]
+    #[error("missing property `{0}`")]
     MissingProperty(String),
+
+    #[error("error accessing property `{0}`")]
+    PropertyAccess(String),
 
     #[error("{0}")]
     Bounds(String),
@@ -25,7 +31,7 @@ pub enum Error {
     #[error(transparent)]
     FasterHex(#[from] faster_hex::Error),
 
-    #[error("JsValue error: {0:?}")]
+    #[error("{0:?}")]
     JsValue(Sendable<JsValue>),
 
     #[error("WASM ABI: {0}")]
@@ -62,5 +68,15 @@ impl From<Error> for JsValue {
 impl From<JsValue> for Error {
     fn from(value: JsValue) -> Self {
         Error::JsValue(Sendable::from(value))
+    }
+}
+
+impl Error {
+    pub fn custom<S: Into<String>>(msg: S) -> Self {
+        Self::Custom(msg.into())
+    }
+
+    pub fn convert<S: std::fmt::Display>(msg: S) -> Self {
+        Self::Convert(msg.to_string())
     }
 }
