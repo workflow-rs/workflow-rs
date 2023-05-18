@@ -1,12 +1,14 @@
 //!
 //! Abortable trigger, can be used to cancel (abort) an asyncronous task.
 //!
+use wasm_bindgen::prelude::*;
 
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
 
+#[wasm_bindgen]
 pub struct Aborted;
 
 impl std::error::Error for Aborted {}
@@ -35,14 +37,18 @@ impl std::fmt::Display for Aborted {
 /// ```
 ///
 #[derive(Default, Clone)]
+#[wasm_bindgen]
 pub struct Abortable(Arc<AtomicBool>);
 
+#[wasm_bindgen]
 impl Abortable {
+    #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self(Arc::new(AtomicBool::new(false)))
     }
 
     #[inline]
+    #[wasm_bindgen(js_name=isAborted)]
     pub fn is_aborted(&self) -> bool {
         self.0.load(Ordering::SeqCst)
     }
