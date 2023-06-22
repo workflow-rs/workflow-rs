@@ -19,8 +19,9 @@ where
     T: Clone;
 unsafe impl<T> Send for Sendable<T> where T: Clone {}
 
-impl<T> Sendable<T> 
-where T: Clone
+impl<T> Sendable<T>
+where
+    T: Clone,
 {
     pub fn new(value: T) -> Self {
         Self(value)
@@ -73,8 +74,9 @@ where
     }
 }
 
-impl<T> From<Sendable<T>> for JsValue 
-where T : Clone + Into<JsValue>
+impl<T> From<Sendable<T>> for JsValue
+where
+    T: Clone + Into<JsValue>,
 {
     fn from(s: Sendable<T>) -> Self {
         s.0.into()

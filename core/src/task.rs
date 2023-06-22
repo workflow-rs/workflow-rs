@@ -74,7 +74,7 @@ pub mod wasm {
         }
     }
 
-    // `dispatch()` is similar to `spawn()` but does not 
+    // `dispatch()` is similar to `spawn()` but does not
     // impose `Send` requirement on the supplied future
     // when building for the `wasm32` target.
     pub fn dispatch<F, T>(_future: F)
