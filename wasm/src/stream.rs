@@ -68,14 +68,14 @@ impl AsyncStreamProxy {
     }
 }
 
-/// 
+///
 /// `AsyncStream` is a helper that receives a stream that must correspond
 /// to the following spec: `Stream<Item = T> where T : Into<JsValue> + Send + 'static`.
 /// The stream must be supplied via the `AsyncStream::new` constructor.
-/// 
-/// You can then use `into()` to obtain a `JsValue` the represents a 
+///
+/// You can then use `into()` to obtain a `JsValue` the represents a
 /// JavaScript generator iterating this stream.
-/// 
+///
 pub struct AsyncStream(AsyncStreamProxy);
 
 impl AsyncStream {
@@ -117,11 +117,11 @@ impl From<AsyncStream> for JsValue {
     }
 }
 
-/// 
+///
 /// Helper function that receives a stream and returns a `JsValue` representing
 /// the JavaScript generator iterating this stream. The function uses `AsyncStream`
 /// internally as follows: `AsyncStream::new(stream).into()`
-/// 
+///
 pub fn create_async_stream_iterator<T>(source: impl Stream<Item = T> + Send + 'static) -> JsValue
 where
     T: Into<JsValue> + Send + 'static,
