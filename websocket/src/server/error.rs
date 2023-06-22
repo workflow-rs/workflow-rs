@@ -67,9 +67,6 @@ pub enum Error {
 
     #[error("Error waiting for listener shutdown: {0}")]
     Join(String),
-
-    #[error(transparent)]
-    Regex(#[from] regex::Error),
 }
 
 impl From<String> for Error {

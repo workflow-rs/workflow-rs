@@ -27,7 +27,6 @@ pub use result::Result;
 
 use async_std::channel::{Receiver, Sender};
 use async_trait::async_trait;
-use regex::Regex;
 use std::pin::Pin;
 use std::sync::Arc;
 use workflow_core::channel::{oneshot, Channel};
@@ -75,8 +74,7 @@ pub struct WebSocket {
 impl WebSocket {
     /// Create a new WebSocket instance connecting to the given URL.
     pub fn new(url: &str, options: Options) -> Result<WebSocket> {
-        let schema = Regex::new(r"^wss?://").unwrap();
-        if !schema.is_match(url) {
+        if !url.starts_with("ws://") && !url.starts_with("wss://") {
             return Err(Error::AddressSchema(url.to_string()));
         }
 

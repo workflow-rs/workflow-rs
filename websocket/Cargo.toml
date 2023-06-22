@@ -33,7 +33,6 @@ cfg-if.workspace = true
 downcast-rs.workspace = true
 futures-util.workspace = true
 futures.workspace = true
-regex.workspace = true
 thiserror.workspace = true
 triggered.workspace = true
 wasm-bindgen.workspace = true
