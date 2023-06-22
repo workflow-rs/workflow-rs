@@ -8,7 +8,7 @@ use std::fmt::Display;
 /// Senable wrapper for JS primitives.
 ///
 /// Wrapping any JS primitive (JsValue, JsString, JsArray, JsObject, etc.) in
-/// Sendable<T> wraps the value with the Send marker, making it transportable
+/// `Sendable<T>` wraps the value with the Send marker, making it transportable
 /// across "thread boundaries". In reality, this allows JS primitives to be
 /// used safely within a single-threaded WASM async environment (browser).
 ///

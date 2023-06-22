@@ -79,7 +79,6 @@ pub mod levels;
 
 pub mod prelude {
     pub use super::console::*;
-    pub use super::levels::*;
     pub use super::log::*;
 }
 

@@ -35,10 +35,7 @@ cfg_if! {
             F: Future<Output = T> + Send + 'static,
             T: Send + 'static,
             {
-                tokio::task::spawn(async {
-                // async_std::task::spawn(async {
-                    future.await
-                });
+                tokio::task::spawn(future);
             }
         }
 
@@ -62,7 +59,7 @@ pub mod wasm {
                 // ironically, block_on is but it spawns a task instead of blocking it
                 // unfortunately access to [`async_std::task::Builder::local()`] is
                 // private.
-                async_std::task::block_on(async move { _future.await });
+                async_std::task::block_on(_future);
                 // async_std::task::Builder::new().local(_future).unwrap();
             } else {
                 panic!("workflow_core::task::wasm::spawn() is not allowed on non-wasm target");
