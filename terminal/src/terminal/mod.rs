@@ -116,7 +116,7 @@ impl UserInput {
         let term = term.clone();
         let terminate = self.terminate.clone();
 
-        workflow_core::task::spawn(async move {
+        workflow_core::task::dispatch(async move {
             let _result = term.term().intake(&terminate).await;
         });
 

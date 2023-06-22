@@ -223,7 +223,7 @@ impl WebSocketInterface {
                 .unwrap_or_else(|err| log_trace!("WebSocket dispatcher error: {err}"));
 
             if self_.reconnect.load(Ordering::SeqCst) {
-                async_std::task::sleep(std::time::Duration::from_millis(1000)).await;
+                workflow_core::task::sleep(std::time::Duration::from_millis(1000)).await;
                 self_.reconnect().await.ok();
             }
         });

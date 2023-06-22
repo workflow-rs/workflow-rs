@@ -32,8 +32,16 @@ cfg_if! {
 
             pub fn spawn<F, T>(future: F)
             where
-            F: Future<Output = T> + Send + 'static,
-            T: Send + 'static,
+                F: Future<Output = T> + Send + 'static,
+                T: Send + 'static,
+            {
+                tokio::task::spawn(future);
+            }
+
+            pub fn dispatch<F, T>(future: F)
+            where
+                F: Future<Output = T> + Send + 'static,
+                T: Send + 'static,
             {
                 tokio::task::spawn(future);
             }
@@ -49,6 +57,28 @@ pub mod wasm {
 
     pub fn spawn<F, T>(_future: F)
     where
+        F: Future<Output = T> + Send + 'static,
+        T: Send + 'static,
+    {
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                // wasm32 spawn shim
+                // spawn and spawn_local are currently not available on wasm32 architectures
+                // ironically, block_on is but it spawns a task instead of blocking it
+                // unfortunately access to [`async_std::task::Builder::local()`] is
+                // private.
+                async_std::task::block_on(_future);
+            } else {
+                panic!("workflow_core::task::wasm::spawn() is not allowed on non-wasm target");
+            }
+        }
+    }
+
+    // `dispatch()` is similar to `spawn()` but does not 
+    // impose `Send` requirement on the supplied future
+    // when building for the `wasm32` target.
+    pub fn dispatch<F, T>(_future: F)
+    where
         F: Future<Output = T> + 'static,
         T: 'static,
     {
@@ -60,7 +90,6 @@ pub mod wasm {
                 // unfortunately access to [`async_std::task::Builder::local()`] is
                 // private.
                 async_std::task::block_on(_future);
-                // async_std::task::Builder::new().local(_future).unwrap();
             } else {
                 panic!("workflow_core::task::wasm::spawn() is not allowed on non-wasm target");
             }
