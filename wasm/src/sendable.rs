@@ -3,6 +3,7 @@
 //!
 
 use std::fmt::Display;
+use wasm_bindgen::JsValue;
 
 ///
 /// Senable wrapper for JS primitives.
@@ -17,6 +18,14 @@ pub struct Sendable<T>(pub T)
 where
     T: Clone;
 unsafe impl<T> Send for Sendable<T> where T: Clone {}
+
+impl<T> Sendable<T> 
+where T: Clone
+{
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
+}
 
 impl<T> std::ops::Deref for Sendable<T>
 where
@@ -61,5 +70,13 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl<T> From<Sendable<T>> for JsValue 
+where T : Clone + Into<JsValue>
+{
+    fn from(s: Sendable<T>) -> Self {
+        s.0.into()
     }
 }
