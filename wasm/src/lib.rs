@@ -28,5 +28,6 @@ cfg_if::cfg_if! {
         pub mod channel;
         pub mod utils;
         pub mod tovalue;
+        pub mod stream;
     }
 }
