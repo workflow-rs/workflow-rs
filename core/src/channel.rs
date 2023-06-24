@@ -208,3 +208,47 @@ where
         Ok(())
     }
 }
+
+#[derive(Clone)]
+pub struct MultiplexerChannel<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    multiplexer: Multiplexer<T>,
+    pub id: Id,
+    pub sender: Sender<T>,
+    pub receiver: Receiver<T>,
+}
+
+impl<T> MultiplexerChannel<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    pub fn close(&self) {
+        self.multiplexer.unregister_event_channel(self.id);
+    }
+}
+
+impl<T> From<&Multiplexer<T>> for MultiplexerChannel<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    fn from(multiplexer: &Multiplexer<T>) -> Self {
+        let (id, sender, receiver) = multiplexer.register_event_channel();
+        MultiplexerChannel {
+            multiplexer: multiplexer.clone(),
+            id,
+            sender,
+            receiver,
+        }
+    }
+}
+
+impl<T> Drop for MultiplexerChannel<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    fn drop(&mut self) {
+        self.multiplexer.unregister_event_channel(self.id);
+    }
+}
