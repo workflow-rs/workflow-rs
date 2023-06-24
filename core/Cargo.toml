@@ -38,6 +38,7 @@ workflow-async-trait.workspace = true
 wasm-bindgen.workspace = true
 js-sys.workspace = true
 serde-wasm-bindgen.workspace = true
+# workflow-log.workspace = true
 
 [target.'cfg(not(any(target_os = "solana", target_arch = "wasm32")))'.dependencies]
 tokio.workspace = true

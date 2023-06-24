@@ -68,6 +68,13 @@ impl WebSocket {
         let ws = WebSysWebSocket::new(url)?;
         Ok(WebSocket(ws))
     }
+
+    fn cleanup(&self) {
+        self.set_onopen(None);
+        self.set_onclose(None);
+        self.set_onerror(None);
+        self.set_onmessage(None);
+    }
 }
 
 impl From<WebSysWebSocket> for WebSocket {
@@ -317,7 +324,9 @@ impl WebSocketInterface {
                             },
                             Message::Close => {
                                 self.is_open.store(false, Ordering::SeqCst);
-                                self.cleanup_ws(&None);
+                                if let Some(inner) = self.inner.lock().unwrap().as_ref() {
+                                    inner.ws.cleanup();
+                                }
                                 self.receiver_channel.sender.send(msg).await.unwrap();
                                 break;
                             }
@@ -354,20 +363,6 @@ impl WebSocketInterface {
         Ok(())
     }
 
-    fn cleanup_ws(self: &Arc<Self>, inner: &Option<Inner>) {
-        let ws = inner
-            .as_ref()
-            .map(|inner| inner.ws.clone())
-            .or_else(|| self.ws());
-
-        if let Some(ws) = ws {
-            ws.set_onopen(None);
-            ws.set_onclose(None);
-            ws.set_onerror(None);
-            ws.set_onmessage(None);
-        }
-    }
-
     async fn _shutdown(self: &Arc<Self>) -> Result<()> {
         self.dispatcher_shutdown
             .signal(())
@@ -378,11 +373,9 @@ impl WebSocketInterface {
     }
 
     pub async fn close(self: &Arc<Self>) -> Result<()> {
-        let mut inner = self.inner.lock().unwrap();
-        self.cleanup_ws(&inner);
-        if let Some(inner_) = &mut *inner {
-            inner_.ws.close()?;
-            *inner = None;
+        if let Some(inner) = self.inner.lock().unwrap().take() {
+            inner.ws.cleanup();
+            inner.ws.close()?;
         } else {
             log_trace!("WebSocket error: disconnecting from non-initialized connection");
         }
