@@ -129,7 +129,9 @@ where
                 let timeout_timer_interval =
                     Duration::from_millis(self.timeout_timer_interval.load(Ordering::SeqCst));
                 select! {
-                    _ = self.timeout_shutdown.request.receiver.recv().fuse() => { break; },
+                    _ = self.timeout_shutdown.request.receiver.recv().fuse() => {
+                        break;
+                    },
                     () = workflow_core::task::sleep(timeout_timer_interval).fuse() => {
                         let timeout = Duration::from_millis(self.timeout_duration.load(Ordering::Relaxed));
                         self.protocol.handle_timeout(timeout).await;

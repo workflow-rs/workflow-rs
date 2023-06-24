@@ -98,40 +98,17 @@ pub mod wasm {
 
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            use std::sync::{Arc, Mutex};
             use wasm_bindgen::prelude::*;
-            use instant::Duration;
 
             #[wasm_bindgen]
             extern "C" {
-                #[wasm_bindgen (catch, js_name = setTimeout)]
-                pub fn set_timeout(closure: &Closure<dyn FnMut()>, timeout: u32) -> std::result::Result<u32, JsValue>;
-                #[wasm_bindgen (catch, js_name = clearTimeout)]
-                pub fn clear_timeout(interval: u32) -> std::result::Result<(), JsValue>;
                 #[wasm_bindgen(js_name = requestAnimationFrame)]
                 fn request_animation_frame(callback:js_sys::Function);
             }
 
-            type SleepClosure = Closure<dyn FnMut()>;
-            /// Suspends current task for the given [`Duration`]
-            pub async fn sleep(duration : Duration) {
-                let (sender, receiver) = crate::channel::oneshot::<()>();
-                let interval = {
-                    let mutex_init : Arc<Mutex<Option<SleepClosure>>> = Arc::new(Mutex::new(None));
-                    let mutex_clear = mutex_init.clone();
-                    let closure = Closure::new(move ||{
-                        sender.try_send(()).unwrap();
-                        *mutex_clear.clone().lock().unwrap() = None;
-                    });
-                    let interval = set_timeout(&closure, duration.as_millis() as u32).unwrap();
-                    *mutex_init.lock().unwrap() = Some(closure);
-                    interval
-                };
-                receiver.recv().await.unwrap();
-                clear_timeout(interval).unwrap();
-            }
-
+            pub use crate::sleep::sleep;
             pub use async_std::task::yield_now;
+
             pub async fn yield_executor() {
                 if !unsafe { REQUEST_ANIMATION_FRAME_INITIALIZED } {
                     init_yield();
@@ -164,5 +141,6 @@ pub mod wasm {
         }
     }
 }
+
 #[cfg(target_arch = "wasm32")]
 pub use wasm::*;
