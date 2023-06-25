@@ -18,6 +18,7 @@ pub struct Sendable<T>(pub T)
 where
     T: Clone;
 unsafe impl<T> Send for Sendable<T> where T: Clone {}
+unsafe impl<T> Sync for Sendable<T> where T: Clone {}
 
 impl<T> Sendable<T>
 where
@@ -65,7 +66,7 @@ where
     }
 }
 
-impl<T> Display for &Sendable<T>
+impl<T> Display for Sendable<T>
 where
     T: Clone + Display,
 {
