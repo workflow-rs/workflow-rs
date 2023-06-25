@@ -31,7 +31,7 @@ pub async fn client_example(json: bool, message_delay: Duration) -> Result<()> {
     )?;
 
     log_info!("Connecting to {url}");
-    rpc.connect(true).await?;
+    rpc.connect(ConnectOptions::default()).await?;
     log_info!("Connection ok!");
 
     let mut seq = 0;

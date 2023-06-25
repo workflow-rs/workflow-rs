@@ -2,7 +2,7 @@ use super::{
     error::Error,
     message::{Ack, Message},
     result::Result,
-    Handshake, Options,
+    ConnectOptions, ConnectResult, Handshake, Options,
 };
 use futures::{select, select_biased, FutureExt};
 use js_sys::{ArrayBuffer, Function, Uint8Array};
@@ -11,7 +11,6 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
 };
-use triggered::{trigger, Listener, Trigger};
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{
     CloseEvent as WsCloseEvent, ErrorEvent as WsErrorEvent, MessageEvent as WsMessageEvent,
@@ -19,7 +18,7 @@ use web_sys::{
 };
 use workflow_core::runtime::*;
 use workflow_core::{
-    channel::{oneshot, unbounded, Channel, DuplexChannel},
+    channel::{oneshot, unbounded, Channel, DuplexChannel, Sender},
     task::spawn,
 };
 use workflow_log::*;
@@ -148,21 +147,51 @@ impl WebSocketInterface {
         self.is_open.load(Ordering::SeqCst)
     }
 
-    pub async fn connect(self: &Arc<Self>, block: bool) -> Result<Option<Listener>> {
-        let (connect_trigger, connect_listener) = trigger();
+    // pub async fn connect(self: &Arc<Self>, block: bool) -> Result<Option<Listener>> {
+    pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
+        let (connect_trigger, connect_listener) = oneshot::<Result<()>>();
+        // log_info!("connect block: {}", block);
 
-        self.connect_impl(Some(connect_trigger))?;
+        if let Some(url) = options.url.as_ref() {
+            self.set_url(url);
+        }
 
-        match block {
-            true => {
-                connect_listener.await;
-                Ok(None)
-            }
+        self.connect_impl(options.clone(), Some(connect_trigger))?;
+
+        // match options.block_async_connect {
+        //     true => {
+        //         match connect_listener.recv().await {
+        //             Ok(_) => Ok(None),
+        //             Err(err) => ,
+
+        //             Ok(_) => Ok(None),
+        //             Err(e) => {
+        //                 log_info!("XXX Got Error: {}", e);
+
+        //                 Err(e)
+        //             },
+        //         }
+        //     },
+        //     false => Ok(Some(connect_listener)),
+        // }
+        match options.block_async_connect {
+            true => match connect_listener.recv().await? {
+                Ok(_) => Ok(None),
+                Err(e) => {
+                    log_info!("XXX Got Error: {}", e);
+
+                    Err(e)
+                }
+            },
             false => Ok(Some(connect_listener)),
         }
     }
 
-    fn connect_impl(self: &Arc<Self>, connect_trigger: Option<Trigger>) -> Result<()> {
+    fn connect_impl(
+        self: &Arc<Self>,
+        options: ConnectOptions,
+        connect_trigger: Option<Sender<Result<()>>>,
+    ) -> Result<()> {
         let mut inner = self.inner.lock().unwrap();
         if inner.is_some() {
             return Err(Error::AlreadyInitialized);
@@ -202,7 +231,6 @@ impl WebSocketInterface {
         // - Close
         let event_sender_ = self.event_channel.sender.clone();
         let onclose = callback!(move |_event: WsCloseEvent| {
-            // let event: CloseEvent = _event.into();
             event_sender_
                 .try_send(Message::Close)
                 .unwrap_or_else(|err| {
@@ -225,11 +253,12 @@ impl WebSocketInterface {
         let self_ = self.clone();
         spawn(async move {
             self_
-                .dispatcher_task(&ws, connect_trigger)
+                .dispatcher_task(&ws, options.clone(), connect_trigger)
                 .await
-                .unwrap_or_else(|err| log_trace!("WebSocket dispatcher error: {err}"));
-
+                .unwrap_or_else(|err| log_trace!("WebSocket error: {err}"));
+            log_info!("DISPATCHER EXITED");
             if self_.reconnect.load(Ordering::SeqCst) {
+                log_info!("RECONNECT IS TRUE");
                 workflow_core::task::sleep(std::time::Duration::from_millis(1000)).await;
                 self_.reconnect().await.ok();
             }
@@ -298,7 +327,8 @@ impl WebSocketInterface {
     async fn dispatcher_task(
         self: &Arc<Self>,
         ws: &WebSocket,
-        connect_trigger: Arc<Mutex<Option<Trigger>>>,
+        options: ConnectOptions,
+        connect_trigger: Arc<Mutex<Option<Sender<Result<()>>>>>,
     ) -> Result<()> {
         loop {
             select! {
@@ -313,21 +343,50 @@ impl WebSocketInterface {
                                 self.receiver_channel.sender.send(msg).await.unwrap();
                             },
                             Message::Open => {
-                                self.handshake(ws).await?;
+
+                                // handle handshake failure
+                                if let Err(err) = self.handshake(ws).await {
+                                    if options.strategy.is_fallback() {
+                                        self.reconnect.store(false, Ordering::SeqCst);
+                                    }
+
+                                    let connect_trigger = connect_trigger.lock().unwrap().take();
+                                    if let Some(connect_trigger) = connect_trigger {
+                                        connect_trigger.send(Err(err)).await.ok();
+                                    }
+
+                                    return Err(Error::NegotiationFailure);
+                                }
+
                                 self.is_open.store(true, Ordering::SeqCst);
 
-                                if connect_trigger.lock().unwrap().is_some() {
-                                    connect_trigger.lock().unwrap().take().unwrap().trigger();
+                                let connect_trigger = connect_trigger.lock().unwrap().take();
+                                if let Some(connect_trigger) = connect_trigger {
+                                    connect_trigger.send(Ok(())).await.ok();
                                 }
 
                                 self.receiver_channel.sender.send(msg).await.unwrap();
                             },
                             Message::Close => {
-                                self.is_open.store(false, Ordering::SeqCst);
+
                                 if let Some(inner) = self.inner.lock().unwrap().as_ref() {
                                     inner.ws.cleanup();
                                 }
-                                self.receiver_channel.sender.send(msg).await.unwrap();
+
+                                if self.is_open.load(Ordering::SeqCst) {
+                                    self.is_open.store(false, Ordering::SeqCst);
+                                    self.receiver_channel.sender.send(msg).await.unwrap();
+                                } else if options.strategy.is_fallback() && options.block_async_connect {
+                                    // if we never connected and receiver Close while
+                                    // the strategy is Fallback, we disable reconnect
+                                    self.reconnect.store(false, Ordering::SeqCst);
+
+                                    let connect_trigger = connect_trigger.lock().unwrap().take();
+                                    if let Some(connect_trigger) = connect_trigger {
+                                        connect_trigger.send(Err(Error::Connect(self.url()))).await.ok();
+                                    }
+                                }
+
                                 break;
                             }
                         }
@@ -386,12 +445,15 @@ impl WebSocketInterface {
 
         Ok(())
     }
+
     async fn reconnect(self: &Arc<Self>) -> Result<()> {
         self.close().await?;
-        self.connect_impl(None)?;
+
+        self.connect_impl(ConnectOptions::reconnect_defaults(), None)?;
 
         Ok(())
     }
+
     pub async fn disconnect(self: &Arc<Self>) -> Result<()> {
         self.reconnect.store(false, Ordering::SeqCst);
         self.close().await.ok();

@@ -61,7 +61,7 @@ pub enum ServerError {
     #[error("{0}")]
     Text(String),
     /// Underlying WebSocket error
-    #[error("WebSocket error: {0}")]
+    #[error("WebSocket -> {0}")]
     WebSocketError(String),
     #[error("Receiver channel")]
     ReceiveChannelRx,

@@ -1,4 +1,7 @@
-use super::{error::Error, message::Message, result::Result, Ack, Handshake, Options};
+use super::{
+    error::Error, message::Message, result::Result, Ack, ConnectOptions, ConnectResult,
+    ConnectStrategy, Handshake, Options,
+};
 use futures::{
     select_biased,
     stream::{SplitSink, SplitStream},
@@ -15,7 +18,7 @@ use tokio_tungstenite::{
     connect_async, tungstenite::protocol::Message as TsMessage, MaybeTlsStream, WebSocketStream,
 };
 pub use workflow_core as core;
-use workflow_core::{channel::*, trigger::*};
+use workflow_core::channel::*;
 pub use workflow_log::*;
 
 impl From<Message> for tungstenite::Message {
@@ -100,17 +103,23 @@ impl WebSocketInterface {
         self.is_open.load(Ordering::SeqCst)
     }
 
-    pub async fn connect(self: &Arc<Self>, block: bool) -> Result<Option<Listener>> {
+    pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
         let self_ = self.clone();
 
         if self.is_open.load(Ordering::SeqCst) {
             return Err(Error::AlreadyConnected);
         }
 
-        let (connect_trigger, connect_listener) = triggered::trigger();
+        let (connect_trigger, connect_listener) = oneshot::<Result<()>>();
+        // let (connect_trigger, connect_listener) = triggered::trigger();
         let mut connect_trigger = Some(connect_trigger);
 
         self_.reconnect.store(true, Ordering::SeqCst);
+
+        let options_ = options.clone();
+        if let Some(url) = options.url.as_ref() {
+            self.set_url(url);
+        }
 
         core::task::spawn(async move {
             loop {
@@ -126,7 +135,7 @@ impl WebSocketInterface {
                         // });
 
                         if connect_trigger.is_some() {
-                            connect_trigger.take().unwrap().trigger();
+                            connect_trigger.take().unwrap().try_send(Ok(())).ok();
                         }
 
                         if let Err(err) = self_.dispatcher(&mut ws_stream).await {
@@ -137,6 +146,14 @@ impl WebSocketInterface {
                     }
                     Err(e) => {
                         log_trace!("WebSocket failed to connect to {}: {}", self_.url(), e);
+                        if matches!(options_.strategy, ConnectStrategy::Fallback) {
+                            if options.block_async_connect {
+                                if connect_trigger.is_some() {
+                                    connect_trigger.take().unwrap().try_send(Err(e.into())).ok();
+                                }
+                            }
+                            break;
+                        }
                         workflow_core::task::sleep(Duration::from_millis(1000)).await;
                     }
                 };
@@ -147,11 +164,11 @@ impl WebSocketInterface {
             }
         });
 
-        match block {
-            true => {
-                connect_listener.await;
-                Ok(None)
-            }
+        match options.block_async_connect {
+            true => match connect_listener.recv().await? {
+                Ok(_) => Ok(None),
+                Err(e) => Err(e),
+            },
             false => Ok(Some(connect_listener)),
         }
     }

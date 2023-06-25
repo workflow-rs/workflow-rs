@@ -2,16 +2,18 @@ use std::sync::PoisonError;
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 use workflow_core::channel::*;
+use workflow_wasm::printable::*;
+use workflow_wasm::sendable::*;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("JsValue {0:?}")]
-    JsValue(String),
+    #[error("{0}")]
+    JsValue(Sendable<Printable>),
 
     #[error("PoisonError")]
     PoisonError,
 
-    #[error("WebSocket URL must start with ws:// or wss:// - supplied argument:`{0}`")]
+    #[error("WebSocket URL must start with ws:// or wss:// - supplied argument is:`{0}`")]
     AddressSchema(String),
 
     #[error("Invalid message type")]
@@ -35,6 +37,9 @@ pub enum Error {
     #[error("WebSocket is not connected")]
     NotConnected,
 
+    #[error("Unable to connect to {0}")]
+    Connect(String),
+
     #[error("Handshake negotiation failure (internal)")]
     NegotiationFailure,
 
@@ -45,7 +50,7 @@ pub enum Error {
     ChannelSend,
 
     #[error("Dispatch channel try_send error")]
-    DispatchChannelTrySend, //(TrySendError<DispatchMessage>)
+    DispatchChannelTrySend,
 
     #[error("Dispatcher signal error")]
     DispatcherSignal,
@@ -68,11 +73,14 @@ pub enum Error {
 
     #[error("Unable to send ctl to receiver")]
     ReceiverCtlSend(SendError<super::message::Message>),
+
+    #[error(transparent)]
+    WorkflowWasm(#[from] workflow_wasm::error::Error),
 }
 
 impl From<JsValue> for Error {
     fn from(error: JsValue) -> Error {
-        Error::JsValue(format!("{error:?}"))
+        Error::JsValue(Sendable(Printable::new(error)))
     }
 }
 
@@ -84,7 +92,7 @@ impl<T> From<PoisonError<T>> for Error {
 
 impl<T> From<SendError<T>> for Error {
     fn from(_error: SendError<T>) -> Error {
-        Error::ChannelSend //(error)
+        Error::ChannelSend
     }
 }
 

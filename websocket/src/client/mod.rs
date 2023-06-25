@@ -22,7 +22,7 @@ pub mod result;
 pub use error::Error;
 use futures::Future;
 pub use message::*;
-pub use options::Options;
+pub use options::{ConnectOptions, ConnectStrategy, Options};
 pub use result::Result;
 
 use async_std::channel::{Receiver, Sender};
@@ -30,7 +30,7 @@ use async_trait::async_trait;
 use std::pin::Pin;
 use std::sync::Arc;
 use workflow_core::channel::{oneshot, Channel};
-use workflow_core::trigger::Listener;
+pub type ConnectResult<E> = std::result::Result<Option<Receiver<Result<()>>>, E>;
 
 pub type HandshakeFn = Arc<
     Box<dyn Send + Sync + Fn(&Sender<Message>, &Receiver<Message>) -> HandshakeFnReturn + 'static>,
@@ -145,8 +145,8 @@ impl WebSocket {
     /// To suspend reconnection, you have to call `disconnect()`
     /// method explicitly.
     ///
-    pub async fn connect(&self, block_until_connected: bool) -> Result<Option<Listener>> {
-        self.inner.client.connect(block_until_connected).await
+    pub async fn connect(&self, options: ConnectOptions) -> ConnectResult<Error> {
+        self.inner.client.connect(options).await
     }
 
     /// Disconnects the websocket from the destination server.

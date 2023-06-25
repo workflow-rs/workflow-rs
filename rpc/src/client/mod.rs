@@ -15,6 +15,7 @@ pub use interface::{Interface, Notification};
 use protocol::ProtocolHandler;
 pub use protocol::{BorshProtocol, SerdeJsonProtocol};
 use std::fmt::Debug;
+pub use workflow_websocket::client::{ConnectOptions, ConnectResult, ConnectStrategy};
 
 ///
 /// notification!() macro for declaration of RPC notification handlers
@@ -70,6 +71,7 @@ pub struct Options<'url> {
 
 struct Inner<Ops> {
     ws: Arc<WebSocket>,
+    is_running: AtomicBool,
     is_open: AtomicBool,
     receiver_is_running: AtomicBool,
     timeout_is_running: AtomicBool,
@@ -95,6 +97,7 @@ where
     {
         let inner = Inner {
             ws,
+            is_running: AtomicBool::new(false),
             is_open: AtomicBool::new(false),
             receiver_is_running: AtomicBool::new(false),
             receiver_shutdown: DuplexChannel::oneshot(),
@@ -109,9 +112,21 @@ where
         Ok(inner)
     }
 
+    #[inline]
+    pub fn is_running(&self) -> bool {
+        self.is_running.load(Ordering::SeqCst)
+    }
+
     pub fn start(self: &Arc<Self>) -> Result<()> {
-        self.clone().timeout_task();
-        self.clone().receiver_task();
+        if !self.is_running.load(Ordering::Relaxed) {
+            self.is_running.store(true, Ordering::SeqCst);
+            self.clone().timeout_task();
+            self.clone().receiver_task();
+        } else {
+            log_warning!(
+                "wRPC services are already running: rpc::start() was called multiple times"
+            );
+        }
         Ok(())
     }
 
@@ -119,6 +134,7 @@ where
         self.stop_timeout().await?;
         self.stop_receiver().await?;
         self.ws.disconnect().await?;
+        self.is_running.store(false, Ordering::SeqCst);
         Ok(())
     }
 
@@ -318,9 +334,7 @@ where
             ..WebSocketOptions::default()
         };
 
-        let url = options.url;
-        let url = Regex::new(r"^wrpc://")?.replace(url, "ws://");
-        let url = Regex::new(r"^wrpcs://")?.replace(&url, "wss://");
+        let url = sanitize_url(&options.url)?;
 
         let ws = Arc::new(WebSocket::new(&url, ws_options)?);
         let protocol: Arc<dyn ProtocolHandler<Ops>> = Arc::new(T::new(ws.clone(), interface));
@@ -333,14 +347,15 @@ where
             id: PhantomData,
         };
 
-        client.inner.start()?;
-
         Ok(client)
     }
 
     /// Connect to the target wRPC endpoint (websocket address)
-    pub async fn connect(&self, block_until_connected: bool) -> Result<Option<Listener>> {
-        Ok(self.inner.ws.connect(block_until_connected).await?)
+    pub async fn connect(&self, options: ConnectOptions) -> ConnectResult<Error> {
+        if !self.inner.is_running() {
+            self.inner.start()?;
+        }
+        Ok(self.inner.ws.connect(options).await?)
     }
 
     /// Stop wRPC client services
@@ -352,6 +367,15 @@ where
     /// Test if the underlying WebSocket is currently open
     pub fn is_open(&self) -> bool {
         self.inner.ws.is_open()
+    }
+
+    pub fn url(&self) -> String {
+        self.inner.ws.url()
+    }
+
+    pub fn set_url(&self, url: &str) -> Result<()> {
+        self.inner.ws.set_url(url);
+        Ok(())
     }
 
     ///
@@ -403,4 +427,14 @@ where
             Protocol::SerdeJson(protocol) => Ok(protocol.request(op, req).await?),
         }
     }
+}
+
+fn sanitize_url(url: &str) -> Result<String> {
+    let url = url
+        .replace("wrpc://", "ws://")
+        .replace("wrpcs://", "wss://");
+    Ok(url)
+    // let url = Regex::new(r"^wrpc://")?.replace(url, "ws://");
+    // let url = Regex::new(r"^wrpcs://")?.replace(&url, "wss://");
+    // url.to_string()
 }

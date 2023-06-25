@@ -22,13 +22,4 @@ pub enum Error {
 
     #[error("SerdeJSON error: {0}")]
     SerdeJSON(#[from] serde_json::Error),
-
-    #[error(transparent)]
-    Regex(#[from] regex::Error),
 }
-
-// impl<T> From<SendError<T>> for Error {
-//     fn from(_: SendError<T>) -> Self {
-//         Error::ChannelSendError
-//     }
-// }

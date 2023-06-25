@@ -29,5 +29,6 @@ cfg_if::cfg_if! {
         pub mod utils;
         pub mod tovalue;
         pub mod stream;
+        pub mod printable;
     }
 }

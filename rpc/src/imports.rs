@@ -10,7 +10,6 @@ pub use core::time::Duration;
 pub use downcast_rs::*;
 pub use futures::Future;
 pub use futures::{future::FutureExt, select};
-pub use regex::Regex;
 pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
 pub use serde_json::{self, Value};
 pub use std::fmt::Debug;

@@ -9,7 +9,7 @@ use std::fmt::Display;
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 use workflow_core::channel::{RecvError, SendError, TrySendError};
-use workflow_websocket::client::error::Error as WebSocketError;
+pub use workflow_websocket::client::error::Error as WebSocketError;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -34,7 +34,7 @@ pub enum Error {
     MissingNotificationHandler,
 
     /// Underlying WebSocket error
-    #[error("WebSocket error: {0}")]
+    #[error("WebSocket -> {0}")]
     WebSocketError(#[from] WebSocketError),
     /// RPC call timeout
     #[error("RPC request timeout")]
@@ -43,27 +43,27 @@ pub enum Error {
     #[error("Receiver ctl failure")]
     ReceiverCtl,
     /// RPC call succeeded but no data was received in success response
-    #[error("RPC: no data in success response")]
+    #[error("RPC has no data in success response")]
     NoDataInSuccessResponse,
-    #[error("RPC: no data in notification")]
+    #[error("RPC has no data in notification")]
     NoDataInNotificationMessage,
     /// RPC call failed but no data was received in error response
-    #[error("RPC: no data in error response")]
+    #[error("RPC has no data in the error response")]
     NoDataInErrorResponse,
     /// Unable to deserialize response data
-    #[error("RPC: error deserializing server message data")]
+    #[error("RPC error deserializing server message data")]
     ErrorDeserializingServerMessageData(crate::error::Error),
     /// Unable to deserialize response data
-    #[error("RPC: error deserializing response data")]
+    #[error("RPC error deserializing response data")]
     ErrorDeserializingResponseData,
     /// Response produced an unknown status code
-    #[error("RPC: status code {0}")]
+    #[error("RPC status code {0}")]
     StatusCode(u32),
     /// RPC call executed successfully but produced an error response
-    #[error("RPC: response error {0:?}")]
+    #[error("RPC response error {0:?}")]
     RpcCall(ServerError),
     /// Unable to serialize borsh data    
-    #[error("RPC: borsh serialization error")]
+    #[error("RPC borsh serialization error")]
     BorshSerialize,
     /// Unable to deserialize borsh data
     #[error("RPC borsh deserialization error: {0}")]
@@ -75,7 +75,7 @@ pub enum Error {
     #[error("RPC serde deserialization error: {0}")]
     SerdeDeserialize(String),
     /// RPC call succeeded, but error occurred deserializing borsh response
-    #[error("RPC: borsh error deserializing response: {0}")]
+    #[error("RPC borsh error deserializing response: {0}")]
     BorshResponseDeserialize(String),
 
     #[error("RPC: channel receive error")]
@@ -98,9 +98,8 @@ pub enum Error {
 
     #[error("{0}")]
     SerdeJsonServerError(SerdeJsonServerError),
-
-    #[error("{0}")]
-    RegexError(#[from] regex::Error),
+    // #[error("{0}")]
+    // RegexError(#[from] regex::Error),
 }
 
 impl From<ServerError> for Error {

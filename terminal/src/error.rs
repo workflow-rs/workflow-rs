@@ -9,9 +9,9 @@ use workflow_core::channel::{ChannelError, RecvError, SendError, TrySendError};
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Error: {0}")]
+    #[error("{0}")]
     String(String),
-    #[error("Error: {0}")]
+    #[error("{0}")]
     JsValue(String),
     #[error("Poison Error: {0}")]
     PoisonError(String),
