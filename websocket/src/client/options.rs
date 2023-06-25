@@ -15,7 +15,7 @@ pub struct Options {
     pub handshake: Option<Arc<dyn Handshake>>,
 }
 
-/// `ConnectionStrategy` specifies how the WebSockeet `async fn connect()` 
+/// `ConnectionStrategy` specifies how the WebSockeet `async fn connect()`
 /// function should behave during the first-time connectivity phase.
 #[derive(Default, Clone)]
 pub enum ConnectStrategy {
@@ -42,9 +42,9 @@ impl ConnectStrategy {
     }
 }
 
-/// 
+///
 /// `ConnectOptions` is used to configure the `WebSocket` connectivity behavior.
-/// 
+///
 #[derive(Clone)]
 pub struct ConnectOptions {
     /// Indicates if the `async fn connect()` method should return immediately

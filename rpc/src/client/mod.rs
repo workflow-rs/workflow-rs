@@ -334,7 +334,7 @@ where
             ..WebSocketOptions::default()
         };
 
-        let url = sanitize_url(&options.url)?;
+        let url = sanitize_url(options.url)?;
 
         let ws = Arc::new(WebSocket::new(&url, ws_options)?);
         let protocol: Arc<dyn ProtocolHandler<Ops>> = Arc::new(T::new(ws.clone(), interface));

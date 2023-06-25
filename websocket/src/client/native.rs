@@ -147,10 +147,8 @@ impl WebSocketInterface {
                     Err(e) => {
                         log_trace!("WebSocket failed to connect to {}: {}", self_.url(), e);
                         if matches!(options_.strategy, ConnectStrategy::Fallback) {
-                            if options.block_async_connect {
-                                if connect_trigger.is_some() {
-                                    connect_trigger.take().unwrap().try_send(Err(e.into())).ok();
-                                }
+                            if options.block_async_connect && connect_trigger.is_some() {
+                                connect_trigger.take().unwrap().try_send(Err(e.into())).ok();
                             }
                             break;
                         }
