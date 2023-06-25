@@ -67,15 +67,15 @@ cfg_if! {
         }
 
         /// Helper to test whether the application is running under
-        /// Node Webkit environment.
+        /// NW environment.
         pub fn is_nw() -> bool {
             detect().1
         }
 
         /// Helper to test whether the application is running under
-        /// in a regular browser environment.
+        /// in a regular browser environment (not NodeJs and not NW).
         pub fn is_web()->bool{
-            !is_node()
+            !is_node() && !is_nw()
         }
 
     }else{
@@ -87,7 +87,7 @@ cfg_if! {
         }
 
         /// Helper to test whether the application is running under
-        /// Node Webkit environment.
+        /// NW environment.
         pub fn is_nw() -> bool {
             false
         }
