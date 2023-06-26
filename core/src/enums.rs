@@ -21,12 +21,16 @@ pub trait EnumTrait<T> {
 }
 
 /// Error produced by the enum `try_from` macros
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, thiserror::Error)]
 #[allow(non_camel_case_types)]
 pub enum TryFromError {
+    #[error("value for enum `{0}` is out of range: {1}")]
     u32(&'static str, u32),
+    #[error("value for enum `{0}` is out of range: {1}")]
     u16(&'static str, u16),
+    #[error("value for enum `{0}` is out of range: {1}")]
     u8(&'static str, u8),
+    #[error("value for enum `{0}` is out of range: {1}")]
     usize(&'static str, usize),
 }
 
