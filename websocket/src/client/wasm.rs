@@ -158,30 +158,10 @@ impl WebSocketInterface {
 
         self.connect_impl(options.clone(), Some(connect_trigger))?;
 
-        // match options.block_async_connect {
-        //     true => {
-        //         match connect_listener.recv().await {
-        //             Ok(_) => Ok(None),
-        //             Err(err) => ,
-
-        //             Ok(_) => Ok(None),
-        //             Err(e) => {
-        //                 log_info!("XXX Got Error: {}", e);
-
-        //                 Err(e)
-        //             },
-        //         }
-        //     },
-        //     false => Ok(Some(connect_listener)),
-        // }
         match options.block_async_connect {
             true => match connect_listener.recv().await? {
                 Ok(_) => Ok(None),
-                Err(e) => {
-                    log_info!("XXX Got Error: {}", e);
-
-                    Err(e)
-                }
+                Err(e) => Err(e)
             },
             false => Ok(Some(connect_listener)),
         }
@@ -256,9 +236,7 @@ impl WebSocketInterface {
                 .dispatcher_task(&ws, options.clone(), connect_trigger)
                 .await
                 .unwrap_or_else(|err| log_trace!("WebSocket error: {err}"));
-            log_info!("DISPATCHER EXITED");
             if self_.reconnect.load(Ordering::SeqCst) {
-                log_info!("RECONNECT IS TRUE");
                 workflow_core::task::sleep(std::time::Duration::from_millis(1000)).await;
                 self_.reconnect().await.ok();
             }
