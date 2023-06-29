@@ -161,7 +161,7 @@ impl WebSocketInterface {
         match options.block_async_connect {
             true => match connect_listener.recv().await? {
                 Ok(_) => Ok(None),
-                Err(e) => Err(e)
+                Err(e) => Err(e),
             },
             false => Ok(Some(connect_listener)),
         }
