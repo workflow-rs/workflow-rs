@@ -17,7 +17,7 @@ pub struct Options {
 
 /// `ConnectionStrategy` specifies how the WebSockeet `async fn connect()`
 /// function should behave during the first-time connectivity phase.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub enum ConnectStrategy {
     /// Continiously attempt to connect to the server. This behavior will
     /// block `connect()` function until the connection is established.
@@ -45,7 +45,7 @@ impl ConnectStrategy {
 ///
 /// `ConnectOptions` is used to configure the `WebSocket` connectivity behavior.
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ConnectOptions {
     /// Indicates if the `async fn connect()` method should return immediately
     /// or block until the connection is established.
