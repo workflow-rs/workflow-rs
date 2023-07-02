@@ -161,8 +161,6 @@ impl WebSocketInterface {
             }
         });
 
-        log_info!("waiting for trigger...");
-
         match options.block_async_connect {
             true => match connect_listener.recv().await? {
                 Ok(_) => Ok(None),
@@ -223,19 +221,11 @@ impl WebSocketInterface {
 
         self.handshake(&mut ws_sender, &mut ws_receiver).await?;
 
-        // let (_, sender_rx) = &self.sender_channel;
-
-        // self.receiver_tx.send(Message::Ctl(Ctl::Open)).await?;
         self.receiver_channel.send(Message::Open).await?;
 
         loop {
-            tokio::select! {
-                _ = self.shutdown.request.receiver.recv() => {
-                    ws_sender.close().await?;
-                    self.shutdown.response.sender.send(()).await?;
-                    break;
-                }
-                dispatch = self.sender_channel.recv() => {
+            select_biased! {
+                dispatch = self.sender_channel.recv().fuse() => {
                     if let Ok((msg,ack)) = dispatch {
                         if let Some(ack_sender) = ack {
                             let result = ws_sender.send(msg.into()).await
@@ -246,8 +236,8 @@ impl WebSocketInterface {
                             ws_sender.send(msg.into()).await?;
                         }
                     }
-                },
-                msg = ws_receiver.next() => {
+                }
+                msg = ws_receiver.next().fuse() => {
                     match msg {
                         Some(Ok(msg)) => {
                             match msg {
@@ -273,6 +263,11 @@ impl WebSocketInterface {
                             break;
                         }
                     }
+                }
+                _ = self.shutdown.request.receiver.recv().fuse() => {
+                    self.receiver_channel.send(Message::Close).await?;
+                    self.shutdown.response.sender.send(()).await?;
+                    break;
                 }
             }
         }
