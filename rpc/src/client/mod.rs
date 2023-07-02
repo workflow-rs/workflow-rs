@@ -213,7 +213,7 @@ where
     }
 
     async fn stop_receiver(&self) -> Result<()> {
-        if self.receiver_is_running.load(Ordering::SeqCst) {
+        if !self.receiver_is_running.load(Ordering::SeqCst) {
             return Ok(());
         }
 

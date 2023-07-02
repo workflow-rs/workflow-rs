@@ -89,6 +89,7 @@
 
 pub mod clear;
 pub mod cli;
+pub mod crlf;
 pub mod cursor;
 pub mod error;
 pub mod keys;
@@ -96,6 +97,7 @@ pub mod result;
 pub mod terminal;
 
 pub use cli::Cli;
+pub use crlf::CrLf;
 pub use result::Result;
 pub use terminal::parse;
 pub use terminal::Options;
