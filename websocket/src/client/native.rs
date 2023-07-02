@@ -120,14 +120,11 @@ impl WebSocketInterface {
         if let Some(url) = options.url.as_ref() {
             self.set_url(url);
         }
-        log_info!("XXX starting connect...");
         core::task::spawn(async move {
             loop {
-                log_info!("XXX loop... starting async connect...");
                 match connect_async(&self_.url()).await {
                     Ok(stream) => {
                         // log_trace!("connected...");
-                        log_info!("XXX connected...");
 
                         self_.is_open.store(true, Ordering::SeqCst);
                         let (mut ws_stream, _) = stream;
@@ -135,10 +132,8 @@ impl WebSocketInterface {
                         // *self_.inner.lock().unwrap() = Some(Inner {
                         //     ws_stream: Some(ws_stream),
                         // });
-                        log_info!("XXX trigger...");
 
                         if connect_trigger.is_some() {
-                            log_info!("XXX trigger sending...");
                             connect_trigger.take().unwrap().try_send(Ok(())).ok();
                         }
 
@@ -307,8 +302,6 @@ impl WebSocketInterface {
                 .unwrap_or_else(|err| {
                     log_error!("Unable to receive WebSocket dispatcher shutdown: {}", err)
                 });
-        } else {
-            log_error!("Error: disconnecting from non-initialized connection");
         }
 
         Ok(())
