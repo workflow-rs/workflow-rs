@@ -413,8 +413,6 @@ impl WebSocketInterface {
         if let Some(inner) = self.inner.lock().unwrap().take() {
             inner.ws.cleanup();
             inner.ws.close()?;
-        } else {
-            log_trace!("WebSocket error: disconnecting from non-initialized connection");
         }
 
         if self.is_open.load(Ordering::SeqCst) {
