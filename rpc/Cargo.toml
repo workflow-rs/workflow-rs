@@ -35,6 +35,7 @@ async-trait.workspace = true
 borsh.workspace = true
 downcast-rs.workspace = true
 futures.workspace = true
+futures-util.workspace = true
 manual_future.workspace = true
 rand.workspace = true
 # regex.workspace = true

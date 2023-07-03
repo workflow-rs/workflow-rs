@@ -11,12 +11,12 @@ pub use crate::client::error::Error;
 pub use crate::client::result::Result;
 
 use crate::imports::*;
-use tokio::task::yield_now;
 use futures_util::select_biased;
 pub use interface::{Interface, Notification};
 use protocol::ProtocolHandler;
 pub use protocol::{BorshProtocol, SerdeJsonProtocol};
 use std::fmt::Debug;
+use workflow_core::task::yield_now;
 pub use workflow_websocket::client::{ConnectOptions, ConnectResult, ConnectStrategy};
 
 ///
@@ -134,7 +134,7 @@ where
 
     pub async fn shutdown(self: &Arc<Self>) -> Result<()> {
         self.ws.disconnect().await?;
-        yield_now();
+        yield_now().await;
         self.stop_timeout().await?;
         self.stop_receiver().await?;
         self.is_running.store(false, Ordering::SeqCst);
@@ -144,7 +144,7 @@ where
     fn timeout_task(self: Arc<Self>) {
         self.timeout_is_running.store(true, Ordering::SeqCst);
         workflow_core::task::spawn(async move {
-            loop {
+            'outer: loop {
                 let timeout_timer_interval =
                     Duration::from_millis(self.timeout_timer_interval.load(Ordering::SeqCst));
                 select_biased! {
@@ -153,7 +153,7 @@ where
                         self.protocol.handle_timeout(timeout).await;
                     },
                     _ = self.timeout_shutdown.request.receiver.recv().fuse() => {
-                        break;
+                        break 'outer;
                     },
                 }
             }
@@ -168,7 +168,7 @@ where
         self.receiver_is_running.store(true, Ordering::SeqCst);
         let receiver_rx = self.ws.receiver_rx().clone();
         workflow_core::task::spawn(async move {
-            loop {
+            'outer: loop {
                 select_biased! {
                     msg = receiver_rx.recv().fuse() => {
                         match msg {
@@ -198,13 +198,13 @@ where
                                 }
                             },
                             Err(err) => {
-                                log_error!("wRPC client receiver channel error: {err}");        
-                                break;
+                                log_error!("wRPC client receiver channel error: {err}");
+                                break 'outer;
                             }
                         }
                     },
                     _ = self.receiver_shutdown.request.receiver.recv().fuse() => {
-                        break;
+                        break 'outer;
                     },
 
                 }
