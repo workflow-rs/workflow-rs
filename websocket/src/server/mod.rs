@@ -17,16 +17,16 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc::{
     UnboundedReceiver as TokioUnboundedReceiver, UnboundedSender as TokioUnboundedSender,
 };
-use tokio_tungstenite::{accept_async, WebSocketStream};
+use tokio_tungstenite::{accept_async_with_config, WebSocketStream};
 use tungstenite::Error as WebSocketError;
 use workflow_core::channel::DuplexChannel;
 use workflow_log::*;
-
 pub mod error;
 pub mod result;
 
 pub use error::Error;
 pub use result::Result;
+pub use tungstenite::protocol::WebSocketConfig;
 pub use tungstenite::Message;
 /// WebSocket stream sender for dispatching [`tungstenite::Message`].
 /// This stream object must have a mutable reference and can not be cloned.
@@ -119,8 +119,10 @@ where
         self: &Arc<Self>,
         peer: SocketAddr,
         stream: TcpStream,
+        config: Option<WebSocketConfig>,
     ) -> Result<()> {
-        let ws_stream = accept_async(stream).await?;
+        let ws_stream = accept_async_with_config(stream, config).await?;
+        // let ws_stream = accept_async(stream, config).await?;
         self.handler.connect(&peer).await?;
         // log_trace!("WebSocket connected: {}", peer);
 
@@ -204,14 +206,14 @@ where
         Ok(listener)
     }
 
-    async fn accept(self: &Arc<Self>, stream: TcpStream) {
+    async fn accept(self: &Arc<Self>, stream: TcpStream, config: Option<WebSocketConfig>) {
         let peer = stream
             .peer_addr()
             .expect("WebSocket connected streams should have a peer address");
 
         let self_ = self.clone();
         tokio::spawn(async move {
-            if let Err(e) = self_.handle_connection(peer, stream).await {
+            if let Err(e) = self_.handle_connection(peer, stream, config).await {
                 match e {
                     Error::WebSocketError(WebSocketError::ConnectionClosed)
                     | Error::WebSocketError(WebSocketError::Protocol(_))
@@ -222,14 +224,18 @@ where
         });
     }
 
-    pub async fn listen(self: Arc<Self>, addr: &str) -> Result<()> {
+    pub async fn listen(
+        self: Arc<Self>,
+        addr: &str,
+        config: Option<WebSocketConfig>,
+    ) -> Result<()> {
         let listener = self.bind(addr).await?;
 
         loop {
             select! {
                 stream = listener.accept().fuse() => {
                     if let Ok((stream,_)) = stream {
-                        self.accept(stream).await;
+                        self.accept(stream, config).await;
                     }
                 },
                 _ = self.stop.request.receiver.recv().fuse() => break,
@@ -305,7 +311,7 @@ where
 ///
 #[async_trait]
 pub trait WebSocketServerTrait: DowncastSync {
-    async fn listen(self: Arc<Self>, addr: &str) -> Result<()>;
+    async fn listen(self: Arc<Self>, addr: &str, config: Option<WebSocketConfig>) -> Result<()>;
     fn stop(&self) -> Result<()>;
     async fn join(&self) -> Result<()>;
     async fn stop_and_join(&self) -> Result<()>;
@@ -317,8 +323,8 @@ impl<T> WebSocketServerTrait for WebSocketServer<T>
 where
     T: WebSocketHandler + Send + Sync + 'static + Sized,
 {
-    async fn listen(self: Arc<Self>, addr: &str) -> Result<()> {
-        self.listen(addr).await
+    async fn listen(self: Arc<Self>, addr: &str, config: Option<WebSocketConfig>) -> Result<()> {
+        self.listen(addr, config).await
     }
 
     fn stop(&self) -> Result<()> {

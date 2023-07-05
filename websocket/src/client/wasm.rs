@@ -2,7 +2,7 @@ use super::{
     error::Error,
     message::{Ack, Message},
     result::Result,
-    ConnectOptions, ConnectResult, Handshake, Options,
+    ConnectOptions, ConnectResult, Handshake, Options, WebSocketConfig,
 };
 use futures::{select, select_biased, FutureExt};
 use js_sys::{ArrayBuffer, Function, Uint8Array};
@@ -113,6 +113,7 @@ impl WebSocketInterface {
         sender_channel: Channel<(Message, Ack)>,
         receiver_channel: Channel<Message>,
         options: Options,
+        _config: Option<WebSocketConfig>,
     ) -> Result<WebSocketInterface> {
         sanity_checks()?;
 

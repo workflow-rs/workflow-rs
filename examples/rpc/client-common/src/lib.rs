@@ -28,6 +28,7 @@ pub async fn client_example(json: bool, message_delay: Duration) -> Result<()> {
             url,
             ..RpcClientOptions::default()
         },
+        None,
     )?;
 
     log_info!("Connecting to {url}");

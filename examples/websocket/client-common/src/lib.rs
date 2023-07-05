@@ -4,7 +4,7 @@ use workflow_log::*;
 use workflow_websocket::client::{ConnectOptions, Message, Options, Result, WebSocket};
 
 pub async fn client_example(message_delay: Duration) -> Result<()> {
-    let ws = WebSocket::new("ws://localhost:9090", Options::default())?;
+    let ws = WebSocket::new("ws://localhost:9090", Options::default(), None)?;
     ws.connect(ConnectOptions::default()).await?;
 
     let ws_ = ws.clone();

@@ -16,8 +16,10 @@ pub use interface::{Interface, Notification};
 use protocol::ProtocolHandler;
 pub use protocol::{BorshProtocol, SerdeJsonProtocol};
 use std::fmt::Debug;
-use workflow_core::task::yield_now;
-pub use workflow_websocket::client::{ConnectOptions, ConnectResult, ConnectStrategy};
+use workflow_core::{channel::Multiplexer, task::yield_now};
+pub use workflow_websocket::client::{
+    ConnectOptions, ConnectResult, ConnectStrategy, WebSocketConfig,
+};
 
 ///
 /// notification!() macro for declaration of RPC notification handlers
@@ -66,7 +68,7 @@ pub trait NotificationHandler: Send + Sync + 'static {
 
 #[derive(Default)]
 pub struct Options<'url> {
-    pub ctl_channel: Option<Channel<Ctl>>,
+    pub ctl_multiplexer: Option<Multiplexer<Ctl>>,
     pub handshake: Option<Arc<dyn Handshake>>,
     pub url: &'url str,
 }
@@ -81,7 +83,7 @@ struct Inner<Ops> {
     timeout_shutdown: DuplexChannel,
     timeout_timer_interval: AtomicU64,
     timeout_duration: AtomicU64,
-    ctl_channel: Option<Channel<Ctl>>,
+    ctl_multiplexer: Option<Multiplexer<Ctl>>,
     protocol: Arc<dyn ProtocolHandler<Ops>>,
 }
 
@@ -107,7 +109,7 @@ where
             timeout_shutdown: DuplexChannel::oneshot(),
             timeout_duration: AtomicU64::new(60_000),
             timeout_timer_interval: AtomicU64::new(5_000),
-            ctl_channel: options.ctl_channel,
+            ctl_multiplexer: options.ctl_multiplexer,
             protocol,
         };
 
@@ -180,8 +182,8 @@ where
                                     }
                                     WebSocketMessage::Open => {
                                         self.is_open.store(true, Ordering::SeqCst);
-                                        if let Some(ctl_channel) = &self.ctl_channel {
-                                            ctl_channel.send(Ctl::Open).await.unwrap();
+                                        if let Some(ctl_channel) = &self.ctl_multiplexer {
+                                            ctl_channel.broadcast(Ctl::Open).await.unwrap();
                                         }
                                     }
                                     WebSocketMessage::Close => {
@@ -191,8 +193,8 @@ where
                                             log_error!("wRPC error during protocol disconnect: {err}");
                                         });
 
-                                        if let Some(ctl_channel) = &self.ctl_channel {
-                                            ctl_channel.send(Ctl::Close).await.unwrap();
+                                        if let Some(ctl_channel) = &self.ctl_multiplexer {
+                                            ctl_channel.broadcast(Ctl::Close).await.unwrap();
                                         }
                                     }
                                 }
@@ -309,10 +311,13 @@ where
         encoding: Encoding,
         interface: Option<Arc<Interface<Ops>>>,
         options: Options<'_>,
+        config: Option<WebSocketConfig>,
     ) -> Result<RpcClient<Ops, Id>> {
         match encoding {
-            Encoding::Borsh => Self::new::<BorshProtocol<Ops, Id>>(interface, options),
-            Encoding::SerdeJson => Self::new::<SerdeJsonProtocol<Ops, Id>>(interface, options),
+            Encoding::Borsh => Self::new::<BorshProtocol<Ops, Id>>(interface, options, config),
+            Encoding::SerdeJson => {
+                Self::new::<SerdeJsonProtocol<Ops, Id>>(interface, options, config)
+            }
         }
     }
 
@@ -330,6 +335,7 @@ where
     pub fn new<T>(
         interface: Option<Arc<Interface<Ops>>>,
         options: Options<'_>,
+        config: Option<WebSocketConfig>,
     ) -> Result<RpcClient<Ops, Id>>
     where
         T: ProtocolHandler<Ops> + Send + Sync + 'static,
@@ -341,7 +347,7 @@ where
 
         let url = sanitize_url(options.url)?;
 
-        let ws = Arc::new(WebSocket::new(&url, ws_options)?);
+        let ws = Arc::new(WebSocket::new(&url, ws_options, config)?);
         let protocol: Arc<dyn ProtocolHandler<Ops>> = Arc::new(T::new(ws.clone(), interface));
         let inner = Arc::new(Inner::new::<T>(ws, protocol.clone(), options)?);
 
@@ -367,6 +373,10 @@ where
     pub async fn shutdown(&self) -> Result<()> {
         self.inner.shutdown().await?;
         Ok(())
+    }
+
+    pub fn ctl_multiplexer(&self) -> &Option<Multiplexer<Ctl>> {
+        &self.inner.ctl_multiplexer
     }
 
     /// Test if the underlying WebSocket is currently open

@@ -14,11 +14,13 @@ cfg_if! {
     }
 }
 
+pub mod config;
 pub mod error;
 pub mod message;
 pub mod options;
 pub mod result;
 
+pub use config::WebSocketConfig;
 pub use error::Error;
 use futures::Future;
 pub use message::*;
@@ -73,7 +75,7 @@ pub struct WebSocket {
 
 impl WebSocket {
     /// Create a new WebSocket instance connecting to the given URL.
-    pub fn new(url: &str, options: Options) -> Result<WebSocket> {
+    pub fn new(url: &str, options: Options, config: Option<WebSocketConfig>) -> Result<WebSocket> {
         if !url.starts_with("ws://") && !url.starts_with("wss://") {
             return Err(Error::AddressSchema(url.to_string()));
         }
@@ -97,6 +99,7 @@ impl WebSocket {
             // receiver_tx,
             // sender_tx_rx,
             options,
+            config,
         )?);
 
         let websocket = WebSocket {

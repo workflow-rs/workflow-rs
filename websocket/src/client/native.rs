@@ -1,6 +1,6 @@
 use super::{
     error::Error, message::Message, result::Result, Ack, ConnectOptions, ConnectResult,
-    ConnectStrategy, Handshake, Options,
+    ConnectStrategy, Handshake, Options, WebSocketConfig,
 };
 use futures::{
     select_biased,
@@ -15,8 +15,10 @@ use std::sync::{
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
-    connect_async, tungstenite::protocol::Message as TsMessage, MaybeTlsStream, WebSocketStream,
+    connect_async_with_config, tungstenite::protocol::Message as TsMessage, MaybeTlsStream,
+    WebSocketStream,
 };
+use tungstenite::protocol::WebSocketConfig as TsWebSocketConfig;
 pub use workflow_core as core;
 use workflow_core::channel::*;
 pub use workflow_log::*;
@@ -46,6 +48,17 @@ impl From<tungstenite::Message> for Message {
     }
 }
 
+impl From<WebSocketConfig> for TsWebSocketConfig {
+    fn from(config: WebSocketConfig) -> Self {
+        TsWebSocketConfig {
+            max_send_queue: config.max_send_queue,
+            max_message_size: config.max_message_size,
+            max_frame_size: config.max_frame_size,
+            accept_unmasked_frames: config.accept_unmasked_frames,
+        }
+    }
+}
+
 struct Settings {
     url: String,
 }
@@ -58,6 +71,7 @@ struct Settings {
 pub struct WebSocketInterface {
     // inner: Arc<Mutex<Option<Inner>>>,
     settings: Arc<Mutex<Settings>>,
+    config: Option<WebSocketConfig>,
     // reconnect : Arc<Mutex<bool>>,
     reconnect: AtomicBool,
     is_open: AtomicBool,
@@ -73,6 +87,7 @@ impl WebSocketInterface {
         sender_channel: Channel<(Message, Ack)>,
         receiver_channel: Channel<Message>,
         options: Options,
+        config: Option<WebSocketConfig>,
     ) -> Result<WebSocketInterface> {
         let settings = Settings {
             url: url.to_string(),
@@ -80,6 +95,7 @@ impl WebSocketInterface {
 
         let iface = WebSocketInterface {
             settings: Arc::new(Mutex::new(settings)),
+            config,
             receiver_channel,
             sender_channel,
             reconnect: AtomicBool::new(true),
@@ -120,9 +136,12 @@ impl WebSocketInterface {
         if let Some(url) = options.url.as_ref() {
             self.set_url(url);
         }
+
+        let ts_websocket_config = self.config.clone().map(|config| config.into());
+
         core::task::spawn(async move {
             loop {
-                match connect_async(&self_.url()).await {
+                match connect_async_with_config(&self_.url(), ts_websocket_config).await {
                     Ok(stream) => {
                         // log_trace!("connected...");
 

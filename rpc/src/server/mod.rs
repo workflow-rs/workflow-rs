@@ -19,7 +19,7 @@ pub use protocol::{BorshProtocol, ProtocolHandler, SerdeJsonProtocol};
 pub use std::net::SocketAddr;
 pub use tokio::sync::mpsc::UnboundedSender as TokioUnboundedSender;
 pub use workflow_websocket::server::{
-    Error as WebSocketError, Message, Result as WebSocketResult, WebSocketHandler,
+    Error as WebSocketError, Message, Result as WebSocketResult, WebSocketConfig, WebSocketHandler,
     WebSocketReceiver, WebSocketSender, WebSocketServer, WebSocketServerTrait, WebSocketSink,
 };
 pub mod handshake {
@@ -449,9 +449,9 @@ impl RpcServer {
     // pub fn
 
     /// Start listening for incoming RPC connections on the `addr`
-    pub async fn listen(&self, addr: &str) -> WebSocketResult<()> {
+    pub async fn listen(&self, addr: &str, config: Option<WebSocketConfig>) -> WebSocketResult<()> {
         let addr = addr.replace("wrpc://", "");
-        self.ws_server.clone().listen(&addr).await
+        self.ws_server.clone().listen(&addr, config).await
     }
 
     /// Signal the listening task to stop
