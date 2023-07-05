@@ -115,6 +115,7 @@ sha2 = "0.10.6"
 syn = {version="1.0.107",features=["full","fold","extra-traits","parsing","proc-macro"]}
 termcolor="0.3.6"
 termion = "2.0.1"
+textwrap = "0.16.0"
 # termion = "1.5.6"
 thiserror = "1.0.38"
 tokio = { version = "1.25.0", default-features = false, features = ['io-util','time','sync','macros','rt','rt-multi-thread'] }

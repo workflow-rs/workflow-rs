@@ -31,6 +31,7 @@ futures.workspace = true
 js-sys.workspace = true
 numtoa.workspace = true
 regex.workspace = true
+textwrap.workspace = true
 thiserror.workspace = true
 wasm-bindgen-futures.workspace = true
 wasm-bindgen.workspace = true

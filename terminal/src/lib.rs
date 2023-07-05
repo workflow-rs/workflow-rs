@@ -103,6 +103,7 @@ pub use terminal::parse;
 pub use terminal::Options;
 pub use terminal::TargetElement;
 pub use terminal::Terminal;
+pub use textwrap;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {

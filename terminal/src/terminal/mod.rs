@@ -7,11 +7,13 @@ use crate::cli::Cli;
 use crate::cursor::*;
 use crate::keys::Key;
 use crate::result::Result;
+use crate::CrLf;
 use cfg_if::cfg_if;
 use futures::*;
 use regex::Regex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LockResult, Mutex, MutexGuard};
+use textwrap::wrap;
 use workflow_core::channel::{unbounded, Channel, DuplexChannel, Receiver, Sender};
 use workflow_core::task::spawn;
 use workflow_log::log_error;
@@ -292,6 +294,16 @@ impl Terminal {
                 self.write("\x08".to_string());
             }
         }
+    }
+
+    pub fn para<'a, S, Opt>(&self, width_or_options: Opt, text: S)
+    where
+        S: Into<String>,
+        Opt: Into<textwrap::Options<'a>>,
+    {
+        wrap(text.into().crlf().as_str(), width_or_options.into())
+            .into_iter()
+            .for_each(|line| self.writeln(line));
     }
 
     /// Get a clone of Arc of the underlying terminal instance
