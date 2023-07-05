@@ -178,14 +178,18 @@ where
         }
     }
 
-    pub fn register_event_channel(&self) -> (Id, Sender<T>, Receiver<T>) {
+    pub fn create_channel(&self) -> MultiplexerChannel<T> {
+        MultiplexerChannel::from(self)
+    }
+
+    fn register_event_channel(&self) -> (Id, Sender<T>, Receiver<T>) {
         let (sender, receiver) = unbounded();
         let id = Id::new();
         self.channels.lock().unwrap().insert(id, sender.clone());
         (id, sender, receiver)
     }
 
-    pub fn unregister_event_channel(&self, id: Id) {
+    fn unregister_event_channel(&self, id: Id) {
         self.channels.lock().unwrap().remove(&id);
     }
 
