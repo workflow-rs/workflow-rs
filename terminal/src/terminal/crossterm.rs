@@ -4,6 +4,7 @@ use crate::terminal::Terminal;
 use crate::Result;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+pub use crossterm::terminal::disable_raw_mode;
 use crossterm::{
     event::{self, Event, KeyCode},
     terminal,
@@ -116,4 +117,23 @@ impl Crossterm {
             stdout.flush().unwrap();
         }
     }
+}
+
+use std::{panic, process};
+
+/// configure custom panic hook that disables terminal raw mode
+/// supply a closure that will be called when a panic occurs
+/// giving an opportunity to output a custom message.  The closure
+/// should return a desirable process exit code.
+pub fn init_panic_hook<F>(f: F)
+where
+    F: Fn() -> i32 + Send + Sync + 'static,
+{
+    let default_hook = panic::take_hook();
+    panic::set_hook(Box::new(move |panic_info| {
+        disable_raw_mode().ok();
+        default_hook(panic_info);
+        let exit_code = f();
+        process::exit(exit_code);
+    }));
 }

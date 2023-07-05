@@ -116,6 +116,10 @@ impl Cli for ExampleCli {
             Ok(vec![])
         }
     }
+
+    fn prompt(&self) -> Option<String> {
+        None
+    }
 }
 
 pub async fn example_terminal() -> Result<()> {

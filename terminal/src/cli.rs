@@ -14,4 +14,5 @@ pub trait Cli: Sync + Send {
     }
     async fn digest(&self, term: Arc<Terminal>, cmd: String) -> Result<()>;
     async fn complete(&self, term: Arc<Terminal>, cmd: String) -> Result<Vec<String>>;
+    fn prompt(&self) -> Option<String>;
 }

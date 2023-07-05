@@ -104,5 +104,10 @@ pub use terminal::Options;
 pub use terminal::TargetElement;
 pub use terminal::Terminal;
 
-#[cfg(target_arch = "wasm32")]
-pub use terminal::{Theme, ThemeOption};
+cfg_if::cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+        pub use terminal::{Theme, ThemeOption};
+    } else {
+        pub use terminal::{disable_raw_mode,init_panic_hook};
+    }
+}

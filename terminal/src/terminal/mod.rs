@@ -33,6 +33,7 @@ cfg_if! {
     } else {
         mod crossterm;
         use crate::terminal::crossterm::Crossterm as Interface;
+        pub use crate::terminal::crossterm::{disable_raw_mode,init_panic_hook};
     }
 }
 
@@ -246,7 +247,11 @@ impl Terminal {
 
     /// Get the current terminal prompt string
     pub fn get_prompt(&self) -> String {
-        return self.prompt.lock().unwrap().clone();
+        if let Some(prompt) = self.handler.prompt() {
+            prompt
+        } else {
+            self.prompt.lock().unwrap().clone()
+        }
     }
 
     /// Render the current prompt in the terminal
