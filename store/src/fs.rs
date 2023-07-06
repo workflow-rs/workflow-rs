@@ -21,6 +21,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use wasm_bindgen::prelude::*;
+use workflow_core::dirs;
 use workflow_core::runtime;
 use workflow_wasm::object::ObjectTrait;
 
@@ -39,7 +40,6 @@ pub struct Fs {
     pub unlink_sync: Function,
 }
 
-#[allow(dead_code)]
 static mut FS: Option<Fs> = None;
 
 #[allow(dead_code)]
@@ -320,7 +320,7 @@ pub fn resolve_path(path: &str) -> PathBuf {
         if runtime::is_web() {
             PathBuf::from(path)
         } else if runtime::is_node() || runtime::is_nw() {
-            todo!();
+            dirs::home_dir().expect("workflow_rs::store::fs::resolve_path(): Unable to obtain nodejs home directory").join(_stripped)
         } else {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {

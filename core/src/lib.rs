@@ -49,6 +49,9 @@ cfg_if::cfg_if! {
         // environment variable access (native and Node.js abstraction)
         pub mod env;
 
+        // directory access (home folder, data folder) (native and Node.js abstraction)
+        pub mod dirs;
+
         /// trigger re-exports and shims
         pub mod trigger;
 
