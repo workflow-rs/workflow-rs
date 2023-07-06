@@ -11,12 +11,13 @@ use crate::CrLf;
 use cfg_if::cfg_if;
 use futures::*;
 use regex::Regex;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, LockResult, Mutex, MutexGuard};
-use textwrap::wrap;
 use workflow_core::channel::{unbounded, Channel, DuplexChannel, Receiver, Sender};
 use workflow_core::task::spawn;
 use workflow_log::log_error;
+
+const DEFAULT_PARA_WIDTH: usize = 80;
 
 mod options;
 pub use options::Options;
@@ -177,6 +178,7 @@ pub struct Terminal {
     pub pipe_raw: Channel<String>,
     pub pipe_crlf: Channel<String>,
     pub pipe_ctl: DuplexChannel<()>,
+    pub para_width: Arc<AtomicUsize>,
 }
 
 impl Terminal {
@@ -195,6 +197,7 @@ impl Terminal {
             pipe_raw: Channel::unbounded(),
             pipe_crlf: Channel::unbounded(),
             pipe_ctl: DuplexChannel::oneshot(),
+            para_width: Arc::new(AtomicUsize::new(DEFAULT_PARA_WIDTH)),
         };
 
         Ok(terminal)
@@ -220,6 +223,7 @@ impl Terminal {
             pipe_raw: Channel::unbounded(),
             pipe_crlf: Channel::unbounded(),
             pipe_ctl: DuplexChannel::oneshot(),
+            para_width: Arc::new(AtomicUsize::new(DEFAULT_PARA_WIDTH)),
         };
 
         Ok(terminal)
@@ -296,12 +300,26 @@ impl Terminal {
         }
     }
 
-    pub fn para<'a, S, Opt>(&self, width_or_options: Opt, text: S)
+    pub fn para<S>(&self, text: S)
+    where
+        S: Into<String>,
+    {
+        let width: usize = self.para_width.load(Ordering::SeqCst);
+        let options = textwrap::Options::new(width).line_ending(textwrap::LineEnding::CRLF);
+
+        textwrap::wrap(text.into().as_str(), options)
+            .into_iter()
+            .for_each(|line| self.writeln(line));
+    }
+
+    pub fn para_with_options<'a, S, Opt>(&self, width_or_options: Opt, text: S)
     where
         S: Into<String>,
         Opt: Into<textwrap::Options<'a>>,
     {
-        wrap(text.into().crlf().as_str(), width_or_options.into())
+        // use textwrap::wrap;
+
+        textwrap::wrap(text.into().crlf().as_str(), width_or_options.into())
             .into_iter()
             .for_each(|line| self.writeln(line));
     }
