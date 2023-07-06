@@ -541,14 +541,6 @@ pub async fn load_scripts() -> Result<()> {
     inject_blob(Content::Script(None, xterm_addon_web_links_js)).await?;
     let xterm_css = include_bytes!("../../extern/resources/xterm.css");
     inject_blob(Content::Style(None, xterm_css)).await?;
-    inject_css(
-        "
-        .terminal{
-            width:100vw;
-            height:100vh;
-        }
-    ",
-    )?;
 
     unsafe { XTERM_LOADED = true };
 
