@@ -20,7 +20,11 @@ pub trait Cli: Sync + Send {
         Ok(())
     }
     async fn digest(self: Arc<Self>, term: Arc<Terminal>, cmd: String) -> Result<()>;
-    async fn complete(self: Arc<Self>, term: Arc<Terminal>, cmd: String) -> Result<Vec<String>>;
+    async fn complete(
+        self: Arc<Self>,
+        term: Arc<Terminal>,
+        cmd: String,
+    ) -> Result<Option<Vec<String>>>;
     fn prompt(&self) -> Option<String>;
 }
 
@@ -46,8 +50,8 @@ pub trait Handler: Sync + Send {
     fn dyn_help(&self, _ctx: &Arc<dyn Context>) -> String {
         "".to_owned()
     }
-    async fn complete(&self, _cmd: &str) -> Option<Vec<String>> {
-        None
+    async fn complete(&self, _ctx: &Arc<dyn Context>, _cmd: &str) -> Result<Option<Vec<String>>> {
+        Ok(None)
     }
     async fn start(self: Arc<Self>, _ctx: &Arc<dyn Context>) -> Result<()> {
         Ok(())
@@ -176,6 +180,23 @@ impl HandlerCli {
                 .handle(&ctx, argv[1..].to_vec(), cmd)
                 .await?;
             Ok(())
+        } else {
+            Err(Error::CommandNotFound(action))
+        }
+    }
+
+    pub async fn complete<T>(&self, ctx: &Arc<T>, cmd: &str) -> Result<Option<Vec<String>>>
+    where
+        T: Context + Sized,
+    {
+        let ctx: Arc<dyn Context> = ctx.clone();
+
+        let argv = parse(cmd);
+        let action = argv[0].to_lowercase();
+
+        let handler = self.resolve_by_name(action.as_str());
+        if let Some(handler) = handler {
+            Ok(handler.clone().complete(&ctx, cmd).await?)
         } else {
             Err(Error::CommandNotFound(action))
         }

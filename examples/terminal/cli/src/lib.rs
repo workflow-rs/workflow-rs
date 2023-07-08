@@ -100,20 +100,24 @@ impl Cli for ExampleCli {
         Ok(())
     }
 
-    async fn complete(self: Arc<Self>, _term: Arc<Terminal>, cmd: String) -> Result<Vec<String>> {
+    async fn complete(
+        self: Arc<Self>,
+        _term: Arc<Terminal>,
+        cmd: String,
+    ) -> Result<Option<Vec<String>>> {
         let argv = parse(&cmd);
         if argv.is_empty() {
-            return Ok(vec![]);
+            return Ok(None);
         }
         let last = argv.last().unwrap();
         if last.starts_with('a') {
-            Ok(vec![
+            Ok(Some(vec![
                 "alpha".to_string(),
                 "aloha".to_string(),
                 "albatross".to_string(),
-            ])
+            ]))
         } else {
-            Ok(vec![])
+            Ok(None)
         }
     }
 
