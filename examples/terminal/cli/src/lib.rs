@@ -48,7 +48,7 @@ impl Cli for ExampleCli {
         Ok(())
     }
 
-    async fn digest(&self, term: Arc<Terminal>, cmd: String) -> Result<()> {
+    async fn digest(self: Arc<Self>, term: Arc<Terminal>, cmd: String) -> Result<()> {
         let argv = parse(&cmd);
         match argv[0].as_str() {
             "help" => {
@@ -100,7 +100,7 @@ impl Cli for ExampleCli {
         Ok(())
     }
 
-    async fn complete(&self, _term: Arc<Terminal>, cmd: String) -> Result<Vec<String>> {
+    async fn complete(self: Arc<Self>, _term: Arc<Terminal>, cmd: String) -> Result<Vec<String>> {
         let argv = parse(&cmd);
         if argv.is_empty() {
             return Ok(vec![]);

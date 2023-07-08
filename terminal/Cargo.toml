@@ -27,6 +27,7 @@ termion = ["dep:termion"]
 async-std.workspace = true
 async-trait.workspace = true
 cfg-if.workspace = true
+downcast.workspace = true
 futures.workspace = true
 js-sys.workspace = true
 numtoa.workspace = true
@@ -39,6 +40,7 @@ workflow-core.workspace = true
 workflow-dom.workspace = true
 workflow-log.workspace = true
 workflow-wasm.workspace = true
+workflow-terminal-macros.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 crossterm.workspace = true

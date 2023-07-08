@@ -2,6 +2,7 @@
 //! Errors produced by [`workflow_terminal`](super)
 //!
 
+use downcast::DowncastError;
 use std::sync::PoisonError;
 use thiserror::Error;
 use wasm_bindgen::JsValue;
@@ -10,7 +11,7 @@ use workflow_core::channel::{ChannelError, RecvError, SendError, TrySendError};
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("{0}")]
-    String(String),
+    Custom(String),
     #[error("{0}")]
     JsValue(String),
     #[error("Poison Error: {0}")]
@@ -27,16 +28,20 @@ pub enum Error {
     ChannelError(String),
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    #[error("{0}")]
+    DowncastError(String),
+    #[error("command not found: {0}")]
+    CommandNotFound(String),
 }
 
 impl From<String> for Error {
     fn from(v: String) -> Self {
-        Self::String(v)
+        Self::Custom(v)
     }
 }
 impl From<&str> for Error {
     fn from(v: &str) -> Self {
-        Self::String(v.to_string())
+        Self::Custom(v.to_string())
     }
 }
 
@@ -82,15 +87,8 @@ where
 impl From<Error> for String {
     fn from(err: Error) -> String {
         match err {
-            Error::String(s)
-            | Error::PoisonError(s)
-            | Error::SendError(s)
-            | Error::JsValue(s)
-            | Error::ChannelError(s) => s,
-            Error::TrySendError(s) => s,
-            Error::RecvError => err.to_string(),
-            Error::Io(err) => err.to_string(),
-            Error::DomError(err) => err.to_string(),
+            Error::Custom(s) => s,
+            _ => err.to_string(),
         }
     }
 }
@@ -105,5 +103,11 @@ impl From<Error> for JsValue {
 impl<T> From<ChannelError<T>> for Error {
     fn from(err: ChannelError<T>) -> Error {
         Error::ChannelError(err.to_string())
+    }
+}
+
+impl<T> From<DowncastError<T>> for Error {
+    fn from(err: DowncastError<T>) -> Error {
+        Error::DowncastError(err.to_string())
     }
 }

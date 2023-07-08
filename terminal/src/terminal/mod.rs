@@ -25,16 +25,16 @@ pub use options::TargetElement;
 
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        mod xterm;
-        mod bindings;
+        pub mod xterm;
+        pub mod bindings;
         use crate::terminal::xterm::Xterm as Interface;
         pub use xterm::{Theme, ThemeOption};
 
     } else if #[cfg(termion)] {
-        mod termion;
+        pub mod termion;
         use crate::terminal::termion::Termion as Interface;
     } else {
-        mod crossterm;
+        pub mod crossterm;
         use crate::terminal::crossterm::Crossterm as Interface;
         pub use crate::terminal::crossterm::{disable_raw_mode,init_panic_hook};
     }
@@ -578,7 +578,7 @@ impl Terminal {
     }
 
     async fn digest(self: &Arc<Terminal>, cmd: String) -> Result<()> {
-        if let Err(err) = self.handler.digest(self.clone(), cmd).await {
+        if let Err(err) = self.handler.clone().digest(self.clone(), cmd).await {
             self.writeln(err);
         }
         if self.terminate.load(Ordering::SeqCst) {

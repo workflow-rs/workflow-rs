@@ -18,6 +18,7 @@ members = [
     "task",
     "task/macros",
     "terminal",
+    "terminal/macros",
     "wasm",
     "wasm/macros",
     "websocket",
@@ -65,6 +66,7 @@ workflow-store = { version = "0.3.17", path = "store" }
 workflow-task = { version = "0.3.17", path = "task" }
 workflow-task-macros = { version = "0.3.17", path = "task/macros" }
 workflow-terminal = { version = "0.3.17", path = "terminal" }
+workflow-terminal-macros = { version = "0.3.17", path = "terminal/macros" }
 workflow-wasm = { version = "0.3.17", path = "wasm" }
 workflow-wasm-macros = { version = "0.3.17", path = "wasm/macros" }
 workflow-websocket = { version = "0.3.17", path = "websocket" }

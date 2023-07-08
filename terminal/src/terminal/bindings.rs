@@ -76,7 +76,16 @@ extern "C" {
     pub fn open(this: &XtermImpl, el: &Element);
 
     #[wasm_bindgen(method, js_name = "setOption")]
-    pub fn set_option(this: &XtermImpl, name: &str, option: js_sys::Object);
+    pub fn set_option(this: &XtermImpl, name: &str, option: JsValue);
+
+    #[wasm_bindgen(method)]
+    pub fn refresh(this: &XtermImpl, start: u32, stop: u32);
+
+    #[wasm_bindgen(method, getter, js_name = "rows")]
+    pub fn rows(this: &XtermImpl) -> u32;
+
+    #[wasm_bindgen(method, getter, js_name = "cols")]
+    pub fn cols(this: &XtermImpl) -> u32;
 
     #[wasm_bindgen(method, js_name = "onKey")]
     pub fn on_key(this: &XtermImpl, f: &js_sys::Function);
@@ -107,7 +116,7 @@ impl XtermImpl {
     }
 
     pub fn set_theme(&self, theme: js_sys::Object) {
-        self.set_option("theme", theme);
+        self.set_option("theme", theme.into());
         //self.core().set_theme(theme);
     }
 }

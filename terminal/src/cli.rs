@@ -2,17 +2,182 @@
 //! Cli trait for implementing a user-side command-line processor.
 //!
 
-use crate::result::Result;
+use crate::error::Error;
+use crate::parse;
+pub use crate::result::Result;
 use crate::terminal::Terminal;
 use async_trait::async_trait;
-use std::sync::Arc;
+use downcast::{downcast_sync, AnySync};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex, MutexGuard},
+};
+pub use workflow_terminal_macros::{declare_handler, register_handlers, Handler};
 
 #[async_trait]
 pub trait Cli: Sync + Send {
     fn init(&self, _term: &Arc<Terminal>) -> Result<()> {
         Ok(())
     }
-    async fn digest(&self, term: Arc<Terminal>, cmd: String) -> Result<()>;
-    async fn complete(&self, term: Arc<Terminal>, cmd: String) -> Result<Vec<String>>;
+    async fn digest(self: Arc<Self>, term: Arc<Terminal>, cmd: String) -> Result<()>;
+    async fn complete(self: Arc<Self>, term: Arc<Terminal>, cmd: String) -> Result<Vec<String>>;
     fn prompt(&self) -> Option<String>;
+}
+
+pub trait Context: Sync + Send + AnySync {
+    fn term(&self) -> Arc<Terminal>;
+}
+downcast_sync!(dyn Context);
+
+impl From<&dyn Context> for Arc<Terminal> {
+    fn from(ctx: &dyn Context) -> Arc<Terminal> {
+        ctx.term()
+    }
+}
+
+#[async_trait]
+pub trait Handler: Sync + Send {
+    fn verb(&self, _ctx: &Arc<dyn Context>) -> Option<&'static str> {
+        None
+    }
+    fn help(&self, _ctx: &Arc<dyn Context>) -> &'static str {
+        ""
+    }
+    fn dyn_help(&self, _ctx: &Arc<dyn Context>) -> String {
+        "".to_owned()
+    }
+    async fn complete(&self, _cmd: &str) -> Option<Vec<String>> {
+        None
+    }
+    async fn start(self: Arc<Self>, _ctx: &Arc<dyn Context>) -> Result<()> {
+        Ok(())
+    }
+    async fn stop(self: Arc<Self>, _ctx: &Arc<dyn Context>) -> Result<()> {
+        Ok(())
+    }
+    async fn handle(
+        self: Arc<Self>,
+        ctx: &Arc<dyn Context>,
+        argv: Vec<String>,
+        cmd: &str,
+    ) -> Result<()>;
+}
+
+pub fn get_handler_help(handler: Arc<dyn Handler>, ctx: &Arc<dyn Context>) -> String {
+    let s = handler.help(ctx);
+    if s.is_empty() {
+        handler.dyn_help(ctx)
+    } else {
+        s.to_string()
+    }
+}
+
+#[derive(Default)]
+struct Inner {
+    handlers: HashMap<String, Arc<dyn Handler + Send + Sync>>,
+}
+
+#[derive(Default)]
+pub struct HandlerCli {
+    inner: Arc<Mutex<Inner>>,
+}
+
+impl HandlerCli {
+    pub fn new() -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(Inner::default())),
+        }
+    }
+
+    fn inner(&self) -> MutexGuard<Inner> {
+        self.inner.lock().unwrap()
+    }
+
+    pub fn collect(&self) -> Vec<Arc<dyn Handler + Send + Sync>> {
+        self.inner().handlers.values().cloned().collect::<Vec<_>>()
+    }
+
+    pub fn resolve_by_name(&self, name: &str) -> Option<Arc<dyn Handler + Send + Sync>> {
+        self.inner().handlers.get(name).cloned()
+    }
+
+    pub fn register<T, H>(&self, ctx: &Arc<T>, handler: H)
+    where
+        T: Context + Sized,
+        H: Handler + Send + Sync + 'static,
+    {
+        let ctx: Arc<dyn Context> = ctx.clone();
+        if let Some(name) = handler.verb(&ctx) {
+            self.inner()
+                .handlers
+                .insert(name.to_lowercase(), Arc::new(handler));
+        }
+    }
+
+    pub fn register_arc<T, H>(&self, ctx: &Arc<T>, handler: &Arc<H>)
+    where
+        T: Context + Sized,
+        H: Handler + Send + Sync + 'static,
+    {
+        let ctx: Arc<dyn Context> = ctx.clone();
+        if let Some(name) = handler.verb(&ctx) {
+            self.inner()
+                .handlers
+                .insert(name.to_lowercase(), handler.clone());
+        }
+    }
+
+    pub fn unregister(&self, name: &str) -> Option<Arc<dyn Handler + Send + Sync>> {
+        self.inner().handlers.remove(name)
+    }
+
+    pub fn clear(&self) -> Result<()> {
+        self.inner().handlers.clear();
+        Ok(())
+    }
+
+    pub async fn start<T>(&self, ctx: &Arc<T>) -> Result<()>
+    where
+        T: Context + Sized,
+    {
+        let ctx: Arc<dyn Context> = ctx.clone();
+        let handlers = self.collect();
+        for handler in handlers.iter() {
+            handler.clone().start(&ctx).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn stop<T>(&self, ctx: &Arc<T>) -> Result<()>
+    where
+        T: Context + Sized,
+    {
+        let handlers = self.collect();
+        let ctx: Arc<dyn Context> = ctx.clone();
+        for handler in handlers.into_iter() {
+            handler.clone().start(&ctx).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn execute<T>(&self, ctx: &Arc<T>, cmd: &str) -> Result<()>
+    where
+        T: Context + Sized,
+    {
+        let ctx: Arc<dyn Context> = ctx.clone();
+
+        let argv = parse(cmd);
+        let action = argv[0].to_lowercase();
+
+        let handler = self.resolve_by_name(action.as_str());
+        if let Some(handler) = handler {
+            handler
+                .clone()
+                .handle(&ctx, argv[1..].to_vec(), cmd)
+                .await?;
+            Ok(())
+        } else {
+            Err(Error::CommandNotFound(action))
+        }
+    }
 }

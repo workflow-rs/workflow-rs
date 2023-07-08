@@ -7,7 +7,7 @@ use crate::Result;
 use std::fmt::Debug;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use wasm_bindgen::JsValue;
 use web_sys::Element;
 use workflow_core::channel::{unbounded, Receiver, Sender};
@@ -119,15 +119,12 @@ pub struct Sink {
     sender: Sender<Ctl>,
 }
 
-impl Sink {
-    pub fn new() -> Sink {
+impl Default for Sink {
+    fn default() -> Self {
         let (sender, receiver) = unbounded();
         Sink { receiver, sender }
     }
 }
-
-unsafe impl Send for Xterm {}
-unsafe impl Sync for Xterm {}
 
 pub struct ResizeObserverInfo {
     #[allow(dead_code)]
@@ -163,6 +160,9 @@ pub struct Xterm {
     terminate: Arc<AtomicBool>,
 }
 
+unsafe impl Send for Xterm {}
+unsafe impl Sync for Xterm {}
+
 impl Xterm {
     pub fn try_new() -> Result<Self> {
         Self::try_new_with_options(&Options::default())
@@ -192,7 +192,7 @@ impl Xterm {
             listener: Arc::new(Mutex::new(None)),
             xterm: Arc::new(Mutex::new(None)),
             terminal: Arc::new(Mutex::new(None)),
-            sink: Arc::new(Sink::new()),
+            sink: Arc::new(Sink::default()),
             resize: Arc::new(Mutex::new(None)),
             // addons: Arc::new(Mutex::new(Vec::new())),
             fit: Arc::new(Mutex::new(None)),
@@ -236,6 +236,10 @@ impl Xterm {
         // log_trace!("term: {:?}", term);
 
         Ok(term)
+    }
+
+    pub fn xterm(&self) -> MutexGuard<Option<XtermImpl>> {
+        self.xterm.lock().unwrap()
     }
 
     pub fn update_theme(&self) -> Result<()> {
@@ -321,6 +325,19 @@ impl Xterm {
         *self.terminal.lock().unwrap() = Some(terminal.clone());
 
         Ok(())
+    }
+
+    pub fn set_option(&self, name: &str, option: JsValue) -> Result<()> {
+        let xterm = self.xterm();
+        let xterm = xterm.as_ref().expect("unable to get xterm");
+        xterm.set_option(name, option);
+        Ok(())
+    }
+
+    pub fn refresh(&self, start: u32, stop: u32) {
+        let xterm = self.xterm();
+        let xterm = xterm.as_ref().expect("unable to get xterm");
+        xterm.refresh(start, stop);
     }
 
     fn init_clipboard(self: &Arc<Self>, xterm: &XtermImpl) -> Result<()> {

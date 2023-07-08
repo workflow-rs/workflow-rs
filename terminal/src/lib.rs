@@ -87,17 +87,21 @@
 //! ```
 //!
 
+extern crate self as workflow_terminal;
+
 pub mod clear;
 pub mod cli;
 pub mod crlf;
 pub mod cursor;
 pub mod error;
 pub mod keys;
+pub mod macros;
 pub mod result;
 pub mod terminal;
 
-pub use cli::Cli;
+pub use cli::{Cli, Context, Handler, HandlerCli};
 pub use crlf::CrLf;
+pub use macros::*;
 pub use result::Result;
 pub use terminal::parse;
 pub use terminal::Options;
@@ -107,7 +111,7 @@ pub use textwrap;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        pub use terminal::{Theme, ThemeOption};
+        pub use terminal::{Theme, ThemeOption, xterm, bindings};
     } else {
         pub use terminal::{disable_raw_mode,init_panic_hook};
     }
