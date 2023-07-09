@@ -114,9 +114,9 @@ pub mod wasm {
                     init_yield();
                     unsafe { REQUEST_ANIMATION_FRAME_INITIALIZED = true };
                 } else {
-                    let promise = js_sys::Promise::new(&mut |res, _|{
+                    let promise = Sendable(js_sys::Promise::new(&mut |res, _|{
                         request_animation_frame(res);
-                    });
+                    }));
                     let _ = wasm_bindgen_futures::JsFuture::from(promise).await;
                 }
             }
