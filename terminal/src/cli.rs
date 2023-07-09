@@ -44,6 +44,9 @@ pub trait Handler: Sync + Send {
     fn verb(&self, _ctx: &Arc<dyn Context>) -> Option<&'static str> {
         None
     }
+    fn condition(&self, ctx: &Arc<dyn Context>) -> bool {
+        self.verb(ctx).is_some()
+    }
     fn help(&self, _ctx: &Arc<dyn Context>) -> &'static str {
         ""
     }
@@ -111,10 +114,13 @@ impl HandlerCli {
         H: Handler + Send + Sync + 'static,
     {
         let ctx: Arc<dyn Context> = ctx.clone();
-        if let Some(name) = handler.verb(&ctx) {
-            self.inner()
-                .handlers
-                .insert(name.to_lowercase(), Arc::new(handler));
+        match handler.verb(&ctx) {
+            Some(name) if handler.condition(&ctx) => {
+                self.inner()
+                    .handlers
+                    .insert(name.to_lowercase(), Arc::new(handler));
+            },
+            _ => {}
         }
     }
 
@@ -124,10 +130,13 @@ impl HandlerCli {
         H: Handler + Send + Sync + 'static,
     {
         let ctx: Arc<dyn Context> = ctx.clone();
-        if let Some(name) = handler.verb(&ctx) {
-            self.inner()
-                .handlers
-                .insert(name.to_lowercase(), handler.clone());
+        match handler.verb(&ctx) {
+            Some(name) if handler.condition(&ctx) => {
+                self.inner()
+                    .handlers
+                    .insert(name.to_lowercase(), handler.clone());
+            },
+            _ => {}
         }
     }
 
