@@ -9,4 +9,4 @@ pub use crate::timers::{
 
 pub use crate::object::ObjectTrait;
 
-pub use crate::sendable::Sendable;
+pub use workflow_core::sendable::Sendable;

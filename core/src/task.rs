@@ -98,43 +98,9 @@ pub mod wasm {
 
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            use wasm_bindgen::prelude::*;
-
-            #[wasm_bindgen]
-            extern "C" {
-                #[wasm_bindgen(js_name = requestAnimationFrame)]
-                fn request_animation_frame(callback:js_sys::Function);
-            }
-
             pub use crate::sleep::sleep;
+            pub use crate::executor::yield_executor;
             pub use async_std::task::yield_now;
-
-            pub async fn yield_executor() {
-                if !unsafe { REQUEST_ANIMATION_FRAME_INITIALIZED } {
-                    init_yield();
-                    unsafe { REQUEST_ANIMATION_FRAME_INITIALIZED = true };
-                } else {
-                    let promise = Sendable(js_sys::Promise::new(&mut |res, _|{
-                        request_animation_frame(res);
-                    }));
-                    let _ = wasm_bindgen_futures::JsFuture::from(promise).await;
-                }
-            }
-
-            static mut REQUEST_ANIMATION_FRAME_INITIALIZED: bool = false;
-
-            fn init_yield(){
-                let _ = js_sys::Function::new_no_args("
-                    if (!this.requestAnimationFrame){
-                        if (this.setImmediate)
-                            this.requestAnimationFrame = (callback)=>setImmediate(callback)
-                        else
-                            this.requestAnimationFrame = (callback)=>setTimeout(callback, 0)
-                    }
-                ")
-                .call0(&JsValue::undefined());
-            }
-
         } else {
             pub use async_std::task::sleep;
             pub use async_std::task::yield_now;

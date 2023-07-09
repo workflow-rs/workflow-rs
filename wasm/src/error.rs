@@ -1,6 +1,6 @@
-use crate::sendable::*;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
+use workflow_core::sendable::*;
 
 #[derive(Error, Debug)]
 pub enum Error {

@@ -5,7 +5,7 @@
 use base64::DecodeError;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
-use workflow_wasm::sendable::Sendable;
+use workflow_core::sendable::Sendable;
 
 #[derive(Error, Debug)]
 pub enum Error {

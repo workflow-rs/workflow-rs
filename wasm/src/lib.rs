@@ -24,7 +24,6 @@ cfg_if::cfg_if! {
         pub mod timers;
         pub mod jsvalue;
         pub mod object;
-        pub mod sendable;
         pub mod channel;
         pub mod utils;
         pub mod tovalue;

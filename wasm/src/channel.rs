@@ -3,7 +3,6 @@
 //!
 
 use crate::result::Result;
-use crate::sendable::Sendable;
 use futures::{select, FutureExt};
 use js_sys::Function;
 use serde::Serialize;
@@ -12,6 +11,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use wasm_bindgen::prelude::*;
 use workflow_core::channel::{DuplexChannel, Multiplexer, MultiplexerChannel};
+use workflow_core::sendable::Sendable;
 use workflow_core::task::*;
 use workflow_log::log_error;
 

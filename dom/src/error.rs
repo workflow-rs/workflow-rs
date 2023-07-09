@@ -4,7 +4,7 @@
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 use workflow_core::channel::RecvError;
-use workflow_wasm::sendable::Sendable;
+use workflow_core::sendable::Sendable;
 
 /// Errors return by the [`workflow_dom`](super) module
 #[derive(Error, Debug, Clone)]

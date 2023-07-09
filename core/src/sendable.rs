@@ -27,6 +27,10 @@ where
     pub fn new(value: T) -> Self {
         Self(value)
     }
+
+    pub fn unwrap(self) -> T {
+        self.0
+    }
 }
 
 impl<T> std::ops::Deref for Sendable<T>
@@ -83,3 +87,8 @@ where
         s.0.into()
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct SendableFuture<T>(pub T);
+unsafe impl<T> Send for SendableFuture<T> {}
+unsafe impl<T> Sync for SendableFuture<T> {}

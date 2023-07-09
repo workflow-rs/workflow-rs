@@ -25,7 +25,9 @@ extern crate self as workflow_core;
 
 pub mod abortable;
 pub mod enums;
+pub mod executor;
 pub mod runtime;
+pub mod sendable;
 pub mod utils;
 
 // pub use workflow_core_macros::describe_enum;

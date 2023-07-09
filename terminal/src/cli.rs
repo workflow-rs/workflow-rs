@@ -119,7 +119,7 @@ impl HandlerCli {
                 self.inner()
                     .handlers
                     .insert(name.to_lowercase(), Arc::new(handler));
-            },
+            }
             _ => {}
         }
     }
@@ -135,7 +135,7 @@ impl HandlerCli {
                 self.inner()
                     .handlers
                     .insert(name.to_lowercase(), handler.clone());
-            },
+            }
             _ => {}
         }
     }
