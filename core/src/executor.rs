@@ -74,6 +74,12 @@ pub struct Yield {
 unsafe impl Sync for Yield {}
 unsafe impl Send for Yield {}
 
+impl Default for Yield {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Yield {
     /// Create a new `Sleep` future that will resolve after the given duration.
     pub fn new() -> Self {
