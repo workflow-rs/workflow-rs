@@ -106,6 +106,7 @@
 //! ```
 pub mod application;
 pub mod error;
+pub mod global;
 pub mod ipc;
 pub mod media;
 pub mod menu;
@@ -113,3 +114,4 @@ pub mod prelude;
 pub mod result;
 pub mod shortcut;
 pub mod tray;
+pub mod window;

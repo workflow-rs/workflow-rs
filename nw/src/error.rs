@@ -6,6 +6,9 @@ use workflow_core::id::Id;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("Error: {0}")]
+    Custom(String),
+
     #[error("Callback Error: {0}")]
     CallbackError(#[from] workflow_wasm::callback::CallbackError),
 
@@ -14,9 +17,6 @@ pub enum Error {
 
     #[error("NW error: {0}")]
     NW(#[from] nw_sys::error::Error),
-
-    #[error("Error: {0}")]
-    String(String),
 
     #[error("Error: {0}")]
     JsValue(String),
@@ -53,17 +53,22 @@ pub enum Error {
 
     #[error(transparent)]
     Wasm(#[from] workflow_wasm::error::Error),
+
+    #[error(transparent)]
+    Ipc(#[from] crate::ipc::error::Error),
+    // #[error(transparent)]
+    // IpcResponse(#[from] crate::ipc::error::ResponseError),
 }
 
 impl From<String> for Error {
     fn from(v: String) -> Self {
-        Self::String(v)
+        Self::Custom(v)
     }
 }
 
 impl From<&str> for Error {
     fn from(v: &str) -> Self {
-        Self::String(v.to_string())
+        Self::Custom(v.to_string())
     }
 }
 

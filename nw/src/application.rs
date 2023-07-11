@@ -10,6 +10,7 @@ use nw_sys::{prelude::*, utils};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{MediaStream, MediaStreamTrack, MouseEvent};
+use workflow_core::channel::*;
 use workflow_wasm::prelude::*;
 
 static mut APP: Option<Arc<Application>> = None;
@@ -32,6 +33,9 @@ pub struct Application {
     /// holds references to [Callback](workflow_wasm::callback::Callback)
     pub callbacks: CallbackMap,
 }
+
+unsafe impl Send for Application {}
+unsafe impl Sync for Application {}
 
 impl Application {
     /// Create [Application](Application) object.
@@ -124,7 +128,38 @@ impl Application {
         Ok(())
     }
 
+    // pub async fn create_window_async(
+    //     &self,
+    //     url: &str,
+    //     option: &nw_sys::window::Options,
+    // ) -> Result<nw_sys::window::Window> {
+    //     let (sender, receiver) = oneshot();
+
+    //     let callback = Callback::new(move |window: nw_sys::Window| {
+    //         sender.try_send(window).unwrap();
+    //     });
+
+    //     nw_sys::window::open_with_options_and_callback(url, option, callback.as_ref());
+    //     Ok(receiver.recv().await?)
+    // }
+
+    pub async fn create_window_async(
+        url: &str,
+        option: &nw_sys::window::Options,
+    ) -> Result<nw_sys::window::Window> {
+        let (sender, receiver) = oneshot();
+
+        let callback = Callback::new(move |window: nw_sys::Window| {
+            sender.try_send(window).unwrap();
+        });
+
+        nw_sys::window::open_with_options_and_callback(url, option, callback.as_ref());
+        Ok(receiver.recv().await?)
+    }
+
     /// Create window with given [Options](nw_sys::window::Options)
+    /// The resulting window handle is not retained. Please use [`Application::create_window_with_callback`]
+    /// or [`Application::create_window`] to retain the window handle.
     pub fn create_window(url: &str, option: &nw_sys::window::Options) -> Result<()> {
         nw_sys::window::open_with_options(url, option);
 

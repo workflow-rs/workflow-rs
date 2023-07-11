@@ -1,5 +1,5 @@
-use wasm_bindgen::prelude::*;
 use js_sys::Object;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -12,4 +12,3 @@ extern "C" {
 pub fn global() -> Object {
     Global::get_global()
 }
-
