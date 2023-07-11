@@ -206,7 +206,7 @@ cfg_if! {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub mod wasm {
+pub mod wasm_log {
     use wasm_bindgen::prelude::*;
     // use super::*;
     #[wasm_bindgen]
@@ -235,7 +235,7 @@ pub mod impls {
             }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    workflow_log::wasm::error(&args.to_string());
+                    workflow_log::wasm_log::error(&args.to_string());
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
@@ -257,7 +257,7 @@ pub mod impls {
             }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    workflow_log::wasm::warn(&args.to_string());
+                    workflow_log::wasm_log::warn(&args.to_string());
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
@@ -279,7 +279,7 @@ pub mod impls {
             }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    workflow_log::wasm::log(&args.to_string());
+                    workflow_log::wasm_log::log(&args.to_string());
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
@@ -301,7 +301,7 @@ pub mod impls {
             }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    workflow_log::wasm::log(&args.to_string());
+                    workflow_log::wasm_log::log(&args.to_string());
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
@@ -323,7 +323,7 @@ pub mod impls {
             }
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    workflow_log::wasm::log(&args.to_string());
+                    workflow_log::wasm_log::log(&args.to_string());
                 } else if #[cfg(target_os = "solana")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
