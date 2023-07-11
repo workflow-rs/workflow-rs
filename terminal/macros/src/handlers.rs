@@ -14,9 +14,8 @@ use syn::{
 
 #[derive(Debug)]
 struct DeclareHandler {
-    // type_ident: Ident,
     type_expr: Expr,
-    verb: String,
+    verb: LitStr,
     help: LitStr,
 }
 
@@ -62,7 +61,8 @@ impl Parse for DeclareHandler {
 
         let verb = if parsed.len() == 2 {
             let type_expr_ts = quote! { #type_ident };
-            type_expr_ts.to_string().to_case(Case::Snake)
+            let s = type_expr_ts.to_string().to_case(Case::Kebab);
+            LitStr::new(s.as_str(), Span::call_site())
         } else {
             let expr = iter.next().unwrap().clone();
             let verb_expr = match &expr {
@@ -76,7 +76,8 @@ impl Parse for DeclareHandler {
             };
 
             let type_expr_ts = quote! { #verb_expr };
-            type_expr_ts.to_string().to_case(Case::Snake)
+            let s = type_expr_ts.to_string().to_case(Case::Kebab);
+            LitStr::new(s.as_str(), Span::call_site())
         };
 
         let expr = iter.next().unwrap().clone();
@@ -110,46 +111,19 @@ pub fn declare_handler(input: TokenStream) -> TokenStream {
 pub fn declare_handler_derive(input: TokenStream) -> TokenStream {
     let mut ast = parse_macro_input!(input as DeriveInput);
 
-    let help = ast.attrs.iter().enumerate().find_map(|(i, attr)| {
-        attr.parse_meta().ok().and_then(|meta| {
-            if meta.path().is_ident("help") {
-                match meta {
-                    Meta::List(meta_list) => {
-                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) = meta_list.nested.first() {
-                            Some((i, lit_str.clone()))
-                        } else {
-                            None
-                        }
-                    }
-                    Meta::NameValue(name_value) => {
-                        if let Lit::Str(lit_str) = name_value.lit {
-                            Some((i, lit_str))
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                }
-            } else {
-                None
-            }
-        })
-    });
-
-    let help = if let Some((index, help)) = help {
-        ast.attrs.remove(index);
-        help
-    } else {
-        LitStr::new("", Span::call_site())
-    };
-
     let type_ident = &ast.ident;
     let type_expr_ts = quote! { #type_ident };
     let type_expr = ident_to_expr(type_ident.clone());
-    let verb = type_expr_ts.to_string().to_case(Case::Snake);
+
+    let verb = get_attribute(&mut ast, "verb").unwrap_or_else(|| {
+        let s = type_expr_ts.to_string().to_case(Case::Kebab);
+        LitStr::new(s.as_str(), Span::call_site())
+    });
+
+    let help =
+        get_attribute(&mut ast, "help").unwrap_or_else(|| LitStr::new("", Span::call_site()));
 
     let handler = DeclareHandler {
-        // type_ident : type_ident.clone(),
         type_expr,
         verb,
         help,
@@ -201,4 +175,39 @@ fn ident_to_expr(ident: Ident) -> Expr {
         qself: None,
         path,
     })
+}
+
+fn get_attribute(ast: &mut DeriveInput, name: &str) -> Option<LitStr> {
+    let attr = ast.attrs.iter().enumerate().find_map(|(i, attr)| {
+        attr.parse_meta().ok().and_then(|meta| {
+            if meta.path().is_ident(name) {
+                match meta {
+                    Meta::List(meta_list) => {
+                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) = meta_list.nested.first() {
+                            Some((i, lit_str.clone()))
+                        } else {
+                            None
+                        }
+                    }
+                    Meta::NameValue(name_value) => {
+                        if let Lit::Str(lit_str) = name_value.lit {
+                            Some((i, lit_str))
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }
+            } else {
+                None
+            }
+        })
+    });
+
+    if let Some((index, attr)) = attr {
+        ast.attrs.remove(index);
+        Some(attr)
+    } else {
+        None
+    }
 }
