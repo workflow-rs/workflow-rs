@@ -23,8 +23,8 @@ mod options;
 pub use options::Options;
 pub use options::TargetElement;
 
-pub mod xterm;
 pub mod bindings;
+pub mod xterm;
 pub use xterm::{Theme, ThemeOption};
 
 cfg_if! {
@@ -612,14 +612,13 @@ impl Terminal {
         self.term.decrease_font_size()
     }
 
-    pub fn set_font_size(&self, font_size : f64) -> Result<()> {
+    pub fn set_font_size(&self, font_size: f64) -> Result<()> {
         self.term.set_font_size(font_size)
     }
 
     pub fn get_font_size(&self) -> Result<Option<f64>> {
         self.term.get_font_size()
     }
-
 }
 
 /// Utility function to strip multiple whitespaces and return a `Vec<String>`

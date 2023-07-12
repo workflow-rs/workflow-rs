@@ -117,7 +117,6 @@ impl Crossterm {
             stdout.flush().unwrap();
         }
     }
-
 }
 
 use std::{panic, process};
@@ -138,7 +137,6 @@ where
         process::exit(exit_code);
     }));
 }
-
 
 // compatibility functions
 impl Crossterm {

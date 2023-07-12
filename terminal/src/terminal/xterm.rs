@@ -554,7 +554,7 @@ impl Xterm {
         self.set_option("fontSize", JsValue::from_f64(font_size))
     }
 
-    fn adjust_font_size(&self, delta : f64) -> Result<Option<f64>> {
+    fn adjust_font_size(&self, delta: f64) -> Result<Option<f64>> {
         let font_size = self.get_option("fontSize")?;
         let mut font_size = font_size.as_f64().ok_or("Unable to get font size")?;
         font_size += delta;
@@ -574,7 +574,6 @@ impl Xterm {
     pub fn decrease_font_size(&self) -> Result<Option<f64>> {
         self.adjust_font_size(-1.0)
     }
-
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
