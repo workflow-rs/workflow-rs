@@ -15,4 +15,4 @@ pub use ipc::{Ipc, IpcDispatch};
 pub use method::Method;
 pub use notification::Notification;
 pub use result::ResponseResult;
-pub use target::IpcTarget;
+pub use target::*;

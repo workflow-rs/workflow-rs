@@ -102,7 +102,7 @@ pub enum ResponseError {
     #[error("data")]
     Data(Vec<u8>),
     #[error("{0}")]
-    Text(String),
+    Custom(String),
     /// Underlying WebSocket error
     #[error("Receiver channel")]
     ReceiveChannelRx,
@@ -124,12 +124,12 @@ impl From<std::io::Error> for ResponseError {
 
 impl From<String> for ResponseError {
     fn from(error: String) -> Self {
-        ResponseError::Text(error)
+        ResponseError::Custom(error)
     }
 }
 
 impl From<&str> for ResponseError {
     fn from(error: &str) -> Self {
-        ResponseError::Text(error.to_string())
+        ResponseError::Custom(error.to_string())
     }
 }
