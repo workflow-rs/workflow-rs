@@ -20,8 +20,9 @@ impl<F> Pending<F> {
 
 type PendingMap<Id, F> = Arc<Mutex<AHashMap<Id, Pending<F>>>>;
 
-pub type BorshResponseFn =
-    Arc<Box<(dyn Fn(Vec<u8>, ResponseResult<Vec<u8>>, Option<&Duration>) -> Result<()> + Sync + Send)>>;
+pub type BorshResponseFn = Arc<
+    Box<(dyn Fn(Vec<u8>, ResponseResult<Vec<u8>>, Option<&Duration>) -> Result<()> + Sync + Send)>,
+>;
 
 struct Inner<Ops>
 where
@@ -311,7 +312,7 @@ pub trait IpcDispatch {
     {
         let payload = payload.try_to_vec().map_err(|_| Error::BorshSerialize)?;
         self.as_target().call_ipc(
-            to_msg::<Ops,IpcId>(BorshHeader::notification::<Ops>(op), &payload)?.as_ref(),
+            to_msg::<Ops, IpcId>(BorshHeader::notification::<Ops>(op), &payload)?.as_ref(),
             None,
         )?;
         Ok(())
@@ -353,22 +354,26 @@ pub trait IpcDispatch {
             pending.insert(
                 id.clone(),
                 Pending::new(Arc::new(Box::new(move |op, result, _duration| {
-                    sender.try_send((op,result.map(|data| data.to_vec())))?;
+                    sender.try_send((op, result.map(|data| data.to_vec())))?;
                     Ok(())
                 }))),
             );
         }
 
         self.as_target().call_ipc(
-            to_msg::<Ops,IpcId>(BorshHeader::request::<Ops>(Some(id), op.clone()), &payload)?.as_ref(),
+            to_msg::<Ops, IpcId>(BorshHeader::request::<Ops>(Some(id), op.clone()), &payload)?
+                .as_ref(),
             Some(source),
         )?;
 
-        let (op_,data) = receiver.recv().await?;
+        let (op_, data) = receiver.recv().await?;
 
         let op_ = Ops::try_from_slice(&op_)?;
         if op != op_ {
-            return Err(Error::Custom(format!("ipc op mismatch: expected {:?}, got {:?}", op, op_)));
+            return Err(Error::Custom(format!(
+                "ipc op mismatch: expected {:?}, got {:?}",
+                op, op_
+            )));
         }
 
         let resp = ResponseResult::<Resp>::try_from_slice(data?.as_ref())

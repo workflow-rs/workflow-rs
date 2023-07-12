@@ -55,32 +55,35 @@ impl<Id> BorshHeader<Id>
 where
     Id: BorshSerialize + BorshDeserialize,
 {
-    pub fn request<Ops>(id: Option<Id>, op: Ops) -> Self 
-    where Ops : OpsT,
+    pub fn request<Ops>(id: Option<Id>, op: Ops) -> Self
+    where
+        Ops: OpsT,
     {
         BorshHeader {
             id,
-            op : op.try_to_vec().expect("request op serialize error"),
+            op: op.try_to_vec().expect("request op serialize error"),
             kind: MessageKind::Request,
         }
     }
 
-    pub fn response<Ops>(id: Option<Id>, op: Ops) -> Self 
-    where Ops : OpsT
+    pub fn response<Ops>(id: Option<Id>, op: Ops) -> Self
+    where
+        Ops: OpsT,
     {
         BorshHeader {
             id,
-            op : op.try_to_vec().expect("response op serialize error"),
+            op: op.try_to_vec().expect("response op serialize error"),
             kind: MessageKind::Response,
         }
     }
 
-    pub fn notification<Ops>(op: Ops) -> Self 
-    where Ops : OpsT,
+    pub fn notification<Ops>(op: Ops) -> Self
+    where
+        Ops: OpsT,
     {
         BorshHeader {
             id: None,
-            op : op.try_to_vec().expect("notification op serialize error"),
+            op: op.try_to_vec().expect("notification op serialize error"),
             kind: MessageKind::Notification,
         }
     }
@@ -95,7 +98,7 @@ where
     pub payload: &'data [u8],
 }
 
-impl<'data,Id> TryFrom<&'data Vec<u8>> for BorshMessage<'data, Id>
+impl<'data, Id> TryFrom<&'data Vec<u8>> for BorshMessage<'data, Id>
 where
     Id: Debug + BorshSerialize + BorshDeserialize + 'data,
 {
