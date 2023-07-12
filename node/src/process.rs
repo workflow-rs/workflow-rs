@@ -72,6 +72,8 @@ pub struct Options {
     /// Delay period after which to issue a `SIGKILL` signal.
     use_force_delay: Duration,
     // env : HashMap<String, String>,
+    stdout: Option<Channel<String>>,
+    stderr: Option<Channel<String>>,
 }
 
 impl Options {
@@ -82,6 +84,8 @@ impl Options {
         restart_delay: Option<Duration>,
         use_force: bool,
         use_force_delay: Option<Duration>,
+        stdout: Option<Channel<String>>,
+        stderr: Option<Channel<String>>,
     ) -> Options {
         let argv = argv.iter().map(|s| s.to_string()).collect::<Vec<_>>();
 
@@ -92,6 +96,8 @@ impl Options {
             restart_delay: restart_delay.unwrap_or_default(),
             use_force,
             use_force_delay: use_force_delay.unwrap_or(Duration::from_millis(10_000)),
+            stdout,
+            stderr,
         }
     }
 }
@@ -105,6 +111,8 @@ impl Default for Options {
             restart_delay: Duration::default(),
             use_force: false,
             use_force_delay: Duration::from_millis(10_000),
+            stdout: None,
+            stderr: None,
         }
     }
 }
@@ -125,17 +133,17 @@ struct Inner {
 }
 
 impl Inner {
-    pub fn new(options: &Options) -> Inner {
+    pub fn new(options: Options) -> Inner {
         Inner {
-            argv: Mutex::new(options.argv.clone()),
-            cwd: Mutex::new(options.cwd.clone()),
+            argv: Mutex::new(options.argv),
+            cwd: Mutex::new(options.cwd),
             running: AtomicBool::new(false),
             restart: AtomicBool::new(options.restart),
             restart_delay: Mutex::new(options.restart_delay),
             use_force: AtomicBool::new(options.use_force),
             use_force_delay: Mutex::new(options.use_force_delay),
-            stdout: Channel::unbounded(),
-            stderr: Channel::unbounded(),
+            stdout: options.stdout.unwrap_or_else(|| Channel::unbounded()),
+            stderr: options.stderr.unwrap_or_else(|| Channel::unbounded()),
             exit: Channel::oneshot(),
             proc: Arc::new(Mutex::new(None)),
             callbacks: CallbackMap::new(),
@@ -246,7 +254,7 @@ impl Inner {
                 }
             }
         }
-        log_info!("loop done...");
+        log_info!("process loop done...");
 
         self.callbacks.clear();
         *self.proc.lock().unwrap() = None;
@@ -268,7 +276,7 @@ pub struct Process {
 
 impl Process {
     /// Create new process instance
-    pub fn new(options: &Options) -> Process {
+    pub fn new(options: Options) -> Process {
         let inner = Arc::new(Inner::new(options));
 
         let task = task!(|inner: Arc<Inner>, stop| async move {
@@ -281,6 +289,10 @@ impl Process {
         }
     }
 
+    pub fn is_running(&self) -> bool {
+        self.inner.running.load(Ordering::SeqCst)
+    }
+
     /// Obtain a clone of the channel [`Receiver`](workflow_core::channel::Receiver) that captures
     /// `stdout` output of the underlying process.
     pub fn stdout(&self) -> Receiver<String> {
@@ -291,6 +303,10 @@ impl Process {
     /// `stderr` output of the underlying process.
     pub fn stderr(&self) -> Receiver<String> {
         self.inner.stderr.receiver.clone()
+    }
+
+    pub fn replace_argv(&self, argv: Vec<String>) {
+        *self.inner.argv.lock().unwrap() = argv;
     }
 
     /// Run the process in the background.  Spawns an async task that
@@ -425,7 +441,13 @@ impl Process {
             .exec_with_args(["--version"].as_slice(), None)
             .await?
             .stdout;
-        let v = text
+        let vstr = if let Some(vstr) = text.split_whitespace().last() {
+            vstr
+        } else {
+            return Ok(Version::none());
+        };
+
+        let v = vstr
             .split('.')
             .flat_map(|v| v.parse::<u64>())
             .collect::<Vec<_>>();
@@ -443,13 +465,15 @@ pub async fn test() {
     log_info!("running rust test() fn");
     workflow_wasm::panic::init_console_panic_hook();
 
-    let proc = Process::new(&Options::new(
+    let proc = Process::new(Options::new(
         &["/Users/aspect/dev/kaspa-dev/kaspad/kaspad"],
         None,
         true,
         Some(Duration::from_millis(3000)),
         true,
         Some(Duration::from_millis(100)),
+        None,
+        None,
     ));
     // futures::task
     let task = task!(|stdout: Receiver<String>, stop: Receiver<()>| async move {
