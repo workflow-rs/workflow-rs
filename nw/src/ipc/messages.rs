@@ -4,7 +4,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use js_sys::{ArrayBuffer, Uint8Array};
 use std::fmt::Debug;
 
-pub fn to_msg<Ops, Id>(header: BorshHeader<Ops, Id>, payload: &[u8]) -> Result<ArrayBuffer>
+pub fn to_msg<Ops, Id>(header: BorshHeader<Id>, payload: &[u8]) -> Result<ArrayBuffer>
 where
     Id: IdT,
     Ops: BorshSerialize + BorshDeserialize,
@@ -42,79 +42,80 @@ impl From<MessageKind> for u32 {
 }
 
 #[derive(Debug, BorshSerialize, BorshDeserialize)]
-pub struct BorshHeader<Ops, Id = Id64>
+pub struct BorshHeader<Id = Id64>
 where
     Id: BorshSerialize + BorshDeserialize,
-    Ops: BorshSerialize + BorshDeserialize,
 {
     pub kind: MessageKind,
     pub id: Option<Id>,
-    pub op: Ops,
+    pub op: Vec<u8>,
 }
 
-impl<Ops, Id> BorshHeader<Ops, Id>
+impl<Id> BorshHeader<Id>
 where
     Id: BorshSerialize + BorshDeserialize,
-    Ops: BorshSerialize + BorshDeserialize,
 {
-    pub fn request(id: Option<Id>, op: Ops) -> Self {
+    pub fn request<Ops>(id: Option<Id>, op: Ops) -> Self 
+    where Ops : OpsT,
+    {
         BorshHeader {
             id,
-            op,
+            op : op.try_to_vec().expect("request op serialize error"),
             kind: MessageKind::Request,
         }
     }
 
-    pub fn response(id: Option<Id>, op: Ops) -> Self {
+    pub fn response<Ops>(id: Option<Id>, op: Ops) -> Self 
+    where Ops : OpsT
+    {
         BorshHeader {
             id,
-            op,
+            op : op.try_to_vec().expect("response op serialize error"),
             kind: MessageKind::Response,
         }
     }
 
-    pub fn notification(op: Ops) -> Self {
+    pub fn notification<Ops>(op: Ops) -> Self 
+    where Ops : OpsT,
+    {
         BorshHeader {
             id: None,
-            op,
+            op : op.try_to_vec().expect("notification op serialize error"),
             kind: MessageKind::Notification,
         }
     }
 }
 
 #[derive(Debug)]
-pub struct BorshMessage<'data, Ops, Id = Id64>
+pub struct BorshMessage<'data, Id = Id64>
 where
     Id: BorshSerialize + BorshDeserialize + 'data,
-    Ops: BorshSerialize + BorshDeserialize + 'data,
 {
-    pub header: BorshHeader<Ops, Id>,
+    pub header: BorshHeader<Id>,
     pub payload: &'data [u8],
 }
 
-impl<'data, Ops, Id> TryFrom<&'data Vec<u8>> for BorshMessage<'data, Ops, Id>
+impl<'data,Id> TryFrom<&'data Vec<u8>> for BorshMessage<'data, Id>
 where
     Id: Debug + BorshSerialize + BorshDeserialize + 'data,
-    Ops: Debug + BorshSerialize + BorshDeserialize + 'data,
 {
     type Error = Error;
 
     fn try_from(src: &'data Vec<u8>) -> std::result::Result<Self, Self::Error> {
-        let v: BorshMessage<Ops, Id> = src[..].try_into()?;
+        let v: BorshMessage<Id> = src[..].try_into()?;
         Ok(v)
     }
 }
 
-impl<'data, Ops, Id> TryFrom<&'data [u8]> for BorshMessage<'data, Ops, Id>
+impl<'data, Id> TryFrom<&'data [u8]> for BorshMessage<'data, Id>
 where
     Id: Debug + BorshSerialize + BorshDeserialize + 'data,
-    Ops: Debug + BorshSerialize + BorshDeserialize + 'data,
 {
     type Error = Error;
 
     fn try_from(src: &'data [u8]) -> std::result::Result<Self, Self::Error> {
         let mut payload = src;
-        let header = BorshHeader::<Ops, Id>::deserialize(&mut payload)?;
+        let header = BorshHeader::<Id>::deserialize(&mut payload)?;
         let message = BorshMessage { header, payload };
         Ok(message)
     }

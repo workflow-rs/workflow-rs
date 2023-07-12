@@ -21,7 +21,7 @@ impl<F> Pending<F> {
 type PendingMap<Id, F> = Arc<Mutex<AHashMap<Id, Pending<F>>>>;
 
 pub type BorshResponseFn =
-    Arc<Box<(dyn Fn(Result<&[u8]>, Option<&Duration>) -> Result<()> + Sync + Send)>>;
+    Arc<Box<(dyn Fn(Vec<u8>, ResponseResult<Vec<u8>>, Option<&Duration>) -> Result<()> + Sync + Send)>>;
 
 struct Inner<Ops>
 where
@@ -122,7 +122,7 @@ where
             };
 
             spawn(async move {
-                match BorshMessage::<Ops, IpcId>::try_from(&vec) {
+                match BorshMessage::<IpcId>::try_from(&vec) {
                     Ok(message) => {
                         if let Err(err) = this.handle_message(message, source).await {
                             log_error!("IPC: handler error: {:?}", err);
@@ -163,17 +163,18 @@ where
 
     pub async fn handle_message<'data>(
         &self,
-        message: BorshMessage<'data, Ops, IpcId>,
+        message: BorshMessage<'data, IpcId>,
         source: Option<IpcTarget>,
     ) -> Result<()> {
-        let BorshMessage::<Ops, IpcId> { header, payload } = message;
-        let BorshHeader::<Ops, IpcId> { op, id, kind } = header;
-
+        let BorshMessage::<IpcId> { header, payload } = message;
+        let BorshHeader::<IpcId> { op, id, kind } = header;
         match kind {
             MessageKind::Request => {
                 let source = source.unwrap_or_else(|| {
                     panic!("ipc received a call request with no source: {:?}", op)
                 });
+
+                let op = Ops::try_from_slice(&op)?;
 
                 let method = self.inner.methods.lock().unwrap().get(&op).cloned();
                 if let Some(method) = method {
@@ -194,6 +195,8 @@ where
                 }
             }
             MessageKind::Notification => {
+                let op = Ops::try_from_slice(&op)?;
+
                 let notification = self.inner.notifications.lock().unwrap().get(&op).cloned();
 
                 if let Some(notification) = notification {
@@ -213,14 +216,7 @@ where
                 let mut pending = pending().lock().unwrap();
                 if let Some(pending) = pending.remove(&id) {
                     let resp = ResponseResult::<Vec<u8>>::try_from_slice(&payload)?;
-                    match resp {
-                        Ok(resp) => {
-                            (pending.callback)(Ok(&resp), None)?;
-                        }
-                        Err(err) => {
-                            (pending.callback)(Err(err.into()), None)?;
-                        }
-                    }
+                    (pending.callback)(op, resp, None)?;
                 } else {
                     log_error!("ipc response id not found: {:?}", id);
                 }
@@ -315,7 +311,7 @@ pub trait IpcDispatch {
     {
         let payload = payload.try_to_vec().map_err(|_| Error::BorshSerialize)?;
         self.as_target().call_ipc(
-            to_msg(BorshHeader::<Ops, IpcId>::notification(op), &payload)?.as_ref(),
+            to_msg::<Ops,IpcId>(BorshHeader::notification::<Ops>(op), &payload)?.as_ref(),
             None,
         )?;
         Ok(())
@@ -356,21 +352,26 @@ pub trait IpcDispatch {
             let mut pending = pending().lock().unwrap();
             pending.insert(
                 id.clone(),
-                Pending::new(Arc::new(Box::new(move |result, _duration| {
-                    sender.try_send(result.map(|data| data.to_vec()))?;
+                Pending::new(Arc::new(Box::new(move |op, result, _duration| {
+                    sender.try_send((op,result.map(|data| data.to_vec())))?;
                     Ok(())
                 }))),
             );
         }
 
         self.as_target().call_ipc(
-            to_msg(BorshHeader::request(Some(id), op), &payload)?.as_ref(),
+            to_msg::<Ops,IpcId>(BorshHeader::request::<Ops>(Some(id), op.clone()), &payload)?.as_ref(),
             Some(source),
         )?;
 
-        let data = receiver.recv().await??;
+        let (op_,data) = receiver.recv().await?;
 
-        let resp = ResponseResult::<Resp>::try_from_slice(data.as_ref())
+        let op_ = Ops::try_from_slice(&op_)?;
+        if op != op_ {
+            return Err(Error::Custom(format!("ipc op mismatch: expected {:?}, got {:?}", op, op_)));
+        }
+
+        let resp = ResponseResult::<Resp>::try_from_slice(data?.as_ref())
             .map_err(|e| Error::BorshDeserialize(e.to_string()))?;
 
         Ok(resp?)

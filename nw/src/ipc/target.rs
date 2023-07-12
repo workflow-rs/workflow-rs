@@ -10,8 +10,6 @@ unsafe impl Sync for IpcTarget {}
 
 impl IpcTarget {
     pub fn new(target: &JsValue) -> IpcTarget {
-        log_info!("Creating IpcTarget for object {:?}", target);
-
         IpcTarget {
             target: Arc::new(target.clone()),
         }
