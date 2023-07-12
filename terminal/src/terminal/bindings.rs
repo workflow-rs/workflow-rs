@@ -78,6 +78,9 @@ extern "C" {
     #[wasm_bindgen(method, js_name = "setOption")]
     pub fn set_option(this: &XtermImpl, name: &str, option: JsValue);
 
+    #[wasm_bindgen(method, js_name = "getOption")]
+    pub fn get_option(this: &XtermImpl, name: &str) -> JsValue;
+
     #[wasm_bindgen(method)]
     pub fn refresh(this: &XtermImpl, start: u32, stop: u32);
 

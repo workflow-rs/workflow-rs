@@ -98,6 +98,7 @@ pub mod keys;
 pub mod macros;
 pub mod result;
 pub mod terminal;
+pub mod prelude;
 
 pub use cli::{Cli, Context, Handler, HandlerCli};
 pub use crlf::CrLf;
@@ -107,11 +108,12 @@ pub use terminal::parse;
 pub use terminal::Options;
 pub use terminal::TargetElement;
 pub use terminal::Terminal;
+pub use terminal::{Theme,ThemeOption};
 pub use textwrap;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        pub use terminal::{Theme, ThemeOption, xterm, bindings};
+        pub use terminal::{xterm, bindings};
     } else {
         pub use terminal::{disable_raw_mode,init_panic_hook};
     }

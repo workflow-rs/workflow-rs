@@ -29,3 +29,9 @@ impl From<nw_sys::Window> for IpcTarget {
         IpcTarget::new(window.window().as_ref())
     }
 }
+
+impl From<Arc<nw_sys::Window>> for IpcTarget {
+    fn from(window: Arc<nw_sys::Window>) -> IpcTarget {
+        IpcTarget::new(window.window().as_ref())
+    }
+}

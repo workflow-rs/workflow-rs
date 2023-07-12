@@ -117,6 +117,7 @@ impl Crossterm {
             stdout.flush().unwrap();
         }
     }
+
 }
 
 use std::{panic, process};
@@ -136,4 +137,24 @@ where
         let exit_code = f();
         process::exit(exit_code);
     }));
+}
+
+
+// compatibility functions
+impl Crossterm {
+    pub fn get_font_size(&self) -> Result<Option<f64>> {
+        Ok(None)
+    }
+
+    pub fn set_font_size(&self, _font_size: f64) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn increase_font_size(&self) -> Result<Option<f64>> {
+        Ok(None)
+    }
+
+    pub fn decrease_font_size(&self) -> Result<Option<f64>> {
+        Ok(None)
+    }
 }

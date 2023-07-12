@@ -154,7 +154,7 @@ fn render(handler: DeclareHandler) -> TokenStream {
             }
 
             async fn handle(self : Arc<Self>, ctx: &Arc<dyn workflow_terminal::cli::Context>, argv : Vec<String>, cmd: &str) -> workflow_terminal::cli::Result<()> {
-                self.main(ctx,argv,cmd).await.map_err(|e|e.into())
+                self.main(ctx,argv,cmd).await.map_err(|e|e.to_string().into())
             }
         }
 

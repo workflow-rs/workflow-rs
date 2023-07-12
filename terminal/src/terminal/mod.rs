@@ -23,12 +23,15 @@ mod options;
 pub use options::Options;
 pub use options::TargetElement;
 
+pub mod xterm;
+pub mod bindings;
+pub use xterm::{Theme, ThemeOption};
+
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        pub mod xterm;
-        pub mod bindings;
+        // pub mod xterm;
+        // pub mod bindings;
         use crate::terminal::xterm::Xterm as Interface;
-        pub use xterm::{Theme, ThemeOption};
 
     } else if #[cfg(termion)] {
         pub mod termion;
@@ -589,22 +592,34 @@ impl Terminal {
         Ok(())
     }
 
-    #[cfg(target_arch = "wasm32")]
-    pub fn set_theme(&self, theme: Theme) -> Result<()> {
-        self.term.set_theme(theme)?;
+    pub fn set_theme(&self, _theme: Theme) -> Result<()> {
+        #[cfg(target_arch = "wasm32")]
+        self.term.set_theme(_theme)?;
         Ok(())
     }
 
-    #[cfg(target_arch = "wasm32")]
     pub fn update_theme(&self) -> Result<()> {
+        #[cfg(target_arch = "wasm32")]
         self.term.update_theme()?;
         Ok(())
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn update_theme(&self) -> Result<()> {
-        Ok(())
+    pub fn increase_font_size(&self) -> Result<Option<f64>> {
+        self.term.increase_font_size()
     }
+
+    pub fn decrease_font_size(&self) -> Result<Option<f64>> {
+        self.term.decrease_font_size()
+    }
+
+    pub fn set_font_size(&self, font_size : f64) -> Result<()> {
+        self.term.set_font_size(font_size)
+    }
+
+    pub fn get_font_size(&self) -> Result<Option<f64>> {
+        self.term.get_font_size()
+    }
+
 }
 
 /// Utility function to strip multiple whitespaces and return a `Vec<String>`

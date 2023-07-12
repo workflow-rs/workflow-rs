@@ -20,10 +20,10 @@ use workflow_wasm::utils::*;
 
 #[derive(Default)]
 pub struct Theme {
-    background: Option<String>,
-    foreground: Option<String>,
-    selection: Option<String>,
-    cursor: Option<String>,
+    pub background: Option<String>,
+    pub foreground: Option<String>,
+    pub selection: Option<String>,
+    pub cursor: Option<String>,
 }
 
 pub enum ThemeOption {
@@ -334,6 +334,12 @@ impl Xterm {
         Ok(())
     }
 
+    pub fn get_option(&self, name: &str) -> Result<JsValue> {
+        let xterm = self.xterm();
+        let xterm = xterm.as_ref().expect("unable to get xterm");
+        Ok(xterm.get_option(name))
+    }
+
     pub fn refresh(&self, start: u32, stop: u32) {
         let xterm = self.xterm();
         let xterm = xterm.as_ref().expect("unable to get xterm");
@@ -538,6 +544,37 @@ impl Xterm {
 
         Ok(())
     }
+
+    pub fn get_font_size(&self) -> Result<Option<f64>> {
+        let font_size = self.get_option("fontSize")?;
+        Ok(font_size.as_f64())
+    }
+
+    pub fn set_font_size(&self, font_size: f64) -> Result<()> {
+        self.set_option("fontSize", JsValue::from_f64(font_size))
+    }
+
+    fn adjust_font_size(&self, delta : f64) -> Result<Option<f64>> {
+        let font_size = self.get_option("fontSize")?;
+        let mut font_size = font_size.as_f64().ok_or("Unable to get font size")?;
+        font_size += delta;
+        if font_size < 4.0 {
+            font_size = 4.0;
+        }
+
+        self.set_option("fontSize", JsValue::from_f64(font_size))?;
+        self.resize()?;
+        Ok(Some(font_size))
+    }
+
+    pub fn increase_font_size(&self) -> Result<Option<f64>> {
+        self.adjust_font_size(1.0)
+    }
+
+    pub fn decrease_font_size(&self) -> Result<Option<f64>> {
+        self.adjust_font_size(-1.0)
+    }
+
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
