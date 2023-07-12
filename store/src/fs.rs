@@ -12,6 +12,7 @@
 //! you should use `*_with_localstorage()` suffixed functions.
 //!
 
+use crate::error::Error;
 use crate::result::Result;
 use cfg_if::cfg_if;
 use js_sys::Function;
@@ -172,8 +173,6 @@ impl Options {
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
 
-        use crate::error::Error;
-
         pub async fn exists_with_options(filename: &Path, options : Options) -> Result<bool> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.to_string_lossy().to_string();
@@ -333,4 +332,55 @@ pub fn resolve_path(path: &str) -> PathBuf {
     } else {
         PathBuf::from(path)
     }
+}
+
+pub trait AbsolutePath {
+    fn absolute(&self) -> Result<PathBuf>;
+}
+
+impl AbsolutePath for Path {
+    fn absolute(&self) -> Result<PathBuf> {
+        absolute(self)
+    }
+}
+
+impl AbsolutePath for PathBuf {
+    fn absolute(&self) -> Result<PathBuf> {
+        absolute(self)
+    }
+}
+
+pub fn absolute<P>(path: P) -> Result<PathBuf>
+where
+    P: AsRef<Path>,
+{
+    if runtime::is_windows() {
+        absolute_with_separator(path.as_ref(), "\\")
+    } else {
+        absolute_with_separator(path.as_ref(), "/")
+    }
+}
+
+pub fn absolute_with_separator(path: &Path, separator: &str) -> Result<PathBuf> {
+    let mut result = PathBuf::new();
+
+    for component in path.components() {
+        if let Some(c) = component.as_os_str().to_str() {
+            if c == "." {
+                continue;
+            } else if c == ".." {
+                result.pop();
+            } else {
+                result.push(c);
+            }
+        } else {
+            return Err(Error::InvalidPath(path.to_string_lossy().to_string()));
+        }
+    }
+
+    if !result.is_absolute() {
+        result = separator.parse::<PathBuf>().unwrap().join(&result);
+    }
+
+    Ok(result)
 }
