@@ -108,7 +108,7 @@ where
         Ok(ipc)
     }
 
-    pub fn register_handler(self: &Arc<Self>) -> Result<()> {
+    fn register_handler(self: &Arc<Self>) -> Result<()> {
         let this = self.clone();
         let handler = Arc::new(callback!(move |message: ArrayBuffer, source: JsValue| {
             let this = this.clone();
@@ -152,7 +152,7 @@ where
         Ok(())
     }
 
-    pub fn unregister_handler(&self) -> Result<()> {
+    fn unregister_handler(&self) -> Result<()> {
         if let Some(_handler) = self.inner.handler.lock().unwrap().take() {
             let object = Object::from(self.inner.target.as_ref().clone());
             js_sys::Reflect::delete_property(&object, &JsValue::from_str("ipc_handler"))?;
