@@ -10,6 +10,7 @@
 //!
 use wasm_bindgen::prelude::*;
 
+pub mod child_process;
 pub mod error;
 pub mod process;
 pub mod result;

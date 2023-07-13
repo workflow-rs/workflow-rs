@@ -17,7 +17,6 @@ doctest = false
 [dependencies]
 futures.workspace = true
 js-sys.workspace = true
-node-child-process.workspace = true
 node-sys.workspace = true
 thiserror.workspace = true
 wasm-bindgen-futures.workspace = true

@@ -5,6 +5,7 @@
 use crate::clear::*;
 use crate::cli::Cli;
 use crate::cursor::*;
+use crate::error::Error;
 use crate::keys::Key;
 use crate::result::Result;
 use crate::CrLf;
@@ -618,6 +619,44 @@ impl Terminal {
 
     pub fn get_font_size(&self) -> Result<Option<f64>> {
         self.term.get_font_size()
+    }
+
+    pub async fn select<T>(self: &Arc<Terminal>, prompt: &str, list: &[T]) -> Result<Option<T>>
+    where
+        T: std::fmt::Display + Clone, // + IdT + Clone + Send + Sync + 'static,
+    {
+        if list.len() == 0 {
+            return Ok(None);
+        } else if list.len() == 1 {
+            return Ok(list.first().cloned());
+        } else {
+            let mut selection = None;
+            while selection.is_none() {
+                list.iter().enumerate().for_each(|(seq, item)| {
+                    self.writeln(format!("{seq}: {item}"));
+                });
+
+                let text = self
+                    .ask(
+                        false,
+                        &format!("{prompt} [{}..{}] or <enter> to abort: ", 0, list.len() - 1),
+                    )
+                    .await?
+                    .trim()
+                    .to_string();
+                if text.is_empty() {
+                    self.writeln("aborting...");
+                    return Err(Error::UserAbort);
+                } else {
+                    match text.parse::<usize>() {
+                        Ok(seq) if seq < list.len() => selection = list.get(seq).cloned(),
+                        _ => {}
+                    };
+                }
+            }
+
+            Ok(selection)
+        }
     }
 }
 

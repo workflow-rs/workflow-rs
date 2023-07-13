@@ -32,6 +32,8 @@ pub enum Error {
     DowncastError(String),
     #[error("command not found: {0}")]
     CommandNotFound(String),
+    #[error("aborting...")]
+    UserAbort,
 }
 
 impl From<String> for Error {

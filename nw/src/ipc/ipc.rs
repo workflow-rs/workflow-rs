@@ -85,7 +85,16 @@ where
     {
         let window = window.window();
         let target = IpcTarget::new(window.as_ref());
-        Self::try_new_binding(&target, identifier)
+        let ipc = Self::try_new_binding(&target, identifier)?;
+
+        unsafe {
+            if IPC_HANDLER_SOURCE.is_some() {
+                panic!("global ipc handler already registered");
+            }
+            IPC_HANDLER_SOURCE.replace(target.clone());
+        }
+
+        Ok(ipc)
     }
 
     fn try_new_binding<Ident>(target: &IpcTarget, identifier: Ident) -> Result<Arc<Self>>
