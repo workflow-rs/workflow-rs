@@ -1,12 +1,12 @@
 //!
 //! Module encapsulating [`Process`] API for running child process daemons under Node.js and NWJS
 //!
+use crate::child_process::{
+    spawn_with_args_and_options, ChildProcess, KillSignal, SpawnArgs, SpawnOptions,
+};
 use crate::error::Error;
 use crate::result::Result;
 use futures::{select, FutureExt};
-use node_child_process::{
-    spawn_with_args_and_options, ChildProcess, KillSignal, SpawnArgs, SpawnOptions,
-};
 use node_sys::*;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -200,13 +200,20 @@ impl Inner {
                 Arc::new(spawn_with_args_and_options(&program, &args, &options))
             };
 
-            let exit = self.exit.sender.clone();
-            let close = callback!(move |code: u32| {
-                exit.try_send(code)
-                    .expect("unable to send close notification");
+            let exit_sender = self.exit.sender.clone();
+            let exit = callback!(move |code: JsValue| {
+                let code = code.as_f64().unwrap_or_default() as u32;
+                exit_sender.try_send(code).expect("unable to send close notification");
             });
-            proc.on("close", close.as_ref());
-            self.callbacks.retain(close.clone())?;
+            proc.on("exit", exit.as_ref());
+            self.callbacks.retain(exit.clone())?;
+
+            // let close_sender = self.close.sender.clone();
+            // let close = callback!(move || {
+            //     close_sender.try_send(0).expect("unable to send close notification");
+            // });
+            // proc.on("close", close.as_ref());
+            // self.callbacks.retain(close.clone())?;
 
             let stdout_tx = self.stdout.sender.clone();
             let stdout_cb = callback!(move |data: buffer::Buffer| {
@@ -256,6 +263,7 @@ impl Inner {
                 proc.kill_with_signal(KillSignal::SIGTERM);
                 if !self.use_force.load(Ordering::SeqCst) {
                     self.exit.receiver.recv().await?;
+                    break;
                 } else {
                     let use_force_delay = sleep(*self.use_force_delay.lock().unwrap());
                     select! {
@@ -271,7 +279,6 @@ impl Inner {
                 }
             }
         }
-        log_info!("process loop done...");
 
         self.callbacks.clear();
         *self.proc.lock().unwrap() = None;
@@ -299,7 +306,7 @@ impl Process {
         let task = task!(|inner: Arc<Inner>, stop| async move {
             inner.run(stop).await.ok();
         });
-        log_info!("creating process");
+
         Process {
             inner,
             task: Arc::new(task),
@@ -334,9 +341,7 @@ impl Process {
     /// monitors the process, capturing its output and restarting
     /// the process if it exits prematurely.
     pub fn run(&self) -> Result<()> {
-        log_info!("run...");
         self.task.run(self.inner.clone())?;
-        log_info!("run done...");
         Ok(())
     }
 
@@ -369,7 +374,6 @@ impl Process {
     /// Stop the process by disabling auto-restart and issuing
     /// a `SIGTERM` signal.
     pub fn stop(&self) -> Result<()> {
-        log_info!("running.load");
         if !self.inner.running.load(Ordering::SeqCst) {
             return Err(Error::NotRunning);
         }
@@ -389,9 +393,9 @@ impl Process {
 
     /// Stop the process and block until it exits.
     pub async fn stop_and_join(&self) -> Result<()> {
-        log_info!("calling stop();");
+        // log_info!("calling stop();");
         self.stop()?;
-        log_info!("calling join();");
+        // log_info!("calling join();");
         self.join().await?;
         Ok(())
     }
