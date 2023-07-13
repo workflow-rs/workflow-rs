@@ -15,6 +15,7 @@ use std::time::Duration;
 use wasm_bindgen::prelude::*;
 use workflow_core::channel::{Channel, Receiver};
 use workflow_core::task::*;
+use workflow_core::time::Instant;
 use workflow_log::*;
 use workflow_task::*;
 use workflow_wasm::callback::*;
@@ -130,6 +131,7 @@ struct Inner {
     exit: Channel<u32>,
     proc: Arc<Mutex<Option<Arc<ChildProcess>>>>,
     callbacks: CallbackMap,
+    start_time: Arc<Mutex<Option<Instant>>>,
 }
 
 impl Inner {
@@ -147,6 +149,7 @@ impl Inner {
             exit: Channel::oneshot(),
             proc: Arc::new(Mutex::new(None)),
             callbacks: CallbackMap::new(),
+            start_time: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -162,11 +165,25 @@ impl Inner {
         self.cwd.lock().unwrap().clone()
     }
 
+    pub fn uptime(&self) -> Option<Duration> {
+        if self.running.load(Ordering::SeqCst) {
+            self.start_time
+                .lock()
+                .unwrap()
+                .map(|ts| ts.duration_since(Instant::now()))
+                .clone()
+        } else {
+            None
+        }
+    }
+
     pub async fn run(&self, stop: Receiver<()>) -> Result<()> {
         loop {
             if self.running.load(Ordering::SeqCst) {
                 return Err(Error::AlreadyRunning);
             }
+
+            self.start_time.lock().unwrap().replace(Instant::now());
 
             let proc = {
                 let program = self.program();
@@ -291,6 +308,10 @@ impl Process {
 
     pub fn is_running(&self) -> bool {
         self.inner.running.load(Ordering::SeqCst)
+    }
+
+    pub fn uptime(&self) -> Option<Duration> {
+        self.inner.uptime()
     }
 
     /// Obtain a clone of the channel [`Receiver`](workflow_core::channel::Receiver) that captures
