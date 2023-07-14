@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use wasm_bindgen::JsValue;
 use web_sys::Element;
 use workflow_core::channel::{unbounded, Receiver, Sender};
+use workflow_core::runtime;
 use workflow_dom::inject::*;
 use workflow_dom::utils::body;
 use workflow_dom::utils::*;
@@ -88,7 +89,8 @@ impl Theme {
 
 enum Ctl {
     SinkEvent(SinkEvent),
-    Paste,
+    Copy,
+    Paste(Option<String>),
     Close,
 }
 
@@ -350,12 +352,19 @@ impl Xterm {
         let this = self.clone();
         let clipboard_callback = callback!(
             move |e: web_sys::KeyboardEvent| -> std::result::Result<(), JsValue> {
-                //log_trace!("xterm: key:{}, ctrl_key:{}, meta_key:{},  {:?}", e.key(), e.ctrl_key(), e.meta_key(), e);
+
+                // log_trace!("xterm: key:{}, ctrl_key:{}, meta_key:{},  {:?}", e.key(), e.ctrl_key(), e.meta_key(), e);
                 if e.key() == "v" && (e.ctrl_key() || e.meta_key()) {
                     this.sink
                         .sender
-                        .try_send(Ctl::Paste)
+                        .try_send(Ctl::Paste(None))
                         .expect("Unable to send paste Ctl");
+                }
+                if e.key() == "c" && (e.ctrl_key() || e.meta_key()) {
+                    this.sink
+                        .sender
+                        .try_send(Ctl::Copy)
+                        .expect("Unable to send copy Ctl");
                 }
                 Ok(())
             }
@@ -367,6 +376,14 @@ impl Xterm {
             .add_event_listener_with_callback("keydown", clipboard_callback.as_ref())?;
         *locked = Some(clipboard_callback);
 
+        Ok(())
+    }
+
+    pub fn paste(&self,text : Option<String>) -> Result<()>{
+        self.sink
+            .sender
+            .try_send(Ctl::Paste(text))
+            .map_err(|_| "Unable to send paste Ctl")?;
         Ok(())
     }
 
@@ -433,11 +450,31 @@ impl Xterm {
                 Ctl::SinkEvent(event) => {
                     self.sink(event).await?;
                 }
-                Ctl::Paste => {
-                    //break;
-                    let data_js_value = get_clipboard_data().await;
-                    if let Some(text) = data_js_value.as_string() {
+                Ctl::Copy => {
+                    if runtime::is_nw() {
+                        let text = self.xterm().as_ref().unwrap().get_selection();
+                        let clipboard = nw_sys::clipboard::get();
+                        clipboard.set(&text);
+                    }
+                }
+                Ctl::Paste(text) => {
+
+                    if let Some(text) = text {
                         self.terminal().inject(text)?;
+                    } else {
+                        if runtime::is_nw() {
+                            let clipboard = nw_sys::clipboard::get();
+                            let text = clipboard.get();
+                            if !text.is_empty() {
+                                self.terminal().inject(text)?;
+                            }
+    
+                        } else {
+                            let data_js_value = get_clipboard_data().await;
+                            if let Some(text) = data_js_value.as_string() {
+                                self.terminal().inject(text)?;
+                            }
+                        }
                     }
                 }
                 Ctl::Close => {

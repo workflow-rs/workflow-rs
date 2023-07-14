@@ -663,6 +663,6 @@ impl Terminal {
 /// Utility function to strip multiple whitespaces and return a `Vec<String>`
 pub fn parse(s: &str) -> Vec<String> {
     let regex = Regex::new(r"\s+").unwrap();
-    let s = regex.replace_all(s, " ");
+    let s = regex.replace_all(s.trim(), " ");
     s.split(' ').map(|s| s.to_string()).collect::<Vec<String>>()
 }

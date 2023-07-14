@@ -41,6 +41,7 @@ workflow-dom.workspace = true
 workflow-log.workspace = true
 workflow-wasm.workspace = true
 workflow-terminal-macros.workspace = true
+nw-sys.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 crossterm.workspace = true
@@ -52,8 +53,10 @@ features = [
     'Blob',
     'CssStyleDeclaration',
     'CustomEvent',
+    'DataTransfer',
     'Document',
     'Element',
+    'Event',
     'EventTarget',
     'HtmlCollection',
     'KeyboardEvent',

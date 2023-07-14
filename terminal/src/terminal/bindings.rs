@@ -104,6 +104,18 @@ extern "C" {
 
     #[wasm_bindgen(method, getter, js_name = "element")]
     pub fn get_element(this: &XtermImpl) -> Element;
+
+    #[wasm_bindgen(method, js_name = "getSelection")]
+    pub fn get_selection(this: &XtermImpl) -> String;
+
+    // future versions of xterm.js
+    // #[wasm_bindgen(method, js_name = "getSelectionService")]
+    // pub fn get_selection_service(this: &XtermImpl) -> SelectionService;
+    // #[wasm_bindgen(extends = js_sys::Object)]
+    // pub type SelectionService;
+    // #[wasm_bindgen(method, js_name = "getSelection")]
+    // pub fn get_selection(this: &SelectionService) -> String;
+
 }
 
 impl Debug for XtermImpl {
@@ -150,3 +162,19 @@ extern "C" {
     #[wasm_bindgen (js_namespace=["navigator", "clipboard"], js_name="readText")]
     pub async fn get_clipboard_data() -> JsValue;
 }
+
+// #[wasm_bindgen]
+// extern "C" {
+//     #[wasm_bindgen (extends = web_sys::Event , extends = :: js_sys :: Object , js_name = ClipboardEvent , typescript_type = "ClipboardEvent")]
+//     #[derive(Debug, Clone, PartialEq, Eq)]
+//     pub type ClipboardEvent;
+//     #[wasm_bindgen (structural , method , getter , js_class = "ClipboardEvent" , js_name = clipboardData)]
+//     pub fn clipboard_data(this: &ClipboardEvent) -> Option<web_sys::DataTransfer>;
+//     #[wasm_bindgen(catch, constructor, js_class = "ClipboardEvent")]
+//     pub fn new(type_: &str) -> Result<ClipboardEvent, JsValue>;
+//     // #[wasm_bindgen(catch, constructor, js_class = "ClipboardEvent")]
+//     // pub fn new_with_event_init_dict(
+//     //     type_: &str,
+//     //     event_init_dict: &ClipboardEventInit,
+//     // ) -> Result<ClipboardEvent, JsValue>;
+// }
