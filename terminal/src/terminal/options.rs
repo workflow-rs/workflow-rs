@@ -23,6 +23,9 @@ pub struct Options {
     pub prompt: Option<String>,
     /// Target DOM element (when running under WASM)
     pub element: TargetElement,
+    /// Disable internal clipboard handling
+    /// (useful when using clipboard API calls externally)
+    pub disable_clipboard_handling: bool,
 }
 
 impl Default for Options {
@@ -30,6 +33,7 @@ impl Default for Options {
         Options {
             prompt: None,
             element: TargetElement::Body,
+            disable_clipboard_handling : false
         }
     }
 }

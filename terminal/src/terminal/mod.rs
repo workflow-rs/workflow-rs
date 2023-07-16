@@ -607,13 +607,13 @@ impl Terminal {
 
     pub fn clipboard_copy(&self) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
-        self.term.clipboard_copy();
+        self.term.clipboard_copy()?;
         Ok(())
     }
 
     pub fn clipboard_paste(&self) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
-        self.term.clipboard_paste();
+        self.term.clipboard_paste()?;
         Ok(())
     }
 

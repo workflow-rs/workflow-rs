@@ -160,6 +160,7 @@ pub struct Xterm {
     _web_links: Arc<Mutex<Option<WebLinksAddon>>>,
     clipboard_listerner: Arc<Mutex<Option<Callback<CallbackClosure<web_sys::KeyboardEvent>>>>>,
     terminate: Arc<AtomicBool>,
+    disable_clipboard_handling : bool,
 }
 
 unsafe impl Send for Xterm {}
@@ -185,7 +186,7 @@ impl Xterm {
         Self::try_new_with_element(&el, options)
     }
 
-    pub fn try_new_with_element(parent: &Element, _options: &Options) -> Result<Self> {
+    pub fn try_new_with_element(parent: &Element, options: &Options) -> Result<Self> {
         let element = document().create_element("div")?;
         element.set_attribute("class", "terminal")?;
         parent.append_child(&element)?;
@@ -201,6 +202,7 @@ impl Xterm {
             _web_links: Arc::new(Mutex::new(None)),
             clipboard_listerner: Arc::new(Mutex::new(None)),
             terminate: Arc::new(AtomicBool::new(false)),
+            disable_clipboard_handling : options.disable_clipboard_handling,
         };
         Ok(terminal)
     }
@@ -321,7 +323,9 @@ impl Xterm {
 
         self.init_kbd_listener(&xterm)?;
         self.init_resize_observer()?;
-        self.init_clipboard(&xterm)?;
+        if !self.disable_clipboard_handling {
+            self.init_clipboard(&xterm)?;
+        }
 
         *self.xterm.lock().unwrap() = Some(xterm);
         *self.terminal.lock().unwrap() = Some(terminal.clone());
