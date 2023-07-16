@@ -103,8 +103,8 @@ manual_future = "0.1.1"
 node-child-process = "0.1.1"
 node-sys = "0.4.2"
 numtoa = "0.2.4"
-# nw-sys="0.1.2"
-nw-sys= { version = "0.1.3", path = "../nw-sys" }
+# nw-sys= { version = "0.1.3", path = "../nw-sys" }
+nw-sys= { version = "0.1.3" }
 parse-variants = "1.0.1"
 proc-macro-error = { version = "1.0.4", default-features = false }
 proc-macro2 = { version = "1.0.50" }
