@@ -2,6 +2,7 @@
 pub mod error;
 pub mod id;
 pub mod imports;
+#[allow(clippy::module_inception)]
 pub mod ipc;
 pub mod messages;
 pub mod method;

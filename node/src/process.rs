@@ -77,6 +77,7 @@ pub struct Options {
     stderr: Option<Channel<String>>,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl Options {
     pub fn new(
         argv: &[&str],
@@ -144,8 +145,8 @@ impl Inner {
             restart_delay: Mutex::new(options.restart_delay),
             use_force: AtomicBool::new(options.use_force),
             use_force_delay: Mutex::new(options.use_force_delay),
-            stdout: options.stdout.unwrap_or_else(|| Channel::unbounded()),
-            stderr: options.stderr.unwrap_or_else(|| Channel::unbounded()),
+            stdout: options.stdout.unwrap_or_else(Channel::unbounded),
+            stderr: options.stderr.unwrap_or_else(Channel::unbounded),
             exit: Channel::oneshot(),
             proc: Arc::new(Mutex::new(None)),
             callbacks: CallbackMap::new(),
@@ -171,7 +172,6 @@ impl Inner {
                 .lock()
                 .unwrap()
                 .map(|ts| ts.duration_since(Instant::now()))
-                .clone()
         } else {
             None
         }
@@ -203,7 +203,9 @@ impl Inner {
             let exit_sender = self.exit.sender.clone();
             let exit = callback!(move |code: JsValue| {
                 let code = code.as_f64().unwrap_or_default() as u32;
-                exit_sender.try_send(code).expect("unable to send close notification");
+                exit_sender
+                    .try_send(code)
+                    .expect("unable to send close notification");
             });
             proc.on("exit", exit.as_ref());
             self.callbacks.retain(exit.clone())?;

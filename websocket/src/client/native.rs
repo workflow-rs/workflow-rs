@@ -141,7 +141,7 @@ impl WebSocketInterface {
 
         core::task::spawn(async move {
             loop {
-                match connect_async_with_config(&self_.url(), ts_websocket_config).await {
+                match connect_async_with_config(&self_.url(), ts_websocket_config, false).await {
                     Ok(stream) => {
                         // log_trace!("connected...");
 

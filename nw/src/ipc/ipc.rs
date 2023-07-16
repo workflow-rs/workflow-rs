@@ -70,7 +70,7 @@ where
             if IPC_HANDLER_SOURCE.is_some() {
                 panic!("global ipc handler already registered");
             }
-            IPC_HANDLER_SOURCE.replace(target.clone());
+            IPC_HANDLER_SOURCE.replace(target);
         }
 
         Ok(ipc)
@@ -91,7 +91,7 @@ where
             if IPC_HANDLER_SOURCE.is_some() {
                 panic!("global ipc handler already registered");
             }
-            IPC_HANDLER_SOURCE.replace(target.clone());
+            IPC_HANDLER_SOURCE.replace(target);
         }
 
         Ok(ipc)
@@ -225,7 +225,7 @@ where
                 // let id = Id64::from(id);
                 let mut pending = pending().lock().unwrap();
                 if let Some(pending) = pending.remove(&id) {
-                    let resp = ResponseResult::<Vec<u8>>::try_from_slice(&payload)?;
+                    let resp = ResponseResult::<Vec<u8>>::try_from_slice(payload)?;
                     (pending.callback)(op, resp, None)?;
                 } else {
                     log_error!("ipc response id not found: {:?}", id);
@@ -282,7 +282,7 @@ impl IpcHandler for IpcTarget {
     fn call_ipc(&self, data: &JsValue, source: Option<&IpcTarget>) -> Result<()> {
         let target_fn = js_sys::Reflect::get(self.as_ref(), &JsValue::from_str("ipc_handler"))?;
 
-        let target_fn = target_fn.clone().unchecked_into::<js_sys::Function>();
+        let target_fn = target_fn.unchecked_into::<js_sys::Function>();
 
         if let Some(source) = source {
             target_fn.call2(

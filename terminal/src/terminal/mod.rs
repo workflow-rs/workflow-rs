@@ -625,10 +625,10 @@ impl Terminal {
     where
         T: std::fmt::Display + Clone, // + IdT + Clone + Send + Sync + 'static,
     {
-        if list.len() == 0 {
-            return Ok(None);
+        if list.is_empty() {
+            Ok(None)
         } else if list.len() == 1 {
-            return Ok(list.first().cloned());
+            Ok(list.first().cloned())
         } else {
             let mut selection = None;
             while selection.is_none() {

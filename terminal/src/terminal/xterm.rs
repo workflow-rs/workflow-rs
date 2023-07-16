@@ -352,7 +352,6 @@ impl Xterm {
         let this = self.clone();
         let clipboard_callback = callback!(
             move |e: web_sys::KeyboardEvent| -> std::result::Result<(), JsValue> {
-
                 // log_trace!("xterm: key:{}, ctrl_key:{}, meta_key:{},  {:?}", e.key(), e.ctrl_key(), e.meta_key(), e);
                 if e.key() == "v" && (e.ctrl_key() || e.meta_key()) {
                     this.sink
@@ -379,7 +378,7 @@ impl Xterm {
         Ok(())
     }
 
-    pub fn paste(&self,text : Option<String>) -> Result<()>{
+    pub fn paste(&self, text: Option<String>) -> Result<()> {
         self.sink
             .sender
             .try_send(Ctl::Paste(text))
@@ -458,22 +457,18 @@ impl Xterm {
                     }
                 }
                 Ctl::Paste(text) => {
-
                     if let Some(text) = text {
                         self.terminal().inject(text)?;
+                    } else if runtime::is_nw() {
+                        let clipboard = nw_sys::clipboard::get();
+                        let text = clipboard.get();
+                        if !text.is_empty() {
+                            self.terminal().inject(text)?;
+                        }
                     } else {
-                        if runtime::is_nw() {
-                            let clipboard = nw_sys::clipboard::get();
-                            let text = clipboard.get();
-                            if !text.is_empty() {
-                                self.terminal().inject(text)?;
-                            }
-    
-                        } else {
-                            let data_js_value = get_clipboard_data().await;
-                            if let Some(text) = data_js_value.as_string() {
-                                self.terminal().inject(text)?;
-                            }
+                        let data_js_value = get_clipboard_data().await;
+                        if let Some(text) = data_js_value.as_string() {
+                            self.terminal().inject(text)?;
                         }
                     }
                 }
