@@ -606,6 +606,22 @@ impl Xterm {
     pub fn decrease_font_size(&self) -> Result<Option<f64>> {
         self.adjust_font_size(-1.0)
     }
+
+    pub fn clipboard_copy(&self) -> Result<()> {
+        self.sink
+            .sender
+            .try_send(Ctl::Copy)
+            .expect("Unable to send copy Ctl");
+        Ok(())
+    }
+
+    pub fn clipboard_paste(&self) -> Result<()> {
+        self.sink
+            .sender
+            .try_send(Ctl::Paste(None))
+            .expect("Unable to send paste Ctl");
+        Ok(())
+    }
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

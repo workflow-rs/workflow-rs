@@ -605,6 +605,18 @@ impl Terminal {
         Ok(())
     }
 
+    pub fn clipboard_copy(&self) -> Result<()> {
+        #[cfg(target_arch = "wasm32")]
+        self.term.clipboard_copy();
+        Ok(())
+    }
+
+    pub fn clipboard_paste(&self) -> Result<()> {
+        #[cfg(target_arch = "wasm32")]
+        self.term.clipboard_paste();
+        Ok(())
+    }
+
     pub fn increase_font_size(&self) -> Result<Option<f64>> {
         self.term.increase_font_size()
     }
