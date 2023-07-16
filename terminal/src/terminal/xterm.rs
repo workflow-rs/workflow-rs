@@ -160,7 +160,7 @@ pub struct Xterm {
     _web_links: Arc<Mutex<Option<WebLinksAddon>>>,
     clipboard_listerner: Arc<Mutex<Option<Callback<CallbackClosure<web_sys::KeyboardEvent>>>>>,
     terminate: Arc<AtomicBool>,
-    disable_clipboard_handling : bool,
+    disable_clipboard_handling: bool,
 }
 
 unsafe impl Send for Xterm {}
@@ -202,7 +202,7 @@ impl Xterm {
             _web_links: Arc::new(Mutex::new(None)),
             clipboard_listerner: Arc::new(Mutex::new(None)),
             terminate: Arc::new(AtomicBool::new(false)),
-            disable_clipboard_handling : options.disable_clipboard_handling,
+            disable_clipboard_handling: options.disable_clipboard_handling,
         };
         Ok(terminal)
     }

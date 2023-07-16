@@ -33,7 +33,7 @@ impl Default for Options {
         Options {
             prompt: None,
             element: TargetElement::Body,
-            disable_clipboard_handling : false
+            disable_clipboard_handling: false,
         }
     }
 }
