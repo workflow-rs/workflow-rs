@@ -14,6 +14,7 @@ use std::sync::{
 };
 use std::time::Duration;
 use tokio::net::TcpStream;
+use tokio::time::timeout;
 use tokio_tungstenite::{
     connect_async_with_config, tungstenite::protocol::Message as TsMessage, MaybeTlsStream,
     WebSocketStream,
@@ -120,17 +121,16 @@ impl WebSocketInterface {
     }
 
     pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
-        let self_ = self.clone();
+        let this = self.clone();
 
         if self.is_open.load(Ordering::SeqCst) {
             return Err(Error::AlreadyConnected);
         }
 
         let (connect_trigger, connect_listener) = oneshot::<Result<()>>();
-        // let (connect_trigger, connect_listener) = triggered::trigger();
         let mut connect_trigger = Some(connect_trigger);
 
-        self_.reconnect.store(true, Ordering::SeqCst);
+        this.reconnect.store(true, Ordering::SeqCst);
 
         let options_ = options.clone();
         if let Some(url) = options.url.as_ref() {
@@ -141,29 +141,31 @@ impl WebSocketInterface {
 
         core::task::spawn(async move {
             loop {
-                match connect_async_with_config(&self_.url(), ts_websocket_config, false).await {
-                    Ok(stream) => {
+                let url = this.url().clone();
+                let connect_future = connect_async_with_config(&url, ts_websocket_config, false);
+                let timeout_future = timeout(options_.timeout(), connect_future);
+
+                match timeout_future.await {
+                    // connect success
+                    Ok(Ok(stream)) => {
                         // log_trace!("connected...");
 
-                        self_.is_open.store(true, Ordering::SeqCst);
+                        this.is_open.store(true, Ordering::SeqCst);
                         let (mut ws_stream, _) = stream;
-
-                        // *self_.inner.lock().unwrap() = Some(Inner {
-                        //     ws_stream: Some(ws_stream),
-                        // });
 
                         if connect_trigger.is_some() {
                             connect_trigger.take().unwrap().try_send(Ok(())).ok();
                         }
 
-                        if let Err(err) = self_.dispatcher(&mut ws_stream).await {
+                        if let Err(err) = this.dispatcher(&mut ws_stream).await {
                             log_trace!("WebSocket dispatcher error: {}", err);
                         }
 
-                        self_.is_open.store(false, Ordering::SeqCst);
+                        this.is_open.store(false, Ordering::SeqCst);
                     }
-                    Err(e) => {
-                        log_trace!("WebSocket failed to connect to {}: {}", self_.url(), e);
+                    // connect error
+                    Ok(Err(e)) => {
+                        log_trace!("WebSocket failed to connect to {}: {}", this.url(), e);
                         if matches!(options_.strategy, ConnectStrategy::Fallback) {
                             if options.block_async_connect && connect_trigger.is_some() {
                                 connect_trigger.take().unwrap().try_send(Err(e.into())).ok();
@@ -172,9 +174,27 @@ impl WebSocketInterface {
                         }
                         workflow_core::task::sleep(Duration::from_millis(1000)).await;
                     }
+                    // timeout error
+                    Err(_) => {
+                        log_trace!(
+                            "WebSocket connection timeout while connecting to {}",
+                            this.url()
+                        );
+                        if matches!(options_.strategy, ConnectStrategy::Fallback) {
+                            if options.block_async_connect && connect_trigger.is_some() {
+                                connect_trigger
+                                    .take()
+                                    .unwrap()
+                                    .try_send(Err(Error::ConnectionTimeout))
+                                    .ok();
+                            }
+                            break;
+                        }
+                        workflow_core::task::sleep(Duration::from_millis(1000)).await;
+                    }
                 };
 
-                if !self_.reconnect.load(Ordering::SeqCst) {
+                if !this.reconnect.load(Ordering::SeqCst) {
                     break;
                 };
             }

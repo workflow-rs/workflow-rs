@@ -4,6 +4,7 @@ use super::Handshake;
 use js_sys::Object;
 use std::sync::Arc;
 use wasm_bindgen::{JsCast, JsValue};
+use workflow_core::time::Duration;
 use workflow_wasm::object::*;
 
 #[derive(Default)]
@@ -54,7 +55,11 @@ pub struct ConnectOptions {
     pub strategy: ConnectStrategy,
     /// Optional `url` that will change the current URL of the WebSocket.
     pub url: Option<String>,
+    /// Optional `timeout` that will change the timeout of the WebSocket connection process.
+    pub timeout: Option<Duration>,
 }
+
+pub const DEFAULT_CONNECT_TIMEOUT_MILLIS: u64 = 5_000;
 
 impl Default for ConnectOptions {
     fn default() -> Self {
@@ -62,6 +67,7 @@ impl Default for ConnectOptions {
             block_async_connect: true,
             strategy: ConnectStrategy::Retry,
             url: None,
+            timeout: None,
         }
     }
 }
@@ -72,6 +78,7 @@ impl ConnectOptions {
             block_async_connect: true,
             strategy: ConnectStrategy::Fallback,
             url: None,
+            timeout: None,
         }
     }
     pub fn reconnect_defaults() -> Self {
@@ -79,7 +86,13 @@ impl ConnectOptions {
             block_async_connect: true,
             strategy: ConnectStrategy::Retry,
             url: None,
+            timeout: None,
         }
+    }
+
+    pub fn timeout(&self) -> Duration {
+        self.timeout
+            .unwrap_or(Duration::from_millis(DEFAULT_CONNECT_TIMEOUT_MILLIS))
     }
 }
 
@@ -90,17 +103,23 @@ impl TryFrom<JsValue> for ConnectOptions {
             let url = args.get("url")?.as_string();
             let block_async_connect = args.get("block")?.as_bool().unwrap_or(true);
             let strategy = ConnectStrategy::new(args.get("retry")?.as_bool().unwrap_or(true));
+            let timeout = args
+                .get("timeout")?
+                .as_f64()
+                .map(|f| Duration::from_millis(f as u64));
 
             ConnectOptions {
                 block_async_connect,
                 strategy,
                 url,
+                timeout,
             }
         } else if let Some(retry) = args.as_bool() {
             ConnectOptions {
                 block_async_connect: true,
                 strategy: ConnectStrategy::new(retry),
                 url: None,
+                timeout: None,
             }
         } else {
             ConnectOptions::default()

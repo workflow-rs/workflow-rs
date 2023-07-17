@@ -76,6 +76,9 @@ pub enum Error {
 
     #[error(transparent)]
     WorkflowWasm(#[from] workflow_wasm::error::Error),
+
+    #[error("Connection timeout")]
+    ConnectionTimeout,
 }
 
 impl From<JsValue> for Error {
