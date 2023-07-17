@@ -87,29 +87,35 @@ pub struct MenubarBuilder {
     pub app_name: String,
     pub menubar: nw_sys::Menu,
     pub menu_items: Vec<nw_sys::MenuItem>,
+    pub is_macos: bool,
 }
 
 impl MenubarBuilder {
-    pub fn new(app_name: &str) -> Self {
+    pub fn new(app_name: &str, is_macos: bool) -> Self {
         Self {
             mac_options: nw_sys::menu::MacOptions::new(),
             app_name: app_name.to_string(),
             menubar: nw_sys::Menu::new_with_options(&nw_sys::menu::Type::Menubar.into()),
             menu_items: vec![],
+            is_macos,
         }
     }
     /// (Mac) do not populate the Edit menu
     ///
     /// ⧉ [NWJS Documentation](https://docs.nwjs.io/en/latest/References/Menu/#menucreatemacbuiltinappname-options-mac)
     pub fn mac_hide_edit(mut self, hide: bool) -> Self {
-        self.mac_options = self.mac_options.hide_edit(hide);
+        if self.is_macos {
+            self.mac_options = self.mac_options.hide_edit(hide);
+        }
         self
     }
     /// (Mac) do not populate the Window menu
     ///
     /// ⧉ [NWJS Documentation](https://docs.nwjs.io/en/latest/References/Menu/#menucreatemacbuiltinappname-options-mac)
     pub fn mac_hide_window(mut self, hide: bool) -> Self {
-        self.mac_options = self.mac_options.hide_window(hide);
+        if self.is_macos {
+            self.mac_options = self.mac_options.hide_window(hide);
+        }
         self
     }
 
@@ -124,8 +130,11 @@ impl MenubarBuilder {
     /// optionally attach menubar to app/window
     /// ⧉ [NWJS Documentation](https://docs.nwjs.io/en/latest/For%20Users/Advanced/Customize%20Menubar/#create-and-set-menubar)
     pub fn build(self, attach: bool) -> Result<nw_sys::Menu> {
-        self.menubar
-            .create_mac_builtin_with_options(&self.app_name, &self.mac_options);
+        if self.is_macos {
+            self.menubar
+                .create_mac_builtin_with_options(&self.app_name, &self.mac_options);
+        }
+
         for item in self.menu_items {
             self.menubar.append(&item);
         }
