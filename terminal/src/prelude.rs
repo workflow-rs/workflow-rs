@@ -1,7 +1,6 @@
 pub use crate::{
     cli,
-    cli::get_handler_help,
-    cli::{declare_handler, register_handlers},
+    cli::{declare_handler, get_handler_help, register_handlers},
     parse,
     terminal::Theme,
     terrorln, tpara, tprintln, twarnln, Cli, Context, CrLf, Handler, Options as TerminalOptions,

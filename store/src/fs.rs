@@ -334,34 +334,63 @@ pub fn resolve_path(path: &str) -> PathBuf {
     }
 }
 
-pub trait AbsolutePath {
-    fn absolute(&self) -> Result<PathBuf>;
+/// Normalizes path, dereferencing relative references `.` and `..`
+/// and converting path separators to current platform separators.
+/// (detects platform nativly or via NodeJS if operating in WASM32
+/// environment)
+pub trait NormalizePath {
+    fn normalize(&self) -> Result<PathBuf>;
 }
 
-impl AbsolutePath for Path {
-    fn absolute(&self) -> Result<PathBuf> {
-        absolute(self)
+impl NormalizePath for Path {
+    fn normalize(&self) -> Result<PathBuf> {
+        normalize(self)
     }
 }
 
-impl AbsolutePath for PathBuf {
-    fn absolute(&self) -> Result<PathBuf> {
-        absolute(self)
+impl NormalizePath for PathBuf {
+    fn normalize(&self) -> Result<PathBuf> {
+        normalize(self)
     }
 }
 
-pub fn absolute<P>(path: P) -> Result<PathBuf>
+/// Convert path separators to unix or to current platform.
+/// Detects platform natively or using NodeJS if operating
+/// under WASM32 environment. Since in WASM32 paths default
+/// to forward slashes, when running WASM32 in Windows paths
+/// needs to be converted back and forth for various path-related
+/// functions to work.
+pub trait ToPlatform {
+    fn to_platform(&self) -> Result<PathBuf>;
+    fn to_unix(&self) -> Result<PathBuf>;
+}
+
+impl ToPlatform for Path {
+    fn to_platform(&self) -> Result<PathBuf> {
+        if runtime::is_windows() {
+            convert_path_separators(self, "/", "\\")
+        } else {
+            Ok(self.to_path_buf())
+        }
+    }
+    fn to_unix(&self) -> Result<PathBuf> {
+        if runtime::is_windows() {
+            convert_path_separators(self, "\\", "/")
+        } else {
+            Ok(self.to_path_buf())
+        }
+    }
+}
+
+/// Normalizes path, dereferencing relative references `.` and `..`
+/// and converting path separators to current platform separators.
+/// (detects platform nativly or via NodeJS if operating in WASM32
+/// environment). Uses [`ToPlatform`] to perform path conversion.
+pub fn normalize<P>(path: P) -> Result<PathBuf>
 where
     P: AsRef<Path>,
 {
-    if runtime::is_windows() {
-        absolute_with_separator(path.as_ref(), "\\")
-    } else {
-        absolute_with_separator(path.as_ref(), "/")
-    }
-}
-
-pub fn absolute_with_separator(path: &Path, separator: &str) -> Result<PathBuf> {
+    let path = path.as_ref().to_unix()?;
     let mut result = PathBuf::new();
 
     for component in path.components() {
@@ -378,9 +407,15 @@ pub fn absolute_with_separator(path: &Path, separator: &str) -> Result<PathBuf> 
         }
     }
 
-    if !result.is_absolute() {
-        result = separator.parse::<PathBuf>().unwrap().join(&result);
-    }
+    result.to_platform()
+}
 
-    Ok(result)
+fn convert_path_separators<P>(path: P, from: &str, to: &str) -> Result<PathBuf>
+where
+    P: AsRef<Path>,
+{
+    let path = path.as_ref().to_string_lossy();
+    let path = path.replace(from, to);
+    let path = PathBuf::from(path);
+    Ok(path)
 }
