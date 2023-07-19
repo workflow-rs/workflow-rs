@@ -20,6 +20,8 @@ use workflow_log::log_error;
 
 const DEFAULT_PARA_WIDTH: usize = 80;
 
+pub type LinkMatcherHandlerFn = Arc<Box<(dyn Fn(&str))>>;
+
 mod options;
 pub use options::Options;
 pub use options::TargetElement;
@@ -674,7 +676,7 @@ impl Terminal {
     pub fn register_link_matcher(
         &self,
         _regexp: &js_sys::RegExp,
-        _handler: Arc<Box<(dyn Fn(&str))>>,
+        _handler: LinkMatcherHandlerFn,
     ) -> Result<()> {
         cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
@@ -684,9 +686,6 @@ impl Terminal {
         Ok(())
     }
 }
-
-// pub type LinkHandlerFn =
-//     Arc<Box<(dyn Fn(&str))>>;
 
 /// Utility function to strip multiple whitespaces and return a `Vec<String>`
 pub fn parse(s: &str) -> Vec<String> {

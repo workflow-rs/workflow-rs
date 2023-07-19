@@ -1,4 +1,5 @@
 use super::bindings::*;
+use super::LinkMatcherHandlerFn;
 use crate::keys::Key;
 use crate::terminal::Options;
 use crate::terminal::TargetElement;
@@ -140,8 +141,6 @@ impl ResizeObserverInfo {
         Self { observer, callback }
     }
 }
-
-type LinkMatcherHandler = Arc<Box<(dyn Fn(&str))>>;
 
 ///
 /// # Xterm
@@ -387,7 +386,7 @@ impl Xterm {
     pub(super) fn register_link_matcher(
         self: &Arc<Self>,
         regexp: &js_sys::RegExp,
-        handler: LinkMatcherHandler,
+        handler: LinkMatcherHandlerFn,
     ) -> Result<()> {
         let xterm = self.xterm();
         let xterm = xterm.as_ref().expect("unable to get xterm");
