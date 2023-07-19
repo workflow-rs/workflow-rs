@@ -108,6 +108,13 @@ extern "C" {
     #[wasm_bindgen(method, js_name = "getSelection")]
     pub fn get_selection(this: &XtermImpl) -> String;
 
+    #[wasm_bindgen(method, js_name = "registerLinkMatcher")]
+    pub fn register_link_matcher(
+        this: &XtermImpl,
+        regexp: &js_sys::RegExp,
+        callback: &js_sys::Function,
+    );
+
     // future versions of xterm.js
     // #[wasm_bindgen(method, js_name = "getSelectionService")]
     // pub fn get_selection_service(this: &XtermImpl) -> SelectionService;

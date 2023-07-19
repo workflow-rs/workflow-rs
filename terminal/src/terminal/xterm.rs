@@ -141,6 +141,8 @@ impl ResizeObserverInfo {
     }
 }
 
+type LinkMatcherHandler = Arc<Box<(dyn Fn(&str))>>;
+
 ///
 /// # Xterm
 ///
@@ -158,9 +160,9 @@ pub struct Xterm {
     resize: Arc<Mutex<Option<ResizeObserverInfo>>>,
     fit: Arc<Mutex<Option<FitAddon>>>,
     _web_links: Arc<Mutex<Option<WebLinksAddon>>>,
-    clipboard_listerner: Arc<Mutex<Option<Callback<CallbackClosure<web_sys::KeyboardEvent>>>>>,
     terminate: Arc<AtomicBool>,
     disable_clipboard_handling: bool,
+    callbacks: CallbackMap,
 }
 
 unsafe impl Send for Xterm {}
@@ -200,9 +202,9 @@ impl Xterm {
             // addons: Arc::new(Mutex::new(Vec::new())),
             fit: Arc::new(Mutex::new(None)),
             _web_links: Arc::new(Mutex::new(None)),
-            clipboard_listerner: Arc::new(Mutex::new(None)),
             terminate: Arc::new(AtomicBool::new(false)),
             disable_clipboard_handling: options.disable_clipboard_handling,
+            callbacks: CallbackMap::default(),
         };
         Ok(terminal)
     }
@@ -372,12 +374,33 @@ impl Xterm {
                 Ok(())
             }
         );
-        let mut locked = self.clipboard_listerner.lock().expect("Unable to lock");
 
         xterm
             .get_element()
             .add_event_listener_with_callback("keydown", clipboard_callback.as_ref())?;
-        *locked = Some(clipboard_callback);
+        self.callbacks.retain(clipboard_callback)?;
+
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn register_link_matcher(
+        self: &Arc<Self>,
+        regexp: &js_sys::RegExp,
+        handler: LinkMatcherHandler,
+    ) -> Result<()> {
+        let xterm = self.xterm();
+        let xterm = xterm.as_ref().expect("unable to get xterm");
+
+        #[rustfmt::skip]
+        let callback = callback!(
+            move |_e: web_sys::Event, link: String| -> std::result::Result<(), JsValue> {
+                handler(link.as_str());
+                Ok(())
+            }
+        );
+        xterm.register_link_matcher(regexp, callback.as_ref());
+        self.callbacks.retain(callback)?;
 
         Ok(())
     }

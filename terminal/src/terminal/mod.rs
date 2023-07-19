@@ -670,7 +670,23 @@ impl Terminal {
             Ok(selection)
         }
     }
+
+    pub fn register_link_matcher(
+        &self,
+        _regexp: &js_sys::RegExp,
+        _handler: Arc<Box<(dyn Fn(&str))>>,
+    ) -> Result<()> {
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                self.term.register_link_matcher(_regexp, _handler)?;
+            }
+        }
+        Ok(())
+    }
 }
+
+// pub type LinkHandlerFn =
+//     Arc<Box<(dyn Fn(&str))>>;
 
 /// Utility function to strip multiple whitespaces and return a `Vec<String>`
 pub fn parse(s: &str) -> Vec<String> {

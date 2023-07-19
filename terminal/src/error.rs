@@ -34,6 +34,8 @@ pub enum Error {
     CommandNotFound(String),
     #[error("aborting...")]
     UserAbort,
+    #[error(transparent)]
+    CallbackError(#[from] workflow_wasm::callback::CallbackError),
 }
 
 impl From<String> for Error {
