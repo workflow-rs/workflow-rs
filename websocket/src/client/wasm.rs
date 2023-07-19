@@ -309,68 +309,71 @@ impl WebSocketInterface {
         options: ConnectOptions,
         connect_trigger: Arc<Mutex<Option<Sender<Result<()>>>>>,
     ) -> Result<()> {
-        loop {
+        'outer: loop {
             select! {
                 _ = self.dispatcher_shutdown.request.receiver.recv().fuse() => {
-                    break;
+                    break 'outer;
                 },
                 msg = self.event_channel.recv().fuse() => {
-
-                    if let Ok(msg) = msg {
-                        match msg {
-                            Message::Binary(_) | Message::Text(_) => {
-                                self.receiver_channel.sender.send(msg).await.unwrap();
-                            },
-                            Message::Open => {
-
-                                // handle handshake failure
-                                if let Err(err) = self.handshake(ws).await {
-                                    if options.strategy.is_fallback() {
-                                        self.reconnect.store(false, Ordering::SeqCst);
-                                    }
-
-                                    let connect_trigger = connect_trigger.lock().unwrap().take();
-                                    if let Some(connect_trigger) = connect_trigger {
-                                        connect_trigger.send(Err(err)).await.ok();
-                                    }
-
-                                    return Err(Error::NegotiationFailure);
-                                }
-
-                                self.is_open.store(true, Ordering::SeqCst);
-
-                                let connect_trigger = connect_trigger.lock().unwrap().take();
-                                if let Some(connect_trigger) = connect_trigger {
-                                    connect_trigger.send(Ok(())).await.ok();
-                                }
-
-                                self.receiver_channel.sender.send(msg).await.unwrap();
-                            },
-                            Message::Close => {
-
-                                if let Some(inner) = self.inner.lock().unwrap().as_ref() {
-                                    inner.ws.cleanup();
-                                }
-
-                                if self.is_open.load(Ordering::SeqCst) {
-                                    self.is_open.store(false, Ordering::SeqCst);
+                    match msg {
+                        Ok(msg) => {
+                            match msg {
+                                Message::Binary(_) | Message::Text(_) => {
                                     self.receiver_channel.sender.send(msg).await.unwrap();
-                                } else if options.strategy.is_fallback() && options.block_async_connect {
-                                    // if we never connected and receiver Close while
-                                    // the strategy is Fallback, we disable reconnect
-                                    self.reconnect.store(false, Ordering::SeqCst);
+                                },
+                                Message::Open => {
+
+                                    // handle handshake failure
+                                    if let Err(err) = self.handshake(ws).await {
+                                        if options.strategy.is_fallback() {
+                                            self.reconnect.store(false, Ordering::SeqCst);
+                                        }
+
+                                        let connect_trigger = connect_trigger.lock().unwrap().take();
+                                        if let Some(connect_trigger) = connect_trigger {
+                                            connect_trigger.send(Err(err)).await.ok();
+                                        }
+
+                                        return Err(Error::NegotiationFailure);
+                                    }
+
+                                    self.is_open.store(true, Ordering::SeqCst);
 
                                     let connect_trigger = connect_trigger.lock().unwrap().take();
                                     if let Some(connect_trigger) = connect_trigger {
-                                        connect_trigger.send(Err(Error::Connect(self.url()))).await.ok();
+                                        connect_trigger.send(Ok(())).await.ok();
                                     }
-                                }
 
-                                break;
+                                    self.receiver_channel.sender.send(msg).await.unwrap();
+                                },
+                                Message::Close => {
+
+                                    if let Some(inner) = self.inner.lock().unwrap().as_ref() {
+                                        inner.ws.cleanup();
+                                    }
+
+                                    if self.is_open.load(Ordering::SeqCst) {
+                                        self.is_open.store(false, Ordering::SeqCst);
+                                        self.receiver_channel.sender.send(msg).await.unwrap();
+                                    } else if options.strategy.is_fallback() && options.block_async_connect {
+                                        // if we never connected and receiver Close while
+                                        // the strategy is Fallback, we disable reconnect
+                                        self.reconnect.store(false, Ordering::SeqCst);
+
+                                        let connect_trigger = connect_trigger.lock().unwrap().take();
+                                        if let Some(connect_trigger) = connect_trigger {
+                                            connect_trigger.send(Err(Error::Connect(self.url()))).await.ok();
+                                        }
+                                    }
+
+                                    break 'outer;
+                                }
                             }
                         }
+                        Err(err) => {
+                            log_error!("WebSocket dispatcher channel error: {err}");
+                        }
                     }
-
                 },
                 msg = self.sender_channel.receiver.recv().fuse() => {
 
