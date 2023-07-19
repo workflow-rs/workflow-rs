@@ -68,6 +68,12 @@ extern "C" {
 unsafe impl Send for ChildProcess {}
 unsafe impl Sync for ChildProcess {}
 
+unsafe impl Send for SpawnOptions {}
+unsafe impl Sync for SpawnOptions {}
+
+unsafe impl Send for SpawnArgs {}
+unsafe impl Sync for SpawnArgs {}
+
 #[derive(Debug)]
 pub enum KillSignal<'s> {
     None,

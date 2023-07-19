@@ -8,12 +8,13 @@ use crate::error::Error;
 use crate::result::Result;
 use futures::{select, FutureExt};
 use node_sys::*;
+use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use wasm_bindgen::prelude::*;
-use workflow_core::channel::{Channel, Receiver};
+use workflow_core::channel::{Channel, Receiver, Sender};
 use workflow_core::task::*;
 use workflow_core::time::Instant;
 use workflow_log::*;
@@ -48,11 +49,27 @@ impl Version {
     }
 }
 
+impl std::fmt::Display for Version {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.none {
+            write!(f, "n/a")
+        } else {
+            write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+        }
+    }
+}
+
 /// Child process execution result
 pub struct ExecutionResult {
     pub exit_code: u32,
     pub stdout: String,
     pub stderr: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum Events {
+    Start,
+    Exit(u32),
 }
 
 /// Options for [`Process`] daemon runner
@@ -75,6 +92,11 @@ pub struct Options {
     // env : HashMap<String, String>,
     stdout: Option<Channel<String>>,
     stderr: Option<Channel<String>>,
+    events: Option<Channel<Events>>,
+    muted_buffer_capacity: Option<usize>,
+    mute: bool,
+    // mute : Arc<AtomicBool>,
+    // stdout_accumulator:
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -88,6 +110,9 @@ impl Options {
         use_force_delay: Option<Duration>,
         stdout: Option<Channel<String>>,
         stderr: Option<Channel<String>>,
+        events: Option<Channel<Events>>,
+        muted_buffer_capacity: Option<usize>,
+        mute: bool,
     ) -> Options {
         let argv = argv.iter().map(|s| s.to_string()).collect::<Vec<_>>();
 
@@ -100,6 +125,9 @@ impl Options {
             use_force_delay: use_force_delay.unwrap_or(Duration::from_millis(10_000)),
             stdout,
             stderr,
+            events,
+            muted_buffer_capacity,
+            mute,
         }
     }
 }
@@ -110,11 +138,14 @@ impl Default for Options {
             argv: Vec::new(),
             cwd: None,
             restart: true,
-            restart_delay: Duration::default(),
+            restart_delay: Duration::from_millis(3_000),
             use_force: false,
             use_force_delay: Duration::from_millis(10_000),
             stdout: None,
             stderr: None,
+            events: None,
+            muted_buffer_capacity: None,
+            mute: false,
         }
     }
 }
@@ -129,11 +160,19 @@ struct Inner {
     use_force_delay: Mutex<Duration>,
     stdout: Channel<String>,
     stderr: Channel<String>,
+    events: Option<Channel<Events>>,
     exit: Channel<u32>,
     proc: Arc<Mutex<Option<Arc<ChildProcess>>>>,
     callbacks: CallbackMap,
     start_time: Arc<Mutex<Option<Instant>>>,
+    mute: Arc<AtomicBool>,
+    muted_buffer_capacity: Option<usize>,
+    muted_buffer_stdout: Arc<Mutex<VecDeque<String>>>,
+    muted_buffer_stderr: Arc<Mutex<VecDeque<String>>>,
 }
+
+unsafe impl Send for Inner {}
+unsafe impl Sync for Inner {}
 
 impl Inner {
     pub fn new(options: Options) -> Inner {
@@ -147,10 +186,15 @@ impl Inner {
             use_force_delay: Mutex::new(options.use_force_delay),
             stdout: options.stdout.unwrap_or_else(Channel::unbounded),
             stderr: options.stderr.unwrap_or_else(Channel::unbounded),
+            events: options.events,
             exit: Channel::oneshot(),
             proc: Arc::new(Mutex::new(None)),
             callbacks: CallbackMap::new(),
             start_time: Arc::new(Mutex::new(None)),
+            mute: Arc::new(AtomicBool::new(options.mute)),
+            muted_buffer_capacity: options.muted_buffer_capacity,
+            muted_buffer_stdout: Arc::new(Mutex::new(VecDeque::default())),
+            muted_buffer_stderr: Arc::new(Mutex::new(VecDeque::default())),
         }
     }
 
@@ -168,21 +212,72 @@ impl Inner {
 
     pub fn uptime(&self) -> Option<Duration> {
         if self.running.load(Ordering::SeqCst) {
-            self.start_time
-                .lock()
-                .unwrap()
-                .map(|ts| ts.duration_since(Instant::now()))
+            self.start_time.lock().unwrap().map(|ts| ts.elapsed())
         } else {
             None
         }
     }
 
-    pub async fn run(&self, stop: Receiver<()>) -> Result<()> {
-        loop {
-            if self.running.load(Ordering::SeqCst) {
-                return Err(Error::AlreadyRunning);
+    fn buffer_muted(&self, data: buffer::Buffer, muted_buffer: &Arc<Mutex<VecDeque<String>>>) {
+        let muted_buffer_capacity = self.muted_buffer_capacity.unwrap_or_default();
+        if muted_buffer_capacity > 0 {
+            let mut muted_buffer = muted_buffer.lock().unwrap();
+            let buffer = String::from(data.to_string(None, None, None));
+            let lines = buffer.split('\n').collect::<Vec<_>>();
+            for line in lines {
+                let line = line.trim();
+                if !line.is_empty() {
+                    muted_buffer.push_back(trim(line.to_string()));
+                }
             }
+            while muted_buffer.len() > muted_buffer_capacity {
+                muted_buffer.pop_front();
+            }
+        }
+    }
 
+    fn drain_muted(
+        &self,
+        acc: &Arc<Mutex<VecDeque<String>>>,
+        sender: &Sender<String>,
+    ) -> Result<()> {
+        let mut acc = acc.lock().unwrap();
+        acc.drain(..).for_each(|line| {
+            sender.try_send(line).unwrap();
+        });
+        Ok(())
+    }
+
+    pub fn toggle_mute(&self) -> Result<bool> {
+        if self.mute.load(Ordering::SeqCst) {
+            self.mute.store(false, Ordering::SeqCst);
+            self.drain_muted(&self.muted_buffer_stdout, &self.stdout.sender)?;
+            self.drain_muted(&self.muted_buffer_stderr, &self.stderr.sender)?;
+            Ok(false)
+        } else {
+            self.mute.store(true, Ordering::SeqCst);
+            Ok(true)
+        }
+    }
+
+    pub fn mute(&self, mute: bool) -> Result<()> {
+        if mute != self.mute.load(Ordering::SeqCst) {
+            self.mute.store(mute, Ordering::SeqCst);
+            if !mute {
+                self.drain_muted(&self.muted_buffer_stdout, &self.stdout.sender)?;
+                self.drain_muted(&self.muted_buffer_stderr, &self.stderr.sender)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn run(self: &Arc<Self>, stop: Receiver<()>) -> Result<()> {
+        if self.running.load(Ordering::SeqCst) {
+            return Err(Error::AlreadyRunning);
+        }
+
+        'outer: loop {
             self.start_time.lock().unwrap().replace(Instant::now());
 
             let proc = {
@@ -200,9 +295,17 @@ impl Inner {
                 Arc::new(spawn_with_args_and_options(&program, &args, &options))
             };
 
+            if let Some(events) = self.events.as_ref() {
+                events.sender.try_send(Events::Start).unwrap();
+            }
+
+            let events = self.events.clone();
             let exit_sender = self.exit.sender.clone();
             let exit = callback!(move |code: JsValue| {
                 let code = code.as_f64().unwrap_or_default() as u32;
+                if let Some(events) = events.as_ref() {
+                    events.sender.try_send(Events::Exit(code)).ok();
+                }
                 exit_sender
                     .try_send(code)
                     .expect("unable to send close notification");
@@ -216,21 +319,30 @@ impl Inner {
             // });
             // proc.on("close", close.as_ref());
             // self.callbacks.retain(close.clone())?;
-
-            let stdout_tx = self.stdout.sender.clone();
+            let this = self.clone();
             let stdout_cb = callback!(move |data: buffer::Buffer| {
-                stdout_tx
-                    .try_send(String::from(data.to_string(None, None, None)))
-                    .unwrap();
+                if this.mute.load(Ordering::SeqCst) {
+                    this.buffer_muted(data, &this.muted_buffer_stdout);
+                } else {
+                    this.stdout
+                        .sender
+                        .try_send(String::from(data.to_string(None, None, None)))
+                        .unwrap();
+                }
             });
             proc.stdout().on("data", stdout_cb.as_ref());
             self.callbacks.retain(stdout_cb)?;
 
-            let stderr_tx = self.stderr.sender.clone();
+            let this = self.clone();
             let stderr_cb = callback!(move |data: buffer::Buffer| {
-                stderr_tx
-                    .try_send(String::from(data.to_string(None, None, None)))
-                    .unwrap();
+                if this.mute.load(Ordering::SeqCst) {
+                    this.buffer_muted(data, &this.muted_buffer_stderr);
+                } else {
+                    this.stderr
+                        .sender
+                        .try_send(String::from(data.to_string(None, None, None)))
+                        .unwrap();
+                }
             });
             proc.stderr().on("data", stderr_cb.as_ref());
             self.callbacks.retain(stderr_cb)?;
@@ -239,44 +351,55 @@ impl Inner {
             self.running.store(true, Ordering::SeqCst);
 
             let kill = select! {
+                // process exited
                 _ = self.exit.receiver.recv().fuse() => {
+                    // if restart is not required, break
                     if !self.restart.load(Ordering::SeqCst) {
                         break;
                     } else {
+                        // sleep and then restart
                         let restart_delay = *self.restart_delay.lock().unwrap();
                         select! {
+                            // slept well, aim to restart
                             _ = sleep(restart_delay).fuse() => {
                                 false
                             },
+                            // stop received while sleeping, break
                             _ = stop.recv().fuse() => {
-                                true
+                                break;
                             }
                         }
                     }
                 },
-                // manual shutdown
+                // manual shutdown while the process is running
                 _ = stop.recv().fuse() => {
                     true
                 }
             };
 
-            if kill && self.running.load(Ordering::SeqCst) {
+            if kill {
+                // && self.running.load(Ordering::SeqCst) {
+                // start process termination
                 self.restart.store(false, Ordering::SeqCst);
                 proc.kill_with_signal(KillSignal::SIGTERM);
+                // if not using force, wait for process termination on SIGTERM
                 if !self.use_force.load(Ordering::SeqCst) {
                     self.exit.receiver.recv().await?;
                     break;
                 } else {
+                    // if using force, sleep and kill with SIGKILL
                     let use_force_delay = sleep(*self.use_force_delay.lock().unwrap());
                     select! {
+                        // process exited normally, break
                         _ = self.exit.receiver.recv().fuse() => {
-                            break;
+                            break 'outer;
                         },
+                        // post SIGKILL and wait for exit
                         _ = use_force_delay.fuse() => {
                             proc.kill_with_signal(KillSignal::SIGKILL);
                             self.exit.receiver.recv().await?;
-                            break;
-                        }
+                            break 'outer;
+                        },
                     }
                 }
             }
@@ -300,6 +423,9 @@ pub struct Process {
     task: Arc<Task<Arc<Inner>, ()>>,
 }
 
+unsafe impl Send for Process {}
+unsafe impl Sync for Process {}
+
 impl Process {
     /// Create new process instance
     pub fn new(options: Options) -> Process {
@@ -315,8 +441,39 @@ impl Process {
         }
     }
 
+    pub fn new_once(path: &str) -> Process {
+        let options = Options::new(
+            &[path],
+            None,
+            false,
+            None,
+            false,
+            None,
+            None,
+            None,
+            None,
+            None,
+            false,
+        );
+
+        Self::new(options)
+    }
+
+    pub async fn version(path: &str) -> Result<Version> {
+        let proc = Self::new_once(path);
+        proc.get_version().await
+    }
+
     pub fn is_running(&self) -> bool {
         self.inner.running.load(Ordering::SeqCst)
+    }
+
+    pub fn mute(&self, mute: bool) -> Result<()> {
+        self.inner.mute(mute)
+    }
+
+    pub fn toggle_mute(&self) -> Result<bool> {
+        self.inner.toggle_mute()
     }
 
     pub fn uptime(&self) -> Option<Duration> {
@@ -374,14 +531,13 @@ impl Process {
     }
 
     /// Stop the process by disabling auto-restart and issuing
-    /// a `SIGTERM` signal.
+    /// a `SIGTERM` signal. Returns `Ok(())` if the process
+    /// is not running.
     pub fn stop(&self) -> Result<()> {
-        if !self.inner.running.load(Ordering::SeqCst) {
-            return Err(Error::NotRunning);
+        if self.inner.running.load(Ordering::SeqCst) {
+            self.inner.restart.store(false, Ordering::SeqCst);
+            self.task.stop()?;
         }
-
-        self.inner.restart.store(false, Ordering::SeqCst);
-        self.task.stop()?;
 
         Ok(())
     }
@@ -389,7 +545,9 @@ impl Process {
     /// Join the process like you would a thread - this async
     /// function blocks until the process exits.
     pub async fn join(&self) -> Result<()> {
-        self.task.join().await?;
+        if self.task.is_running() {
+            self.task.join().await?;
+        }
         Ok(())
     }
 
@@ -421,11 +579,11 @@ impl Process {
 
         let cp = spawn_with_args_and_options(&proc, &args, &options);
         let exit = self.inner.exit.sender.clone();
-        let close = callback!(move |code: u32| {
+        let exit = callback!(move |code: u32| {
             exit.try_send(code)
                 .expect("unable to send close notification");
         });
-        cp.on("close", close.as_ref());
+        cp.on("exit", exit.as_ref());
 
         let stdout_tx = self.inner.stdout.sender.clone();
         let stdout_cb = callback!(move |data: buffer::Buffer| {
@@ -487,6 +645,17 @@ impl Process {
     }
 }
 
+pub fn trim(mut s: String) -> String {
+    // let mut s = String::from(self);
+    if s.ends_with('\n') {
+        s.pop();
+        if s.ends_with('\r') {
+            s.pop();
+        }
+    }
+    s
+}
+
 #[wasm_bindgen]
 pub async fn test() {
     log_info!("running rust test() fn");
@@ -501,6 +670,9 @@ pub async fn test() {
         Some(Duration::from_millis(100)),
         None,
         None,
+        None,
+        None,
+        false,
     ));
     // futures::task
     let task = task!(|stdout: Receiver<String>, stop: Receiver<()>| async move {

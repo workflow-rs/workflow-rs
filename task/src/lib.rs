@@ -163,6 +163,10 @@ where
             Err(TaskError::NotRunning)
         }
     }
+
+    pub fn is_running(&self) -> bool {
+        self.running.load(Ordering::SeqCst)
+    }
 }
 
 /// [`Task`]{self::Task} struct allows you to spawn an async fn that can run
@@ -310,6 +314,12 @@ where
     /// task exits.
     pub async fn stop_and_join(&self) -> TaskResult<T> {
         self.inner.stop_and_join().await
+    }
+
+    /// Returns `true` if the task is running, otherwise
+    /// returns `false`.
+    pub fn is_running(&self) -> bool {
+        self.inner.is_running()
     }
 }
 
