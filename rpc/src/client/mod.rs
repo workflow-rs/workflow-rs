@@ -150,7 +150,7 @@ where
                 let timeout_timer_interval =
                     Duration::from_millis(self.timeout_timer_interval.load(Ordering::SeqCst));
                 select_biased! {
-                    () = workflow_core::task::sleep(timeout_timer_interval).fuse() => {
+                    _ = workflow_core::task::sleep(timeout_timer_interval).fuse() => {
                         let timeout = Duration::from_millis(self.timeout_duration.load(Ordering::Relaxed));
                         self.protocol.handle_timeout(timeout).await;
                     },
