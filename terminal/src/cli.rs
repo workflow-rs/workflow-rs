@@ -32,6 +32,7 @@ pub trait Context: Sync + Send + AnySync {
     fn term(&self) -> Arc<Terminal>;
 }
 downcast_sync!(dyn Context);
+downcast_sync!(dyn Context + Sync + Send);
 
 impl From<&dyn Context> for Arc<Terminal> {
     fn from(ctx: &dyn Context) -> Arc<Terminal> {
@@ -40,7 +41,7 @@ impl From<&dyn Context> for Arc<Terminal> {
 }
 
 #[async_trait]
-pub trait Handler: Sync + Send {
+pub trait Handler: Sync + Send + AnySync {
     fn verb(&self, _ctx: &Arc<dyn Context>) -> Option<&'static str> {
         None
     }
@@ -70,6 +71,8 @@ pub trait Handler: Sync + Send {
     ) -> Result<()>;
 }
 
+downcast_sync!(dyn Handler);
+
 pub fn get_handler_help(handler: Arc<dyn Handler>, ctx: &Arc<dyn Context>) -> String {
     let s = handler.help(ctx);
     if s.is_empty() {
@@ -81,7 +84,7 @@ pub fn get_handler_help(handler: Arc<dyn Handler>, ctx: &Arc<dyn Context>) -> St
 
 #[derive(Default)]
 struct Inner {
-    handlers: HashMap<String, Arc<dyn Handler + Send + Sync>>,
+    handlers: HashMap<String, Arc<dyn Handler>>,
 }
 
 #[derive(Default)]
@@ -100,11 +103,11 @@ impl HandlerCli {
         self.inner.lock().unwrap()
     }
 
-    pub fn collect(&self) -> Vec<Arc<dyn Handler + Send + Sync>> {
+    pub fn collect(&self) -> Vec<Arc<dyn Handler>> {
         self.inner().handlers.values().cloned().collect::<Vec<_>>()
     }
 
-    pub fn resolve_by_name(&self, name: &str) -> Option<Arc<dyn Handler + Send + Sync>> {
+    pub fn get(&self, name: &str) -> Option<Arc<dyn Handler>> {
         self.inner().handlers.get(name).cloned()
     }
 
@@ -140,7 +143,7 @@ impl HandlerCli {
         }
     }
 
-    pub fn unregister(&self, name: &str) -> Option<Arc<dyn Handler + Send + Sync>> {
+    pub fn unregister(&self, name: &str) -> Option<Arc<dyn Handler>> {
         self.inner().handlers.remove(name)
     }
 
@@ -182,7 +185,7 @@ impl HandlerCli {
         let argv = parse(cmd);
         let action = argv[0].to_lowercase();
 
-        let handler = self.resolve_by_name(action.as_str());
+        let handler = self.get(action.as_str());
         if let Some(handler) = handler {
             handler
                 .clone()
@@ -203,7 +206,7 @@ impl HandlerCli {
         let argv = parse(cmd);
         let action = argv[0].to_lowercase();
 
-        let handler = self.resolve_by_name(action.as_str());
+        let handler = self.get(action.as_str());
         if let Some(handler) = handler {
             Ok(handler.clone().complete(&ctx, cmd).await?)
         } else {
