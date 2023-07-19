@@ -32,6 +32,9 @@ pub enum Error {
 
     #[error(transparent)]
     CallbackError(#[from] workflow_wasm::callback::CallbackError),
+
+    #[error("{0}")]
+    ChannelError(String),
 }
 
 impl From<String> for Error {
@@ -68,6 +71,12 @@ impl<T> From<TrySendError<T>> for Error {
 impl From<RecvError> for Error {
     fn from(_: RecvError) -> Self {
         Error::ChannelRecvError
+    }
+}
+
+impl<T> From<ChannelError<T>> for Error {
+    fn from(e: ChannelError<T>) -> Error {
+        Error::ChannelError(e.to_string())
     }
 }
 
