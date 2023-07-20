@@ -23,6 +23,7 @@ cfg_if::cfg_if! {
         pub mod promise;
         pub mod timers;
         pub mod jsvalue;
+        pub mod jserror;
         pub mod object;
         pub mod channel;
         pub mod utils;
