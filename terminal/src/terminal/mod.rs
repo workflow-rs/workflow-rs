@@ -84,6 +84,7 @@ impl Inner {
 
 #[derive(Clone)]
 struct UserInput {
+    prompt: Arc<Mutex<String>>,
     buffer: Arc<Mutex<String>>,
     enabled: Arc<AtomicBool>,
     secure: Arc<AtomicBool>,
@@ -96,6 +97,7 @@ impl UserInput {
     pub fn new() -> Self {
         let (sender, receiver) = unbounded();
         UserInput {
+            prompt: Arc::new(Mutex::new(String::new())),
             buffer: Arc::new(Mutex::new(String::new())),
             enabled: Arc::new(AtomicBool::new(false)),
             secure: Arc::new(AtomicBool::new(false)),
@@ -105,7 +107,16 @@ impl UserInput {
         }
     }
 
-    pub fn open(&self, secure: bool) -> Result<()> {
+    pub fn get_prompt(&self) -> String {
+        self.prompt.lock().unwrap().clone()
+    }
+
+    pub fn get_buffer(&self) -> String {
+        self.buffer.lock().unwrap().clone()
+    }
+
+    pub fn open(&self, secure: bool, prompt: String) -> Result<()> {
+        *self.prompt.lock().unwrap() = prompt;
         self.enabled.store(true, Ordering::SeqCst);
         self.secure.store(secure, Ordering::SeqCst);
         self.terminate.store(false, Ordering::SeqCst);
@@ -114,6 +125,7 @@ impl UserInput {
 
     pub fn close(&self) -> Result<()> {
         let s = {
+            self.prompt.lock().unwrap().clear();
             let mut buffer = self.buffer.lock().unwrap();
             let s = buffer.clone();
             buffer.clear();
@@ -126,8 +138,13 @@ impl UserInput {
         Ok(())
     }
 
-    pub async fn capture(&self, secure: bool, term: &Arc<Terminal>) -> Result<String> {
-        self.open(secure)?;
+    pub async fn capture(
+        &self,
+        secure: bool,
+        prompt: String,
+        term: &Arc<Terminal>,
+    ) -> Result<String> {
+        self.open(secure, prompt)?;
 
         let term = term.clone();
         let terminate = self.terminate.clone();
@@ -299,7 +316,17 @@ impl Terminal {
         S: Into<String>,
     {
         if self.is_running() {
-            self.write(format!("{}\n\r", s.into()));
+            if self.user_input.is_enabled() {
+                self.write(format!("{}{}\n\r", ClearLine, s.into()));
+                let p = format!(
+                    "{}{}",
+                    self.user_input.get_prompt(),
+                    self.user_input.get_buffer()
+                );
+                self.write(p);
+            } else {
+                self.write(format!("{}\n\r", s.into()));
+            }
         } else {
             self.write(format!("{}{}\n\r", ClearLine, s.into()));
             let data = self.inner().unwrap();
@@ -409,7 +436,9 @@ impl Terminal {
     pub async fn ask(self: &Arc<Terminal>, secure: bool, prompt: &str) -> Result<String> {
         self.reset_line_buffer();
         self.term().write(prompt.to_string());
-        self.user_input.capture(secure, self).await
+        self.user_input
+            .capture(secure, prompt.to_string(), self)
+            .await
     }
 
     /// Inject a string into the current cursor position
@@ -585,6 +614,7 @@ impl Terminal {
     /// is set to true when delivering the user command to the
     /// [`Cli`] handler and is reset to false when the [`Cli`]
     /// handler returns.
+    #[inline]
     pub fn is_running(&self) -> bool {
         self.running.load(Ordering::SeqCst)
     }
