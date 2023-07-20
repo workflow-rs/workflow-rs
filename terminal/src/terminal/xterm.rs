@@ -142,6 +142,10 @@ impl ResizeObserverInfo {
     }
 }
 
+pub struct XtermOptions {
+    pub font_size: Option<f64>,
+}
+
 ///
 /// # Xterm
 ///
@@ -162,6 +166,7 @@ pub struct Xterm {
     terminate: Arc<AtomicBool>,
     disable_clipboard_handling: bool,
     callbacks: CallbackMap,
+    defaults: XtermOptions,
 }
 
 unsafe impl Send for Xterm {}
@@ -191,6 +196,9 @@ impl Xterm {
         let element = document().create_element("div")?;
         element.set_attribute("class", "terminal")?;
         parent.append_child(&element)?;
+        let defaults = XtermOptions {
+            font_size: options.font_size,
+        };
         let terminal = Xterm {
             element,
             listener: Arc::new(Mutex::new(None)),
@@ -204,11 +212,12 @@ impl Xterm {
             terminate: Arc::new(AtomicBool::new(false)),
             disable_clipboard_handling: options.disable_clipboard_handling,
             callbacks: CallbackMap::default(),
+            defaults,
         };
         Ok(terminal)
     }
 
-    fn init_xterm() -> Result<XtermImpl> {
+    fn init_xterm(defaults: &XtermOptions) -> Result<XtermImpl> {
         let theme = js_sys::Object::new();
         let theme_opts = Vec::from([
             ("background", JsValue::from("rgba(255,255,255,1)")),
@@ -229,7 +238,10 @@ impl Xterm {
                 "fontFamily",
                 JsValue::from("Consolas, Ubuntu Mono, courier-new, courier, monospace"),
             ),
-            ("fontSize", JsValue::from(20)),
+            (
+                "fontSize",
+                JsValue::from(defaults.font_size.unwrap_or(20.0)),
+            ),
             ("cursorBlink", JsValue::from(true)),
             ("theme", JsValue::from(theme)),
         ]);
@@ -311,11 +323,9 @@ impl Xterm {
     }
 
     pub async fn init(self: &Arc<Self>, terminal: &Arc<Terminal>) -> Result<()> {
-        // let receiver =
         load_scripts().await?;
-        // receiver.recv().await?;
 
-        let xterm = Self::init_xterm()?;
+        let xterm = Self::init_xterm(&self.defaults)?;
 
         self.init_addons(&xterm)?;
 

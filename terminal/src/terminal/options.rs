@@ -26,6 +26,8 @@ pub struct Options {
     /// Disable internal clipboard handling
     /// (useful when using clipboard API calls externally)
     pub disable_clipboard_handling: bool,
+    // Default font size
+    pub font_size: Option<f64>,
 }
 
 impl Default for Options {
@@ -34,6 +36,7 @@ impl Default for Options {
             prompt: None,
             element: TargetElement::Body,
             disable_clipboard_handling: false,
+            font_size: None,
         }
     }
 }
