@@ -20,7 +20,13 @@ use workflow_log::log_error;
 
 const DEFAULT_PARA_WIDTH: usize = 80;
 
-pub type LinkMatcherHandlerFn = Arc<Box<(dyn Fn(&str))>>;
+pub struct Modifiers {
+    pub alt: bool,
+    pub shift: bool,
+    pub ctrl: bool,
+    pub meta: bool,
+}
+pub type LinkMatcherHandlerFn = Arc<Box<(dyn Fn(Modifiers, &str))>>;
 
 mod options;
 pub use options::Options;

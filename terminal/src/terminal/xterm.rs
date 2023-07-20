@@ -1,5 +1,5 @@
 use super::bindings::*;
-use super::LinkMatcherHandlerFn;
+use super::{LinkMatcherHandlerFn, Modifiers};
 use crate::keys::Key;
 use crate::terminal::Options;
 use crate::terminal::TargetElement;
@@ -393,8 +393,14 @@ impl Xterm {
 
         #[rustfmt::skip]
         let callback = callback!(
-            move |_e: web_sys::Event, link: String| -> std::result::Result<(), JsValue> {
-                handler(link.as_str());
+            move |e: web_sys::MouseEvent, link: String| -> std::result::Result<(), JsValue> {
+                let modifiers = Modifiers {
+                    shift: e.shift_key(),
+                    ctrl: e.ctrl_key(),
+                    alt: e.alt_key(),
+                    meta: e.meta_key(),
+                };
+                handler(modifiers, link.as_str());
                 Ok(())
             }
         );
