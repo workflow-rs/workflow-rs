@@ -218,4 +218,12 @@ impl SpawnOptions {
     pub fn kill_signal_str(&self, signal: &str) -> &Self {
         self.set("killSignal", JsValue::from(signal))
     }
+
+    pub fn stdio(&self, stdio: &str) -> &Self {
+        self.set("stdio", JsValue::from(stdio))
+    }
+
+    pub fn stdio_with_array(&self, array: js_sys::Array) -> &Self {
+        self.set("stdio", array.into())
+    }
 }
