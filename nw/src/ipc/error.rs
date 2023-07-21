@@ -90,7 +90,7 @@ pub enum ResponseError {
     Timeout,
     #[error("no data")]
     NoData,
-    #[error("RPC method not found")]
+    #[error("IPC method not found")]
     NotFound,
     #[error("resource lock error")]
     PoisonError,
