@@ -339,6 +339,20 @@ impl Terminal {
         }
     }
 
+    /// Refreshes the prompt and the user input buffer. This function
+    /// is useful when the prompt is handled externally and contains
+    /// data that should be updated.
+    pub fn refresh_prompt(&self) {
+        self.write(format!("{}", ClearLine));
+        let data = self.inner().unwrap();
+        let p = format!("{}{}", self.get_prompt(), data.buffer);
+        self.write(p);
+        let l = data.buffer.len() - data.cursor;
+        for _ in 0..l {
+            self.write("\x08".to_string());
+        }
+    }
+
     pub fn para<S>(&self, text: S)
     where
         S: Into<String>,
