@@ -318,12 +318,10 @@ impl Terminal {
         if self.is_running() {
             if self.user_input.is_enabled() {
                 self.write(format!("{}{}\n\r", ClearLine, s.into()));
-                let p = format!(
-                    "{}{}",
-                    self.user_input.get_prompt(),
-                    self.user_input.get_buffer()
-                );
-                self.write(p);
+                self.write(self.user_input.get_prompt());
+                if !self.user_input.secure.load(Ordering::SeqCst) {
+                    self.write(self.user_input.get_buffer());
+                }
             } else {
                 self.write(format!("{}\n\r", s.into()));
             }
