@@ -30,3 +30,4 @@ pub mod link;
 pub mod loader;
 pub mod result;
 pub mod utils;
+pub mod download;
