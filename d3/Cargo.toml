@@ -1,0 +1,46 @@
+[package]
+name = "workflow-d3"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = ["wasm","dom","d3","graph","visualization"]
+categories = ["web-programming::http-client","wasm"]
+exclude = ["/.*", "/test"]
+description = """
+D3 visualization API bindings and utilities
+"""
+
+[lib]
+crate-type = ["cdylib","lib"]
+doctest = false
+
+[dependencies]
+# futures.workspace = true
+# js-sys.workspace = true
+# regex.workspace = true
+# thiserror.workspace = true
+# wasm-bindgen.workspace = true
+# wasm-bindgen-futures.workspace = true
+# workflow-core.workspace = true
+# workflow-log.workspace = true
+# workflow-wasm.workspace = true
+workflow-dom.workspace = true
+
+# [dependencies.web-sys]
+# workspace = true
+# features = [
+#     'Blob',
+#     'BlobPropertyBag',
+#     'CustomEvent',
+#     'MouseEvent',
+#     'Document',
+#     'Element',
+#     'HtmlCollection',
+#     'Location',
+#     'Node',
+#     'NodeList',
+#     'Url',
+#     'Window',
+# ]

@@ -2,6 +2,7 @@
 members = [
     "core",
     "core/macros",
+    "d3",
     "dom",
     "features",
     "html",
@@ -50,6 +51,7 @@ repository = "https://github.com/workflow-rs/workflow-rs"
 
 workflow-core = { version = "0.3.17", path = "core" }
 workflow-core-macros = { version = "0.3.17", path = "core/macros" }
+workflow-d3 = { version = "0.3.17", path = "d3" }
 workflow-dom = { version = "0.3.17", path = "dom" }
 workflow-html = { version = "0.3.17", path = "html" }
 workflow-html-macros = { version = "0.3.17", path = "html/macros" }
