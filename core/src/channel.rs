@@ -194,18 +194,19 @@ where
     }
 
     pub async fn broadcast(&self, event: T) -> Result<(), ChannelError<T>> {
-        let channels = self.channels.lock().unwrap();
-        for (_, sender) in channels.iter() {
+        let mut removed = vec![];
+        let mut channels = self.channels.lock().unwrap();
+        for (id, sender) in channels.iter() {
             match sender.try_send(event.clone()) {
                 Ok(_) => {}
                 Err(_err) => {
-                    // log_error!(
-                    //     "Multiplexer: error multiplexing the event {:?}: {:?}",
-                    //     event.clone(),
-                    //     err,
-                    // );
-                    return Err(ChannelError::BroadcastTrySendError);
+                    removed.push(*id);
                 }
+            }
+        }
+        if !removed.is_empty() {
+            for id in removed.iter() {
+                channels.remove(id);
             }
         }
 
