@@ -498,10 +498,8 @@ impl Xterm {
                     if runtime::is_nw() {
                         let clipboard = nw_sys::clipboard::get();
                         clipboard.set(&text);
-                    } else {
-                        if let Err(err) = clipboard::write_text(&text).await {
-                            log_error!("{}", err.error_message());
-                        }
+                    } else if let Err(err) = clipboard::write_text(&text).await {
+                        log_error!("{}", err.error_message());
                     }
                 }
                 Ctl::Paste(text) => {
