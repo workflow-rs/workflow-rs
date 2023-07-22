@@ -164,12 +164,6 @@ extern "C" {
     pub fn unobserve(this: &ResizeObserver, target: &Element);
 }
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen (js_namespace=["navigator", "clipboard"], js_name="readText")]
-    pub async fn get_clipboard_data() -> JsValue;
-}
-
 // #[wasm_bindgen]
 // extern "C" {
 //     #[wasm_bindgen (extends = web_sys::Event , extends = :: js_sys :: Object , js_name = ClipboardEvent , typescript_type = "ClipboardEvent")]

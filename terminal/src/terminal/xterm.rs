@@ -13,10 +13,12 @@ use wasm_bindgen::JsValue;
 use web_sys::Element;
 use workflow_core::channel::{unbounded, Receiver, Sender};
 use workflow_core::runtime;
+use workflow_dom::clipboard;
 use workflow_dom::inject::*;
 use workflow_dom::utils::body;
 use workflow_dom::utils::*;
 use workflow_log::*;
+use workflow_wasm::jserror::*;
 use workflow_wasm::prelude::*;
 use workflow_wasm::utils::*;
 
@@ -492,10 +494,14 @@ impl Xterm {
                     self.sink(event).await?;
                 }
                 Ctl::Copy => {
+                    let text = self.xterm().as_ref().unwrap().get_selection();
                     if runtime::is_nw() {
-                        let text = self.xterm().as_ref().unwrap().get_selection();
                         let clipboard = nw_sys::clipboard::get();
                         clipboard.set(&text);
+                    } else {
+                        if let Err(err) = clipboard::write_text(&text).await {
+                            log_error!("{}", err.error_message());
+                        }
                     }
                 }
                 Ctl::Paste(text) => {
@@ -508,7 +514,7 @@ impl Xterm {
                             self.terminal().inject(text)?;
                         }
                     } else {
-                        let data_js_value = get_clipboard_data().await;
+                        let data_js_value = clipboard::read_text().await;
                         if let Some(text) = data_js_value.as_string() {
                             self.terminal().inject(text)?;
                         }
