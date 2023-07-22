@@ -1,9 +1,9 @@
-use web_sys::{Blob, Url, MouseEvent};
 use crate::result::Result;
-use js_sys::{Array, Uint8Array};
 use crate::utils::*;
+use js_sys::{Array, Uint8Array};
+use web_sys::{Blob, MouseEvent, Url};
 
-pub fn data(filename: &str, content : &[u8], mime : &str) -> Result<()> {
+pub fn data(filename: &str, content: &[u8], mime: &str) -> Result<()> {
     let document = document();
     let body = body()?;
 
@@ -22,13 +22,12 @@ pub fn data(filename: &str, content : &[u8], mime : &str) -> Result<()> {
 
     let event = MouseEvent::new("click").unwrap();
     el.dispatch_event(&event).unwrap();
-    
+
     body.remove_child(&el).unwrap();
 
     Url::revoke_object_url(&url)?;
 
     Ok(())
-
 }
 
 pub fn text(filename: &str, content: &str) -> Result<()> {

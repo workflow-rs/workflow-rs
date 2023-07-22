@@ -24,10 +24,10 @@
 //! ```
 
 pub mod clipboard;
+pub mod download;
 pub mod error;
 pub mod inject;
 pub mod link;
 pub mod loader;
 pub mod result;
 pub mod utils;
-pub mod download;
