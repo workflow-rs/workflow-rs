@@ -23,8 +23,10 @@
 //! inject_blob(Content::Script(None, data)).await?;
 //! ```
 
+pub mod clipboard;
 pub mod error;
 pub mod inject;
+pub mod link;
 pub mod loader;
 pub mod result;
 pub mod utils;
