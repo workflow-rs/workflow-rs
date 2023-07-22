@@ -38,12 +38,12 @@ cfg_if! {
                 tokio::task::spawn(future);
             }
 
-            pub fn dispatch<F, T>(future: F)
+            pub fn dispatch<F, T>(_future: F)
             where
-                F: Future<Output = T> + Send + 'static,
-                T: Send + 'static,
+                F: Future<Output = T> + 'static,
+                T: 'static,
             {
-                tokio::task::spawn(future);
+                unimplemented!()
             }
         }
 
