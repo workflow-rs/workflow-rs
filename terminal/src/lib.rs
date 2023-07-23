@@ -105,6 +105,7 @@ pub use crlf::CrLf;
 pub use macros::*;
 pub use result::Result;
 pub use terminal::parse;
+pub use terminal::Event;
 pub use terminal::Modifiers;
 pub use terminal::Options;
 pub use terminal::TargetElement;

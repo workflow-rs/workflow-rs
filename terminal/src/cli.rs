@@ -16,7 +16,7 @@ pub use workflow_terminal_macros::{declare_handler, register_handlers, Handler};
 
 #[async_trait]
 pub trait Cli: Sync + Send {
-    fn init(&self, _term: &Arc<Terminal>) -> Result<()> {
+    fn init(self: Arc<Self>, _term: &Arc<Terminal>) -> Result<()> {
         Ok(())
     }
     async fn digest(self: Arc<Self>, term: Arc<Terminal>, cmd: String) -> Result<()>;

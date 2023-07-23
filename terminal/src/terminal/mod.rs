@@ -28,6 +28,13 @@ pub struct Modifiers {
 }
 pub type LinkMatcherHandlerFn = Arc<Box<(dyn Fn(Modifiers, &str))>>;
 
+#[derive(Debug, Clone)]
+pub enum Event {
+    Copy,
+    Paste,
+}
+pub type EventHandlerFn = Arc<Box<(dyn Fn(Event))>>;
+
 mod options;
 pub use options::Options;
 pub use options::TargetElement;
@@ -260,8 +267,10 @@ impl Terminal {
 
     /// Init the terminal instance
     pub async fn init(self: &Arc<Self>) -> Result<()> {
-        self.handler.init(self)?;
         self.term.init(self).await?;
+
+        self.handler.clone().init(self)?;
+
         Ok(())
     }
 
@@ -719,6 +728,12 @@ impl Terminal {
 
             Ok(selection)
         }
+    }
+
+    pub fn register_event_handler(self: &Arc<Self>, _handler: EventHandlerFn) -> Result<()> {
+        #[cfg(target_arch = "wasm32")]
+        self.term.register_event_handler(_handler)?;
+        Ok(())
     }
 
     pub fn register_link_matcher(

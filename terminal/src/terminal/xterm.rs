@@ -1,6 +1,8 @@
 use super::bindings::*;
 use super::{LinkMatcherHandlerFn, Modifiers};
 use crate::keys::Key;
+use crate::terminal::Event;
+use crate::terminal::EventHandlerFn;
 use crate::terminal::Options;
 use crate::terminal::TargetElement;
 use crate::terminal::Terminal;
@@ -169,6 +171,7 @@ pub struct Xterm {
     disable_clipboard_handling: bool,
     callbacks: CallbackMap,
     defaults: XtermOptions,
+    event_handler: Arc<Mutex<Option<EventHandlerFn>>>,
 }
 
 unsafe impl Send for Xterm {}
@@ -214,6 +217,7 @@ impl Xterm {
             terminate: Arc::new(AtomicBool::new(false)),
             disable_clipboard_handling: options.disable_clipboard_handling,
             callbacks: CallbackMap::default(),
+            event_handler: Arc::new(Mutex::new(None)),
             defaults,
         };
         Ok(terminal)
@@ -394,6 +398,16 @@ impl Xterm {
         Ok(())
     }
 
+    fn event_handler(&self) -> Option<EventHandlerFn> {
+        self.event_handler.lock().unwrap().clone()
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn register_event_handler(self: &Arc<Self>, handler: EventHandlerFn) -> Result<()> {
+        self.event_handler.lock().unwrap().replace(handler);
+        Ok(())
+    }
+
     #[allow(dead_code)]
     pub(super) fn register_link_matcher(
         self: &Arc<Self>,
@@ -501,6 +515,10 @@ impl Xterm {
                     } else if let Err(err) = clipboard::write_text(&text).await {
                         log_error!("{}", err.error_message());
                     }
+
+                    if let Some(handler) = self.event_handler() {
+                        handler(Event::Copy);
+                    }
                 }
                 Ctl::Paste(text) => {
                     if let Some(text) = text {
@@ -516,6 +534,10 @@ impl Xterm {
                         if let Some(text) = data_js_value.as_string() {
                             self.terminal().inject(text)?;
                         }
+                    }
+
+                    if let Some(handler) = self.event_handler() {
+                        handler(Event::Copy);
                     }
                 }
                 Ctl::Close => {
@@ -658,6 +680,12 @@ impl Xterm {
             .sender
             .try_send(Ctl::Copy)
             .expect("Unable to send copy Ctl");
+        log_info!("clipboard_copy inside xterm, sending notification");
+        if let Some(handler) = self.event_handler() {
+            log_info!("clipboard_copy inside xterm, sending notification - DONE");
+            handler(Event::Copy);
+        }
+
         Ok(())
     }
 
@@ -666,6 +694,10 @@ impl Xterm {
             .sender
             .try_send(Ctl::Paste(None))
             .expect("Unable to send paste Ctl");
+        if let Some(handler) = self.event_handler() {
+            handler(Event::Paste);
+        }
+
         Ok(())
     }
 }

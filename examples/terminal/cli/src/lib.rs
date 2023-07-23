@@ -43,7 +43,7 @@ impl workflow_log::Sink for ExampleCli {
 
 #[async_trait]
 impl Cli for ExampleCli {
-    fn init(&self, term: &Arc<Terminal>) -> Result<()> {
+    fn init(self: Arc<Self>, term: &Arc<Terminal>) -> Result<()> {
         *self.term.lock().unwrap() = Some(term.clone());
         Ok(())
     }
