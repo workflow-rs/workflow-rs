@@ -29,6 +29,9 @@ pub enum Error {
 
     #[error("invalid path: {0}")]
     InvalidPath(String),
+
+    #[error("Unable to obtain user home directory")]
+    HomeDir(String),
 }
 
 impl From<Error> for JsValue {

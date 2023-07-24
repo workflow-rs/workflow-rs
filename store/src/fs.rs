@@ -314,23 +314,25 @@ where
     write_json_with_options(filename, Options::default(), value).await
 }
 
-pub fn resolve_path(path: &str) -> PathBuf {
+pub fn resolve_path(path: &str) -> Result<PathBuf> {
     if let Some(_stripped) = path.strip_prefix("~/") {
         if runtime::is_web() {
-            PathBuf::from(path)
+            Ok(PathBuf::from(path))
         } else if runtime::is_node() || runtime::is_nw() {
-            dirs::home_dir().expect("workflow_rs::store::fs::resolve_path(): Unable to obtain nodejs home directory").join(_stripped)
+            Ok(dirs::home_dir()
+                .ok_or_else(|| Error::HomeDir(path.to_string()))?
+                .join(_stripped))
         } else {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    PathBuf::from(path)
+                    Ok(PathBuf::from(path))
                 } else {
-                    home::home_dir().unwrap().join(_stripped)
+                    Ok(home::home_dir().ok_or_else(||Error::HomeDir(path.to_string()))?.join(_stripped))
                 }
             }
         }
     } else {
-        PathBuf::from(path)
+        Ok(PathBuf::from(path))
     }
 }
 
