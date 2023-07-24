@@ -45,8 +45,10 @@ cfg_if::cfg_if! {
         // async object lookup combinator
         pub mod lookup;
 
-        #[cfg(target_arch = "wasm32")]
+        // #[cfg(target_arch = "wasm32")]
         pub mod sleep;
+        // #[cfg(target_arch = "wasm32")]
+        pub mod interval;
 
         // environment variable access (native and Node.js abstraction)
         pub mod env;

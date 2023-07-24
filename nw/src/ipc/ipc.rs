@@ -425,10 +425,9 @@ where
             js_sys::Reflect::get(window.window().as_ref(), &JsValue::from("ipc_identifier"))?;
         if let Some(ipc_ident) = prop.as_string() {
             if ipc_ident == ident {
-                return Ok(Some(IpcTarget::new(window.as_ref())));
+                return Ok(Some(IpcTarget::new(window.window().as_ref())));
             }
         }
     }
-
     Ok(None)
 }
