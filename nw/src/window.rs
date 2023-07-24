@@ -1,8 +1,8 @@
+use crate::result::Result;
 use nw_sys::prelude::*;
 use wasm_bindgen::prelude::*;
 use workflow_core::channel::oneshot;
 use workflow_wasm::callback::Callback;
-use crate::result::Result;
 
 pub async fn get_all_async() -> Result<Vec<Window>> {
     let (sender, receiver) = oneshot();
