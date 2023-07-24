@@ -5,13 +5,14 @@
 //!
 
 use cfg_if::cfg_if;
-use js_sys::Date;
 
 /// re-export of [`instant`] crate supporting native and WASM implementations
 pub use instant::*;
 
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
+        use js_sys::Date;
+
         #[inline(always)]
         pub fn unixtime_as_millis_u128() -> u128 {
             (Date::now() * 1000.0) as u128
