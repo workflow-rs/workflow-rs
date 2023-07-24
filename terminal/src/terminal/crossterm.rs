@@ -148,6 +148,14 @@ impl Crossterm {
         Ok(())
     }
 
+    pub fn cols(&self) -> Option<usize> {
+        None
+    }
+
+    pub fn rows(&self) -> Option<usize> {
+        None
+    }
+
     pub fn increase_font_size(&self) -> Result<Option<f64>> {
         Ok(None)
     }

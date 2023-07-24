@@ -692,6 +692,10 @@ impl Terminal {
         self.term.get_font_size()
     }
 
+    pub fn cols(&self) -> Option<usize> {
+        self.term.cols()
+    }
+
     pub async fn select<T>(self: &Arc<Terminal>, prompt: &str, list: &[T]) -> Result<Option<T>>
     where
         T: std::fmt::Display + Clone, // + IdT + Clone + Send + Sync + 'static,
