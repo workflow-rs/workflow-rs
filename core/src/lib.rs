@@ -50,6 +50,8 @@ cfg_if::cfg_if! {
         // #[cfg(target_arch = "wasm32")]
         pub mod interval;
 
+        pub mod time;
+
         // environment variable access (native and Node.js abstraction)
         pub mod env;
 
@@ -58,11 +60,6 @@ cfg_if::cfg_if! {
 
         /// trigger re-exports and shims
         pub mod trigger;
-
-        pub mod time {
-            //! re-export of [`instant`] crate supporting native and WASM implementations
-            pub use instant::*;
-        }
 
         /// re-export of [`mod@cfg_if`] crate
         pub use ::cfg_if::cfg_if;
