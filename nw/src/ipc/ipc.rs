@@ -408,22 +408,21 @@ pub async fn get_ipc_target<Ident>(identifier: Ident) -> crate::result::Result<O
 where
     Ident: ToString,
 {
-    let ipc_identifier = JsValue::from("ipc_identifier");
     let ident: String = identifier.to_string();
 
-    // let global = js_sys::global();
-    let global = global::global();
-    let prop = js_sys::Reflect::get(&global, &ipc_identifier)?;
-    if let Some(ipc_ident) = prop.as_string() {
+    if let Some(ipc_ident) =
+        Reflect::get(&global::global(), &JsValue::from("ipc_identifier"))?.as_string()
+    {
         if ipc_ident == ident {
-            return Ok(Some(IpcTarget::new(global.as_ref())));
+            return Ok(Some(IpcTarget::new(global::global().as_ref())));
         }
     }
 
     let windows = crate::window::get_all_async().await?;
 
     for window in windows.iter() {
-        let prop = js_sys::Reflect::get(window.window().as_ref(), &ipc_identifier)?;
+        let prop =
+            js_sys::Reflect::get(window.window().as_ref(), &JsValue::from("ipc_identifier"))?;
         if let Some(ipc_ident) = prop.as_string() {
             if ipc_ident == ident {
                 return Ok(Some(IpcTarget::new(window.as_ref())));
