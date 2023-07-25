@@ -9,6 +9,9 @@ use workflow_core::sendable::Sendable;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("{0}")]
+    Custom(String),
+
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
 
@@ -49,5 +52,11 @@ impl From<JsValue> for Error {
 impl From<DecodeError> for Error {
     fn from(error: DecodeError) -> Error {
         Error::DecodeError(error)
+    }
+}
+
+impl From<String> for Error {
+    fn from(error: String) -> Error {
+        Error::Custom(error)
     }
 }

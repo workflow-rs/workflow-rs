@@ -17,6 +17,7 @@ crate-type = ["cdylib", "lib"]
 doctest = false
 
 [dependencies]
+async-std.workspace = true
 base64.workspace = true
 cfg-if.workspace = true
 js-sys.workspace = true
@@ -27,6 +28,7 @@ wasm-bindgen.workspace = true
 workflow-core.workspace = true
 workflow-wasm.workspace = true
 workflow-log.workspace = true
+wasm-bindgen-futures.workspace = true
 
 [target.'cfg(not(any(target_arch = "wasm32", target_os="solana")))'.dependencies]
 async-std.workspace = true
