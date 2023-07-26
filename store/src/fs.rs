@@ -98,19 +98,19 @@ impl Options {
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
 
-        pub async fn exists_with_options(filename: &Path, options : Options) -> Result<bool> {
+        pub async fn exists_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.to_platform_string();
-                Ok(fs_exists_sync(&filename)?)
+                Ok(fs_exists_sync(filename.as_ref())?)
             } else {
                 let key_name = options.local_storage_key(filename);
                 Ok(local_storage().get_item(&key_name)?.is_some())
             }
         }
 
-        pub async fn read_to_string_with_options(filename: &Path, options : Options) -> Result<String> {
+        pub async fn read_to_string_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<String> {
             if runtime::is_node() || runtime::is_nw() {
-                let filename = filename.to_platform_string();
+                let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
                 Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
                 // options.set("encoding", "utf-8");
@@ -118,7 +118,7 @@ cfg_if! {
                 let text = js_value.as_string().ok_or(Error::DataIsNotAString(filename))?;
                 Ok(text)
             } else {
-                let key_name = options.local_storage_key(filename);
+                let key_name = options.local_storage_key(filename.as_ref());
                 if let Some(text) = local_storage().get_item(&key_name)? {
                     Ok(text)
                 } else {
@@ -127,35 +127,35 @@ cfg_if! {
             }
         }
 
-        pub async fn write_string_with_options(filename: &Path, options: Options, text : &str) -> Result<()> {
+        pub async fn write_string_with_options<P : AsRef<Path>>(filename: P, options: Options, text : &str) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
-                let filename = filename.to_platform_string();
+                let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
                 fs_write_file_sync(&filename, text, options)?;
             } else {
-                let key_name = options.local_storage_key(filename);
+                let key_name = options.local_storage_key(filename.as_ref());
                 local_storage().set_item(&key_name, text)?;
             }
             Ok(())
         }
 
-        pub async fn remove_with_options(filename: &Path, options: Options) -> Result<()> {
+        pub async fn remove_with_options<P : AsRef<Path>>(filename: P, options: Options) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
-                let filename = filename.to_platform_string();
+                let filename = filename.as_ref().to_platform_string();
                 // let options = Object::new();
                 fs_unlink_sync(&filename)?;
             } else {
-                let key_name = options.local_storage_key(filename);
+                let key_name = options.local_storage_key(filename.as_ref());
                 local_storage().remove_item(&key_name)?;
             }
             Ok(())
         }
 
-        pub async fn create_dir_all(filename: &Path) -> Result<()> {
+        pub async fn create_dir_all<P : AsRef<Path>>(filename: P) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let options = Object::new();
                 Reflect::set(&options, &JsValue::from("recursive"), &JsValue::from_bool(true))?;
-                let filename = filename.to_platform_string();
+                let filename = filename.as_ref().to_platform_string();
                 fs_mkdir_sync(&filename, options)?;
             }
 
@@ -195,24 +195,24 @@ cfg_if! {
 
         // native platforms
 
-        pub async fn exists_with_options(filename: &Path, _options: Options) -> Result<bool> {
-            Ok(filename.exists())
+        pub async fn exists_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<bool> {
+            Ok(filename.as_ref().exists())
         }
 
-        pub async fn read_to_string_with_options(filename: &Path, _options: Options) -> Result<String> {
+        pub async fn read_to_string_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<String> {
             Ok(std::fs::read_to_string(filename)?)
         }
 
-        pub async fn write_string_with_options(filename: &Path, _options: Options, text : &str) -> Result<()> {
+        pub async fn write_string_with_options<P : AsRef<Path>>(filename: P, _options: Options, text : &str) -> Result<()> {
             Ok(std::fs::write(filename, text)?)
         }
 
-        pub async fn remove_with_options(filename: &Path, _options: Options) -> Result<()> {
+        pub async fn remove_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<()> {
             std::fs::remove_file(filename)?;
             Ok(())
         }
 
-        pub async fn create_dir_all(dir: &Path) -> Result<()> {
+        pub async fn create_dir_all<P : AsRef<Path>>(dir: P) -> Result<()> {
             std::fs::create_dir_all(dir)?;
             Ok(())
         }
@@ -254,7 +254,7 @@ impl From<JsValue> for DirEntry {
     }
 }
 
-pub async fn exists(filename: &Path) -> Result<bool> {
+pub async fn exists<P : AsRef<Path>>(filename: P) -> Result<bool> {
     exists_with_options(filename, Options::default()).await
 }
 
