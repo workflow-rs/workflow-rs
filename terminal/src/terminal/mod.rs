@@ -582,7 +582,7 @@ impl Terminal {
 
                 if let Some(cmd) = cmd {
                     self.running.store(true, Ordering::SeqCst);
-                    self.digest(cmd).await.ok();
+                    self.exec(cmd).await.ok();
                     self.running.store(false, Ordering::SeqCst);
                 } else {
                     self.prompt();
@@ -640,7 +640,7 @@ impl Terminal {
         self.running.load(Ordering::SeqCst)
     }
 
-    async fn digest(self: &Arc<Terminal>, cmd: String) -> Result<()> {
+    async fn exec(self: &Arc<Terminal>, cmd: String) -> Result<()> {
         if let Err(err) = self.handler.clone().digest(self.clone(), cmd).await {
             self.writeln(err);
         }
