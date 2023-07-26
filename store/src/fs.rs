@@ -100,10 +100,10 @@ cfg_if! {
 
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
             if runtime::is_node() || runtime::is_nw() {
-                let filename = filename.to_platform_string();
+                let filename = filename.as_ref().to_platform_string();
                 Ok(fs_exists_sync(filename.as_ref())?)
             } else {
-                let key_name = options.local_storage_key(filename);
+                let key_name = options.local_storage_key(filename.as_ref());
                 Ok(local_storage().get_item(&key_name)?.is_some())
             }
         }
@@ -122,7 +122,7 @@ cfg_if! {
                 if let Some(text) = local_storage().get_item(&key_name)? {
                     Ok(text)
                 } else {
-                    Err(Error::NotFound(filename.to_string_lossy().to_string()))
+                    Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
                 }
             }
         }
@@ -254,7 +254,7 @@ impl From<JsValue> for DirEntry {
     }
 }
 
-pub async fn exists<P : AsRef<Path>>(filename: P) -> Result<bool> {
+pub async fn exists<P: AsRef<Path>>(filename: P) -> Result<bool> {
     exists_with_options(filename, Options::default()).await
 }
 
