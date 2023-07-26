@@ -20,7 +20,7 @@ use workflow_core::id::Id;
 pub type CallbackId = Id;
 
 /// Errors produced by the [`callback`](self) module
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum CallbackError {
     /// Custom error message
     #[error("String {0:?}")]
@@ -28,7 +28,7 @@ pub enum CallbackError {
 
     /// Error contains a JsValue
     #[error("JsValue {0:?}")]
-    JsValue(JsValue),
+    JsValue(Printable),
 
     /// LockError message resulting from Mutex lock failure ([`std::sync::PoisonError`])
     #[error("LockError: Unable to lock closure, {0:?}")]
@@ -44,7 +44,7 @@ unsafe impl Sync for CallbackError {}
 
 impl From<JsValue> for CallbackError {
     fn from(value: JsValue) -> Self {
-        CallbackError::JsValue(value)
+        CallbackError::JsValue(value.into())
     }
 }
 
@@ -411,3 +411,5 @@ impl CallbackMap {
 ///     ```
 ///
 pub use workflow_wasm_macros::callback;
+
+use crate::printable::Printable;

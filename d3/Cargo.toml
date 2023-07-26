@@ -17,30 +17,20 @@ crate-type = ["cdylib","lib"]
 doctest = false
 
 [dependencies]
-# futures.workspace = true
-# js-sys.workspace = true
-# regex.workspace = true
-# thiserror.workspace = true
-# wasm-bindgen.workspace = true
-# wasm-bindgen-futures.workspace = true
-# workflow-core.workspace = true
-# workflow-log.workspace = true
-# workflow-wasm.workspace = true
+js-sys.workspace = true
+thiserror.workspace = true
+wasm-bindgen.workspace = true
+workflow-core.workspace = true
 workflow-dom.workspace = true
+workflow-log.workspace = true
+workflow-wasm.workspace = true
 
-# [dependencies.web-sys]
-# workspace = true
-# features = [
-#     'Blob',
-#     'BlobPropertyBag',
-#     'CustomEvent',
-#     'MouseEvent',
-#     'Document',
-#     'Element',
-#     'HtmlCollection',
-#     'Location',
-#     'Node',
-#     'NodeList',
-#     'Url',
-#     'Window',
-# ]
+[dependencies.web-sys]
+workspace = true
+features = [
+    'Element',
+    'HtmlCanvasElement',
+    'DomRect',
+    'Window',
+    'CanvasRenderingContext2d',
+]
