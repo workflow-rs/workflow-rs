@@ -672,7 +672,7 @@ impl Terminal {
         self.running.load(Ordering::SeqCst)
     }
 
-    async fn exec(self: &Arc<Terminal>, cmd: String) -> Result<()> {
+    pub async fn exec(self: &Arc<Terminal>, cmd: String) -> Result<()> {
         if let Err(err) = self.handler.clone().digest(self.clone(), cmd).await {
             self.writeln(err);
         }

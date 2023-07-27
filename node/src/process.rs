@@ -82,6 +82,7 @@ pub enum Termination {
 
 #[derive(Debug, Clone, BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 pub enum Event {
+    Start,
     Exit(u32),
     Error(String),
     Stdout(String),
@@ -364,6 +365,8 @@ impl Inner {
 
             *self.proc.lock().unwrap() = Some(proc.clone());
             self.running.store(true, Ordering::SeqCst);
+
+            self.events.sender.try_send(Event::Start).unwrap();
 
             let kill = select! {
                 // process exited
