@@ -70,6 +70,9 @@ extern "C" {
 
     #[wasm_bindgen(catch, js_name = unlinkSync, js_namespace = fs)]
     fn fs_unlink_sync(path: &str) -> Result<()>;
+
+    #[wasm_bindgen(catch, js_name = statSync, js_namespace = fs)]
+    fn fs_stat_sync(path: &str) -> Result<JsValue>;
 }
 
 pub fn local_storage() -> web_sys::Storage {
@@ -162,7 +165,31 @@ cfg_if! {
             Ok(())
         }
 
-        pub async fn readdir<P>(path: P) -> Result<Vec<DirEntry>>
+
+        async fn fetch_metadata(path: &str, entries : &mut [DirEntry]) -> Result<()> {
+            for entry in entries.iter_mut() {
+                let path = format!("{}/{}",path, entry.file_name());
+                let metadata = fs_stat_sync(&path).unwrap();
+                entry.metadata = metadata.try_into().ok();
+            }
+
+            Ok(())
+        }
+
+        async fn readdir_impl(path: &Path, metadata : bool) -> std::result::Result<Vec<DirEntry>,String> {
+            let path_string = path.to_string_lossy().to_string();
+            let files = fs_readdir(&path_string).await.map_err(|e|e.to_string())?;
+            let list = files.dyn_into::<js_sys::Array>().expect("readdir: expecting resulting entries to be an array");
+            let mut entries = list.to_vec().into_iter().map(|s| s.into()).collect::<Vec<DirEntry>>();
+
+            if metadata {
+                fetch_metadata(&path_string, &mut entries).await.map_err(|e|e.to_string())?;
+            }
+
+            Ok(entries)
+        }
+
+        pub async fn readdir<P>(path: P, metadata : bool) -> Result<Vec<DirEntry>>
         where P : AsRef<Path> + Send + 'static
         {
             // this is a hack to bypass JsFuture being !Send
@@ -179,21 +206,22 @@ cfg_if! {
 
                 let (sender, receiver) = oneshot();
                 dispatch(async move {
-                    let result = fs_readdir(&path.as_ref().to_platform_string()).await.map_err(|e|e.to_string());
+                    let path = path.as_ref();
+                    let result = readdir_impl(path, metadata).await;
                     sender.send(Sendable(result)).await.unwrap();
                 });
 
-                let files = receiver.recv().await.unwrap().unwrap()?;
-                let list = files.dyn_into::<js_sys::Array>()?;
-                Ok(list.to_vec().into_iter().map(|s| s.into()).collect::<Vec<DirEntry>>())
+                Ok(receiver.recv().await.unwrap().unwrap()?)
             } else {
                 panic!("readdir not supported on this platform")
             }
         }
 
-    } else {
+        // -----------------------------------------
 
-        // native platforms
+    } else {  // cfg_if - native platforms
+
+        // -----------------------------------------
 
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<bool> {
             Ok(filename.as_ref().exists())
@@ -218,9 +246,23 @@ cfg_if! {
         }
 
 
-        pub async fn readdir<P : AsRef<Path>>(path: P) -> Result<Vec<DirEntry>> {
+        pub async fn readdir<P : AsRef<Path>>(path: P, metadata : bool) -> Result<Vec<DirEntry>> {
             let entries = std::fs::read_dir(path.as_ref())?;
-            Ok(entries.map(|r|r.map(|e|e.into())).collect::<std::result::Result<Vec<_>,_>>()?)
+
+            if metadata {
+                let mut list = Vec::new();
+                for de in entries {
+                    let de = de?;
+                    let metadata = std::fs::metadata(de.path())?;
+                    let dir_entry = DirEntry::from((de,metadata));
+                    list.push(dir_entry);
+                }
+                Ok(list)
+            } else {
+                Ok(entries.map(|r|r.map(|e|e.into())).collect::<std::result::Result<Vec<_>,_>>()?)
+            }
+
+
         }
 
     }
@@ -228,13 +270,111 @@ cfg_if! {
 }
 
 #[derive(Clone, Debug)]
+pub struct Metadata {
+    created: u64,
+    modified: u64,
+    accessed: u64,
+    len: u64,
+}
+
+impl Metadata {
+    pub fn created(&self) -> u64 {
+        self.created
+    }
+
+    pub fn modified(&self) -> u64 {
+        self.modified
+    }
+
+    pub fn accessed(&self) -> u64 {
+        self.accessed
+    }
+
+    pub fn len(&self) -> u64 {
+        self.len
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+}
+
+impl From<std::fs::Metadata> for Metadata {
+    fn from(metadata: std::fs::Metadata) -> Self {
+        Metadata {
+            created: metadata
+                .created()
+                .unwrap()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            modified: metadata
+                .modified()
+                .unwrap()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            accessed: metadata
+                .accessed()
+                .unwrap()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            len: metadata.len(),
+        }
+    }
+}
+
+impl TryFrom<JsValue> for Metadata {
+    type Error = Error;
+    fn try_from(metadata: JsValue) -> Result<Self> {
+        if metadata.is_undefined() {
+            return Err(Error::Metadata);
+        }
+        // let object = Object::from(metadata);
+        workflow_log::log_info!("{:?}", metadata);
+        let created = (Reflect::get(&metadata, &"birthtimeMs".into())
+            .unwrap()
+            .as_f64()
+            .unwrap()
+            / 1000.0) as u64;
+        let modified = (Reflect::get(&metadata, &"mtimeMs".into())
+            .unwrap()
+            .as_f64()
+            .unwrap()
+            / 1000.0) as u64;
+        let accessed = (Reflect::get(&metadata, &"atimeMs".into())
+            .unwrap()
+            .as_f64()
+            .unwrap()
+            / 1000.0) as u64;
+        let size = Reflect::get(&metadata, &"size".into())
+            .unwrap()
+            .as_f64()
+            .unwrap() as u64;
+
+        Ok(Metadata {
+            created,
+            modified,
+            accessed,
+            len: size,
+        })
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct DirEntry {
     file_name: String,
+    metadata: Option<Metadata>,
 }
 
 impl DirEntry {
     pub fn file_name(&self) -> &str {
         &self.file_name
+    }
+
+    pub fn metadata(&self) -> Option<&Metadata> {
+        self.metadata.as_ref()
     }
 }
 
@@ -242,6 +382,16 @@ impl From<std::fs::DirEntry> for DirEntry {
     fn from(de: std::fs::DirEntry) -> Self {
         DirEntry {
             file_name: de.file_name().to_string_lossy().to_string(),
+            metadata: None,
+        }
+    }
+}
+
+impl From<(std::fs::DirEntry, std::fs::Metadata)> for DirEntry {
+    fn from((de, metadata): (std::fs::DirEntry, std::fs::Metadata)) -> Self {
+        DirEntry {
+            file_name: de.file_name().to_string_lossy().to_string(),
+            metadata: Some(metadata.into()),
         }
     }
 }
@@ -250,6 +400,7 @@ impl From<JsValue> for DirEntry {
     fn from(de: JsValue) -> Self {
         DirEntry {
             file_name: de.as_string().unwrap(),
+            metadata: None,
         }
     }
 }

@@ -35,6 +35,9 @@ pub enum Error {
 
     #[error("Unable to obtain user home directory")]
     HomeDir(String),
+
+    #[error("No file metadata")]
+    Metadata,
 }
 
 impl From<Error> for JsValue {
