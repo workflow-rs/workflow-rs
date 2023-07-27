@@ -94,7 +94,8 @@ struct UserInput {
     prompt: Arc<Mutex<String>>,
     buffer: Arc<Mutex<String>>,
     enabled: Arc<AtomicBool>,
-    secure: Arc<AtomicBool>,
+    echo: Arc<AtomicBool>,
+    kbhit: Arc<AtomicBool>,
     terminate: Arc<AtomicBool>,
     sender: Sender<String>,
     receiver: Receiver<String>,
@@ -107,7 +108,8 @@ impl UserInput {
             prompt: Arc::new(Mutex::new(String::new())),
             buffer: Arc::new(Mutex::new(String::new())),
             enabled: Arc::new(AtomicBool::new(false)),
-            secure: Arc::new(AtomicBool::new(false)),
+            echo: Arc::new(AtomicBool::new(false)),
+            kbhit: Arc::new(AtomicBool::new(false)),
             terminate: Arc::new(AtomicBool::new(false)),
             sender,
             receiver,
@@ -122,10 +124,11 @@ impl UserInput {
         self.buffer.lock().unwrap().clone()
     }
 
-    pub fn open(&self, secure: bool, prompt: String) -> Result<()> {
+    pub fn open(&self, echo: bool, kbhit: bool, prompt: String) -> Result<()> {
         *self.prompt.lock().unwrap() = prompt;
         self.enabled.store(true, Ordering::SeqCst);
-        self.secure.store(secure, Ordering::SeqCst);
+        self.echo.store(echo, Ordering::SeqCst);
+        self.kbhit.store(kbhit, Ordering::SeqCst);
         self.terminate.store(false, Ordering::SeqCst);
         Ok(())
     }
@@ -147,11 +150,12 @@ impl UserInput {
 
     pub async fn capture(
         &self,
-        secure: bool,
+        echo: bool,
+        kbhit: bool,
         prompt: String,
         term: &Arc<Terminal>,
     ) -> Result<String> {
-        self.open(secure, prompt)?;
+        self.open(echo, kbhit, prompt)?;
 
         let term = term.clone();
         let terminate = self.terminate.clone();
@@ -180,8 +184,12 @@ impl UserInput {
         self.enabled.load(Ordering::SeqCst)
     }
 
-    fn is_secure(&self) -> bool {
-        self.secure.load(Ordering::SeqCst)
+    fn is_echo(&self) -> bool {
+        self.echo.load(Ordering::SeqCst)
+    }
+
+    fn is_kbhit(&self) -> bool {
+        self.kbhit.load(Ordering::SeqCst)
     }
 
     fn inject(&self, key: Key, term: &Arc<Terminal>) -> Result<()> {
@@ -192,13 +200,17 @@ impl UserInput {
             }
             Key::Char(ch) => {
                 self.buffer.lock().unwrap().push(ch);
-                if !self.is_secure() {
+                if !self.is_echo() {
                     term.write(ch);
+                }
+                if self.is_kbhit() {
+                    term.crlf();
+                    self.close()?;
                 }
             }
             Key::Backspace => {
                 self.buffer.lock().unwrap().pop();
-                if !self.is_secure() {
+                if !self.is_echo() {
                     term.write("\x08 \x08");
                 }
             }
@@ -340,7 +352,7 @@ impl Terminal {
             if self.user_input.is_enabled() {
                 self.write(format!("{}{}\n\r", ClearLine, s.into()));
                 self.write(self.user_input.get_prompt());
-                if !self.user_input.secure.load(Ordering::SeqCst) {
+                if !self.user_input.echo.load(Ordering::SeqCst) {
                     self.write(self.user_input.get_buffer());
                 }
             } else {
@@ -466,11 +478,19 @@ impl Terminal {
     /// Ask a question (input a string until CRLF).
     /// `secure` argument suppresses echoing of the
     /// user input (useful for password entry)
-    pub async fn ask(self: &Arc<Terminal>, secure: bool, prompt: &str) -> Result<String> {
+    pub async fn ask(self: &Arc<Terminal>, echo: bool, prompt: &str) -> Result<String> {
         self.reset_line_buffer();
         self.term().write(prompt.to_string());
         self.user_input
-            .capture(secure, prompt.to_string(), self)
+            .capture(echo, false, prompt.to_string(), self)
+            .await
+    }
+
+    pub async fn kbhit(self: &Arc<Terminal>, prompt: &str) -> Result<String> {
+        self.reset_line_buffer();
+        self.term().write(prompt.to_string());
+        self.user_input
+            .capture(true, true, prompt.to_string(), self)
             .await
     }
 
