@@ -156,9 +156,21 @@ impl UserInput {
         let term = term.clone();
         let terminate = self.terminate.clone();
 
-        workflow_core::task::dispatch(async move {
-            let _result = term.term().intake(&terminate).await;
-        });
+        cfg_if! {
+
+            // TODO - refactor
+            // this is currently a workaround due to DOM
+            // clipboard API using JsPromise.
+            if #[cfg(target_arch = "wasm32")] {
+                workflow_core::task::dispatch(async move {
+                    let _result = term.term().intake(&terminate).await;
+                });
+            } else {
+                workflow_core::task::spawn(async move {
+                    let _result = term.term().intake(&terminate).await;
+                });
+            }
+        }
 
         let string = self.receiver.recv().await?;
         Ok(string)
