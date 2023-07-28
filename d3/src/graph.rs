@@ -14,6 +14,11 @@ use workflow_wasm::object::ObjectTrait;
 
 static mut DOM_INIT: bool = false;
 
+pub const SECONDS: f64 = 1000.0;
+pub const MINUTES: f64 = SECONDS * 60.0;
+pub const HOURS: f64 = MINUTES * 60.0;
+pub const DAYS: f64 = HOURS * 24.0;
+
 #[derive(Clone)]
 pub enum GraphTimeline {
     Seconds(u32),
