@@ -26,9 +26,13 @@ cfg_if! {
             //! native implementation
             pub use super::*;
 
-            pub use tokio::task::yield_now;
+            // yield_executor functionality is browser-specific
+            // hence we create a stub in a form of `yield_now()`
+            // for native platforms
             pub use tokio::task::yield_now as yield_executor;
+            pub use tokio::task::yield_now;
             pub use tokio::time::sleep;
+            pub use crate::native::interval::{interval,Interval};
 
             pub fn spawn<F, T>(future: F)
             where
@@ -98,10 +102,16 @@ pub mod wasm {
 
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            pub use crate::sleep::sleep;
-            pub use crate::executor::yield_executor;
+            pub use crate::wasm::{
+                interval::{interval,Interval},
+                yield_executor::{yield_executor,Yield},
+                sleep::{sleep,Sleep}
+            };
             pub use async_std::task::yield_now;
         } else {
+            pub use crate::native::{
+                interval::{interval,Interval},
+            };
             pub use async_std::task::sleep;
             pub use async_std::task::yield_now;
         }

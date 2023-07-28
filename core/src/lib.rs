@@ -25,10 +25,12 @@ extern crate self as workflow_core;
 
 pub mod abortable;
 pub mod enums;
-pub mod executor;
 pub mod runtime;
 pub mod sendable;
 pub mod utils;
+
+mod native;
+mod wasm;
 
 // pub use workflow_core_macros::describe_enum;
 // pub use workflow_core_macros::Describe;
@@ -45,11 +47,7 @@ cfg_if::cfg_if! {
         // async object lookup combinator
         pub mod lookup;
 
-        // #[cfg(target_arch = "wasm32")]
-        pub mod sleep;
-        // #[cfg(target_arch = "wasm32")]
-        pub mod interval;
-
+        // time functions and utilities
         pub mod time;
 
         // environment variable access (native and Node.js abstraction)

@@ -3,6 +3,9 @@
 //! `requestAnimationFrame`
 //!
 
+#![allow(dead_code)]
+
+use futures::task::AtomicWaker;
 use std::future::Future;
 use std::{
     pin::Pin,
@@ -10,7 +13,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
     },
-    task::{Context as FutureContext, Poll, Waker},
+    task::{Context as FutureContext, Poll},
 };
 use wasm_bindgen::prelude::*;
 
@@ -50,7 +53,6 @@ fn init_request_animation_frame_fn() {
 }
 
 struct Context {
-    waker: Option<Waker>,
     #[allow(dead_code)]
     instance: JsValue,
     #[allow(dead_code)]
@@ -58,7 +60,8 @@ struct Context {
 }
 
 struct Inner {
-    ready: Arc<AtomicBool>,
+    ready: AtomicBool,
+    waker: AtomicWaker,
     ctx: Mutex<Option<Context>>,
 }
 
@@ -84,26 +87,25 @@ impl Yield {
     /// Create a new `Sleep` future that will resolve after the given duration.
     pub fn new() -> Self {
         let inner = Arc::new(Inner {
-            ready: Arc::new(AtomicBool::new(false)),
+            ready: AtomicBool::new(false),
+            waker: AtomicWaker::new(),
             ctx: Mutex::new(None),
         });
 
         let inner_ = inner.clone();
         let closure = Closure::once_into_js(move || {
             inner_.ready.store(true, Ordering::SeqCst);
-            if let Some(mut ctx) = inner_.ctx.lock().unwrap().take() {
-                if let Some(waker) = ctx.waker.take() {
-                    waker.wake();
-                }
+            if let Some(waker) = inner_.waker.take() {
+                waker.wake();
             }
         });
 
         let instance = request_animation_frame(closure.clone().into());
-        inner.ctx.lock().unwrap().replace(Context {
-            waker: None,
-            closure,
-            instance,
-        });
+        inner
+            .ctx
+            .lock()
+            .unwrap()
+            .replace(Context { closure, instance });
 
         Yield { inner }
     }
@@ -131,13 +133,12 @@ impl Future for Yield {
                 Poll::Ready(())
             }
             false => {
-                if let Some(ctx) = self.inner.ctx.lock().unwrap().as_mut() {
-                    ctx.waker.replace(cx.waker().clone());
+                self.inner.waker.register(cx.waker());
+                if self.inner.ready.load(Ordering::SeqCst) {
+                    Poll::Ready(())
                 } else {
-                    panic!("workflow_core::executor::yield_executor() missing context");
+                    Poll::Pending
                 }
-                // self.inner.ctx.lock().unwrap().as_mut().waker.replace(cx.waker().clone());
-                Poll::Pending
             }
         }
     }

@@ -1,8 +1,11 @@
 //!
 //! `Sleep` future and an `async sleep()` function backed by
-//! the JavaScript `createTimeout()` and `clearTimeout()` APIs.
+//! the JavaScript `setTimeout()` and `clearTimeout()` APIs.
 //!
 
+#![allow(dead_code)]
+
+use futures::task::AtomicWaker;
 use instant::Duration;
 use std::future::Future;
 use std::{
@@ -11,7 +14,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
     },
-    task::{Context, Poll, Waker},
+    task::{Context, Poll},
 };
 use wasm_bindgen::prelude::*;
 
@@ -29,21 +32,25 @@ extern "C" {
 type SleepClosure = Closure<dyn FnMut()>;
 
 struct SleepContext {
-    waker: Option<Waker>,
     instance: JsValue,
+    // this closue, while not read
+    // must be retained for the lifetime
+    // of this context.
     #[allow(dead_code)]
     closure: SleepClosure,
 }
 
 struct Inner {
-    ready: Arc<AtomicBool>,
+    ready: AtomicBool,
+    waker: AtomicWaker,
     ctx: Mutex<Option<SleepContext>>,
 }
 
 /// `Sleep` future used by the `sleep()` function to provide a
 /// timeout future that is backed by the JavaScript `createTimeout()`
 /// and `clearTimeout()` APIs. The `Sleep` future is meant only for
-/// use in WASM32 browser environments.
+/// use in WASM32 browser environments. It has an advantage of having
+/// `Send` and `Sync` markers.
 #[derive(Clone)]
 pub struct Sleep {
     inner: Arc<Inner>,
@@ -56,27 +63,26 @@ impl Sleep {
     /// Create a new `Sleep` future that will resolve after the given duration.
     pub fn new(duration: Duration) -> Self {
         let inner = Arc::new(Inner {
-            ready: Arc::new(AtomicBool::new(false)),
+            ready: AtomicBool::new(false),
+            waker: AtomicWaker::new(),
             ctx: Mutex::new(None),
         });
 
         let inner_ = inner.clone();
         let closure = Closure::new(move || {
             inner_.ready.store(true, Ordering::SeqCst);
-            if let Some(mut ctx) = inner_.ctx.lock().unwrap().take() {
-                if let Some(waker) = ctx.waker.take() {
-                    waker.wake();
-                }
+            if let Some(waker) = inner_.waker.take() {
+                waker.wake();
             }
         });
 
         let instance = set_timeout(&closure, duration.as_millis() as u32).unwrap();
 
-        inner.ctx.lock().unwrap().replace(SleepContext {
-            instance,
-            closure,
-            waker: None,
-        });
+        inner
+            .ctx
+            .lock()
+            .unwrap()
+            .replace(SleepContext { instance, closure });
 
         Sleep { inner }
     }
@@ -104,13 +110,12 @@ impl Future for Sleep {
                 Poll::Ready(())
             }
             false => {
-                if let Some(ctx) = self.inner.ctx.lock().unwrap().as_mut() {
-                    ctx.waker.replace(cx.waker().clone());
+                self.inner.waker.register(cx.waker());
+                if self.inner.ready.load(Ordering::SeqCst) {
+                    Poll::Ready(())
                 } else {
-                    panic!("workflow_core::sleep::sleep() missing context");
+                    Poll::Pending
                 }
-
-                Poll::Pending
             }
         }
     }
