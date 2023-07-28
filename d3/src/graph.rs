@@ -14,33 +14,31 @@ use workflow_wasm::object::ObjectTrait;
 
 static mut DOM_INIT: bool = false;
 
-pub const SECONDS: f64 = 1000.0;
-pub const MINUTES: f64 = SECONDS * 60.0;
-pub const HOURS: f64 = MINUTES * 60.0;
-pub const DAYS: f64 = HOURS * 24.0;
+pub const SECONDS: u64 = 1000;
+pub const MINUTES: u64 = SECONDS * 60;
+pub const HOURS: u64 = MINUTES * 60;
+pub const DAYS: u64 = HOURS * 24;
+
+pub type MilliSeconds = u64;
 
 #[derive(Clone)]
-pub enum GraphTimeline {
-    Seconds(u32),
-    Minutes(u32),
-    Hours(u32),
-    Days(u32),
-}
-impl TryFrom<String> for GraphTimeline {
-    type Error = Error;
-    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
-        let timeline = if value.contains("s") {
-            let seconds = value.replace("s", "").parse::<u32>()?;
-            GraphTimeline::Seconds(seconds)
-        } else if value.contains("m") {
-            let minutes = value.replace("m", "").parse::<u32>()?;
-            GraphTimeline::Minutes(minutes)
-        } else if value.contains("h") {
-            let minutes = value.replace("h", "").parse::<u32>()?;
-            GraphTimeline::Hours(minutes)
-        } else if value.contains("d") {
-            let days = value.replace("d", "").parse::<u32>()?;
-            GraphTimeline::Days(days)
+pub struct GraphDuration;
+
+impl GraphDuration {
+    pub fn parse<T: Into<String>>(value: T) -> std::result::Result<MilliSeconds, Error> {
+        let value: String = value.into();
+        let timeline = if value.contains('s') {
+            let seconds = value.replace('s', "").parse::<u64>()?;
+            seconds * SECONDS
+        } else if value.contains('m') {
+            let minutes = value.replace('m', "").parse::<u64>()?;
+            minutes * MINUTES
+        } else if value.contains('h') {
+            let hours = value.replace('h', "").parse::<u64>()?;
+            hours * HOURS
+        } else if value.contains('d') {
+            let days = value.replace('d', "").parse::<u64>()?;
+            days * DAYS
         } else {
             return Err(Error::Custom(format!("Invalid timeline str: {value:?}")));
         };
@@ -68,7 +66,7 @@ pub struct GraphThemeOptions {
 pub enum GraphTheme {
     Light,
     Dark,
-    Custom(GraphThemeOptions),
+    Custom(Box<GraphThemeOptions>),
 }
 
 impl GraphTheme {
@@ -76,7 +74,7 @@ impl GraphTheme {
         match self {
             Self::Light => Self::light_theme_options(),
             Self::Dark => Self::dark_theme_options(),
-            Self::Custom(theme) => theme,
+            Self::Custom(theme) => *theme,
         }
     }
     pub fn light_theme_options() -> GraphThemeOptions {
@@ -142,7 +140,7 @@ struct Inner {
     value: String,
     title_box_height: f64,
     title_padding_y: f64,
-    timeline: GraphTimeline,
+    duration: MilliSeconds,
 }
 
 #[derive(Clone)]
@@ -196,7 +194,7 @@ impl Graph {
         container: &Arc<Container>,
         title: T,
         y_caption: T,
-        timeline: GraphTimeline,
+        duration: MilliSeconds,
         theme: GraphTheme,
         margin: Margin,
     ) -> Result<Graph> {
@@ -232,7 +230,7 @@ impl Graph {
                 value: "".into(),
                 title_box_height: 20.0,
                 title_padding_y: 20.0,
-                timeline,
+                duration,
             })),
             x: Arc::new(D3::scale_time()),
             y: Arc::new(D3::scale_linear()),
@@ -345,8 +343,8 @@ impl Graph {
         Ok(())
     }
 
-    pub fn set_timeline(&self, timeline: &GraphTimeline) -> &Self {
-        self.inner().timeline = timeline.clone();
+    pub fn set_duration(&self, duration: MilliSeconds) -> &Self {
+        self.inner().duration = duration;
         self
     }
 
@@ -421,7 +419,7 @@ impl Graph {
             )
         };
         let context = &self.context;
-        context.translate(margin_left as f64, margin_top as f64)?;
+        context.translate(margin_left as f64, margin_top)?;
         self.x_axis()?;
         self.y_axis()?;
         Ok(())
@@ -596,7 +594,7 @@ impl Graph {
         Ok(())
     }
 
-    fn build_captions(&self) -> Result<()> {
+    fn build_captions(&self, text: &str) -> Result<()> {
         let context = &self.context;
         let title_font = self.title_font();
         let title_color = self.title_color();
@@ -626,7 +624,7 @@ impl Graph {
             context.fill_text(
                 //&self.title,
                 //self.width() as f64 / 2.0,
-                &format!("{} {}", &self.title, &self.value()),
+                &format!("{} {}", &self.title, text),
                 0.0,
                 y,
             )?;
@@ -657,27 +655,11 @@ impl Graph {
     }
 
     fn update_x_domain(&self) -> Result<()> {
-        // let cb = js_sys::Function::new_with_args("d", "return d.date");
-        // self.x.domain(D3::extent(&self.data, cb));
         let date1 = js_sys::Date::new_0();
         let time = date1.get_time();
         let date2 = js_sys::Date::new(&time.into());
         let mut inner = self.inner();
-        match inner.timeline {
-            GraphTimeline::Seconds(seconds) => {
-                date2.set_time(time - seconds as f64 * 1000.0);
-            }
-            GraphTimeline::Minutes(minutes) => {
-                date2.set_time(time - minutes as f64 * 60000.0);
-            }
-            GraphTimeline::Hours(hours) => {
-                date2.set_time(time - hours as f64 * 3600000.0);
-            }
-            GraphTimeline::Days(days) => {
-                date2.set_time(time - days as f64 * 86400000.0);
-            }
-        }
-
+        date2.set_time(time - inner.duration as f64);
         let x_domain = js_sys::Array::new();
         x_domain.push(&date2);
         x_domain.push(&date1);
@@ -687,19 +669,19 @@ impl Graph {
         Ok(())
     }
 
-    fn update_axis_and_title(&self) -> Result<()> {
+    fn update_axis_and_title(&self, text: &str) -> Result<()> {
         self.update_x_domain()?;
         let cb = js_sys::Function::new_with_args("d", "return d.value");
         self.y.set_domain_array(D3::extent(&self.data, cb));
         self.clear()?;
         self.x_axis()?;
         self.y_axis()?;
-        self.build_captions()?;
+        self.build_captions(text)?;
 
         Ok(())
     }
 
-    pub async fn ingest(&self, time: f64, value: Sendable<JsValue>) -> Result<()> {
+    pub async fn ingest(&self, time: f64, value: Sendable<JsValue>, text: &str) -> Result<()> {
         // TODO - ingest into graph
         //self.element().set_inner_html(format!("{} -> {:?}", time, value).as_str());
         //workflow_log::log_info!("{} -> {:?}", time, value);
@@ -711,9 +693,6 @@ impl Graph {
         //let value: JsValue = (js_sys::Math::random() * 100000.0).into();
         let _ = item.set("value", &value);
         workflow_log::log_info!("item: {item:?}");
-        {
-            self.inner().value = format!("{}", value.as_f64().unwrap());
-        }
         self.data.push(&item.into());
         let min_date = self.min_date();
 
@@ -733,7 +712,7 @@ impl Graph {
             break;
         }
 
-        self.update_axis_and_title()?;
+        self.update_axis_and_title(text)?;
 
         let area_color = self.area_color();
 

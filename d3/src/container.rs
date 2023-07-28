@@ -1,4 +1,4 @@
-use crate::graph::{Graph, GraphTimeline};
+use crate::graph::{Graph, GraphDuration};
 use crate::imports::*;
 use web_sys::{Element, HtmlSelectElement};
 use workflow_dom::inject::*;
@@ -68,9 +68,9 @@ impl Container {
         let on_change = callback!(move || {
             let value = el_clone.value();
             workflow_log::log_info!("duration-selector:change: {value:?}");
-            if let Ok(timeline) = GraphTimeline::try_from(value) {
+            if let Ok(duration) = GraphDuration::parse(value) {
                 for graph in &graphs {
-                    graph.set_timeline(&timeline);
+                    graph.set_duration(duration);
                 }
             }
         });
