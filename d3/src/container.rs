@@ -6,6 +6,7 @@ static mut DOM_INIT: bool = false;
 
 pub struct Container {
     element: Element,
+    //duration_selector: Arc<Mutex<Option<Element>>>,
 }
 
 unsafe impl Sync for Container {}
@@ -36,7 +37,10 @@ impl Container {
 
         body.append_child(&element).unwrap();
 
-        let layout = Container { element };
+        let layout = Container {
+            element,
+            //duration_selector: Arc::new(Mutex::new(None)),
+        };
 
         Ok(layout)
     }
@@ -44,4 +48,13 @@ impl Container {
     pub fn element(&self) -> &Element {
         &self.element
     }
+
+    // pub fn init_duration_selector(&self, window: &web_sys::Window)->Result<()>{
+    //     let doc = window.document().unwrap();
+    //     let element = doc.create_element("div").unwrap();
+    //     element.set_class_name("duration-selector");
+    //     *self.duration_selector.lock().unwrap() = Some(element);
+    //     self.element.append_child(&element);
+    //     Ok(())
+    // }
 }

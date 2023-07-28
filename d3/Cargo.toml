@@ -33,4 +33,5 @@ features = [
     'DomRect',
     'Window',
     'CanvasRenderingContext2d',
+    'TextMetrics'
 ]

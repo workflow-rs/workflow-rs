@@ -31,6 +31,10 @@ pub struct GraphThemeOptions {
     pub x_axis_font: String,
     pub y_axis_font: String,
     pub title_font: String,
+    pub y_caption_font: String,
+    pub y_caption_color: String,
+    // pub value_color: String,
+    // pub value_font: String,
 }
 
 #[derive(Clone)]
@@ -50,24 +54,32 @@ impl GraphTheme {
     }
     pub fn light_theme_options() -> GraphThemeOptions {
         GraphThemeOptions {
-            title_font: String::from("bold 15px sans-serif"),
+            title_font: String::from("bold 30px sans-serif"),
             x_axis_font: String::from("20px serif"),
             y_axis_font: String::from("20px serif"),
+            //value_font: String::from("bold 23px sans-serif"),
             area_color: String::from("blue"),
             x_axis_color: String::from("black"),
             y_axis_color: String::from("black"),
             title_color: String::from("black"),
+            //value_color: String::from("black"),
+            y_caption_color: String::from("black"),
+            y_caption_font: String::from("15px sans-serif"),
         }
     }
     pub fn dark_theme_options() -> GraphThemeOptions {
         GraphThemeOptions {
-            title_font: String::from("bold 15px sans-serif"),
+            title_font: String::from("bold 30px sans-serif"),
             x_axis_font: String::from("20px serif"),
             y_axis_font: String::from("20px serif"),
+            //value_font: String::from("bold 23px sans-serif"),
             area_color: String::from("grey"),
             x_axis_color: String::from("white"),
             y_axis_color: String::from("white"),
             title_color: String::from("white"),
+            //value_color: String::from("white"),
+            y_caption_color: String::from("white"),
+            y_caption_font: String::from("15px sans-serif"),
         }
     }
 }
@@ -100,6 +112,9 @@ struct Inner {
     margin_top: f32,
     margin_bottom: f32,
     min_date: js_sys::Date,
+    value: String,
+    title_box_height: f64,
+    title_padding_y: f64,
 }
 
 #[derive(Clone)]
@@ -121,6 +136,7 @@ pub struct Graph {
     y_tick_count: u32,
     y_tick_padding: f64,
     title: String,
+    y_caption: String,
     options: Arc<Mutex<GraphThemeOptions>>,
 
     /// holds references to [Callback](workflow_wasm::callback::Callback)
@@ -152,13 +168,10 @@ impl Graph {
         window: &web_sys::Window,
         container: &Arc<Container>,
         title: T,
+        y_caption: T,
         timeline: GraphTimeline,
         theme: GraphTheme,
         margin: Margin,
-        // margin_left: f32,
-        // margin_right: f32,
-        // margin_top: f32,
-        // margin_bottom: f32,
     ) -> Result<Graph> {
         let document = window.document().unwrap();
         let element = document.create_element("div").unwrap();
@@ -189,6 +202,9 @@ impl Graph {
                 margin_top: margin.top,
                 margin_bottom: margin.bottom,
                 min_date: js_sys::Date::new_0(),
+                value: "".into(),
+                title_box_height: 20.0,
+                title_padding_y: 20.0,
             })),
             x: Arc::new(D3::scale_time()),
             y: Arc::new(D3::scale_linear()),
@@ -203,6 +219,7 @@ impl Graph {
             y_tick_count: 10,
             y_tick_padding: 3.0,
             title: title.into(),
+            y_caption: y_caption.into(),
             options,
             callbacks: CallbackMap::new(),
         };
@@ -283,11 +300,26 @@ impl Graph {
         self
     }
 
-    pub fn set_theme(&self, theme: GraphTheme) {
-        *self.options() = theme.get_options();
+    pub fn set_y_caption_color<T: Into<String>>(&self, color: T) -> &Self {
+        self.options().y_caption_color = color.into();
+        self
+    }
+
+    pub fn set_y_caption_font<T: Into<String>>(&self, font: T) -> &Self {
+        self.options().y_caption_font = font.into();
+        self
+    }
+
+    pub fn set_theme(&self, theme: GraphTheme) -> Result<()> {
+        {
+            *self.options() = theme.get_options();
+        }
+        self.calculate_title_box()?;
+        Ok(())
     }
 
     pub async fn init(&mut self) -> Result<()> {
+        self.calculate_title_box()?;
         self.update_size()?;
         self.update_x_domain()?;
         self.x.set_clamp(true);
@@ -341,13 +373,20 @@ impl Graph {
         let (margin_left, margin_top) = {
             let mut inner = self.inner();
             inner.width = width - inner.margin_left - inner.margin_right;
-            inner.height = height - inner.margin_top - inner.margin_bottom;
+            inner.height = height
+                - inner.margin_top
+                - inner.margin_bottom
+                - inner.title_box_height as f32
+                - inner.title_padding_y as f32;
             inner.full_width = width;
             inner.full_height = height;
 
             self.x.range([0.0, inner.width]);
             self.y.range([inner.height, 0.0]);
-            (inner.margin_left, inner.margin_top)
+            (
+                inner.margin_left,
+                inner.margin_top as f64 + inner.title_box_height + inner.title_padding_y,
+            )
         };
         let context = &self.context;
         context.translate(margin_left as f64, margin_top as f64)?;
@@ -365,6 +404,23 @@ impl Graph {
     pub fn min_date(&self) -> js_sys::Date {
         self.inner().min_date.clone()
     }
+
+    pub fn value(&self) -> String {
+        self.inner().value.clone()
+    }
+
+    pub fn title_box_height(&self) -> f64 {
+        self.inner().title_box_height
+    }
+
+    // pub fn value_color(&self) -> String {
+    //     self.options().value_color.clone()
+    // }
+
+    // pub fn value_font(&self) -> String {
+    //     self.options().value_font.clone()
+    // }
+
     pub fn area_color(&self) -> String {
         self.options().area_color.clone()
     }
@@ -373,6 +429,12 @@ impl Graph {
     }
     pub fn title_color(&self) -> String {
         self.options().title_color.clone()
+    }
+    pub fn y_caption_font(&self) -> String {
+        self.options().y_caption_font.clone()
+    }
+    pub fn y_caption_color(&self) -> String {
+        self.options().y_caption_color.clone()
     }
 
     fn x_axis(&self) -> Result<()> {
@@ -481,17 +543,66 @@ impl Graph {
         Ok(())
     }
 
-    fn build_title(&self) -> Result<()> {
+    fn calculate_title_box(&self) -> Result<()> {
         let context = &self.context;
         let title_font = self.title_font();
         let title_color = self.title_color();
+
+        context.save();
+        context.set_text_baseline("top");
+        context.set_font(&title_font);
+        context.set_fill_style(&JsValue::from(&title_color));
+        let metrics = context.measure_text(&format!("{} {}", &self.title, &self.value()))?;
+
+        {
+            self.inner().title_box_height = metrics.actual_bounding_box_ascent().abs()
+                + metrics.actual_bounding_box_descent().abs();
+        }
+
+        context.restore();
+
+        Ok(())
+    }
+
+    fn build_captions(&self) -> Result<()> {
+        let context = &self.context;
+        let title_font = self.title_font();
+        let title_color = self.title_color();
+        let y_caption_color = self.y_caption_color();
+        let y_caption_font = self.y_caption_font();
+        // let value_color = self.value_color();
+        // let value_font = self.value_font();
         context.save();
         context.rotate(-std::f64::consts::PI / 2.0)?;
         context.set_text_align("right");
         context.set_text_baseline("top");
+        context.set_font(&y_caption_font);
+        context.set_fill_style(&JsValue::from(&y_caption_color));
+        context.fill_text(&self.y_caption, -10.0, 10.0)?;
+        context.restore();
+
+        context.save();
+        context.set_text_align("left");
+        context.set_text_baseline("top");
         context.set_font(&title_font);
         context.set_fill_style(&JsValue::from(&title_color));
-        context.fill_text(&self.title, -10.0, 10.0)?;
+        {
+            let y = {
+                let inner = self.inner();
+                -(inner.margin_top as f64 + inner.title_box_height + inner.title_padding_y / 2.0)
+            };
+            context.fill_text(
+                //&self.title,
+                //self.width() as f64 / 2.0,
+                &format!("{} {}", &self.title, &self.value()),
+                0.0,
+                y,
+            )?;
+        }
+        // context.set_text_align("right");
+        // context.set_font(&value_font);
+        // context.set_fill_style(&JsValue::from(&value_color));
+        // context.fill_text(&self.value(), self.width() as f64, 10.0)?;
         context.restore();
 
         Ok(())
@@ -506,7 +617,7 @@ impl Graph {
         let context = &self.context;
         context.clear_rect(
             -inner.margin_left as f64,
-            -inner.margin_top as f64,
+            -(inner.margin_top as f64 + inner.title_box_height + inner.title_padding_y),
             inner.full_width as f64,
             inner.full_height as f64,
         );
@@ -551,7 +662,7 @@ impl Graph {
         self.clear()?;
         self.x_axis()?;
         self.y_axis()?;
-        self.build_title()?;
+        self.build_captions()?;
 
         Ok(())
     }
@@ -565,8 +676,12 @@ impl Graph {
         //date.set_date((js_sys::Math::random() * 10.0) as u32);
         let _ = item.set("date", &date);
         //let _ = item.set("value", &(js_sys::Math::random() * 100.0).into());
+        //let value: JsValue = (js_sys::Math::random() * 100000.0).into();
         let _ = item.set("value", &value);
         workflow_log::log_info!("item: {item:?}");
+        {
+            self.inner().value = format!("{}", value.as_f64().unwrap());
+        }
         self.data.push(&item.into());
         let min_date = self.min_date();
 
