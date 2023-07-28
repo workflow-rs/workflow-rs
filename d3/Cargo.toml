@@ -30,6 +30,7 @@ workspace = true
 features = [
     'Element',
     'HtmlCanvasElement',
+    'HtmlSelectElement',
     'DomRect',
     'Window',
     'CanvasRenderingContext2d',

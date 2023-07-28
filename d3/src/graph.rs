@@ -21,6 +21,28 @@ pub enum GraphTimeline {
     Hours(u32),
     Days(u32),
 }
+impl TryFrom<String> for GraphTimeline {
+    type Error = Error;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let timeline = if value.contains("s") {
+            let seconds = value.replace("s", "").parse::<u32>()?;
+            GraphTimeline::Seconds(seconds)
+        } else if value.contains("m") {
+            let minutes = value.replace("m", "").parse::<u32>()?;
+            GraphTimeline::Minutes(minutes)
+        } else if value.contains("h") {
+            let minutes = value.replace("h", "").parse::<u32>()?;
+            GraphTimeline::Hours(minutes)
+        } else if value.contains("d") {
+            let days = value.replace("d", "").parse::<u32>()?;
+            GraphTimeline::Days(days)
+        } else {
+            return Err(Error::Custom(format!("Invalid timeline str: {value:?}")));
+        };
+
+        Ok(timeline)
+    }
+}
 
 #[derive(Clone)]
 pub struct GraphThemeOptions {
@@ -115,6 +137,7 @@ struct Inner {
     value: String,
     title_box_height: f64,
     title_padding_y: f64,
+    timeline: GraphTimeline,
 }
 
 #[derive(Clone)]
@@ -129,7 +152,6 @@ pub struct Graph {
     y: Arc<d3::ScaleLinear>,
     area: Option<Arc<d3::Area>>,
     data: Array,
-    timeline: GraphTimeline,
     x_tick_size: f64,
     y_tick_size: f64,
     x_tick_count: u32,
@@ -205,12 +227,12 @@ impl Graph {
                 value: "".into(),
                 title_box_height: 20.0,
                 title_padding_y: 20.0,
+                timeline,
             })),
             x: Arc::new(D3::scale_time()),
             y: Arc::new(D3::scale_linear()),
             area: None,
             data: Array::new(),
-            timeline,
             canvas,
             context,
             x_tick_size: 6.0,
@@ -316,6 +338,11 @@ impl Graph {
         }
         self.calculate_title_box()?;
         Ok(())
+    }
+
+    pub fn set_timeline(&self, timeline: &GraphTimeline) -> &Self {
+        self.inner().timeline = timeline.clone();
+        self
     }
 
     pub async fn init(&mut self) -> Result<()> {
@@ -630,8 +657,8 @@ impl Graph {
         let date1 = js_sys::Date::new_0();
         let time = date1.get_time();
         let date2 = js_sys::Date::new(&time.into());
-
-        match self.timeline {
+        let mut inner = self.inner();
+        match inner.timeline {
             GraphTimeline::Seconds(seconds) => {
                 date2.set_time(time - seconds as f64 * 1000.0);
             }
@@ -649,7 +676,7 @@ impl Graph {
         let x_domain = js_sys::Array::new();
         x_domain.push(&date2);
         x_domain.push(&date1);
-        self.inner().min_date = date2;
+        inner.min_date = date2;
 
         self.x.set_domain_array(x_domain);
         Ok(())

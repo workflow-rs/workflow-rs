@@ -1,3 +1,4 @@
+use std::num::ParseIntError;
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 use workflow_wasm::printable::Printable;
@@ -38,6 +39,12 @@ impl From<String> for Error {
 
 impl From<&str> for Error {
     fn from(err: &str) -> Self {
+        Self::Custom(err.to_string())
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(err: ParseIntError) -> Self {
         Self::Custom(err.to_string())
     }
 }
