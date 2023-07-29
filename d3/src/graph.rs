@@ -160,7 +160,7 @@ pub struct Graph {
     inner: Arc<Mutex<Inner>>,
     x: Arc<d3::ScaleTime>,
     y: Arc<d3::ScaleLinear>,
-    area: Option<Arc<d3::Area>>,
+    area: Arc<d3::Area>,
     data: Array,
     x_tick_size: f64,
     y_tick_size: f64,
@@ -247,7 +247,7 @@ impl Graph {
             })),
             x: Arc::new(D3::scale_time()),
             y: Arc::new(D3::scale_linear()),
-            area: None,
+            area: Arc::new(D3::area()),
             data: Array::new(),
             canvas,
             context,
@@ -388,13 +388,11 @@ impl Graph {
         let y_cb = callback!(move |d: js_sys::Object| {
             that.y.call1(&JsValue::NULL, &d.get("value").unwrap())
         });
-        self.area = Some(Arc::new(
-            D3::area()
-                .x(x_cb.get_fn())
-                .y0(height)
-                .y1(y_cb.get_fn())
-                .context(&self.context),
-        ));
+        self.area
+            .x(x_cb.get_fn())
+            .y0(height)
+            .y1(y_cb.get_fn())
+            .context(&self.context);
 
         let that = self.clone();
         let on_resize = callback!(move || { that.update_size() });
@@ -418,7 +416,7 @@ impl Graph {
             - (pixel_ratio * rect.top() as f32).round();
         self.canvas.set_width(width as u32);
         self.canvas.set_height(height as u32);
-        let (margin_left, margin_top) = {
+        let (height, margin_left, margin_top) = {
             let mut inner = self.inner();
             inner.width = width - inner.margin_left - inner.margin_right;
             inner.height = height
@@ -432,6 +430,7 @@ impl Graph {
             self.x.range([0.0, inner.width]);
             self.y.range([inner.height, 0.0]);
             (
+                inner.height,
                 inner.margin_left,
                 inner.margin_top as f64 + inner.title_box_height + inner.title_padding_y,
             )
@@ -440,6 +439,7 @@ impl Graph {
         context.translate(margin_left as f64, margin_top)?;
         self.x_axis()?;
         self.y_axis()?;
+        self.area.y0(height);
         Ok(())
     }
 
@@ -749,10 +749,7 @@ impl Graph {
 
         let context = &self.context;
         context.begin_path();
-        self.area
-            .as_ref()
-            .unwrap()
-            .call1(&JsValue::NULL, &self.data)?;
+        self.area.call1(&JsValue::NULL, &self.data)?;
         context.set_fill_style(&JsValue::from(&area_fill_color));
         context.set_stroke_style(&JsValue::from(&area_stroke_color));
         context.fill();
