@@ -32,13 +32,16 @@ pub enum Content<'content> {
 /// Inject CSS stylesheed directly into DOM as a
 /// [`<style>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style)
 /// element using [`Element::set_inner_html`]
-pub fn inject_css(css: &str) -> Result<()> {
+pub fn inject_css(id: Option<&str>, css: &str) -> Result<()> {
     let doc = document();
     let head = doc
         .get_elements_by_tag_name("head")
         .item(0)
         .ok_or("Unable to locate head element")?;
     let style_el = doc.create_element("style")?;
+    if let Some(id) = id {
+        style_el.set_attribute("id", id)?;
+    }
     style_el.set_inner_html(css);
     head.append_child(&style_el)?;
     Ok(())

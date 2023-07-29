@@ -178,21 +178,26 @@ pub struct Graph {
 unsafe impl Sync for Graph {}
 unsafe impl Send for Graph {}
 
-impl Graph {
-    pub async fn try_init() -> Result<()> {
-        if !unsafe { DOM_INIT } {
-            let graph_css = include_str!("graph.css");
-            inject_css(graph_css)?;
+const DEFAULT_STYLE: &str = include_str!("graph.css");
 
-            // TODO: this should be used for development only, then embedded directly into this file
-            // alternatively use Function() to bootstrap the js graph code
-            // let graph_js = include_bytes!("graph.js");
-            // inject_blob(Content::Script(None, graph_js)).await?;
+impl Graph {
+    pub async fn try_init(id: Option<&str>) -> Result<()> {
+        if !unsafe { DOM_INIT } {
+            inject_css(id, DEFAULT_STYLE)?;
             unsafe {
                 DOM_INIT = true;
             }
         }
 
+        Ok(())
+    }
+
+    pub async fn default_style() -> Result<String> {
+        Ok(DEFAULT_STYLE.to_string())
+    }
+
+    pub async fn replace_graph_style(id: &str, css: &str) -> Result<()> {
+        inject_css(Some(id), css)?;
         Ok(())
     }
 

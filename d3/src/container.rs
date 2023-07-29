@@ -19,7 +19,7 @@ impl Container {
     pub async fn try_init() -> Result<()> {
         if !unsafe { DOM_INIT } {
             let layout_css = include_str!("container.css");
-            inject_css(layout_css)?;
+            inject_css(None, layout_css)?;
             unsafe {
                 DOM_INIT = true;
             }

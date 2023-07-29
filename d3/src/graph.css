@@ -1,8 +1,15 @@
 .graph {
     display: block;
+
     min-width: 300px;
     max-width: 500px;
     height: 150px;
+
+
+    /* min-width: 25vw;
+    max-width: 50vw; */
+    /* width: 25vw;
+    height: 20vh; */
     border: 1px solid #ccc;
     border-radius: 5px;
     flex: 1;
