@@ -38,12 +38,21 @@ pub fn inject_css(id: Option<&str>, css: &str) -> Result<()> {
         .get_elements_by_tag_name("head")
         .item(0)
         .ok_or("Unable to locate head element")?;
-    let style_el = doc.create_element("style")?;
-    if let Some(id) = id {
-        style_el.set_attribute("id", id)?;
-    }
+
+    let style_el = if let Some(id) = id {
+        if let Some(old_el) = doc.get_element_by_id(id) {
+            old_el
+        } else {
+            let style_el = doc.create_element("style")?;
+            style_el.set_attribute("id", id)?;
+            head.append_child(&style_el)?;
+            style_el
+        }
+    } else {
+        doc.create_element("style")?
+    };
+
     style_el.set_inner_html(css);
-    head.append_child(&style_el)?;
     Ok(())
 }
 
