@@ -49,7 +49,8 @@ impl GraphDuration {
 
 #[derive(Clone)]
 pub struct GraphThemeOptions {
-    pub area_color: String,
+    pub area_fill_color: String,
+    pub area_stroke_color: String,
     pub x_axis_color: String,
     pub y_axis_color: String,
     pub title_color: String,
@@ -78,33 +79,39 @@ impl GraphTheme {
         }
     }
     pub fn light_theme_options() -> GraphThemeOptions {
+        let font = "'Consolas', 'Lucida Grande', 'Roboto Mono', 'Source Code Pro', 'Trebuchet'";
         GraphThemeOptions {
-            title_font: String::from("bold 30px sans-serif"),
-            x_axis_font: String::from("20px serif"),
-            y_axis_font: String::from("20px serif"),
+            // title_font: format!("bold 30px {font}"),
+            title_font: format!("30px {font}"),
+            x_axis_font: format!("20px {font}"),
+            y_axis_font: format!("20px {font}"),
             //value_font: String::from("bold 23px sans-serif"),
-            area_color: String::from("blue"),
+            area_fill_color: String::from("rgb(220, 231, 240)"),
+            area_stroke_color: String::from("rgb(17, 125, 187)"),
             x_axis_color: String::from("black"),
             y_axis_color: String::from("black"),
             title_color: String::from("black"),
             //value_color: String::from("black"),
-            y_caption_color: String::from("black"),
-            y_caption_font: String::from("15px sans-serif"),
+            y_caption_color: String::from("#343434"),
+            y_caption_font: String::from("15px {font}"),
         }
     }
     pub fn dark_theme_options() -> GraphThemeOptions {
+        let font = "'Consolas', 'Lucida Grande', 'Roboto Mono', 'Source Code Pro', 'Trebuchet'";
         GraphThemeOptions {
-            title_font: String::from("bold 30px sans-serif"),
-            x_axis_font: String::from("20px serif"),
-            y_axis_font: String::from("20px serif"),
+            // title_font: format!("bold 30px {font}"),
+            title_font: format!("30px {font}"),
+            x_axis_font: format!("20px {font}"),
+            y_axis_font: format!("20px {font}"),
             //value_font: String::from("bold 23px sans-serif"),
-            area_color: String::from("grey"),
+            area_fill_color: String::from("grey"),
+            area_stroke_color: String::from("white"),
             x_axis_color: String::from("white"),
             y_axis_color: String::from("white"),
             title_color: String::from("white"),
             //value_color: String::from("white"),
             y_caption_color: String::from("white"),
-            y_caption_font: String::from("15px sans-serif"),
+            y_caption_font: format!("15px {font}"),
         }
     }
 }
@@ -160,7 +167,7 @@ pub struct Graph {
     x_tick_count: u32,
     y_tick_count: u32,
     y_tick_padding: f64,
-    title: String,
+    title: Option<String>,
     y_caption: String,
     options: Arc<Mutex<GraphThemeOptions>>,
 
@@ -192,7 +199,7 @@ impl Graph {
     pub async fn try_new<T: Into<String>>(
         window: &web_sys::Window,
         container: &Arc<Container>,
-        title: T,
+        title: Option<T>,
         y_caption: T,
         duration: MilliSeconds,
         theme: GraphTheme,
@@ -243,7 +250,7 @@ impl Graph {
             x_tick_count: 10,
             y_tick_count: 10,
             y_tick_padding: 3.0,
-            title: title.into(),
+            title: title.map(|title| title.into()),
             y_caption: y_caption.into(),
             options,
             callbacks: CallbackMap::new(),
@@ -253,7 +260,7 @@ impl Graph {
     }
 
     pub fn set_title<T: Into<String>>(mut self, title: T) -> Self {
-        self.title = title.into();
+        self.title = Some(title.into());
         self
     }
 
@@ -305,8 +312,13 @@ impl Graph {
         self
     }
 
-    pub fn set_area_color<T: Into<String>>(&self, color: T) -> &Self {
-        self.options().area_color = color.into();
+    pub fn set_area_fill_color<T: Into<String>>(&self, color: T) -> &Self {
+        self.options().area_fill_color = color.into();
+        self
+    }
+
+    pub fn set_area_stroke_color<T: Into<String>>(&self, color: T) -> &Self {
+        self.options().area_stroke_color = color.into();
         self
     }
 
@@ -451,8 +463,18 @@ impl Graph {
     //     self.options().value_font.clone()
     // }
 
-    pub fn area_color(&self) -> String {
-        self.options().area_color.clone()
+    pub fn area_fill_color(&self) -> String {
+        self.options().area_fill_color.clone()
+    }
+    pub fn area_stroke_color(&self) -> String {
+        self.options().area_stroke_color.clone()
+    }
+    pub fn area_color(&self) -> (String, String) {
+        let options = self.options();
+        (
+            options.area_fill_color.clone(),
+            options.area_stroke_color.clone(),
+        )
     }
     pub fn title_font(&self) -> String {
         self.options().title_font.clone()
@@ -582,7 +604,11 @@ impl Graph {
         context.set_text_baseline("top");
         context.set_font(&title_font);
         context.set_fill_style(&JsValue::from(&title_color));
-        let metrics = context.measure_text(&format!("{} {}", &self.title, &self.value()))?;
+        let metrics = if let Some(title) = self.title.as_ref() {
+            context.measure_text(&format!("{} {}", title, self.value()))?
+        } else {
+            context.measure_text(&self.value())?
+        };
 
         {
             self.inner().title_box_height = metrics.actual_bounding_box_ascent().abs()
@@ -621,13 +647,12 @@ impl Graph {
                 let inner = self.inner();
                 -(inner.margin_top as f64 + inner.title_box_height + inner.title_padding_y / 2.0)
             };
-            context.fill_text(
-                //&self.title,
-                //self.width() as f64 / 2.0,
-                &format!("{} {}", &self.title, text),
-                0.0,
-                y,
-            )?;
+
+            if let Some(title) = self.title.as_ref() {
+                context.fill_text(&format!("{} {}", title, text), 0.0, y)?;
+            } else {
+                context.fill_text(text, 0.0, y)?;
+            }
         }
         // context.set_text_align("right");
         // context.set_font(&value_font);
@@ -714,7 +739,7 @@ impl Graph {
 
         self.update_axis_and_title(text)?;
 
-        let area_color = self.area_color();
+        let (area_fill_color, area_stroke_color) = self.area_color();
 
         let context = &self.context;
         context.begin_path();
@@ -722,9 +747,10 @@ impl Graph {
             .as_ref()
             .unwrap()
             .call1(&JsValue::NULL, &self.data)?;
-        context.set_fill_style(&JsValue::from(&area_color));
-        context.set_stroke_style(&JsValue::from(&area_color));
+        context.set_fill_style(&JsValue::from(&area_fill_color));
+        context.set_stroke_style(&JsValue::from(&area_stroke_color));
         context.fill();
+        context.stroke();
         Ok(())
     }
 }
