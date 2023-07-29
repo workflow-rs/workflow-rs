@@ -189,11 +189,11 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
             }
         }
 
-        impl std::fmt::Display for #enum_name{
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "{}", self.as_str())
-            }
-        }
+        // impl std::fmt::Display for #enum_name{
+        //     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        //         write!(f, "{}", self.as_str())
+        //     }
+        // }
 
     };
 
