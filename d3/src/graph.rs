@@ -146,6 +146,7 @@ struct Inner {
     min_date: js_sys::Date,
     value: String,
     title_box_height: f64,
+    x_tick_width: f64,
     title_padding_y: f64,
     duration: MilliSeconds,
 }
@@ -243,6 +244,7 @@ impl Graph {
                 value: "".into(),
                 title_box_height: 20.0,
                 title_padding_y: 20.0,
+                x_tick_width: 20.0,
                 duration,
             })),
             x: Arc::new(D3::scale_time()),
@@ -461,6 +463,10 @@ impl Graph {
         self.inner().title_box_height
     }
 
+    pub fn x_tick_width(&self) -> f64 {
+        self.inner().x_tick_width
+    }
+
     // pub fn value_color(&self) -> String {
     //     self.options().value_color.clone()
     // }
@@ -488,6 +494,12 @@ impl Graph {
     pub fn title_color(&self) -> String {
         self.options().title_color.clone()
     }
+    pub fn x_axis_font(&self) -> String {
+        self.options().x_axis_font.clone()
+    }
+    pub fn x_axis_color(&self) -> String {
+        self.options().x_axis_color.clone()
+    }
     pub fn y_caption_font(&self) -> String {
         self.options().y_caption_font.clone()
     }
@@ -496,15 +508,19 @@ impl Graph {
     }
 
     fn x_axis(&self) -> Result<()> {
+        let width = self.width();
         let tick_count = self.x_tick_count;
         let tick_size = self.x_tick_size;
+        let tick_width = self.x_tick_width() as f32;
+        let count = (width / tick_width) as u32;
+        //let ticks = self.x.ticks(count);
         let ticks = self.x.ticks(tick_count);
+        let count2 = ticks.length();
         let tick_format = self.x.tick_format();
         let context = &self.context;
         //workflow_log::log_info!("tick_format:::: {:?}", tick_format);
         let options = self.options();
         let height = self.height();
-        let width = self.width();
 
         context.begin_path();
         context.move_to(0.0, height as f64);
@@ -532,6 +548,12 @@ impl Graph {
         context.set_text_baseline("top");
         context.set_fill_style(&JsValue::from(&options.x_axis_color));
         context.set_font(&options.x_axis_font);
+        context.fill_text(
+            &format!("{tick_width}/{width}/{count}/{count2}"),
+            150.0,
+            40.0,
+        )?;
+        let mut last_end = 0.0;
         for tick in ticks {
             let x = self
                 .x
@@ -539,12 +561,18 @@ impl Graph {
                 .unwrap()
                 .as_f64()
                 .unwrap();
+            if x < last_end {
+                continue;
+            }
+
             let text = tick_format
                 .call1(&JsValue::NULL, &tick)
                 .unwrap()
                 .as_string()
                 .unwrap();
             context.fill_text(&text, x, height as f64 + tick_size)?;
+            let m = context.measure_text(&text).unwrap();
+            last_end = x + m.width() + 2.0;
         }
 
         Ok(())
@@ -605,6 +633,7 @@ impl Graph {
         let context = &self.context;
         let title_font = self.title_font();
         let title_color = self.title_color();
+        let x_axis_font = self.x_axis_font();
 
         context.save();
         context.set_text_baseline("top");
@@ -616,9 +645,14 @@ impl Graph {
             context.measure_text(&self.value())?
         };
 
+        context.set_font(&x_axis_font);
+        let x_metrics = context.measure_text("_00:00PM_")?;
+
         {
-            self.inner().title_box_height = metrics.actual_bounding_box_ascent().abs()
+            let mut inner = self.inner();
+            inner.title_box_height = metrics.actual_bounding_box_ascent().abs()
                 + metrics.actual_bounding_box_descent().abs();
+            inner.x_tick_width = x_metrics.width();
         }
 
         context.restore();
