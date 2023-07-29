@@ -198,6 +198,7 @@ impl Graph {
 
     pub async fn replace_graph_style(id: &str, css: &str) -> Result<()> {
         inject_css(Some(id), css)?;
+        window().dispatch_event(&web_sys::Event::new("resize")?)?;
         Ok(())
     }
 
