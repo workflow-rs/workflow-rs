@@ -1,5 +1,5 @@
 //!
-//! Sendable NewType for automatic Send marker tagging of JS primitives.
+//! Sendable NewType for automatic Send marker wrapping of JS primitives.
 //!
 
 use std::fmt::Display;

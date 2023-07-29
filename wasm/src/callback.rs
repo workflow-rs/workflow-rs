@@ -129,6 +129,7 @@ where
         }
     }
 }
+
 macro_rules! create_fns {
     ($(
         ($name: ident, $($var:ident)*)
@@ -144,6 +145,7 @@ macro_rules! create_fns {
 
     )*)
 }
+
 impl<T> Callback<T> {
     create_fns! {
         (new_with_args_0, )
