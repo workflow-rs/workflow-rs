@@ -2,7 +2,7 @@ use thiserror::Error;
 use wasm_bindgen::prelude::*;
 use workflow_core::sendable::*;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum Error {
     #[error("{0}")]
     Custom(String),

@@ -8,7 +8,9 @@ use crate::imports::*;
 // use std::sync::MutexGuard;
 use web_sys::{Element, HtmlCanvasElement};
 use workflow_dom::inject::*;
+use workflow_log::log_error;
 // use workflow_wasm::callback::AsCallback;
+use workflow_core::time::Duration;
 use workflow_wasm::object::ObjectTrait;
 // use workflow_wasm::prelude::CallbackMap;
 
@@ -19,15 +21,15 @@ pub const MINUTES: u64 = SECONDS * 60;
 pub const HOURS: u64 = MINUTES * 60;
 pub const DAYS: u64 = HOURS * 24;
 
-pub type MilliSeconds = u64;
+// pub type MilliSeconds = u64;
 
 #[derive(Clone)]
 pub struct GraphDuration;
 
 impl GraphDuration {
-    pub fn parse<T: Into<String>>(value: T) -> std::result::Result<MilliSeconds, Error> {
+    pub fn parse<T: Into<String>>(value: T) -> std::result::Result<Duration, Error> {
         let value: String = value.into();
-        let timeline = if value.contains('s') {
+        let millis = if value.contains('s') {
             let seconds = value.replace('s', "").parse::<u64>()?;
             seconds * SECONDS
         } else if value.contains('m') {
@@ -43,7 +45,7 @@ impl GraphDuration {
             return Err(Error::Custom(format!("Invalid timeline str: {value:?}")));
         };
 
-        Ok(timeline)
+        Ok(Duration::from_millis(millis))
     }
 }
 
@@ -143,12 +145,13 @@ struct Inner {
     margin_right: f32,
     margin_top: f32,
     margin_bottom: f32,
-    min_date: js_sys::Date,
+    // min_date: js_sys::Date,
     value: String,
     title_box_height: f64,
     x_tick_width: f64,
     title_padding_y: f64,
-    duration: MilliSeconds,
+    duration: Duration,
+    retention: Duration,
 }
 
 #[derive(Clone)]
@@ -203,12 +206,14 @@ impl Graph {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn try_new<T: Into<String>>(
         window: &web_sys::Window,
         container: &Arc<Container>,
         title: Option<T>,
         y_caption: T,
-        duration: MilliSeconds,
+        duration: Duration,
+        retention: Duration,
         theme: GraphTheme,
         margin: Margin,
     ) -> Result<Graph> {
@@ -240,12 +245,13 @@ impl Graph {
                 margin_right: margin.right,
                 margin_top: margin.top,
                 margin_bottom: margin.bottom,
-                min_date: js_sys::Date::new_0(),
+                // min_date: js_sys::Date::new_0(),
                 value: "".into(),
                 title_box_height: 20.0,
                 title_padding_y: 20.0,
                 x_tick_width: 20.0,
                 duration,
+                retention,
             })),
             x: Arc::new(D3::scale_time()),
             y: Arc::new(D3::scale_linear()),
@@ -363,7 +369,7 @@ impl Graph {
         Ok(())
     }
 
-    pub fn set_duration(&self, duration: MilliSeconds) -> &Self {
+    pub fn set_duration(&self, duration: Duration) -> &Self {
         self.inner().duration = duration;
         self
     }
@@ -451,9 +457,9 @@ impl Graph {
     pub fn width(&self) -> f32 {
         self.inner().width
     }
-    pub fn min_date(&self) -> js_sys::Date {
-        self.inner().min_date.clone()
-    }
+    // pub fn min_date(&self) -> js_sys::Date {
+    //     self.inner().min_date.clone()
+    // }
 
     pub fn value(&self) -> String {
         self.inner().value.clone()
@@ -511,11 +517,11 @@ impl Graph {
         let width = self.width();
         let tick_count = self.x_tick_count;
         let tick_size = self.x_tick_size;
-        let tick_width = self.x_tick_width() as f32;
-        let count = (width / tick_width) as u32;
+        // let tick_width = self.x_tick_width() as f32;
+        // let count = (width / tick_width) as u32;
         //let ticks = self.x.ticks(count);
         let ticks = self.x.ticks(tick_count);
-        let count2 = ticks.length();
+        // let count2 = ticks.length();
         let tick_format = self.x.tick_format();
         let context = &self.context;
         //workflow_log::log_info!("tick_format:::: {:?}", tick_format);
@@ -557,7 +563,7 @@ impl Graph {
             150.0,
             40.0,
         )?;
-        
+
         */
 
         let mut last_end = 0.0;
@@ -730,12 +736,12 @@ impl Graph {
         let date1 = js_sys::Date::new_0();
         let time = date1.get_time();
         let date2 = js_sys::Date::new(&time.into());
-        let mut inner = self.inner();
-        date2.set_time(time - inner.duration as f64);
+        let inner = self.inner();
+        date2.set_time(time - inner.duration.as_millis() as f64);
         let x_domain = js_sys::Array::new();
         x_domain.push(&date2);
         x_domain.push(&date1);
-        inner.min_date = date2;
+        // inner.min_date.set_time(time - (inner.retention.as_millis() as f64) * 60.0 * 60.0 * 1000.0);
 
         self.x.set_domain_array(x_domain);
         Ok(())
@@ -753,6 +759,42 @@ impl Graph {
         Ok(())
     }
 
+    fn handle_retention(&self) -> Result<()> {
+        let limit = js_sys::Date::new_0();
+        limit.set_time(limit.get_time() - self.inner().retention.as_millis() as f64);
+
+        loop {
+            let first_item_date = self
+                .data
+                .at(0)
+                .dyn_into::<js_sys::Object>()?
+                .get("date")?
+                .dyn_into::<js_sys::Date>()?;
+            if first_item_date.lt(&limit) {
+                self.data.shift();
+            } else {
+                break;
+            }
+
+            // let item = self.data.at(0);
+
+            // if let Ok(item) = item.dyn_into::<js_sys::Object>() {
+            //     if let Ok(item_date_v) = item.get("date") {
+            //         if let Ok(item_date) = item_date_v.dyn_into::<js_sys::Date>() {
+            //             //workflow_log::log_info!("item_date: {item_date:?} min_date:{min_date:?}");
+            //             if item_date.lt(&min_date) {
+            //                 self.data.shift();
+            //                 continue;
+            //             }
+            //         }
+            //     }
+            // }
+            // break;
+        }
+
+        Ok(())
+    }
+
     pub async fn ingest(&self, time: f64, value: Sendable<JsValue>, text: &str) -> Result<()> {
         // TODO - ingest into graph
         //self.element().set_inner_html(format!("{} -> {:?}", time, value).as_str());
@@ -764,25 +806,12 @@ impl Graph {
         //let _ = item.set("value", &(js_sys::Math::random() * 100.0).into());
         //let value: JsValue = (js_sys::Math::random() * 100000.0).into();
         let _ = item.set("value", &value);
-        workflow_log::log_info!("item: {item:?}");
+        // workflow_log::log_info!("item: {item:?}");
         self.data.push(&item.into());
-        let min_date = self.min_date();
 
-        loop {
-            let item = self.data.at(0);
-            if let Ok(item) = item.dyn_into::<js_sys::Object>() {
-                if let Ok(item_date_v) = item.get("date") {
-                    if let Ok(item_date) = item_date_v.dyn_into::<js_sys::Date>() {
-                        //workflow_log::log_info!("item_date: {item_date:?} min_date:{min_date:?}");
-                        if item_date.lt(&min_date) {
-                            self.data.shift();
-                            continue;
-                        }
-                    }
-                }
-            }
-            break;
-        }
+        self.handle_retention().unwrap_or_else(|err| {
+            log_error!("Error handling retention: {err:?}");
+        });
 
         self.update_axis_and_title(text)?;
 

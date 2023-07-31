@@ -17,6 +17,9 @@ pub enum Error {
 
     #[error(transparent)]
     CallbackError(#[from] workflow_wasm::callback::CallbackError),
+
+    #[error(transparent)]
+    Wasm(#[from] workflow_wasm::error::Error),
 }
 
 impl From<Error> for JsValue {
