@@ -10,16 +10,11 @@ use web_sys::{Element, HtmlCanvasElement};
 use workflow_dom::inject::*;
 use workflow_log::log_error;
 // use workflow_wasm::callback::AsCallback;
-use workflow_core::time::Duration;
+use workflow_core::time::*;
 use workflow_wasm::object::ObjectTrait;
 // use workflow_wasm::prelude::CallbackMap;
 
 static mut DOM_INIT: bool = false;
-
-pub const SECONDS: u64 = 1000;
-pub const MINUTES: u64 = SECONDS * 60;
-pub const HOURS: u64 = MINUTES * 60;
-pub const DAYS: u64 = HOURS * 24;
 
 // pub type MilliSeconds = u64;
 
@@ -65,11 +60,34 @@ pub struct GraphThemeOptions {
     // pub value_font: String,
 }
 
+impl GraphThemeOptions {
+    pub fn new(
+        font_name: &str,
+        title_color: &str,
+        fill_color: &str,
+        stroke_color: &str,
+        axis_color: &str,
+    ) -> GraphThemeOptions {
+        GraphThemeOptions {
+            title_font: format!("30px {font_name}"),
+            x_axis_font: format!("20px {font_name}"),
+            y_axis_font: format!("20px {font_name}"),
+            area_fill_color: fill_color.into(),
+            area_stroke_color: stroke_color.into(),
+            x_axis_color: axis_color.into(),
+            y_axis_color: axis_color.into(),
+            title_color: title_color.into(),
+            y_caption_color: axis_color.into(),
+            y_caption_font: format!("15px {font_name}"),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub enum GraphTheme {
     Light,
     Dark,
-    Custom(Box<GraphThemeOptions>),
+    Custom(GraphThemeOptions),
 }
 
 impl GraphTheme {
@@ -77,7 +95,7 @@ impl GraphTheme {
         match self {
             Self::Light => Self::light_theme_options(),
             Self::Dark => Self::dark_theme_options(),
-            Self::Custom(theme) => *theme,
+            Self::Custom(theme) => theme,
         }
     }
     pub fn light_theme_options() -> GraphThemeOptions {
@@ -741,7 +759,6 @@ impl Graph {
         let x_domain = js_sys::Array::new();
         x_domain.push(&date2);
         x_domain.push(&date1);
-        // inner.min_date.set_time(time - (inner.retention.as_millis() as f64) * 60.0 * 60.0 * 1000.0);
 
         self.x.set_domain_array(x_domain);
         Ok(())

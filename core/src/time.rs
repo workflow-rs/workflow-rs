@@ -9,6 +9,11 @@ use cfg_if::cfg_if;
 /// re-export of [`instant`] crate supporting native and WASM implementations
 pub use instant::*;
 
+pub const SECONDS: u64 = 1000;
+pub const MINUTES: u64 = SECONDS * 60;
+pub const HOURS: u64 = MINUTES * 60;
+pub const DAYS: u64 = HOURS * 24;
+
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
         use js_sys::Date;
