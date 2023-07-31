@@ -568,21 +568,17 @@ impl Graph {
         context.set_stroke_style(&JsValue::from(&options.x_axis_color));
         context.stroke();
 
-        /*
-
         // used for debugging
 
         context.set_text_align("center");
         context.set_text_baseline("top");
         context.set_fill_style(&JsValue::from(&options.x_axis_color));
         context.set_font(&options.x_axis_font);
-        context.fill_text(
-            &format!("{tick_width}/{width}/{count}/{count2}"),
-            150.0,
-            40.0,
-        )?;
-
-        */
+        // context.fill_text(
+        //     &format!("{tick_width}/{width}/{count}/{count2}"),
+        //     150.0,
+        //     40.0,
+        // )?;
 
         let mut last_end = 0.0;
         for tick in ticks {
