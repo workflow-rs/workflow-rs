@@ -21,7 +21,6 @@ cfg_if::cfg_if! {
         pub mod panic;
         pub mod prelude;
         pub mod promise;
-        pub mod timers;
         pub mod jsvalue;
         pub mod jserror;
         pub mod object;

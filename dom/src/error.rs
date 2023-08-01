@@ -4,7 +4,8 @@
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 use workflow_core::channel::RecvError;
-use workflow_core::sendable::Sendable;
+// use workflow_core::sendable::Sendable;
+use workflow_wasm::jserror::*;
 
 /// Errors return by the [`workflow_dom`](super) module
 #[derive(Error, Debug, Clone)]
@@ -13,8 +14,10 @@ pub enum Error {
     #[error("{0}")]
     String(String),
     /// Error containing [`wasm_bindgen::JsValue`] value
-    #[error("{0:?}")]
-    JsValue(Sendable<JsValue>),
+    // #[error("{0:?}")]
+    // JsValue(Sendable<JsValue>),
+    #[error("{0}")]
+    JsValue(JsErrorData),
     #[error("{0}")]
     RecvError(RecvError), //#[from] workflow_core::channel::RecvError),
 }
@@ -35,8 +38,8 @@ impl From<&str> for Error {
 }
 
 impl From<JsValue> for Error {
-    fn from(v: JsValue) -> Self {
-        Self::JsValue(Sendable(v))
+    fn from(error: JsValue) -> Self {
+        Self::JsValue(error.into())
     }
 }
 

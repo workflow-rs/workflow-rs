@@ -24,6 +24,8 @@ use std::path::{Path, PathBuf};
 use wasm_bindgen::prelude::*;
 use workflow_core::dirs;
 use workflow_core::runtime;
+#[allow(unused_imports)]
+use workflow_wasm::jserror::*;
 // use workflow_wasm::object::ObjectTrait;
 // use js_sys::Array;
 
@@ -51,28 +53,35 @@ extern "C" {
     pub fn readdir_sync(path: &str, callback: js_sys::Function);
 
     #[wasm_bindgen(catch, js_name = readdir, js_namespace = fs_promises)]
-    async fn fs_readdir(path: &str) -> Result<JsValue>;
+    async fn fs_readdir(path: &str) -> std::result::Result<JsValue, JsValue>;
 
     #[wasm_bindgen(catch, js_name = readdir, js_namespace = fs_promises)]
-    async fn fs_readdir_with_options(path: &str, options: Object) -> Result<JsValue>;
+    async fn fs_readdir_with_options(
+        path: &str,
+        options: Object,
+    ) -> std::result::Result<JsValue, JsValue>;
 
     #[wasm_bindgen(catch, js_name = existsSync, js_namespace = fs)]
-    fn fs_exists_sync(path: &str) -> Result<bool>;
+    fn fs_exists_sync(path: &str) -> std::result::Result<bool, JsValue>;
 
     #[wasm_bindgen(catch, js_name = writeFileSync, js_namespace = fs)]
-    fn fs_write_file_sync(path: &str, data: &str, options: Object) -> Result<()>;
+    fn fs_write_file_sync(
+        path: &str,
+        data: &str,
+        options: Object,
+    ) -> std::result::Result<(), JsValue>;
 
     #[wasm_bindgen(catch, js_name = readFileSync, js_namespace = fs)]
-    fn fs_read_file_sync(path: &str, options: Object) -> Result<JsValue>;
+    fn fs_read_file_sync(path: &str, options: Object) -> std::result::Result<JsValue, JsValue>;
 
     #[wasm_bindgen(catch, js_name = mkdirSync, js_namespace = fs)]
-    fn fs_mkdir_sync(path: &str, options: Object) -> Result<()>;
+    fn fs_mkdir_sync(path: &str, options: Object) -> std::result::Result<(), JsValue>;
 
     #[wasm_bindgen(catch, js_name = unlinkSync, js_namespace = fs)]
-    fn fs_unlink_sync(path: &str) -> Result<()>;
+    fn fs_unlink_sync(path: &str) -> std::result::Result<(), JsValue>;
 
     #[wasm_bindgen(catch, js_name = statSync, js_namespace = fs)]
-    fn fs_stat_sync(path: &str) -> Result<JsValue>;
+    fn fs_stat_sync(path: &str) -> std::result::Result<JsValue, JsValue>;
 }
 
 pub fn local_storage() -> web_sys::Storage {
@@ -166,7 +175,7 @@ cfg_if! {
         }
 
 
-        async fn fetch_metadata(path: &str, entries : &mut [DirEntry]) -> Result<()> {
+        async fn fetch_metadata(path: &str, entries : &mut [DirEntry]) -> std::result::Result<(),JsErrorData> {
             for entry in entries.iter_mut() {
                 let path = format!("{}/{}",path, entry.file_name());
                 let metadata = fs_stat_sync(&path).unwrap();
@@ -176,14 +185,16 @@ cfg_if! {
             Ok(())
         }
 
-        async fn readdir_impl(path: &Path, metadata : bool) -> std::result::Result<Vec<DirEntry>,String> {
+        async fn readdir_impl(path: &Path, metadata : bool) -> std::result::Result<Vec<DirEntry>,JsErrorData> {
+        // async fn readdir_impl(path: &Path, metadata : bool) -> Result<Vec<DirEntry>> {
             let path_string = path.to_string_lossy().to_string();
-            let files = fs_readdir(&path_string).await.map_err(|e|e.to_string())?;
+            // let files = fs_readdir(&path_string).await.map_err(|e|e.to_string())?;
+            let files = fs_readdir(&path_string).await?;
             let list = files.dyn_into::<js_sys::Array>().expect("readdir: expecting resulting entries to be an array");
             let mut entries = list.to_vec().into_iter().map(|s| s.into()).collect::<Vec<DirEntry>>();
 
             if metadata {
-                fetch_metadata(&path_string, &mut entries).await.map_err(|e|e.to_string())?;
+                fetch_metadata(&path_string, &mut entries).await?; //.map_err(|e|e.to_string())?;
             }
 
             Ok(entries)

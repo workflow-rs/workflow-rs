@@ -322,10 +322,13 @@ impl Inner {
             let this = self.clone();
             let error_sender = termination.sender.clone();
             let error = callback!(move |err: JsValue| {
-                let msg = err.error_message();
-                this.events.sender.try_send(Event::Error(msg.clone())).ok();
+                let msg = JsErrorData::from(err);
+                this.events
+                    .sender
+                    .try_send(Event::Error(msg.to_string()))
+                    .ok();
                 error_sender
-                    .try_send(Termination::Error(msg))
+                    .try_send(Termination::Error(msg.to_string()))
                     .expect("unable to send close notification");
             });
             proc.on("error", error.as_ref());

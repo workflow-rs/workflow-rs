@@ -5,7 +5,8 @@
 use base64::DecodeError;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
-use workflow_core::sendable::Sendable;
+// use workflow_core::sendable::Sendable;
+use workflow_wasm::jserror::*;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -15,8 +16,10 @@ pub enum Error {
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
 
-    #[error("JavaScript error: {0:?}")]
-    JsValue(Sendable<JsValue>),
+    // #[error("JavaScript error: {0:?}")]
+    // JsValue(Sendable<JsValue>),
+    #[error("{0}")]
+    JsValue(JsErrorData),
 
     #[error("Base64 decode error: {0}")]
     DecodeError(DecodeError),
@@ -42,13 +45,31 @@ pub enum Error {
 
 impl From<Error> for JsValue {
     fn from(err: Error) -> Self {
-        JsValue::from_str(&err.to_string())
+        match err {
+            Error::JsValue(js_err) => js_err.into(),
+            _ => err.into(),
+        }
     }
 }
+
+// impl From<Error> for JsErrorData {
+//     fn from(err: Error) -> Self {
+//         match err {
+//             Error::JsValue(js_err) => js_err.into(),
+//             _ => err.into(),
+//         }
+//     }
+// }
 
 impl From<JsValue> for Error {
     fn from(error: JsValue) -> Error {
         Error::JsValue(error.into())
+    }
+}
+
+impl From<JsErrorData> for Error {
+    fn from(error: JsErrorData) -> Error {
+        Error::JsValue(error)
     }
 }
 
@@ -61,5 +82,14 @@ impl From<DecodeError> for Error {
 impl From<String> for Error {
     fn from(error: String) -> Error {
         Error::Custom(error)
+    }
+}
+
+impl Error {
+    pub fn code(&self) -> Option<&str> {
+        match self {
+            Error::JsValue(js_err) => js_err.code().as_deref(),
+            _ => None,
+        }
     }
 }

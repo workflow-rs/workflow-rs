@@ -1,6 +1,7 @@
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
-use workflow_core::sendable::*;
+// use workflow_core::sendable::*;
+use crate::jserror::*;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {
@@ -31,8 +32,10 @@ pub enum Error {
     #[error(transparent)]
     FasterHex(#[from] faster_hex::Error),
 
-    #[error("{0:?}")]
-    JsValue(Sendable<JsValue>),
+    // #[error("{0:?}")]
+    // JsValue(Sendable<JsValue>),
+    #[error("{0}")]
+    JsValue(JsErrorData),
 
     #[error("WASM ABI: {0}")]
     Abi(String),
@@ -66,8 +69,8 @@ impl From<Error> for JsValue {
 }
 
 impl From<JsValue> for Error {
-    fn from(value: JsValue) -> Self {
-        Error::JsValue(Sendable::from(value))
+    fn from(error: JsValue) -> Self {
+        Error::JsValue(error.into())
     }
 }
 

@@ -513,7 +513,7 @@ impl Xterm {
                         let clipboard = nw_sys::clipboard::get();
                         clipboard.set(&text);
                     } else if let Err(err) = clipboard::write_text(&text).await {
-                        log_error!("{}", err.error_message());
+                        log_error!("{:?}", JsErrorData::from(err));
                     }
 
                     if let Some(handler) = self.event_handler() {
