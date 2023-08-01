@@ -699,8 +699,13 @@ impl Terminal {
         self.running.load(Ordering::SeqCst)
     }
 
-    pub async fn exec(self: &Arc<Terminal>, cmd: String) -> Result<()> {
-        if let Err(err) = self.handler.clone().digest(self.clone(), cmd).await {
+    pub async fn exec<S: ToString>(self: &Arc<Terminal>, cmd: S) -> Result<()> {
+        if let Err(err) = self
+            .handler
+            .clone()
+            .digest(self.clone(), cmd.to_string())
+            .await
+        {
             self.writeln(err);
         }
         if self.terminate.load(Ordering::SeqCst) {
