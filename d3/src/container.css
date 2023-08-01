@@ -1,9 +1,5 @@
 .layout {
     width : 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: row;
-    align-content: flex-start;
-    flex-wrap: wrap;
+    height: calc(100vh - 55px);
 }
 
