@@ -87,7 +87,7 @@ impl GraphThemeOptions {
 pub enum GraphTheme {
     Light,
     Dark,
-    Custom(GraphThemeOptions),
+    Custom(Box<GraphThemeOptions>),
 }
 
 impl GraphTheme {
@@ -95,7 +95,7 @@ impl GraphTheme {
         match self {
             Self::Light => Self::light_theme_options(),
             Self::Dark => Self::dark_theme_options(),
-            Self::Custom(theme) => theme,
+            Self::Custom(theme) => *theme,
         }
     }
     pub fn light_theme_options() -> GraphThemeOptions {
