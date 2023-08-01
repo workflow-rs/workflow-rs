@@ -11,6 +11,7 @@ use crate::result::Result;
 use crate::CrLf;
 use cfg_if::cfg_if;
 use futures::*;
+pub use pad::PadStr;
 use regex::Regex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, LockResult, Mutex, MutexGuard};
@@ -406,6 +407,32 @@ impl Terminal {
         textwrap::wrap(text.into().crlf().as_str(), width_or_options.into())
             .into_iter()
             .for_each(|line| self.writeln(line));
+    }
+
+    pub fn help<S: ToString, H: ToString>(
+        &self,
+        list: &[(S, H)],
+        separator: Option<&str>,
+    ) -> Result<()> {
+        let mut list = list
+            .iter()
+            .map(|(verb, help)| (verb.to_string(), help.to_string()))
+            .collect::<Vec<_>>();
+        list.sort_by_key(|(verb, _)| verb.to_string());
+        let len = list.iter().map(|(c, _)| c.len()).fold(0, |a, b| a.max(b)) + 2;
+        self.writeln("");
+        for (verb, help) in list {
+            self.writeln(format!(
+                "{:>4} {} {} {}",
+                "",
+                verb.pad_to_width(len),
+                separator.unwrap_or(""),
+                help
+            ));
+        }
+        self.writeln("");
+
+        Ok(())
     }
 
     /// Get a clone of Arc of the underlying terminal instance
