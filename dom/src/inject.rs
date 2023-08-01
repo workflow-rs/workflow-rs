@@ -49,7 +49,9 @@ pub fn inject_css(id: Option<&str>, css: &str) -> Result<()> {
             style_el
         }
     } else {
-        doc.create_element("style")?
+        let style_el = doc.create_element("style")?;
+        head.append_child(&style_el)?;
+        style_el
     };
 
     style_el.set_inner_html(css);
