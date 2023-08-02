@@ -28,6 +28,8 @@ pub struct Options {
     pub disable_clipboard_handling: bool,
     // Default font size
     pub font_size: Option<f64>,
+    // Default scrollback limit
+    pub scrollback: Option<u32>,
 }
 
 impl Default for Options {
@@ -37,6 +39,7 @@ impl Default for Options {
             element: TargetElement::Body,
             disable_clipboard_handling: false,
             font_size: None,
+            scrollback: Some(2048),
         }
     }
 }
@@ -50,6 +53,12 @@ impl Options {
     /// Set prompt string
     pub fn with_prompt(mut self, prompt: &str) -> Self {
         self.prompt = Some(prompt.into());
+        self
+    }
+
+    /// Set scrollback limit
+    pub fn with_scrollback(mut self, scrollback: u32) -> Self {
+        self.scrollback = Some(scrollback);
         self
     }
 
