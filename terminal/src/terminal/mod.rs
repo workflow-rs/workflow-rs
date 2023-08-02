@@ -416,19 +416,35 @@ impl Terminal {
     ) -> Result<()> {
         let mut list = list
             .iter()
-            .map(|(verb, help)| (verb.to_string(), help.to_string()))
+            .map(|(cmd, help)| (cmd.to_string(), help.to_string()))
             .collect::<Vec<_>>();
-        list.sort_by_key(|(verb, _)| verb.to_string());
-        let len = list.iter().map(|(c, _)| c.len()).fold(0, |a, b| a.max(b)) + 2;
+        list.sort_by_key(|(cmd, _)| cmd.to_string());
+        let separator = separator.unwrap_or(" ");
+        let term_width: usize = self.cols().unwrap_or(80);
+        let cmd_width = list.iter().map(|(c, _)| c.len()).fold(0, |a, b| a.max(b)) + 2;
+        let help_width = term_width - cmd_width - 2 - 4 - separator.len();
+        let cmd_space = "".pad_to_width(cmd_width);
         self.writeln("");
-        for (verb, help) in list {
-            self.writeln(format!(
-                "{:>4} {} {} {}",
-                "",
-                verb.pad_to_width(len),
-                separator.unwrap_or(""),
-                help
-            ));
+        for (cmd, help) in list {
+            let mut first = true;
+            let options =
+                textwrap::Options::new(help_width).line_ending(textwrap::LineEnding::CRLF);
+            textwrap::wrap(help.as_str(), options)
+                .into_iter()
+                .for_each(|line| {
+                    if first {
+                        self.writeln(format!(
+                            "{:>4}{}{}{}",
+                            "",
+                            cmd.pad_to_width(cmd_width),
+                            separator,
+                            line
+                        ));
+                        first = false;
+                    } else {
+                        self.writeln(format!("{:>4}{cmd_space}{}{}", "", separator, line));
+                    }
+                });
         }
         self.writeln("");
 

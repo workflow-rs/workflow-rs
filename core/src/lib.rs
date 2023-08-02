@@ -25,10 +25,10 @@ extern crate self as workflow_core;
 
 pub mod abortable;
 pub mod enums;
+pub mod extensions;
 pub mod prelude;
 pub mod runtime;
 pub mod sendable;
-pub mod traits;
 pub mod utils;
 
 mod native;

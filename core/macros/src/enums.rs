@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use proc_macro2::TokenTree;
+use proc_macro2::{Literal, TokenTree};
 use quote::{quote, ToTokens};
 use std::convert::Into;
 use syn::{parse_macro_input, DeriveInput};
@@ -9,6 +9,7 @@ use workflow_macro_tools::attributes::*;
 #[derive(Debug)]
 struct Enum {
     pub args: Args,
+    pub docs: Vec<Literal>,
     variant: Variant,
 }
 
@@ -84,6 +85,7 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
         }
 
         let enum_instance = Enum {
+            docs,
             args,
             variant: variant.clone(),
         };
@@ -100,6 +102,7 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
         .collect();
 
     let mut descr: Vec<String> = Vec::new();
+    let mut docs: Vec<String> = Vec::new();
     for e in enums.iter() {
         let have_key = e.args.has("default");
         if !have_key {
@@ -109,6 +112,33 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
         } else {
             descr.push(format!("{}", e.variant.ident.clone()));
         }
+
+        if e.docs.is_empty() {
+            docs.push("".to_string());
+        } else {
+            let doc = e
+                .docs
+                .iter()
+                .map(|doc| doc.to_token_stream().to_string())
+                .collect::<Vec<String>>()
+                .join(" ");
+            let collapse_spaces_regex = regex::Regex::new(r"\s+").unwrap();
+            let wrappers = regex::Regex::new(r###"(^\"|\"$)"###).unwrap();
+            let doc = wrappers
+                .replace_all(&doc, "")
+                .replace("\\\"", "\"")
+                .replace("\\'", "'");
+            //let single_quotes = regex::Regex::new(r###"(^\"|\"$)"###).unwrap();
+            // .trim()
+            // .to_string();
+            let doc = collapse_spaces_regex
+                .replace_all(&doc, " ")
+                .trim()
+                .to_string();
+
+            docs.push(doc);
+        }
+        // docs.push
     }
 
     #[cfg(target_os = "solana")]
@@ -159,6 +189,12 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
             pub fn descr(&self) -> &'static str {
                 match self {
                     #( #enum_name::#entries => { #descr.into() }),*
+                }
+            }
+
+            pub fn doc(&self) -> &'static str {
+                match self {
+                    #( #enum_name::#entries => { #docs.into() }),*
                 }
             }
         }
