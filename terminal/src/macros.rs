@@ -3,6 +3,14 @@ use std::sync::Arc;
 use workflow_log::style;
 
 #[inline(always)]
+pub fn tprint_impl<T>(term: T, args: &str)
+where
+    T: Into<Arc<Terminal>>,
+{
+    term.into().write(args);
+}
+
+#[inline(always)]
 pub fn tprintln_impl<T>(term: T, args: &str)
 where
     T: Into<Arc<Terminal>>,
@@ -66,6 +74,17 @@ macro_rules! tprintln {
 
     ($dest:expr, $($arg:tt)*) => {
         $crate::tprintln_impl($dest.deref().clone(), &format_args!($($arg)*).to_string().as_str())
+    };
+}
+
+#[macro_export]
+macro_rules! tprint {
+    ($dest:expr) => {
+        $crate::tprint_impl($dest.as_ref(), &"")
+    };
+
+    ($dest:expr, $($arg:tt)*) => {
+        $crate::tprint_impl($dest.deref().clone(), &format_args!($($arg)*).to_string().as_str())
     };
 }
 

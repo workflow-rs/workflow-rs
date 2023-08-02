@@ -92,7 +92,7 @@ impl Inner {
 
 #[derive(Clone)]
 struct UserInput {
-    prompt: Arc<Mutex<String>>,
+    prompt: Arc<Mutex<Option<String>>>,
     buffer: Arc<Mutex<String>>,
     enabled: Arc<AtomicBool>,
     echo: Arc<AtomicBool>,
@@ -106,7 +106,7 @@ impl UserInput {
     pub fn new() -> Self {
         let (sender, receiver) = unbounded();
         UserInput {
-            prompt: Arc::new(Mutex::new(String::new())),
+            prompt: Arc::new(Mutex::new(None)),
             buffer: Arc::new(Mutex::new(String::new())),
             enabled: Arc::new(AtomicBool::new(false)),
             echo: Arc::new(AtomicBool::new(false)),
@@ -117,7 +117,7 @@ impl UserInput {
         }
     }
 
-    pub fn get_prompt(&self) -> String {
+    pub fn get_prompt(&self) -> Option<String> {
         self.prompt.lock().unwrap().clone()
     }
 
@@ -125,7 +125,7 @@ impl UserInput {
         self.buffer.lock().unwrap().clone()
     }
 
-    pub fn open(&self, echo: bool, kbhit: bool, prompt: String) -> Result<()> {
+    pub fn open(&self, echo: bool, kbhit: bool, prompt: Option<String>) -> Result<()> {
         *self.prompt.lock().unwrap() = prompt;
         self.enabled.store(true, Ordering::SeqCst);
         self.echo.store(echo, Ordering::SeqCst);
@@ -136,7 +136,7 @@ impl UserInput {
 
     pub fn close(&self) -> Result<()> {
         let s = {
-            self.prompt.lock().unwrap().clear();
+            self.prompt.lock().unwrap().take();
             let mut buffer = self.buffer.lock().unwrap();
             let s = buffer.clone();
             buffer.clear();
@@ -153,7 +153,7 @@ impl UserInput {
         &self,
         echo: bool,
         kbhit: bool,
-        prompt: String,
+        prompt: Option<String>,
         term: &Arc<Terminal>,
     ) -> Result<String> {
         self.open(echo, kbhit, prompt)?;
@@ -351,10 +351,12 @@ impl Terminal {
     {
         if self.is_running() {
             if self.user_input.is_enabled() {
-                self.write(format!("{}{}\n\r", ClearLine, s.into()));
-                self.write(self.user_input.get_prompt());
-                if !self.user_input.echo.load(Ordering::SeqCst) {
-                    self.write(self.user_input.get_buffer());
+                if let Some(prompt) = self.user_input.get_prompt() {
+                    self.write(format!("{}{}\n\r", ClearLine, s.into()));
+                    self.write(prompt);
+                    if !self.user_input.echo.load(Ordering::SeqCst) {
+                        self.write(self.user_input.get_buffer());
+                    }
                 }
             } else {
                 self.write(format!("{}\n\r", s.into()));
@@ -527,15 +529,17 @@ impl Terminal {
         self.reset_line_buffer();
         self.term().write(prompt.to_string());
         self.user_input
-            .capture(echo, false, prompt.to_string(), self)
+            .capture(echo, false, Some(prompt.to_string()), self)
             .await
     }
 
-    pub async fn kbhit(self: &Arc<Terminal>, prompt: &str) -> Result<String> {
+    pub async fn kbhit(self: &Arc<Terminal>, prompt: Option<&str>) -> Result<String> {
         self.reset_line_buffer();
-        self.term().write(prompt.to_string());
+        if let Some(prompt) = prompt {
+            self.term().write(prompt.to_string());
+        }
         self.user_input
-            .capture(true, true, prompt.to_string(), self)
+            .capture(true, true, prompt.map(String::from), self)
             .await
     }
 
