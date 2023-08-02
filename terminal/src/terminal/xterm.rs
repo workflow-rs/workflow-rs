@@ -148,6 +148,7 @@ impl ResizeObserverInfo {
 
 pub struct XtermOptions {
     pub font_size: Option<f64>,
+    pub scrollback: Option<u32>,
 }
 
 ///
@@ -203,6 +204,7 @@ impl Xterm {
         parent.append_child(&element)?;
         let defaults = XtermOptions {
             font_size: options.font_size,
+            scrollback: options.scrollback,
         };
         let terminal = Xterm {
             element,
@@ -253,6 +255,9 @@ impl Xterm {
         ]);
         for (k, v) in opts {
             js_sys::Reflect::set(&options, &k.into(), &v)?;
+        }
+        if let Some(scrollback) = defaults.scrollback {
+            js_sys::Reflect::set(&options, &"scrollback".into(), &JsValue::from(scrollback))?;
         }
 
         let term = XtermImpl::new(options);
