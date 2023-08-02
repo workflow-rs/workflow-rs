@@ -151,7 +151,6 @@ impl WebSocketInterface {
     // pub async fn connect(self: &Arc<Self>, block: bool) -> Result<Option<Listener>> {
     pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
         let (connect_trigger, connect_listener) = oneshot::<Result<()>>();
-        // log_info!("connect block: {}", block);
 
         if let Some(url) = options.url.as_ref() {
             self.set_url(url);
@@ -175,6 +174,8 @@ impl WebSocketInterface {
     ) -> Result<()> {
         let mut inner = self.inner.lock().unwrap();
         if inner.is_some() {
+            log_warning!("WebSocket::connect() called while already initialized");
+
             return Err(Error::AlreadyInitialized);
         }
 
@@ -196,7 +197,7 @@ impl WebSocketInterface {
 
         // - Error
         let onerror = callback!(move |_event: WsErrorEvent| {
-            // log_trace!("error event: {:?}", _event);
+            log_trace!("WS - error event: {:?}", _event);
         });
         ws.set_onerror(Some(onerror.as_ref()));
 
@@ -212,10 +213,11 @@ impl WebSocketInterface {
         // - Close
         let event_sender_ = self.event_channel.sender.clone();
         let onclose = callback!(move |_event: WsCloseEvent| {
+            log_trace!("WS - close event: {:?}", _event);
             event_sender_
                 .try_send(Message::Close)
                 .unwrap_or_else(|err| {
-                    log_trace!("WebSocket unable to try_send() `open` to event channel: `{err}`")
+                    log_trace!("WebSocket unable to try_send() `close` to event channel: `{err}`")
                 });
         });
         ws.set_onclose(Some(onclose.as_ref()));
@@ -322,9 +324,12 @@ impl WebSocketInterface {
                                     self.receiver_channel.sender.send(msg).await.unwrap();
                                 },
                                 Message::Open => {
+                                    // log_info!("WebSocket connected to {}",self.url());
 
                                     // handle handshake failure
                                     if let Err(err) = self.handshake(ws).await {
+                                        log_info!("WebSocket handshake negotiation error: {err}");
+
                                         if options.strategy.is_fallback() {
                                             self.reconnect.store(false, Ordering::SeqCst);
                                         }
@@ -347,8 +352,9 @@ impl WebSocketInterface {
                                     self.receiver_channel.sender.send(msg).await.unwrap();
                                 },
                                 Message::Close => {
+                                    // log_info!("WebSocket disconnecting from {}",self.url());
 
-                                    if let Some(inner) = self.inner.lock().unwrap().as_ref() {
+                                    if let Some(inner) = self.inner.lock().unwrap().take() {
                                         inner.ws.cleanup();
                                     }
 
