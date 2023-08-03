@@ -232,6 +232,10 @@ where
     pub fn close(&self) {
         self.multiplexer.unregister_event_channel(self.id);
     }
+
+    pub async fn recv(&self) -> Result<T, RecvError> {
+        self.receiver.recv().await
+    }
 }
 
 impl<T> From<&Multiplexer<T>> for MultiplexerChannel<T>
