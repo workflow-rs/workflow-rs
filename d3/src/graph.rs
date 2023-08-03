@@ -392,6 +392,10 @@ impl Graph {
         self
     }
 
+    pub fn duration(&self) -> Duration {
+        self.inner().duration
+    }
+
     pub async fn init(&mut self) -> Result<()> {
         self.calculate_title_box()?;
         self.update_size()?;
@@ -760,10 +764,11 @@ impl Graph {
         Ok(())
     }
 
-    fn update_axis_and_title(&self, text: &str) -> Result<()> {
+    fn update_axis_and_title(&self, text: &str, data: &Array) -> Result<()> {
         self.update_x_domain()?;
         let cb = js_sys::Function::new_with_args("d", "return d.value");
-        self.y.set_domain_array(D3::extent(&self.data, cb));
+        // self.y.set_domain_array(D3::extent(&self.data, cb));
+        self.y.set_domain_array(D3::extent(data, cb));
         self.clear()?;
         self.x_axis()?;
         self.y_axis()?;
@@ -788,21 +793,6 @@ impl Graph {
             } else {
                 break;
             }
-
-            // let item = self.data.at(0);
-
-            // if let Ok(item) = item.dyn_into::<js_sys::Object>() {
-            //     if let Ok(item_date_v) = item.get("date") {
-            //         if let Ok(item_date) = item_date_v.dyn_into::<js_sys::Date>() {
-            //             //workflow_log::log_info!("item_date: {item_date:?} min_date:{min_date:?}");
-            //             if item_date.lt(&min_date) {
-            //                 self.data.shift();
-            //                 continue;
-            //             }
-            //         }
-            //     }
-            // }
-            // break;
         }
 
         Ok(())
@@ -826,13 +816,23 @@ impl Graph {
             log_error!("Error handling retention: {err:?}");
         });
 
-        self.update_axis_and_title(text)?;
+        // slice the length of the retained dataset according to the current duration
+        // we assume that ingestion is happening at regular 1 second intervals
+        let len = self.data.length();
+        let secs = self.duration().as_secs() as u32;
+        let data = if let Some(start) = len.checked_sub(secs) {
+            self.data.slice(start, len)
+        } else {
+            self.data.clone()
+        };
+
+        self.update_axis_and_title(text, &data)?;
 
         let (area_fill_color, area_stroke_color) = self.area_color();
 
         let context = &self.context;
         context.begin_path();
-        self.area.call1(&JsValue::NULL, &self.data)?;
+        self.area.call1(&JsValue::NULL, &data)?;
         context.set_fill_style(&JsValue::from(&area_fill_color));
         context.set_stroke_style(&JsValue::from(&area_stroke_color));
         context.fill();
