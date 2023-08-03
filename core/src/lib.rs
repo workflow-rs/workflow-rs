@@ -52,6 +52,9 @@ cfg_if::cfg_if! {
         // time functions and utilities
         pub mod time;
 
+        // timeout function
+        // pub mod timeout;
+
         // environment variable access (native and Node.js abstraction)
         pub mod env;
 

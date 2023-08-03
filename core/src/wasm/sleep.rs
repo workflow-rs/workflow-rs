@@ -5,6 +5,7 @@
 
 #![allow(dead_code)]
 
+use futures::future::FusedFuture;
 use futures::task::AtomicWaker;
 use instant::Duration;
 use std::future::Future;
@@ -130,4 +131,10 @@ impl Drop for Sleep {
 /// `async sleep()` function backed by the JavaScript `createTimeout()`
 pub fn sleep(duration: Duration) -> Sleep {
     Sleep::new(duration)
+}
+
+impl FusedFuture for Sleep {
+    fn is_terminated(&self) -> bool {
+        self.inner.ready.load(Ordering::SeqCst)
+    }
 }
