@@ -178,7 +178,8 @@ where
         }
     }
 
-    pub fn create_channel(&self) -> MultiplexerChannel<T> {
+    /// Create a new multiplexer receiving channel
+    pub fn channel(&self) -> MultiplexerChannel<T> {
         MultiplexerChannel::from(self)
     }
 
