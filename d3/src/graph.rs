@@ -715,7 +715,7 @@ impl Graph {
         self.draw_title(false)?;
         Ok(())
     }
-    
+
     fn draw_axis_captions(&self) -> Result<()> {
         let context = &self.context;
         let y_caption_color = self.y_caption_color();
