@@ -3,20 +3,14 @@
 use crate::container::*;
 use crate::d3::{self, D3};
 use crate::imports::*;
-// #[allow(unused_imports)]
-// use kaspa_cli::metrics::{Metric, MetricsData};
-// use std::sync::MutexGuard;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use web_sys::{Element, HtmlCanvasElement};
+use workflow_core::time::*;
 use workflow_dom::inject::*;
 use workflow_log::log_error;
-// use workflow_wasm::callback::AsCallback;
-use workflow_core::time::*;
 use workflow_wasm::object::ObjectTrait;
-// use workflow_wasm::prelude::CallbackMap;
 
 static mut DOM_INIT: bool = false;
-
-// pub type MilliSeconds = u64;
 
 #[derive(Clone)]
 pub struct GraphDuration;
@@ -192,6 +186,9 @@ pub struct Graph {
     title: Option<String>,
     y_caption: String,
     options: Arc<Mutex<GraphThemeOptions>>,
+    time: Arc<AtomicU64>,
+    redraw: Arc<AtomicBool>,
+    last_draw_time: Arc<AtomicU64>,
 
     /// holds references to [Callback](workflow_wasm::callback::Callback)
     pub callbacks: CallbackMap,
@@ -286,6 +283,9 @@ impl Graph {
             y_caption: y_caption.into(),
             options,
             callbacks: CallbackMap::new(),
+            time: Arc::new(AtomicU64::new(0)),
+            redraw: Arc::new(AtomicBool::new(true)),
+            last_draw_time: Arc::new(AtomicU64::new(0)),
         };
         graph.init().await?;
         Ok(graph)
@@ -384,16 +384,30 @@ impl Graph {
             *self.options() = theme.get_options();
         }
         self.calculate_title_box()?;
+        self.draw()?;
         Ok(())
     }
 
-    pub fn set_duration(&self, duration: Duration) -> &Self {
+    pub fn set_duration(&self, duration: Duration) -> Result<()> {
         self.inner().duration = duration;
-        self
+        self.draw()?;
+        Ok(())
     }
 
     pub fn duration(&self) -> Duration {
         self.inner().duration
+    }
+
+    pub fn redraw(&self) {
+        self.redraw.store(true, Ordering::Relaxed);
+    }
+
+    pub fn needs_redraw(&self) -> bool {
+        let flag = self.redraw.load(Ordering::Relaxed);
+        if flag {
+            self.redraw.store(false, Ordering::Relaxed);
+        }
+        flag
     }
 
     pub async fn init(&mut self) -> Result<()> {
@@ -470,6 +484,7 @@ impl Graph {
         self.x_axis()?;
         self.y_axis()?;
         self.area.y0(height);
+        self.redraw();
         Ok(())
     }
 
@@ -482,6 +497,10 @@ impl Graph {
     // pub fn min_date(&self) -> js_sys::Date {
     //     self.inner().min_date.clone()
     // }
+
+    pub fn set_value<T: Into<String>>(&self, value: T) {
+        self.inner().value = value.into();
+    }
 
     pub fn value(&self) -> String {
         self.inner().value.clone()
@@ -691,10 +710,14 @@ impl Graph {
         Ok(())
     }
 
-    fn build_captions(&self, text: &str) -> Result<()> {
+    fn draw_all_captions(&self) -> Result<()> {
+        self.draw_axis_captions()?;
+        self.draw_title(false)?;
+        Ok(())
+    }
+    
+    fn draw_axis_captions(&self) -> Result<()> {
         let context = &self.context;
-        let title_font = self.title_font();
-        let title_color = self.title_color();
         let y_caption_color = self.y_caption_color();
         let y_caption_font = self.y_caption_font();
         // let value_color = self.value_color();
@@ -708,27 +731,43 @@ impl Graph {
         context.fill_text(&self.y_caption, -10.0, 10.0)?;
         context.restore();
 
+        Ok(())
+    }
+
+    fn draw_title(&self, clear: bool) -> Result<()> {
+        let context = &self.context;
+        let title_font = self.title_font();
+        let title_color = self.title_color();
+
         context.save();
+
         context.set_text_align("left");
         context.set_text_baseline("top");
         context.set_font(&title_font);
         context.set_fill_style(&JsValue::from(&title_color));
+
         {
-            let y = {
+            let (y, height, width) = {
                 let inner = self.inner();
-                -(inner.margin_top as f64 + inner.title_box_height + inner.title_padding_y / 2.0)
+                (
+                    -(inner.margin_top as f64
+                        + inner.title_box_height
+                        + inner.title_padding_y / 2.0),
+                    inner.title_box_height + inner.title_padding_y / 2.0,
+                    inner.width as f64,
+                )
             };
 
+            if clear {
+                context.clear_rect(0.0, y, width, height);
+            }
+
             if let Some(title) = self.title.as_ref() {
-                context.fill_text(&format!("{} {}", title, text), 0.0, y)?;
+                context.fill_text(&format!("{} {}", title, self.value()), 0.0, y)?;
             } else {
-                context.fill_text(text, 0.0, y)?;
+                context.fill_text(self.value().as_str(), 0.0, y)?;
             }
         }
-        // context.set_text_align("right");
-        // context.set_font(&value_font);
-        // context.set_fill_style(&JsValue::from(&value_color));
-        // context.fill_text(&self.value(), self.width() as f64, 10.0)?;
         context.restore();
 
         Ok(())
@@ -764,7 +803,7 @@ impl Graph {
         Ok(())
     }
 
-    fn update_axis_and_title(&self, text: &str, data: &Array) -> Result<()> {
+    fn update_axis_and_title(&self, data: &Array) -> Result<()> {
         self.update_x_domain()?;
         let cb = js_sys::Function::new_with_args("d", "return d.value");
         // self.y.set_domain_array(D3::extent(&self.data, cb));
@@ -772,7 +811,7 @@ impl Graph {
         self.clear()?;
         self.x_axis()?;
         self.y_axis()?;
-        self.build_captions(text)?;
+        self.draw_all_captions()?;
 
         Ok(())
     }
@@ -799,25 +838,49 @@ impl Graph {
     }
 
     pub async fn ingest(&self, time: f64, value: Sendable<JsValue>, text: &str) -> Result<()> {
-        // TODO - ingest into graph
-        //self.element().set_inner_html(format!("{} -> {:?}", time, value).as_str());
-        //workflow_log::log_info!("{} -> {:?}", time, value);
+        // store text as value
+        self.set_value(text);
+
+        // store ingested data point
         let item = js_sys::Object::new();
         let date = js_sys::Date::new(&JsValue::from(time));
-        //date.set_date((js_sys::Math::random() * 10.0) as u32);
-        let _ = item.set("date", &date);
-        //let _ = item.set("value", &(js_sys::Math::random() * 100.0).into());
-        //let value: JsValue = (js_sys::Math::random() * 100000.0).into();
-        let _ = item.set("value", &value);
-        // workflow_log::log_info!("item: {item:?}");
+        item.set("date", &date)?;
+        item.set("value", &value)?;
         self.data.push(&item.into());
 
+        // cleanup data past retention period
         self.handle_retention().unwrap_or_else(|err| {
             log_error!("Error handling retention: {err:?}");
         });
 
-        // slice the length of the retained dataset according to the current duration
-        // we assume that ingestion is happening at regular 1 second intervals
+        // store current time for redraw suppression
+        let time_u64 = time as u64;
+        self.time.store(time_u64, Ordering::Relaxed);
+
+        // calculate redraw suppression resolution
+        let secs = self.duration().as_secs() as f32;
+        let width = self.width();
+        let resolution = (secs * 1000. / width) as u64;
+        let elapsed = time_u64 - self.last_draw_time.load(Ordering::SeqCst);
+        let needs_redraw = if elapsed + 1000 > resolution {
+            true
+        } else {
+            false
+        };
+
+        if self.needs_redraw() || needs_redraw {
+            self.draw()?;
+        } else {
+            self.draw_title(true)?;
+        }
+
+        Ok(())
+    }
+
+    fn draw(&self) -> Result<()> {
+        let time_u64 = self.time.load(Ordering::SeqCst);
+        self.last_draw_time.store(time_u64, Ordering::SeqCst);
+
         let len = self.data.length();
         let secs = self.duration().as_secs() as u32;
         let data = if let Some(start) = len.checked_sub(secs) {
@@ -826,7 +889,7 @@ impl Graph {
             self.data.clone()
         };
 
-        self.update_axis_and_title(text, &data)?;
+        self.update_axis_and_title(&data)?;
 
         let (area_fill_color, area_stroke_color) = self.area_color();
 
@@ -837,6 +900,7 @@ impl Graph {
         context.set_stroke_style(&JsValue::from(&area_stroke_color));
         context.fill();
         context.stroke();
+
         Ok(())
     }
 }
