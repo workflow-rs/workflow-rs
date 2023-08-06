@@ -27,8 +27,11 @@ pub enum Error {
     #[error("Not found: {0}")]
     NotFound(String),
 
-    #[error("Not a string: {0}")]
+    #[error("Not a text data: {0}")]
     DataIsNotAString(String),
+
+    #[error("Not a buffer data: {0}")]
+    DataIsNotABuffer(String),
 
     #[error(transparent)]
     SerdeJson(#[from] serde_json::Error),
@@ -41,6 +44,9 @@ pub enum Error {
 
     #[error("No file metadata")]
     Metadata,
+
+    #[error(transparent)]
+    FasterHex(#[from] faster_hex::Error),
 }
 
 impl From<Error> for JsValue {

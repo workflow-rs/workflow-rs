@@ -20,6 +20,7 @@ doctest = false
 async-std.workspace = true
 base64.workspace = true
 cfg-if.workspace = true
+faster-hex.workspace = true
 js-sys.workspace = true
 serde_json.workspace = true
 serde.workspace = true

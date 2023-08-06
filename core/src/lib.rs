@@ -68,6 +68,8 @@ cfg_if::cfg_if! {
         /// Trigger crate re-exports and shims
         pub mod trigger;
 
+        pub mod hex;
+
         /// Re-export of [`mod@cfg_if`] crate.
         pub use ::cfg_if::cfg_if;
 

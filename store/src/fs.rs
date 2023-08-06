@@ -15,6 +15,7 @@
 use crate::error::Error;
 use crate::result::Result;
 use cfg_if::cfg_if;
+use js_sys::Uint8Array;
 // use js_sys::Function;
 #[allow(unused_imports)]
 use js_sys::{Object, Reflect};
@@ -33,6 +34,17 @@ use workflow_wasm::jserror::*;
 extern "C" {
     #[wasm_bindgen]
     pub fn require(s: &str) -> JsValue;
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(extends = Uint8Array)]
+    #[derive(Clone, Debug)]
+    pub type Buffer;
+
+    #[wasm_bindgen(static_method_of = Buffer, js_name = from)]
+    pub fn from_uint8_array(array: &Uint8Array) -> Buffer;
+
 }
 
 #[wasm_bindgen(inline_js = r#"
@@ -67,7 +79,8 @@ extern "C" {
     #[wasm_bindgen(catch, js_name = writeFileSync, js_namespace = fs)]
     fn fs_write_file_sync(
         path: &str,
-        data: &str,
+        // data: &str,
+        data: JsValue,
         options: Object,
     ) -> std::result::Result<(), JsValue>;
 
@@ -109,6 +122,7 @@ impl Options {
 
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
+        use workflow_core::hex::*;
 
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
             if runtime::is_node() || runtime::is_nw() {
@@ -125,7 +139,6 @@ cfg_if! {
                 let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
                 Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
-                // options.set("encoding", "utf-8");
                 let js_value = fs_read_file_sync(&filename, options)?;
                 let text = js_value.as_string().ok_or(Error::DataIsNotAString(filename))?;
                 Ok(text)
@@ -139,11 +152,31 @@ cfg_if! {
             }
         }
 
+        pub async fn read_binary_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<Vec<u8>> {
+            if runtime::is_node() || runtime::is_nw() {
+                let filename = filename.as_ref().to_platform_string();
+                let options = Object::new();
+                let buffer = fs_read_file_sync(&filename, options)?;
+                let data = buffer.dyn_into::<Uint8Array>()?;
+                Ok(data.to_vec())
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                if let Some(text) = local_storage().get_item(&key_name)? {
+                    let data = Vec::<u8>::from_hex(&text)?;
+                    Ok(data)
+                } else {
+                    Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
+                }
+            }
+        }
+
         pub async fn write_string_with_options<P : AsRef<Path>>(filename: P, options: Options, text : &str) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
-                fs_write_file_sync(&filename, text, options)?;
+                Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
+                let data = JsValue::from(text);
+                fs_write_file_sync(&filename, data, options)?;
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
                 local_storage().set_item(&key_name, text)?;
@@ -151,10 +184,23 @@ cfg_if! {
             Ok(())
         }
 
+        pub async fn write_binary_with_options<P : AsRef<Path>>(filename: P, options: Options, data : &[u8]) -> Result<()> {
+            if runtime::is_node() || runtime::is_nw() {
+                let filename = filename.as_ref().to_platform_string();
+                let options = Object::new();
+                let uint8_array = Uint8Array::from(data);
+                let buffer = Buffer::from_uint8_array(&uint8_array);
+                fs_write_file_sync(&filename, buffer.into(), options)?;
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                local_storage().set_item(&key_name, data.to_hex().as_str())?;
+            }
+            Ok(())
+        }
+
         pub async fn remove_with_options<P : AsRef<Path>>(filename: P, options: Options) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
-                // let options = Object::new();
                 fs_unlink_sync(&filename)?;
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
@@ -186,9 +232,7 @@ cfg_if! {
         }
 
         async fn readdir_impl(path: &Path, metadata : bool) -> std::result::Result<Vec<DirEntry>,JsErrorData> {
-        // async fn readdir_impl(path: &Path, metadata : bool) -> Result<Vec<DirEntry>> {
             let path_string = path.to_string_lossy().to_string();
-            // let files = fs_readdir(&path_string).await.map_err(|e|e.to_string())?;
             let files = fs_readdir(&path_string).await?;
             let list = files.dyn_into::<js_sys::Array>().expect("readdir: expecting resulting entries to be an array");
             let mut entries = list.to_vec().into_iter().map(|s| s.into()).collect::<Vec<DirEntry>>();
@@ -242,8 +286,16 @@ cfg_if! {
             Ok(std::fs::read_to_string(filename)?)
         }
 
+        pub async fn read_binary_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<Vec<u8>> {
+            Ok(std::fs::read(filename)?)
+        }
+
         pub async fn write_string_with_options<P : AsRef<Path>>(filename: P, _options: Options, text : &str) -> Result<()> {
             Ok(std::fs::write(filename, text)?)
+        }
+
+        pub async fn write_binary_with_options<P : AsRef<Path>>(filename: P, _options: Options, data : &[u8]) -> Result<()> {
+            Ok(std::fs::write(filename, data)?)
         }
 
         pub async fn remove_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<()> {
@@ -424,8 +476,16 @@ pub async fn read_to_string(filename: &Path) -> Result<String> {
     read_to_string_with_options(filename, Options::default()).await
 }
 
+pub async fn read(filename: &Path) -> Result<Vec<u8>> {
+    read_binary_with_options(filename, Options::default()).await
+}
+
 pub async fn write_string(filename: &Path, text: &str) -> Result<()> {
     write_string_with_options(filename, Options::default(), text).await
+}
+
+pub async fn write(filename: &Path, data: &[u8]) -> Result<()> {
+    write_binary_with_options(filename, Options::default(), data).await
 }
 
 pub async fn remove(filename: &Path) -> Result<()> {
