@@ -3,6 +3,7 @@
 use crate::container::*;
 use crate::d3::{self, D3};
 use crate::imports::*;
+use atomic_float::AtomicF64;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use web_sys::{Element, HtmlCanvasElement};
 use workflow_core::time::*;
@@ -11,6 +12,10 @@ use workflow_log::log_error;
 use workflow_wasm::object::ObjectTrait;
 
 static mut DOM_INIT: bool = false;
+
+const ONE_DAY_MSEC: u64 = DAYS;
+const ONE_DAY_SEC: u64 = DAYS / 1000;
+const LOWREW_CELL_SIZE: u64 = ONE_DAY_SEC / 4096;
 
 #[derive(Clone)]
 pub struct GraphDuration;
@@ -177,7 +182,10 @@ pub struct Graph {
     x: Arc<d3::ScaleTime>,
     y: Arc<d3::ScaleLinear>,
     area: Arc<d3::Area>,
-    data: Array,
+    data_hirez: Array,
+    data_lowrez: Array,
+    lowrez_cell: Arc<AtomicU64>,
+    lowrez_cell_value: Arc<AtomicF64>,
     x_tick_size: f64,
     y_tick_size: f64,
     x_tick_count: u32,
@@ -271,7 +279,10 @@ impl Graph {
             x: Arc::new(D3::scale_time()),
             y: Arc::new(D3::scale_linear()),
             area: Arc::new(D3::area()),
-            data: Array::new(),
+            data_hirez: Array::new(),
+            data_lowrez: Array::new(),
+            lowrez_cell: Arc::new(AtomicU64::new(0)),
+            lowrez_cell_value: Arc::new(AtomicF64::new(0.0)),
             canvas,
             context,
             x_tick_size: 6.0,
@@ -397,6 +408,12 @@ impl Graph {
     pub fn duration(&self) -> Duration {
         self.inner().duration
     }
+
+    // fn set_cell_value(&self, value: f64) -> Result<()> {
+    //     self.lowrez_cell_value.store(value, Ordering::Relaxed);
+    //     self.draw()?;
+    //     Ok(())
+    // }
 
     pub fn redraw(&self) {
         self.redraw.store(true, Ordering::Relaxed);
@@ -822,13 +839,27 @@ impl Graph {
 
         loop {
             let first_item_date = self
-                .data
+                .data_hirez
                 .at(0)
                 .dyn_into::<js_sys::Object>()?
                 .get("date")?
                 .dyn_into::<js_sys::Date>()?;
             if first_item_date.lt(&limit) {
-                self.data.shift();
+                self.data_hirez.shift();
+            } else {
+                break;
+            }
+        }
+
+        loop {
+            let first_item_date = self
+                .data_lowrez
+                .at(0)
+                .dyn_into::<js_sys::Object>()?
+                .get("date")?
+                .dyn_into::<js_sys::Date>()?;
+            if first_item_date.lt(&limit) {
+                self.data_lowrez.shift();
             } else {
                 break;
             }
@@ -837,16 +868,36 @@ impl Graph {
         Ok(())
     }
 
-    pub async fn ingest(&self, time: f64, value: Sendable<JsValue>, text: &str) -> Result<()> {
-        // store text as value
-        self.set_value(text);
-
+    fn store(&self, time: f64, value_f64: f64) -> Result<()> {
+        let value = JsValue::from(value_f64);
         // store ingested data point
         let item = js_sys::Object::new();
         let date = js_sys::Date::new(&JsValue::from(time));
         item.set("date", &date)?;
         item.set("value", &value)?;
-        self.data.push(&item.into());
+        self.data_hirez.push(&item.into());
+
+        let lowrez_cell = self.lowrez_cell.fetch_add(1, Ordering::SeqCst);
+        if lowrez_cell % LOWREW_CELL_SIZE == 0 {
+            let lowrez_cell_value = self.lowrez_cell_value.load(Ordering::SeqCst);
+            let lowrez_value = JsValue::from(lowrez_cell_value);
+            let item = js_sys::Object::new();
+            item.set("date", &date)?;
+            item.set("value", &lowrez_value)?;
+            self.data_lowrez.push(&item.into());
+        } else {
+            self.lowrez_cell_value
+                .fetch_max(value_f64, Ordering::SeqCst);
+        }
+
+        Ok(())
+    }
+
+    pub async fn ingest(&self, time: f64, value_f64: f64, text: &str) -> Result<()> {
+        // store text as value
+        self.set_value(text);
+
+        self.store(time, value_f64)?;
 
         // cleanup data past retention period
         self.handle_retention().unwrap_or_else(|err| {
@@ -858,15 +909,11 @@ impl Graph {
         self.time.store(time_u64, Ordering::Relaxed);
 
         // calculate redraw suppression resolution
-        let secs = self.duration().as_secs() as f32;
+        let msec = self.duration().as_millis() as f32;
         let width = self.width();
-        let resolution = (secs * 1000. / width) as u64;
+        let resolution = (msec / width) as u64;
         let elapsed = time_u64 - self.last_draw_time.load(Ordering::SeqCst);
-        let needs_redraw = if elapsed + 1000 > resolution {
-            true
-        } else {
-            false
-        };
+        let needs_redraw = elapsed + 1000 > resolution;
 
         if self.needs_redraw() || needs_redraw {
             self.draw()?;
@@ -881,12 +928,23 @@ impl Graph {
         let time_u64 = self.time.load(Ordering::SeqCst);
         self.last_draw_time.store(time_u64, Ordering::SeqCst);
 
-        let len = self.data.length();
         let secs = self.duration().as_secs() as u32;
-        let data = if let Some(start) = len.checked_sub(secs) {
-            self.data.slice(start, len)
+
+        let data = if secs > ONE_DAY_SEC as u32 {
+            let len = self.data_lowrez.length();
+            let cells = secs / LOWREW_CELL_SIZE as u32;
+            if let Some(start) = len.checked_sub(cells) {
+                self.data_lowrez.slice(start, len)
+            } else {
+                self.data_lowrez.clone()
+            }
         } else {
-            self.data.clone()
+            let len = self.data_hirez.length();
+            if let Some(start) = len.checked_sub(secs) {
+                self.data_hirez.slice(start, len)
+            } else {
+                self.data_hirez.clone()
+            }
         };
 
         self.update_axis_and_title(&data)?;

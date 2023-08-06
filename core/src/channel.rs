@@ -194,7 +194,27 @@ where
         self.channels.lock().unwrap().remove(&id);
     }
 
-    pub async fn broadcast(&self, event: T) -> Result<(), ChannelError<T>> {
+    // pub async fn broadcast(&self, event: T) -> Result<(), ChannelError<T>> {
+    //     let mut removed = vec![];
+    //     let mut channels = self.channels.lock().unwrap();
+    //     for (id, sender) in channels.iter() {
+    //         match sender.try_send(event.clone()) {
+    //             Ok(_) => {}
+    //             Err(_err) => {
+    //                 removed.push(*id);
+    //             }
+    //         }
+    //     }
+    //     if !removed.is_empty() {
+    //         for id in removed.iter() {
+    //             channels.remove(id);
+    //         }
+    //     }
+
+    //     Ok(())
+    // }
+
+    pub fn try_broadcast(&self, event: T) -> Result<(), ChannelError<T>> {
         let mut removed = vec![];
         let mut channels = self.channels.lock().unwrap();
         for (id, sender) in channels.iter() {

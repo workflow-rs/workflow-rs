@@ -183,7 +183,7 @@ where
                                     WebSocketMessage::Open => {
                                         self.is_open.store(true, Ordering::SeqCst);
                                         if let Some(ctl_channel) = &self.ctl_multiplexer {
-                                            ctl_channel.broadcast(Ctl::Open).await.unwrap();
+                                            ctl_channel.try_broadcast(Ctl::Open).expect("ctl_channel.try_broadcast(Ctl::Open)");
                                         }
                                     }
                                     WebSocketMessage::Close => {
@@ -194,7 +194,7 @@ where
                                         });
 
                                         if let Some(ctl_channel) = &self.ctl_multiplexer {
-                                            ctl_channel.broadcast(Ctl::Close).await.unwrap();
+                                            ctl_channel.try_broadcast(Ctl::Close).expect("ctl_channel.try_broadcast(Ctl::Close)");
                                         }
                                     }
                                 }

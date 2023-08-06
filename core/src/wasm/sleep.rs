@@ -43,6 +43,7 @@ struct SleepContext {
 
 struct Inner {
     ready: AtomicBool,
+    consumed: AtomicBool,
     waker: AtomicWaker,
     ctx: Mutex<Option<SleepContext>>,
 }
@@ -65,6 +66,7 @@ impl Sleep {
     pub fn new(duration: Duration) -> Self {
         let inner = Arc::new(Inner {
             ready: AtomicBool::new(false),
+            consumed: AtomicBool::new(false),
             waker: AtomicWaker::new(),
             ctx: Mutex::new(None),
         });
@@ -107,6 +109,7 @@ impl Future for Sleep {
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         match self.inner.ready.load(Ordering::SeqCst) {
             true => {
+                self.inner.consumed.store(true, Ordering::SeqCst);
                 self.inner.ctx.lock().unwrap().take();
                 Poll::Ready(())
             }
@@ -135,6 +138,6 @@ pub fn sleep(duration: Duration) -> Sleep {
 
 impl FusedFuture for Sleep {
     fn is_terminated(&self) -> bool {
-        self.inner.ready.load(Ordering::SeqCst)
+        self.inner.consumed.load(Ordering::SeqCst)
     }
 }
