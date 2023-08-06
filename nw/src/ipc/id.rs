@@ -1,6 +1,6 @@
 //!
 //! IPC message identifiers. Provides [`Id64`]
-//! and allows for a custom construction of IPC 
+//! and allows for a custom construction of IPC
 //! message ids using the [`Generator`] trait.
 //!
 
