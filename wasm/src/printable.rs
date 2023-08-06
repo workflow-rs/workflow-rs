@@ -1,3 +1,7 @@
+//! Printable representation for a JsValue. Will print the string
+//! representation if it is a string, otherwise
+//! will output the debug representation.
+
 use wasm_bindgen::prelude::*;
 
 #[derive(Clone, Debug)]

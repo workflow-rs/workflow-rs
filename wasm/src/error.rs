@@ -1,7 +1,8 @@
+//! Error enum used by the `workflow_wasm` crate.
+
+use crate::jserror::*;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
-// use workflow_core::sendable::*;
-use crate::jserror::*;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {

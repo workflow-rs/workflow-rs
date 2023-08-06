@@ -1,3 +1,5 @@
+//! The [`defer`] utility function.
+
 use js_sys::Function;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;

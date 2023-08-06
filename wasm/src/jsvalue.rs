@@ -1,3 +1,9 @@
+//! JsValue to native Rust datatypes conversion utilities.
+//! These utilities marshall incoming data for different types
+//! of representations and convert them to native Rust datatypes.
+//! For example, a Vec<u8> can be converted from a Uint8Array
+//! or from a hex-encoded string.
+
 use crate::error::Error;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;

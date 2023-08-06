@@ -3,21 +3,18 @@
 //! and the browser domain-associated local storage ([Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API)).
 //!
 //! Storage APIs abstracted:
-//! - Std File I/O (fs::xxx)
-//! - NodeJS File I/O (fs::read_file_sync)
-//! - Local Storage
+//! - Rust std sile I/O (fs::xxx)
+//! - NodeJS sile I/O (fs::read_file_sync)
+//! - Browser local storage
 //!
 //! By default, all I/O functions will use the name of the file as a key
-//! for localstorage. If you want to manually specify the localstorage key,
-//! you should use `*_with_localstorage()` suffixed functions.
+//! for localstorage. If you want to manually specify the localstorage key.
 //!
 
 use crate::error::Error;
 use crate::result::Result;
 use cfg_if::cfg_if;
 use js_sys::Uint8Array;
-// use js_sys::Function;
-#[allow(unused_imports)]
 use js_sys::{Object, Reflect};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -25,10 +22,6 @@ use std::path::{Path, PathBuf};
 use wasm_bindgen::prelude::*;
 use workflow_core::dirs;
 use workflow_core::runtime;
-#[allow(unused_imports)]
-use workflow_wasm::jserror::*;
-// use workflow_wasm::object::ObjectTrait;
-// use js_sys::Array;
 
 #[wasm_bindgen]
 extern "C" {
@@ -123,6 +116,7 @@ impl Options {
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
         use workflow_core::hex::*;
+        use workflow_wasm::jserror::*;
 
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
             if runtime::is_node() || runtime::is_nw() {
@@ -468,30 +462,47 @@ impl From<JsValue> for DirEntry {
     }
 }
 
+/// Check if a file exists
 pub async fn exists<P: AsRef<Path>>(filename: P) -> Result<bool> {
     exists_with_options(filename, Options::default()).await
 }
 
+/// Read file contents to a string. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be used.
 pub async fn read_to_string(filename: &Path) -> Result<String> {
     read_to_string_with_options(filename, Options::default()).await
 }
 
+/// Read binary file contents to a `Vec<u8>`. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be used and the data is assumed to be hex-encoded.
 pub async fn read(filename: &Path) -> Result<Vec<u8>> {
     read_binary_with_options(filename, Options::default()).await
 }
 
+/// Write a string to a text file. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be used.
 pub async fn write_string(filename: &Path, text: &str) -> Result<()> {
     write_string_with_options(filename, Options::default(), text).await
 }
 
+/// Write a `Vec<u8>` to a binary file. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be used and the data will be hex-encoded.
 pub async fn write(filename: &Path, data: &[u8]) -> Result<()> {
     write_binary_with_options(filename, Options::default(), data).await
 }
 
+/// Remove the file at the given path. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be removed.
 pub async fn remove(filename: &Path) -> Result<()> {
     remove_with_options(filename, Options::default()).await
 }
 
+/// Read text file and deserialized it using `serde-json`.
 pub async fn read_json_with_options<T>(filename: &Path, options: Options) -> Result<T>
 where
     T: DeserializeOwned,
@@ -500,6 +511,7 @@ where
     Ok(serde_json::from_str(&text)?)
 }
 
+/// Write a serializable value to a text file using `serde-json`.
 pub async fn write_json_with_options<T>(filename: &Path, options: Options, value: &T) -> Result<()>
 where
     T: Serialize,
@@ -509,6 +521,7 @@ where
     Ok(())
 }
 
+/// Read text file and deserialized it using `serde-json`.
 pub async fn read_json<T>(filename: &Path) -> Result<T>
 where
     T: DeserializeOwned,
@@ -516,6 +529,7 @@ where
     read_json_with_options(filename, Options::default()).await
 }
 
+/// Write a serializable value to a text file using `serde-json`.
 pub async fn write_json<T>(filename: &Path, value: &T) -> Result<()>
 where
     T: Serialize,
@@ -523,6 +537,7 @@ where
     write_json_with_options(filename, Options::default(), value).await
 }
 
+/// Parses the supplied path resolving `~/` to the home directory.
 pub fn resolve_path(path: &str) -> Result<PathBuf> {
     if let Some(_stripped) = path.strip_prefix("~/") {
         if runtime::is_web() {

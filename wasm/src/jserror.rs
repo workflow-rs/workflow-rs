@@ -1,5 +1,8 @@
-use std::sync::Arc;
+//! Structures for handling JavaScript errors. Specifically this module
+//! provides a `JsErrorData` struct which is used to extract information
+//! from a `JsValue` that represents a JavaScript error.
 
+use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use workflow_core::sendable::Sendable;
 
