@@ -154,9 +154,9 @@ pub struct XtermOptions {
 ///
 /// # Xterm
 ///
-/// Wrapper around XtermJS - https://github.com/xtermjs/xterm.js
+/// Wrapper around XtermJS - <https://github.com/xtermjs/xterm.js>
 ///
-/// TODO enhance API to match https://github.com/xtermjs/xterm.js/blob/4.14.1/typings/xterm.d.ts
+/// TODO enhance API to match <https://github.com/xtermjs/xterm.js/blob/4.14.1/typings/xterm.d.ts>
 ///
 ///
 pub struct Xterm {

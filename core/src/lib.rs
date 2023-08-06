@@ -14,12 +14,13 @@
 //!
 //! This is a general-purpose crate that provides platform-uniform (native and WASM) abstractions for:
 //! - async channels
-//! - task spawn and sleep functions
+//! - task spawn, sleep and interval functions
 //! - random identifiers
 //! - async-friendly and threadsafe event triggers
-//! - time (Instant and Duration) structs
-//! - dynamic async_trait attribute macros
-//!
+//! - time (Instant and Duration) as well as functions to obtain UNIX time (native and WASM)
+//! - yield_executor() function to yield Rust executor to browser using `requestAnimationFrame()` (this prevents async Rust applications from locking down the Browser UX)
+//! - runtime autodetection, allowing to identify the operating environmnet at runtime
+//! - home and data folder access (useful when combined with `workflow_store` crate)
 
 extern crate self as workflow_core;
 
@@ -34,8 +35,11 @@ pub mod utils;
 mod native;
 mod wasm;
 
-// pub use workflow_core_macros::describe_enum;
-// pub use workflow_core_macros::Describe;
+/// Seal macro that prevents acceidental modification of the enclosed source code
+/// by hashing the source code and comparing it to the supplied hash.  If the code
+/// is modified, the macro will fail to compile, and the developer will need to
+/// change the hash value.  This is useful for locking down sensitive parts of the
+/// code to prevent their accidental change.
 pub use workflow_core_macros::seal;
 
 cfg_if::cfg_if! {
@@ -58,13 +62,13 @@ cfg_if::cfg_if! {
         // environment variable access (native and Node.js abstraction)
         pub mod env;
 
-        // directory access (home folder, data folder) (native and Node.js abstraction)
+        // Directory access (home folder, data folder) (native and Node.js abstraction)
         pub mod dirs;
 
-        /// trigger re-exports and shims
+        /// Trigger crate re-exports and shims
         pub mod trigger;
 
-        /// re-export of [`mod@cfg_if`] crate
+        /// Re-export of [`mod@cfg_if`] crate.
         pub use ::cfg_if::cfg_if;
 
         /// dynamically configured re-export of async_trait as workflow_async_trait

@@ -1,3 +1,9 @@
+//! Provides functions that allow to detect the runtime environment. These functions can be used to
+//! detect whether the code is running in a browser, node.js or native OS, the type of the underlying OS 
+//! (Windows,Linux,MacOS,*BSD) as well as the type of a web environment (Browser or NWJS).
+//! This is useful for an application of an API to detect which environment it is operating under
+//! and subsequently restrict the functionality to the capabilities to this environment.
+
 use cfg_if::cfg_if;
 
 cfg_if! {

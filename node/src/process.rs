@@ -506,7 +506,7 @@ impl Process {
     }
 
     /// Obtain a clone of the channel [`Receiver`](workflow_core::channel::Receiver) that captures
-    /// [`Events`] of the underlying process.
+    /// [`Event`] of the underlying process.
     pub fn events(&self) -> Receiver<Event> {
         self.inner.events.receiver.clone()
     }

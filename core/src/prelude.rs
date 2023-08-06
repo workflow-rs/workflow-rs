@@ -1,3 +1,4 @@
+//! The prelude module re-exports the most commonly used traits and types from the workflow_core crate.
 pub use crate::abortable::Abortable;
 pub use crate::channel::{oneshot, Channel, DuplexChannel, Multiplexer};
 pub use crate::enums::Describe;

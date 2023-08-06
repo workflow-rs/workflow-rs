@@ -1,8 +1,7 @@
 //!
-//! RPC message identifiers. Provides [`Id32`] and [`Id64`]
-//! defaults (based on `u32` and `u64` respectively) and allows
-//! for a custom construction of RPC message ids
-//! using the [`Generator`] trait.
+//! IPC message identifiers. Provides [`Id64`]
+//! and allows for a custom construction of IPC 
+//! message ids using the [`Generator`] trait.
 //!
 
 use crate::ipc::imports::*;
@@ -46,19 +45,7 @@ pub trait Generator {
     fn generate() -> Self;
 }
 
-// /// RPC message id represented by a `u32` type
-// #[derive(
-//     Debug, Clone, Eq, PartialEq, Hash, BorshSerialize, BorshDeserialize, Serialize, Deserialize,
-// )]
-// pub struct Id32(u32);
-
-// impl Generator for Id32 {
-//     fn generate() -> Self {
-//         Id32(rand::random())
-//     }
-// }
-
-/// RPC message id represented by a `u64` type
+/// IPC message id represented by a `u64` type
 #[derive(
     Debug, Clone, Eq, PartialEq, Hash, BorshSerialize, BorshDeserialize, Serialize, Deserialize,
 )]

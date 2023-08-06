@@ -27,6 +27,11 @@ pub fn oneshot<T>() -> (Sender<T>, Receiver<T>) {
     bounded(1)
 }
 
+/// [`DuplexChannel`] contains 2 channels `request` and `response`
+/// meant to provide for a request/response pattern. This is useful
+/// for any type of signaling, but especially during task termination,
+/// where you can request a task to terminate and wait for a response
+/// confirming its termination.
 #[derive(Debug, Clone)]
 pub struct DuplexChannel<T = (), R = ()> {
     pub request: Channel<T>,
@@ -60,7 +65,7 @@ impl<T, R> DuplexChannel<T, R> {
 
 /// [`Channel`] struct that combines [`async_std::channel::Sender`] and
 /// [`async_std::channel::Receiver`] into a single struct with `sender`
-/// and `receiver` members.
+/// and `receiver` members representing a single channel.
 #[derive(Debug, Clone)]
 pub struct Channel<T = ()> {
     pub sender: Sender<T>,
@@ -148,13 +153,21 @@ impl<T> Iterator for ChannelIterator<T> {
     }
 }
 
-/// A simple channel Multiplexer that broadcasts to multiple registered receivers.
+/// A simple MPMC (one to many) channel Multiplexer that broadcasts to
+/// multiple registered receivers.  [`Multiplexer<T>`] itself can be
+/// cloned and used to broadcast using [`Multiplexer::broadcast()`]
+/// or [`Multiplexer::try_broadcast()`].  To create a receiving channel,
+/// you can call [`MultiplexerChannel<T>::from()`] and supply the
+/// desired Multiplexer instance, or  simply call [`Multiplexer::channel()`]
+/// to create a new [`MultiplexerChannel`] instance.  The receiving channel
+/// gets unregistered when [`MultiplexerChannel`] is dropped or the
+/// underlying [`Receiver`] is closed.
 #[derive(Clone)]
 pub struct Multiplexer<T>
 where
     T: Clone + Send + Sync + 'static,
 {
-    pub channels: Arc<Mutex<HashMap<Id, Sender<T>>>>,
+    pub channels: Arc<Mutex<HashMap<Id, Arc<Sender<T>>>>>,
     t: PhantomData<T>,
 }
 
@@ -171,6 +184,7 @@ impl<T> Multiplexer<T>
 where
     T: Clone + Send + Sync + 'static,
 {
+    /// Create a new Multiplexer instance
     pub fn new() -> Multiplexer<T> {
         Multiplexer {
             channels: Arc::new(Mutex::new(HashMap::default())),
@@ -186,7 +200,10 @@ where
     fn register_event_channel(&self) -> (Id, Sender<T>, Receiver<T>) {
         let (sender, receiver) = unbounded();
         let id = Id::new();
-        self.channels.lock().unwrap().insert(id, sender.clone());
+        self.channels
+            .lock()
+            .unwrap()
+            .insert(id, Arc::new(sender.clone()));
         (id, sender, receiver)
     }
 
@@ -194,26 +211,36 @@ where
         self.channels.lock().unwrap().remove(&id);
     }
 
-    // pub async fn broadcast(&self, event: T) -> Result<(), ChannelError<T>> {
-    //     let mut removed = vec![];
-    //     let mut channels = self.channels.lock().unwrap();
-    //     for (id, sender) in channels.iter() {
-    //         match sender.try_send(event.clone()) {
-    //             Ok(_) => {}
-    //             Err(_err) => {
-    //                 removed.push(*id);
-    //             }
-    //         }
-    //     }
-    //     if !removed.is_empty() {
-    //         for id in removed.iter() {
-    //             channels.remove(id);
-    //         }
-    //     }
+    /// Async [`Multiplexer::broadcast`] function that calls [`Sender::send()`] on all registered [`MultiplexerChannel`] instances.
+    pub async fn broadcast(&self, event: T) -> Result<(), ChannelError<T>> {
+        let mut removed = vec![];
+        let channels = self
+            .channels
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|(k, v)| (*k, v.clone()))
+            .collect::<Vec<_>>();
+        for (id, sender) in channels.iter() {
+            match sender.send(event.clone()).await {
+                Ok(_) => {}
+                Err(_err) => {
+                    removed.push(*id);
+                }
+            }
+        }
+        if !removed.is_empty() {
+            let mut channels = self.channels.lock().unwrap();
+            for id in removed.iter() {
+                channels.remove(id);
+            }
+        }
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
+    /// A synchronous [`Multiplexer::try_broadcast`] function that calls [`Sender::try_send()`] on all registered [`MultiplexerChannel`] instances.
+    /// This function holds a mutex for the duration of the broadcast.
     pub fn try_broadcast(&self, event: T) -> Result<(), ChannelError<T>> {
         let mut removed = vec![];
         let mut channels = self.channels.lock().unwrap();
@@ -235,6 +262,9 @@ where
     }
 }
 
+/// Receiving channel endpoint for the [`Multiplexer`].  [`MultiplexerChannel<T>`] holds a [`Sender`] and the [`Receiver`] channel endpoints.
+/// The [`Sender`] is provided for convenience, allowing internal relay within this channel instance.
+/// To process events, simply iterate over [`MultiplexerChannel::recv()`] by calling `channel.recv().await`.
 #[derive(Clone)]
 pub struct MultiplexerChannel<T>
 where
@@ -250,15 +280,24 @@ impl<T> MultiplexerChannel<T>
 where
     T: Clone + Send + Sync + 'static,
 {
+    /// Close the receiving channel.  This will unregister the channel from the [`Multiplexer`].
     pub fn close(&self) {
         self.multiplexer.unregister_event_channel(self.id);
     }
 
+    /// Receive an event from the channel.  This is a blocking async call.
     pub async fn recv(&self) -> Result<T, RecvError> {
         self.receiver.recv().await
     }
+
+    /// Receive an event from the channel.  This is a non-blocking sync call that
+    /// follows [`Receiver::try_recv`] semantics.
+    pub fn try_recv(&self) -> Result<T, TryRecvError> {
+        self.receiver.try_recv()
+    }
 }
 
+/// Create a [`MultiplexerChannel`] from [`Multiplexer`] by reference.
 impl<T> From<&Multiplexer<T>> for MultiplexerChannel<T>
 where
     T: Clone + Send + Sync + 'static,

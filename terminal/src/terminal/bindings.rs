@@ -1,5 +1,5 @@
 //!
-//! [xterm.js](http://xtermjs.org) [`wasm_bindgen`] interface and plugin bindings
+//! [xterm.js](http://xtermjs.org) [`mod@wasm_bindgen`] interface and plugin bindings
 //!
 
 use std::fmt::Debug;

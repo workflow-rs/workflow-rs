@@ -1,6 +1,6 @@
 //!
 //! Access to home and data folder (windows) when running natively or
-//! on top of Node.js
+//! within Node.js
 //!
 
 use cfg_if::cfg_if;
