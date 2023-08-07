@@ -393,7 +393,10 @@ impl Terminal {
     where
         S: Into<String>,
     {
-        let width: usize = self.para_width.load(Ordering::SeqCst);
+        let width = self
+            .term()
+            .cols()
+            .unwrap_or_else(|| self.para_width.load(Ordering::SeqCst));
         let options = textwrap::Options::new(width).line_ending(textwrap::LineEnding::CRLF);
 
         textwrap::wrap(text.into().as_str(), options)
