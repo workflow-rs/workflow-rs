@@ -197,7 +197,7 @@ impl WebSocketInterface {
 
         // - Error
         let onerror = callback!(move |_event: WsErrorEvent| {
-            log_trace!("WS - error event: {:?}", _event);
+            // log_trace!("WS - error event: {:?}", _event);
         });
         ws.set_onerror(Some(onerror.as_ref()));
 
@@ -213,7 +213,7 @@ impl WebSocketInterface {
         // - Close
         let event_sender_ = self.event_channel.sender.clone();
         let onclose = callback!(move |_event: WsCloseEvent| {
-            log_trace!("WS - close event: {:?}", _event);
+            // log_trace!("WS - close event: {:?}", _event);
             event_sender_
                 .try_send(Message::Close)
                 .unwrap_or_else(|err| {

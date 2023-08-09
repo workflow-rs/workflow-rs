@@ -1,31 +1,30 @@
+use crate::require;
 use js_sys::{Array, Object};
+use lazy_static::lazy_static;
 use node_sys::*;
 use wasm_bindgen::prelude::*;
 use workflow_log::log_info;
 
+lazy_static! {
+    static ref CP: Cp = require("child_process").unchecked_into();
+}
+
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen]
-    pub fn require(s: &str) -> JsValue;
-}
 
-#[wasm_bindgen(inline_js = r#"
-if (!globalThis.require) {
-    globalThis.require = () => { return {}; };
-}
-const child_process = globalThis.require('child_process'); 
-export { child_process };
-"#)]
-extern "C" {
+    #[wasm_bindgen(extends = Object)]
+    #[derive(Clone)]
+    pub type Cp;
 
-    #[wasm_bindgen(js_name = spawn, js_namespace = child_process)]
-    pub fn spawn(cmd: &str) -> ChildProcess;
+    #[wasm_bindgen(js_name = spawn, method)]
+    pub fn cp_spawn(this: &Cp, cmd: &str) -> ChildProcess;
 
-    #[wasm_bindgen(js_name = spawn, js_namespace = child_process)]
-    pub fn spawn_with_args(cmd: &str, args: &SpawnArgs) -> ChildProcess;
+    #[wasm_bindgen(js_name = spawn, method)]
+    pub fn cp_spawn_with_args(this: &Cp, cmd: &str, args: &SpawnArgs) -> ChildProcess;
 
-    #[wasm_bindgen(js_name = spawn, js_namespace = child_process)]
-    pub fn spawn_with_args_and_options(
+    #[wasm_bindgen(js_name = spawn, method)]
+    pub fn cp_spawn_with_args_and_options(
+        this: &Cp,
         cmd: &str,
         args: &SpawnArgs,
         options: &SpawnOptions,
@@ -65,6 +64,9 @@ extern "C" {
     fn kill_with_signal_impl(this: &ChildProcess, signal: JsValue) -> bool;
 }
 
+unsafe impl Send for Cp {}
+unsafe impl Sync for Cp {}
+
 unsafe impl Send for ChildProcess {}
 unsafe impl Sync for ChildProcess {}
 
@@ -73,6 +75,25 @@ unsafe impl Sync for SpawnOptions {}
 
 unsafe impl Send for SpawnArgs {}
 unsafe impl Sync for SpawnArgs {}
+
+#[inline(always)]
+pub fn spawn(cmd: &str) -> ChildProcess {
+    CP.cp_spawn(cmd)
+}
+
+#[inline(always)]
+pub fn spawn_with_args(cmd: &str, args: &SpawnArgs) -> ChildProcess {
+    CP.cp_spawn_with_args(cmd, args)
+}
+
+#[inline(always)]
+pub fn spawn_with_args_and_options(
+    cmd: &str,
+    args: &SpawnArgs,
+    options: &SpawnOptions,
+) -> ChildProcess {
+    CP.cp_spawn_with_args_and_options(cmd, args, options)
+}
 
 #[derive(Debug)]
 pub enum KillSignal<'s> {

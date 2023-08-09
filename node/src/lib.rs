@@ -8,19 +8,16 @@
 //!
 //! Framework compoents for using Node.js and NWJS in WASM environment
 //!
-use wasm_bindgen::prelude::*;
 
 pub mod child_process;
 pub mod error;
+pub mod fs;
 pub mod process;
+pub mod require;
 pub mod result;
 
 pub mod prelude {
     pub use crate::process::*;
 }
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen]
-    pub fn require(s: &str) -> JsValue;
-}
+pub use require::*;

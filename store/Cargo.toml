@@ -29,7 +29,9 @@ wasm-bindgen.workspace = true
 workflow-core.workspace = true
 workflow-wasm.workspace = true
 workflow-log.workspace = true
+workflow-node.workspace = true
 wasm-bindgen-futures.workspace = true
+lazy_static.workspace = true
 
 [target.'cfg(not(any(target_arch = "wasm32", target_os="solana")))'.dependencies]
 async-std.workspace = true

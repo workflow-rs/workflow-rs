@@ -14,20 +14,14 @@
 use crate::error::Error;
 use crate::result::Result;
 use cfg_if::cfg_if;
+use js_sys::Reflect;
 use js_sys::Uint8Array;
-use js_sys::{Object, Reflect};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use wasm_bindgen::prelude::*;
 use workflow_core::dirs;
 use workflow_core::runtime;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen]
-    pub fn require(s: &str) -> JsValue;
-}
 
 #[wasm_bindgen]
 extern "C" {
@@ -38,56 +32,6 @@ extern "C" {
     #[wasm_bindgen(static_method_of = Buffer, js_name = from)]
     pub fn from_uint8_array(array: &Uint8Array) -> Buffer;
 
-}
-
-#[wasm_bindgen(inline_js = r#"
-if (!globalThis.require) {
-    globalThis.require = () => { return {}; };
-}
-const fs = globalThis.require('fs'); 
-const fs_promises = globalThis.require('fs/promises'); 
-export { fs, fs_promises };
-"#)]
-extern "C" {
-
-    // #[wasm_bindgen(extends = Object)]
-    // #[derive(Debug, Clone, PartialEq, Eq)]
-    // pub type ReadDir;
-
-    #[wasm_bindgen(js_name = readdir, js_namespace = fs)]
-    pub fn readdir_sync(path: &str, callback: js_sys::Function);
-
-    #[wasm_bindgen(catch, js_name = readdir, js_namespace = fs_promises)]
-    async fn fs_readdir(path: &str) -> std::result::Result<JsValue, JsValue>;
-
-    #[wasm_bindgen(catch, js_name = readdir, js_namespace = fs_promises)]
-    async fn fs_readdir_with_options(
-        path: &str,
-        options: Object,
-    ) -> std::result::Result<JsValue, JsValue>;
-
-    #[wasm_bindgen(catch, js_name = existsSync, js_namespace = fs)]
-    fn fs_exists_sync(path: &str) -> std::result::Result<bool, JsValue>;
-
-    #[wasm_bindgen(catch, js_name = writeFileSync, js_namespace = fs)]
-    fn fs_write_file_sync(
-        path: &str,
-        // data: &str,
-        data: JsValue,
-        options: Object,
-    ) -> std::result::Result<(), JsValue>;
-
-    #[wasm_bindgen(catch, js_name = readFileSync, js_namespace = fs)]
-    fn fs_read_file_sync(path: &str, options: Object) -> std::result::Result<JsValue, JsValue>;
-
-    #[wasm_bindgen(catch, js_name = mkdirSync, js_namespace = fs)]
-    fn fs_mkdir_sync(path: &str, options: Object) -> std::result::Result<(), JsValue>;
-
-    #[wasm_bindgen(catch, js_name = unlinkSync, js_namespace = fs)]
-    fn fs_unlink_sync(path: &str) -> std::result::Result<(), JsValue>;
-
-    #[wasm_bindgen(catch, js_name = statSync, js_namespace = fs)]
-    fn fs_stat_sync(path: &str) -> std::result::Result<JsValue, JsValue>;
 }
 
 pub fn local_storage() -> web_sys::Storage {
@@ -117,11 +61,13 @@ cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
         use workflow_core::hex::*;
         use workflow_wasm::jserror::*;
+        use workflow_node as node;
+        use js_sys::Object;
 
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
-                Ok(fs_exists_sync(filename.as_ref())?)
+                Ok(node::fs::exists_sync(filename.as_ref())?)
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
                 Ok(local_storage().get_item(&key_name)?.is_some())
@@ -133,7 +79,7 @@ cfg_if! {
                 let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
                 Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
-                let js_value = fs_read_file_sync(&filename, options)?;
+                let js_value = node::fs::read_file_sync(&filename, options)?;
                 let text = js_value.as_string().ok_or(Error::DataIsNotAString(filename))?;
                 Ok(text)
             } else {
@@ -150,7 +96,7 @@ cfg_if! {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
-                let buffer = fs_read_file_sync(&filename, options)?;
+                let buffer = node::fs::read_file_sync(&filename, options)?;
                 let data = buffer.dyn_into::<Uint8Array>()?;
                 Ok(data.to_vec())
             } else {
@@ -170,7 +116,7 @@ cfg_if! {
                 let options = Object::new();
                 Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
                 let data = JsValue::from(text);
-                fs_write_file_sync(&filename, data, options)?;
+                node::fs::write_file_sync(&filename, data, options)?;
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
                 local_storage().set_item(&key_name, text)?;
@@ -184,7 +130,7 @@ cfg_if! {
                 let options = Object::new();
                 let uint8_array = Uint8Array::from(data);
                 let buffer = Buffer::from_uint8_array(&uint8_array);
-                fs_write_file_sync(&filename, buffer.into(), options)?;
+                node::fs::write_file_sync(&filename, buffer.into(), options)?;
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
                 local_storage().set_item(&key_name, data.to_hex().as_str())?;
@@ -195,7 +141,7 @@ cfg_if! {
         pub async fn remove_with_options<P : AsRef<Path>>(filename: P, options: Options) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
-                fs_unlink_sync(&filename)?;
+                node::fs::unlink_sync(&filename)?;
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
                 local_storage().remove_item(&key_name)?;
@@ -208,7 +154,7 @@ cfg_if! {
                 let options = Object::new();
                 Reflect::set(&options, &JsValue::from("recursive"), &JsValue::from_bool(true))?;
                 let filename = filename.as_ref().to_platform_string();
-                fs_mkdir_sync(&filename, options)?;
+                node::fs::mkdir_sync(&filename, options)?;
             }
 
             Ok(())
@@ -218,7 +164,7 @@ cfg_if! {
         async fn fetch_metadata(path: &str, entries : &mut [DirEntry]) -> std::result::Result<(),JsErrorData> {
             for entry in entries.iter_mut() {
                 let path = format!("{}/{}",path, entry.file_name());
-                let metadata = fs_stat_sync(&path).unwrap();
+                let metadata = node::fs::stat_sync(&path).unwrap();
                 entry.metadata = metadata.try_into().ok();
             }
 
@@ -227,7 +173,7 @@ cfg_if! {
 
         async fn readdir_impl(path: &Path, metadata : bool) -> std::result::Result<Vec<DirEntry>,JsErrorData> {
             let path_string = path.to_string_lossy().to_string();
-            let files = fs_readdir(&path_string).await?;
+            let files = node::fs::readdir(&path_string).await?;
             let list = files.dyn_into::<js_sys::Array>().expect("readdir: expecting resulting entries to be an array");
             let mut entries = list.to_vec().into_iter().map(|s| s.into()).collect::<Vec<DirEntry>>();
 
