@@ -52,6 +52,7 @@ use crate::application::app;
 use crate::result::Result;
 use js_sys::Object;
 use nw_sys::prelude::OptionsTrait;
+use std::fmt;
 use std::sync::Arc;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::MediaStream;
@@ -66,12 +67,12 @@ pub enum MediaStreamTrackKind {
     All,
 }
 
-impl ToString for MediaStreamTrackKind {
-    fn to_string(&self) -> String {
+impl fmt::Display for MediaStreamTrackKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Video => "Video".to_string(),
-            Self::Audio => "Audio".to_string(),
-            Self::All => "All".to_string(),
+            Self::Video => write!(f, "Video"),
+            Self::Audio => write!(f, "Audio"),
+            Self::All => write!(f, "All"),
         }
     }
 }

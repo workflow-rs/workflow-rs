@@ -48,15 +48,15 @@ impl ThemeOption {
         ])
     }
 }
-impl ToString for ThemeOption {
-    fn to_string(&self) -> String {
+
+impl std::fmt::Display for ThemeOption {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Background => "Background",
-            Self::Foreground => "Foreground",
-            Self::Selection => "Selection",
-            Self::Cursor => "Cursor",
+            Self::Background => write!(f, "Background"),
+            Self::Foreground => write!(f, "Foreground"),
+            Self::Selection => write!(f, "Selection"),
+            Self::Cursor => write!(f, "Cursor"),
         }
-        .to_string()
     }
 }
 
