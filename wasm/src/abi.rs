@@ -18,7 +18,7 @@ where
         return Err(Error::NotAnObject);
     }
 
-    let ptr = ::js_sys::Reflect::get(js, &JsValue::from_str("ptr"))?;
+    let ptr = ::js_sys::Reflect::get(js, &JsValue::from_str("__wbg_ptr"))?;
     if ptr.is_falsy() {
         return Err(Error::NotWasmAbiPointer);
     }
@@ -56,7 +56,7 @@ where
         }
     }
 
-    let ptr = ::js_sys::Reflect::get(js, &::wasm_bindgen::JsValue::from_str("ptr"))?;
+    let ptr = ::js_sys::Reflect::get(js, &::wasm_bindgen::JsValue::from_str("__wbg_ptr"))?;
     if ptr.is_falsy() {
         return Err(Error::NotWasmAbiPointerForClass(class.to_string()));
     }
