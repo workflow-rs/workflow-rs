@@ -5,7 +5,7 @@ use js_sys::Object;
 use std::sync::Arc;
 use wasm_bindgen::{JsCast, JsValue};
 use workflow_core::time::Duration;
-use workflow_wasm::object::*;
+use workflow_wasm::extensions::object::*;
 
 #[derive(Default)]
 pub struct Options {

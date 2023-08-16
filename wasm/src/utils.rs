@@ -4,7 +4,7 @@
 //!
 
 use crate::error::Error;
-use crate::jsvalue::*;
+use crate::extensions::jsvalue::*;
 use js_sys::{Array, Reflect, Uint8Array};
 use wasm_bindgen::prelude::*;
 

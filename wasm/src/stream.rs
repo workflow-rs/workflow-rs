@@ -31,7 +31,7 @@
 //!
 
 use crate::error::Error;
-use crate::object::*;
+use crate::extensions::object::*;
 use futures::{Stream, StreamExt};
 use js_sys::Object;
 use std::pin::Pin;

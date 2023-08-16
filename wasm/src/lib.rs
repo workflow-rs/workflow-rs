@@ -21,13 +21,12 @@ cfg_if::cfg_if! {
         pub mod panic;
         pub mod prelude;
         pub mod promise;
-        pub mod jsvalue;
         pub mod jserror;
-        pub mod object;
         pub mod channel;
         pub mod utils;
         pub mod tovalue;
         pub mod stream;
         pub mod printable;
+        pub mod extensions;
     }
 }

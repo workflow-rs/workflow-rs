@@ -5,13 +5,13 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
 /// Trait that declares `is_not_empty()` method.
-pub trait IsNotEmpty {
+pub trait IsNotEmptyExtension {
     fn is_not_empty(&self) -> bool;
 }
 
 macro_rules! is_not_empty {
     ($type:ty) => {
-        impl IsNotEmpty for $type {
+        impl IsNotEmptyExtension for $type {
             #[inline(always)]
             fn is_not_empty(&self) -> bool {
                 !self.is_empty()
@@ -22,7 +22,7 @@ macro_rules! is_not_empty {
 
 macro_rules! is_not_empty_generic {
     ($type:ident<$($t:ident),+>) => (
-        impl<$($t),+> IsNotEmpty for $type<$($t),+> {
+        impl<$($t),+> IsNotEmptyExtension for $type<$($t),+> {
             #[inline(always)]
             fn is_not_empty(&self) -> bool {
                 !self.is_empty()

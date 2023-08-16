@@ -3,12 +3,13 @@
 //!
 
 use crate::utils::*;
-use crate::{error::Error, jsvalue::JsValueTrait};
+use crate::error::Error;
+use crate::extensions::jsvalue::JsValueExtension;
 use js_sys::{Object, Reflect};
 use wasm_bindgen::prelude::*;
 
 /// Custom trait implementing simplified property accessor functions for [`Object`].
-pub trait ObjectTrait {
+pub trait ObjectExtension {
     /// get `JsValue` property
     fn get(&self, prop: &str) -> Result<JsValue, Error>;
     /// get `String` property
@@ -43,7 +44,7 @@ pub trait ObjectTrait {
     fn delete(&self, prop: &str) -> Result<bool, Error>;
 }
 
-impl ObjectTrait for Object {
+impl ObjectExtension for Object {
     fn get(&self, prop: &str) -> Result<JsValue, Error> {
         Ok(Reflect::get(self, &JsValue::from(prop))?)
     }

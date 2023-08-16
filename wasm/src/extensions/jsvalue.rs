@@ -8,7 +8,7 @@ use crate::error::Error;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 
-pub trait JsValueTrait {
+pub trait JsValueExtension {
     fn try_as_u8(&self) -> Result<u8, Error>;
     fn try_as_u16(&self) -> Result<u16, Error>;
     fn try_as_u32(&self) -> Result<u32, Error>;
@@ -16,7 +16,7 @@ pub trait JsValueTrait {
     fn try_as_vec_u8(&self) -> Result<Vec<u8>, Error>;
 }
 
-impl JsValueTrait for JsValue {
+impl JsValueExtension for JsValue {
     fn try_as_u8(&self) -> Result<u8, Error> {
         let f = self
             .as_f64()

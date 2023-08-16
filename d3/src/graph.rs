@@ -9,7 +9,7 @@ use web_sys::{Element, HtmlCanvasElement};
 use workflow_core::time::*;
 use workflow_dom::inject::*;
 use workflow_log::log_error;
-use workflow_wasm::object::ObjectTrait;
+use workflow_wasm::prelude::*;
 
 static mut DOM_INIT: bool = false;
 
