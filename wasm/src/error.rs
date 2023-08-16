@@ -1,6 +1,6 @@
 //! Error enum used by the `workflow_wasm` crate.
 
-use crate::jserror::*;
+use crate::jserror::JsErrorData;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
@@ -33,9 +33,7 @@ pub enum Error {
     #[error(transparent)]
     FasterHex(#[from] faster_hex::Error),
 
-    // #[error("{0:?}")]
-    // JsValue(Sendable<JsValue>),
-    #[error("{0}")]
+    #[error(transparent)]
     JsValue(JsErrorData),
 
     #[error("WASM ABI: {0}")]

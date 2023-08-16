@@ -48,6 +48,8 @@ pub struct JsErrorData {
     inner: Arc<Inner>,
 }
 
+impl std::error::Error for JsErrorData {}
+
 impl JsErrorData {
     pub fn name(&self) -> &Option<String> {
         &self.inner.name
