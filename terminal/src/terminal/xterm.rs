@@ -261,7 +261,6 @@ impl Xterm {
         }
 
         let term = XtermImpl::new(options);
-        // log_trace!("term: {:?}", term);
 
         Ok(term)
     }
@@ -290,7 +289,7 @@ impl Xterm {
             let theme_obj = js_sys::Object::new();
             for (key, css_var) in keys {
                 if let Ok(value) = css.get_property_value(css_var) {
-                    log_trace!("workflow-terminal: `{}`: {:?}", key, value);
+                    // log_trace!("workflow-terminal: `{}`: {:?}", key, value);
                     js_sys::Reflect::set(
                         &theme_obj,
                         &JsValue::from(key),
@@ -424,7 +423,7 @@ impl Xterm {
         let this = self.clone();
         let resize_callback = callback!(move |_| -> std::result::Result<(), JsValue> {
             if let Err(err) = this.resize() {
-                log_error!("Resize error: {:?}", err);
+                log_error!("terminal resize error: {:?}", err);
             }
             Ok(())
         });
@@ -477,7 +476,7 @@ impl Xterm {
             let alt_key = dom_event.alt_key();
             let meta_key = dom_event.meta_key();
 
-            log_info!("key: {key}, meta: {meta_key}");
+            // log_info!("key: {key}, ctrl: {ctrl_key}, alt: {alt_key}, meta: {meta_key}");
 
             if !runtime::is_macos() && !this.disable_clipboard_handling {
                 if (key == "v" || key == "V") && (ctrl_key || meta_key) {
@@ -486,8 +485,7 @@ impl Xterm {
                         .try_send(Ctl::Paste(None))
                         .expect("Unable to send paste Ctl");
                     return Ok(());
-                }
-                if (key == "c" || key == "C") && (ctrl_key || meta_key) {
+                } else if (key == "c" || key == "C") && (ctrl_key || meta_key) {
                     let text = this.xterm().as_ref().unwrap().get_selection();
                     this.sink
                         .sender
@@ -540,7 +538,7 @@ impl Xterm {
                         let clipboard = nw_sys::clipboard::get();
                         clipboard.set(&text);
                     } else if let Err(err) = clipboard::write_text(&text).await {
-                        log_error!("{:?}", JsErrorData::from(err));
+                        log_error!("{}", JsErrorData::from(err));
                     }
 
                     if let Some(handler) = self.event_handler() {
@@ -716,9 +714,7 @@ impl Xterm {
             .sender
             .try_send(Ctl::Copy(Some(text)))
             .expect("Unable to send copy Ctl");
-        // log_info!("clipboard_copy inside xterm, sending notification");
         if let Some(handler) = self.event_handler() {
-            log_info!("clipboard_copy inside xterm, sending notification - DONE");
             handler(Event::Copy);
         }
 
