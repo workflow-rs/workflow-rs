@@ -2,9 +2,9 @@
 //! Js [`Object`] property access utilities
 //!
 
-use crate::utils::*;
 use crate::error::Error;
 use crate::extensions::jsvalue::JsValueExtension;
+use crate::utils::*;
 use js_sys::{Object, Reflect};
 use wasm_bindgen::prelude::*;
 
