@@ -94,7 +94,7 @@ impl Theme {
 
 enum Ctl {
     SinkEvent(SinkEvent),
-    Copy,
+    Copy(Option<String>),
     Paste(Option<String>),
     Close,
 }
@@ -345,9 +345,6 @@ impl Xterm {
 
         self.init_kbd_listener(&xterm)?;
         self.init_resize_observer()?;
-        if !self.disable_clipboard_handling {
-            self.init_clipboard(&xterm)?;
-        }
 
         *self.xterm.lock().unwrap() = Some(xterm);
         *self.terminal.lock().unwrap() = Some(terminal.clone());
@@ -374,34 +371,6 @@ impl Xterm {
         xterm.refresh(start, stop);
     }
 
-    fn init_clipboard(self: &Arc<Self>, xterm: &XtermImpl) -> Result<()> {
-        let this = self.clone();
-        let clipboard_callback = callback!(
-            move |e: web_sys::KeyboardEvent| -> std::result::Result<(), JsValue> {
-                // log_trace!("xterm: key:{}, ctrl_key:{}, meta_key:{},  {:?}", e.key(), e.ctrl_key(), e.meta_key(), e);
-                if e.key() == "v" && (e.ctrl_key() || e.meta_key()) {
-                    this.sink
-                        .sender
-                        .try_send(Ctl::Paste(None))
-                        .expect("Unable to send paste Ctl");
-                }
-                if e.key() == "c" && (e.ctrl_key() || e.meta_key()) {
-                    this.sink
-                        .sender
-                        .try_send(Ctl::Copy)
-                        .expect("Unable to send copy Ctl");
-                }
-                Ok(())
-            }
-        );
-
-        xterm
-            .get_element()
-            .add_event_listener_with_callback("keydown", clipboard_callback.as_ref())?;
-        self.callbacks.retain(clipboard_callback)?;
-
-        Ok(())
-    }
 
     fn event_handler(&self) -> Option<EventHandlerFn> {
         self.event_handler.lock().unwrap().clone()
@@ -476,6 +445,26 @@ impl Xterm {
             let alt_key = dom_event.alt_key();
             let meta_key = dom_event.meta_key();
 
+            if !this.disable_clipboard_handling {
+                if (key == "v" || key == "v") && (ctrl_key || meta_key) {
+                    this.sink
+                        .sender
+                        .try_send(Ctl::Paste(None))
+                        .expect("Unable to send paste Ctl");
+                    return Ok(());
+                }
+                if (key == "c" || key == "C") && (ctrl_key || meta_key) {
+                    let text = this.xterm().as_ref().unwrap().get_selection();
+                    log_info!("XXX getting clipboard text: '{text}'");
+
+                    this.sink
+                        .sender
+                        .try_send(Ctl::Copy(Some(text)))
+                        .expect("Unable to send copy Ctl");
+                    return Ok(());
+                }
+            }
+
             this.sink
                 .sender
                 .try_send(Ctl::SinkEvent(SinkEvent::new(
@@ -512,8 +501,9 @@ impl Xterm {
                 Ctl::SinkEvent(event) => {
                     self.sink(event).await?;
                 }
-                Ctl::Copy => {
-                    let text = self.xterm().as_ref().unwrap().get_selection();
+                Ctl::Copy(text) => {
+                    let text =
+                        text.unwrap_or_else(|| self.xterm().as_ref().unwrap().get_selection());
                     if runtime::is_nw() {
                         let clipboard = nw_sys::clipboard::get();
                         clipboard.set(&text);
@@ -689,11 +679,12 @@ impl Xterm {
     }
 
     pub fn clipboard_copy(&self) -> Result<()> {
+        let text = self.xterm().as_ref().unwrap().get_selection();
         self.sink
             .sender
-            .try_send(Ctl::Copy)
+            .try_send(Ctl::Copy(Some(text)))
             .expect("Unable to send copy Ctl");
-        log_info!("clipboard_copy inside xterm, sending notification");
+        // log_info!("clipboard_copy inside xterm, sending notification");
         if let Some(handler) = self.event_handler() {
             log_info!("clipboard_copy inside xterm, sending notification - DONE");
             handler(Event::Copy);
