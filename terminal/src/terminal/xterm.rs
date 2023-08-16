@@ -371,7 +371,6 @@ impl Xterm {
         xterm.refresh(start, stop);
     }
 
-
     fn event_handler(&self) -> Option<EventHandlerFn> {
         self.event_handler.lock().unwrap().clone()
     }
