@@ -24,7 +24,7 @@ cfg_if::cfg_if! {
         pub mod jserror;
         pub mod channel;
         pub mod utils;
-        pub mod tovalue;
+        pub mod serde;
         pub mod stream;
         pub mod printable;
         pub mod extensions;
