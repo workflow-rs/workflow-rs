@@ -345,6 +345,9 @@ impl Xterm {
 
         self.init_kbd_listener(&xterm)?;
         self.init_resize_observer()?;
+        if runtime::is_macos() && !self.disable_clipboard_handling {
+            self.init_clipboard_listener_for_macos(&xterm)?;
+        }
 
         *self.xterm.lock().unwrap() = Some(xterm);
         *self.terminal.lock().unwrap() = Some(terminal.clone());
@@ -433,6 +436,36 @@ impl Xterm {
         Ok(())
     }
 
+    fn init_clipboard_listener_for_macos(self: &Arc<Self>, xterm: &XtermImpl) -> Result<()> {
+        let this = self.clone();
+        let clipboard_callback = callback!(
+            move |e: web_sys::KeyboardEvent| -> std::result::Result<(), JsValue> {
+                // log_trace!("xterm: key:{}, ctrl_key:{}, meta_key:{},  {:?}", e.key(), e.ctrl_key(), e.meta_key(), e);
+                if e.key() == "v" && (e.ctrl_key() || e.meta_key()) {
+                    this.sink
+                        .sender
+                        .try_send(Ctl::Paste(None))
+                        .expect("Unable to send paste Ctl");
+                }
+                if e.key() == "c" && (e.ctrl_key() || e.meta_key()) {
+                    let text = this.xterm().as_ref().unwrap().get_selection();
+                    this.sink
+                        .sender
+                        .try_send(Ctl::Copy(Some(text)))
+                        .expect("Unable to send copy Ctl");
+                }
+                Ok(())
+            }
+        );
+
+        xterm
+            .get_element()
+            .add_event_listener_with_callback("keydown", clipboard_callback.as_ref())?;
+        self.callbacks.retain(clipboard_callback)?;
+
+        Ok(())
+    }
+
     fn init_kbd_listener(self: &Arc<Self>, xterm: &XtermImpl) -> Result<()> {
         let this = self.clone();
         let callback = callback!(move |e: XtermEvent| -> std::result::Result<(), JsValue> {
@@ -444,8 +477,10 @@ impl Xterm {
             let alt_key = dom_event.alt_key();
             let meta_key = dom_event.meta_key();
 
-            if !this.disable_clipboard_handling {
-                if (key == "v" || key == "v") && (ctrl_key || meta_key) {
+            log_info!("key: {key}, meta: {meta_key}");
+
+            if !runtime::is_macos() && !this.disable_clipboard_handling {
+                if (key == "v" || key == "V") && (ctrl_key || meta_key) {
                     this.sink
                         .sender
                         .try_send(Ctl::Paste(None))
@@ -454,8 +489,6 @@ impl Xterm {
                 }
                 if (key == "c" || key == "C") && (ctrl_key || meta_key) {
                     let text = this.xterm().as_ref().unwrap().get_selection();
-                    log_info!("XXX getting clipboard text: '{text}'");
-
                     this.sink
                         .sender
                         .try_send(Ctl::Copy(Some(text)))
