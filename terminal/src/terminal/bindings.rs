@@ -133,8 +133,8 @@ impl Debug for XtermImpl {
 }
 
 impl XtermImpl {
-    pub fn write<T: Into<String>>(&self, text: T) {
-        self._write(text.into());
+    pub fn write<T: ToString>(&self, text: T) {
+        self._write(text.to_string());
     }
 
     pub fn set_theme(&self, theme: js_sys::Object) {

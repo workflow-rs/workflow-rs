@@ -26,9 +26,11 @@ pub struct Options {
     /// Disable internal clipboard handling
     /// (useful when using clipboard API calls externally)
     pub disable_clipboard_handling: bool,
-    // Default font size
+    /// Default font family (xterm.js only)
+    pub font_family: Option<String>,
+    /// Default font size (xterm.js only)
     pub font_size: Option<f64>,
-    // Default scrollback limit
+    /// Default scrollback limit (xterm.js only)
     pub scrollback: Option<u32>,
 }
 
@@ -38,6 +40,7 @@ impl Default for Options {
             prompt: None,
             element: TargetElement::Body,
             disable_clipboard_handling: false,
+            font_family: None,
             font_size: None,
             scrollback: Some(2048),
         }

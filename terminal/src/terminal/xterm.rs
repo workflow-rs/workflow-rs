@@ -14,7 +14,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use wasm_bindgen::JsValue;
 use web_sys::Element;
 use workflow_core::channel::{unbounded, Receiver, Sender};
-use workflow_core::runtime;
+use workflow_core::runtime::{self, platform, Platform};
 use workflow_dom::clipboard;
 use workflow_dom::inject::*;
 use workflow_dom::utils::body;
@@ -147,6 +147,7 @@ impl ResizeObserverInfo {
 }
 
 pub struct XtermOptions {
+    pub font_family: Option<String>,
     pub font_size: Option<f64>,
     pub scrollback: Option<u32>,
 }
@@ -204,6 +205,7 @@ impl Xterm {
         parent.append_child(&element)?;
         let defaults = XtermOptions {
             font_size: options.font_size,
+            font_family: options.font_family.clone(),
             scrollback: options.scrollback,
         };
         let terminal = Xterm {
@@ -239,13 +241,17 @@ impl Xterm {
             js_sys::Reflect::set(&theme, &k.into(), &v)?;
         }
 
+        let font = match platform() {
+            Platform::MacOS | Platform::IOS => "Menlo",
+            Platform::Windows => "Consolas",
+            Platform::Linux => "Ubuntu Mono",
+            _ => "monospace",
+        };
+
         let options = js_sys::Object::new();
         let opts = Vec::from([
             ("allowTransparency", JsValue::from(true)),
-            (
-                "fontFamily",
-                JsValue::from("Consolas, Ubuntu Mono, courier-new, courier, monospace"),
-            ),
+            ("fontFamily", JsValue::from(font)),
             (
                 "fontSize",
                 JsValue::from(defaults.font_size.unwrap_or(20.0)),
@@ -623,14 +629,14 @@ impl Xterm {
 
     pub fn write<S>(&self, s: S)
     where
-        S: Into<String>,
+        S: ToString,
     {
         self.xterm
             .lock()
             .unwrap()
             .as_ref()
             .expect("Xterm is not initialized")
-            .write(s.into());
+            .write(s);
     }
 
     pub fn measure(&self) -> Result<()> {

@@ -99,6 +99,7 @@ pub mod macros;
 pub mod prelude;
 pub mod result;
 pub mod terminal;
+pub mod unicode;
 
 pub use cli::{Cli, Context, Handler, HandlerCli};
 pub use crlf::CrLf;
@@ -112,6 +113,7 @@ pub use terminal::TargetElement;
 pub use terminal::Terminal;
 pub use terminal::{Theme, ThemeOption};
 pub use textwrap;
+pub use unicode::UnicodeString;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {

@@ -105,9 +105,9 @@ impl Crossterm {
 
     pub fn write<S>(&self, s: S)
     where
-        S: Into<String>,
+        S: ToString,
     {
-        print!("{}", s.into());
+        print!("{}", s.to_string());
         self.flush();
     }
 

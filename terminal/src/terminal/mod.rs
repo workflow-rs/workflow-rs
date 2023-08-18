@@ -9,6 +9,7 @@ use crate::error::Error;
 use crate::keys::Key;
 use crate::result::Result;
 use crate::CrLf;
+use crate::UnicodeString;
 use cfg_if::cfg_if;
 use futures::*;
 pub use pad::PadStr;
@@ -62,8 +63,8 @@ cfg_if! {
 
 #[derive(Debug)]
 pub struct Inner {
-    pub buffer: String,
-    history: Vec<String>,
+    pub buffer: UnicodeString,
+    history: Vec<UnicodeString>,
     pub cursor: usize,
     history_index: usize,
 }
@@ -77,8 +78,8 @@ impl Default for Inner {
 impl Inner {
     pub fn new() -> Self {
         Inner {
-            buffer: String::new(),
-            history: Vec::new(),
+            buffer: UnicodeString::default(),
+            history: vec![],
             cursor: 0,
             history_index: 0,
         }
@@ -93,7 +94,7 @@ impl Inner {
 #[derive(Clone)]
 struct UserInput {
     prompt: Arc<Mutex<Option<String>>>,
-    buffer: Arc<Mutex<String>>,
+    buffer: Arc<Mutex<UnicodeString>>,
     enabled: Arc<AtomicBool>,
     echo: Arc<AtomicBool>,
     kbhit: Arc<AtomicBool>,
@@ -107,7 +108,7 @@ impl UserInput {
         let (sender, receiver) = unbounded();
         UserInput {
             prompt: Arc::new(Mutex::new(None)),
-            buffer: Arc::new(Mutex::new(String::new())),
+            buffer: Arc::new(Mutex::new(UnicodeString::default())),
             enabled: Arc::new(AtomicBool::new(false)),
             echo: Arc::new(AtomicBool::new(false)),
             kbhit: Arc::new(AtomicBool::new(false)),
@@ -122,7 +123,7 @@ impl UserInput {
     }
 
     pub fn get_buffer(&self) -> String {
-        self.buffer.lock().unwrap().clone()
+        self.buffer.lock().unwrap().clone().to_string()
     }
 
     pub fn open(&self, echo: bool, kbhit: bool, prompt: Option<String>) -> Result<()> {
@@ -145,7 +146,7 @@ impl UserInput {
 
         self.enabled.store(false, Ordering::SeqCst);
         self.terminate.store(true, Ordering::SeqCst);
-        self.sender.try_send(s).unwrap();
+        self.sender.try_send(s.to_string()).unwrap();
         Ok(())
     }
 
@@ -305,7 +306,7 @@ impl Terminal {
     }
 
     /// Get terminal command line history list as `Vec<String>`
-    pub fn history(&self) -> Vec<String> {
+    pub fn history(&self) -> Vec<UnicodeString> {
         let data = self.inner().unwrap();
         data.history.clone()
     }
@@ -339,30 +340,30 @@ impl Terminal {
     /// Write a string
     pub fn write<S>(&self, s: S)
     where
-        S: Into<String>,
+        S: ToString,
     {
-        self.term().write(s.into());
+        self.term().write(s);
     }
 
     /// Write a string ending with CRLF sequence
     pub fn writeln<S>(&self, s: S)
     where
-        S: Into<String>,
+        S: ToString,
     {
         if self.is_running() {
             if self.user_input.is_enabled() {
                 if let Some(prompt) = self.user_input.get_prompt() {
-                    self.write(format!("{}{}\n\r", ClearLine, s.into()));
+                    self.write(format!("{}{}\n\r", ClearLine, s.to_string()));
                     self.write(prompt);
                     if !self.user_input.echo.load(Ordering::SeqCst) {
                         self.write(self.user_input.get_buffer());
                     }
                 }
             } else {
-                self.write(format!("{}\n\r", s.into()));
+                self.write(format!("{}\n\r", s.to_string()));
             }
         } else {
-            self.write(format!("{}{}\n\r", ClearLine, s.into()));
+            self.write(format!("{}{}\n\r", ClearLine, s.to_string()));
             let data = self.inner().unwrap();
             let p = format!("{}{}", self.get_prompt(), data.buffer);
             self.write(p);
@@ -547,17 +548,36 @@ impl Terminal {
     }
 
     /// Inject a string into the current cursor position
-    pub fn inject(&self, text: String) -> Result<()> {
+    pub fn inject_unicode_string(&self, text: UnicodeString) -> Result<()> {
         let mut data = self.inner()?;
         self.inject_impl(&mut data, text)?;
         Ok(())
     }
 
-    fn inject_impl(&self, data: &mut Inner, text: String) -> Result<()> {
+    pub fn inject<S: ToString>(&self, text: S) -> Result<()> {
+        let mut data = self.inner()?;
+        self.inject_impl(&mut data, text.to_string().into())?;
+        Ok(())
+    }
+
+    fn inject_impl(&self, data: &mut Inner, text: UnicodeString) -> Result<()> {
         let len = text.len();
-        data.buffer.insert_str(data.cursor, &text);
+        data.buffer.insert(data.cursor, text);
         self.trail(data.cursor, &data.buffer, true, false, len);
         data.cursor += len;
+        Ok(())
+    }
+
+    pub fn inject_char(&self, ch: char) -> Result<()> {
+        let mut data = self.inner()?;
+        self.inject_char_impl(&mut data, ch)?;
+        Ok(())
+    }
+
+    fn inject_char_impl(&self, data: &mut Inner, ch: char) -> Result<()> {
+        data.buffer.insert_char(data.cursor, ch);
+        self.trail(data.cursor, &data.buffer, true, false, 1);
+        data.cursor += 1;
         Ok(())
     }
 
@@ -687,7 +707,7 @@ impl Terminal {
                 return Ok(());
             }
             Key::Char(ch) => {
-                self.inject(ch.to_string())?;
+                self.inject_char(ch)?;
             }
             _ => {
                 return Ok(());
@@ -697,10 +717,17 @@ impl Terminal {
         Ok(())
     }
 
-    fn trail(&self, cursor: usize, buffer: &str, rewind: bool, erase_last: bool, offset: usize) {
-        let mut tail = buffer[cursor..].to_string();
+    fn trail(
+        &self,
+        cursor: usize,
+        buffer: &UnicodeString,
+        rewind: bool,
+        erase_last: bool,
+        offset: usize,
+    ) {
+        let mut tail = UnicodeString::from(&buffer.0[cursor..]); //.to_vec();//.to_string();
         if erase_last {
-            tail += " ";
+            tail.push(' ');
         }
         self.write(&tail);
         if rewind {
