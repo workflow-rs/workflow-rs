@@ -199,12 +199,13 @@ pub enum Platform {
     FreeBSD,
     OpenBSD,
     NetBSD,
-    Web,
+    Android,
+    IOS,
+    Unknown,
     Other(String),
 }
 
 impl Platform {
-    #[cfg(target_arch = "wasm32")]
     pub fn from_node() -> Self {
         let result = js_sys::Function::new_no_args(
             "
@@ -229,6 +230,43 @@ impl Platform {
 
         platform
     }
+
+    pub fn from_web() -> Self {
+        let window = if let Some(window) = web_sys::window() {
+            window
+        } else {
+            return Platform::Unknown;
+        };
+
+        let user_agent = if let Ok(user_agent) = window.navigator().user_agent() {
+            user_agent.to_lowercase()
+        } else {
+            return Platform::Unknown;
+        };
+
+        if user_agent.contains("win") {
+            Platform::Windows
+        } else if user_agent.contains("mac") {
+            Platform::MacOS
+        } else if user_agent.contains("linux") {
+            Platform::Linux
+        } else if user_agent.contains("android") {
+            Platform::Android
+        } else if user_agent.contains("ios")
+            || user_agent.contains("iphone")
+            || user_agent.contains("ipad")
+        {
+            Platform::IOS
+        } else if user_agent.contains("freebsd") {
+            Platform::FreeBSD
+        } else if user_agent.contains("openbsd") {
+            Platform::OpenBSD
+        } else if user_agent.contains("netbsd") {
+            Platform::NetBSD
+        } else {
+            Platform::Unknown
+        }
+    }
 }
 
 static mut PLATFORM: Option<Platform> = None;
@@ -248,7 +286,7 @@ pub fn platform() -> Platform {
                 let platform = if is_node() {
                     Platform::from_node()
                 } else {
-                    Platform::Web
+                    Platform::from_web()
                 };
             }
         }
@@ -318,14 +356,14 @@ pub fn is_netbsd() -> bool {
     }
 }
 
-pub fn is_unix() -> bool {
-    is_macos() || is_linux() || is_freebsd() || is_openbsd() || is_netbsd()
-}
-
 pub fn is_ios() -> bool {
-    unimplemented!()
+    platform() == Platform::IOS
 }
 
 pub fn is_android() -> bool {
-    unimplemented!()
+    platform() == Platform::Android
+}
+
+pub fn is_unix() -> bool {
+    is_macos() || is_linux() || is_freebsd() || is_openbsd() || is_netbsd()
 }
