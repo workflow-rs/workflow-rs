@@ -52,10 +52,12 @@ impl From<tungstenite::Message> for Message {
 impl From<WebSocketConfig> for TsWebSocketConfig {
     fn from(config: WebSocketConfig) -> Self {
         TsWebSocketConfig {
-            max_send_queue: config.max_send_queue,
+            write_buffer_size: config.write_buffer_size,
+            max_write_buffer_size: config.max_write_buffer_size,
             max_message_size: config.max_message_size,
             max_frame_size: config.max_frame_size,
             accept_unmasked_frames: config.accept_unmasked_frames,
+            ..Default::default()
         }
     }
 }

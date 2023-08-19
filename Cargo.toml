@@ -38,7 +38,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Anton Yemelyanov <anton.yemelyanov@gmail.com>", "Surinder Singh Matoo Mattaur <surinder83singh@gmail.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -49,36 +49,36 @@ repository = "https://github.com/workflow-rs/workflow-rs"
 
 # internal dependencies
 
-workflow-core = { version = "0.5.3", path = "core" }
-workflow-core-macros = { version = "0.5.3", path = "core/macros" }
-workflow-d3 = { version = "0.5.3", path = "d3" }
-workflow-dom = { version = "0.5.3", path = "dom" }
-workflow-html = { version = "0.5.3", path = "html" }
-workflow-html-macros = { version = "0.5.3", path = "html/macros" }
-workflow-i18n = { version = "0.5.3", path = "i18n" }
-workflow-log = { version = "0.5.3", path = "log" }
-workflow-macro-tools = { version = "0.5.3", path = "macro-tools" }
-workflow-node = { version = "0.5.3", path = "node" }
-workflow-nw = { version = "0.5.3", path = "nw" }
-workflow-panic-hook = { version = "0.5.3", path = "panic-hook" }
-workflow-rpc = { version = "0.5.3", path = "rpc" }
-workflow-rpc-macros = { version = "0.5.3", path = "rpc/macros" }
-workflow-rs = { version = "0.5.3", path = "features" }
-workflow-store = { version = "0.5.3", path = "store" }
-workflow-task = { version = "0.5.3", path = "task" }
-workflow-task-macros = { version = "0.5.3", path = "task/macros" }
-workflow-terminal = { version = "0.5.3", path = "terminal" }
-workflow-terminal-macros = { version = "0.5.3", path = "terminal/macros" }
-workflow-wasm = { version = "0.5.3", path = "wasm" }
-workflow-wasm-macros = { version = "0.5.3", path = "wasm/macros" }
-workflow-websocket = { version = "0.5.3", path = "websocket" }
+workflow-core = { version = "0.5.4", path = "core" }
+workflow-core-macros = { version = "0.5.4", path = "core/macros" }
+workflow-d3 = { version = "0.5.4", path = "d3" }
+workflow-dom = { version = "0.5.4", path = "dom" }
+workflow-html = { version = "0.5.4", path = "html" }
+workflow-html-macros = { version = "0.5.4", path = "html/macros" }
+workflow-i18n = { version = "0.5.4", path = "i18n" }
+workflow-log = { version = "0.5.4", path = "log" }
+workflow-macro-tools = { version = "0.5.4", path = "macro-tools" }
+workflow-node = { version = "0.5.4", path = "node" }
+workflow-nw = { version = "0.5.4", path = "nw" }
+workflow-panic-hook = { version = "0.5.4", path = "panic-hook" }
+workflow-rpc = { version = "0.5.4", path = "rpc" }
+workflow-rpc-macros = { version = "0.5.4", path = "rpc/macros" }
+workflow-rs = { version = "0.5.4", path = "features" }
+workflow-store = { version = "0.5.4", path = "store" }
+workflow-task = { version = "0.5.4", path = "task" }
+workflow-task-macros = { version = "0.5.4", path = "task/macros" }
+workflow-terminal = { version = "0.5.4", path = "terminal" }
+workflow-terminal-macros = { version = "0.5.4", path = "terminal/macros" }
+workflow-wasm = { version = "0.5.4", path = "wasm" }
+workflow-wasm-macros = { version = "0.5.4", path = "wasm/macros" }
+workflow-websocket = { version = "0.5.4", path = "websocket" }
 
 # external dependencies
 
 ahash = "0.8.3"
 async-channel = "1.9.0"
 async-std = { version = "1.12.0", features = ['attributes'] }
-async-trait = "0.1.71"
+async-trait = "0.1.73"
 atomic_float = "0.1.0"
 base64 = "0.21.2"
 # borsh = { version = "0.10.0", features = ["rc"] }
@@ -87,8 +87,8 @@ bs58 = "0.5.0"
 cfg-if = "1.0.0"
 console = "0.15.7"
 convert_case = "0.6.0"
-crossterm = "0.26.1"
-clap = { version = "4.3.12", features = ["derive","cargo"] }
+crossterm = "0.27.0"
+clap = { version = "4.3.23", features = ["derive","cargo"] }
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
 dirs = "5.0.1"
@@ -101,7 +101,7 @@ home = "0.5.5"
 instant = { version ="0.1.12", features = ['wasm-bindgen'] }
 js-sys = "0.3.64"
 lazy_static = "1.4.0"
-log = "0.4.19"
+log = "0.4.20"
 manual_future = "0.1.1"
 node-child-process = "0.1.1"
 node-sys = "0.4.2"
@@ -114,10 +114,10 @@ proc-macro-error = { version = "1.0.4", default-features = false }
 proc-macro2 = { version = "1.0.50" }
 quote = "1.0.23"
 rand = { version = "0.8.5", features = ["getrandom"] }
-regex = "1.9.1"
+regex = "1.9.3"
 ritehash = "0.2.0"
 serde = { version = "1.0.171" , features = ["derive","rc"] }
-serde_json = "1.0.103"
+serde_json = "1.0.105"
 serde-wasm-bindgen = "0.5.0"
 sha2 = "0.10.7"
 syn = {version="1.0.107",features=["full","fold","extra-traits","parsing","proc-macro"]}
@@ -125,11 +125,11 @@ termcolor="1.2.0"
 termion = "2.0.1"
 textwrap = "0.16.0"
 # termion = "1.5.6"
-thiserror = "1.0.43"
-tokio = { version = "1.29.1", default-features = false, features = ['io-util','time','sync','macros','rt','rt-multi-thread'] }
-tokio-tungstenite = { version = "0.19.0", features = ["handshake"] }
+thiserror = "1.0.47"
+tokio = { version = "1.32.0", default-features = false, features = ['io-util','time','sync','macros','rt','rt-multi-thread'] }
+tokio-tungstenite = { version = "0.20.0", features = ["handshake"] }
 triggered = "0.1.2"
-tungstenite = { version = "0.19.0", features = ["handshake"] }
+tungstenite = { version = "0.20.0", features = ["handshake"] }
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4.37"
 web-sys = "0.3.64"
