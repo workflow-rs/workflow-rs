@@ -2,7 +2,7 @@
 /// This `WebSocketConfig` is mirrored from Tungstenite, and has no effect when
 /// used in the WASM (browser) environment due to lack of control in browser
 /// websockets.
-#[derive(Default, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct WebSocketConfig {
     /// The target minimum size of the write buffer to reach before writing the data
     /// to the underlying stream.
@@ -39,4 +39,16 @@ pub struct WebSocketConfig {
     /// some popular libraries that are sending unmasked frames, ignoring the RFC.
     /// By default this option is set to `false`, i.e. according to RFC 6455.
     pub accept_unmasked_frames: bool,
+}
+
+impl Default for WebSocketConfig {
+    fn default() -> Self {
+        WebSocketConfig {
+            write_buffer_size: 128 * 1024,
+            max_write_buffer_size: usize::MAX,
+            max_message_size: Some(64 << 20),
+            max_frame_size: Some(16 << 20),
+            accept_unmasked_frames: false,
+        }
+    }
 }
