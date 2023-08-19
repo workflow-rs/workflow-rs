@@ -74,8 +74,8 @@ impl From<JsValue> for Error {
 }
 
 impl Error {
-    pub fn custom<S: Into<String>>(msg: S) -> Self {
-        Self::Custom(msg.into())
+    pub fn custom<S: ToString>(msg: S) -> Self {
+        Self::Custom(msg.to_string())
     }
 
     pub fn convert<S: std::fmt::Display>(msg: S) -> Self {

@@ -19,6 +19,9 @@ pub enum Error {
 
     #[error(transparent)]
     Task(#[from] workflow_task::TaskError),
+
+    #[error("invalid encoding {0}")]
+    Encoding(String),
 }
 
 ///

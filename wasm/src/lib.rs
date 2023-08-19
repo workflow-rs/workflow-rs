@@ -10,6 +10,8 @@
 //! This crate provides utilities for WASM32 environment
 //!
 
+extern crate self as workflow_wasm;
+
 cfg_if::cfg_if! {
     if #[cfg(not(target_os = "solana"))] {
         pub mod abi;

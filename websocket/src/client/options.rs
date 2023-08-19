@@ -100,11 +100,11 @@ impl TryFrom<JsValue> for ConnectOptions {
     type Error = Error;
     fn try_from(args: JsValue) -> Result<Self> {
         let options = if let Some(args) = args.dyn_ref::<Object>() {
-            let url = args.get("url")?.as_string();
-            let block_async_connect = args.get("block")?.as_bool().unwrap_or(true);
-            let strategy = ConnectStrategy::new(args.get("retry")?.as_bool().unwrap_or(true));
+            let url = args.get_value("url")?.as_string();
+            let block_async_connect = args.get_value("block")?.as_bool().unwrap_or(true);
+            let strategy = ConnectStrategy::new(args.get_value("retry")?.as_bool().unwrap_or(true));
             let timeout = args
-                .get("timeout")?
+                .get_value("timeout")?
                 .as_f64()
                 .map(|f| Duration::from_millis(f as u64));
 

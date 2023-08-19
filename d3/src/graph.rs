@@ -842,7 +842,7 @@ impl Graph {
                 .data_hirez
                 .at(0)
                 .dyn_into::<js_sys::Object>()?
-                .get("date")?
+                .get_value("date")?
                 .dyn_into::<js_sys::Date>()?;
             if first_item_date.lt(&limit) {
                 self.data_hirez.shift();
@@ -856,7 +856,7 @@ impl Graph {
                 .data_lowrez
                 .at(0)
                 .dyn_into::<js_sys::Object>()?
-                .get("date")?
+                .get_value("date")?
                 .dyn_into::<js_sys::Date>()?;
             if first_item_date.lt(&limit) {
                 self.data_lowrez.shift();

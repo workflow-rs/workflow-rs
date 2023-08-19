@@ -4,7 +4,7 @@
 
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen(js_name = "init_workflow")]
+// #[wasm_bindgen(js_name = "initApplicationFramework")]
 pub fn init_workflow(workflow: &JsValue, modules: &JsValue) -> std::result::Result<(), JsValue> {
     let global = js_sys::Object::new();
     js_sys::Reflect::set(&js_sys::global(), &"$workflow$".into(), &global)?;

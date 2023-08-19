@@ -2,11 +2,13 @@
 //! Subscription-based channel multiplexer - WASM client.
 //!
 
+use crate::abi::ref_from_abi;
+use crate::error::Error;
 use crate::result::Result;
 use futures::{select, FutureExt};
 use js_sys::Function;
 use serde::Serialize;
-use serde_wasm_bindgen::*;
+use serde_wasm_bindgen::to_value;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use wasm_bindgen::prelude::*;
@@ -140,5 +142,13 @@ impl MultiplexerClient {
                 .map_err(|err| JsValue::from_str(&err.to_string()))?;
         }
         Ok(())
+    }
+}
+
+impl TryFrom<JsValue> for MultiplexerClient {
+    type Error = Error;
+
+    fn try_from(js_value: JsValue) -> std::result::Result<Self, Self::Error> {
+        Ok(ref_from_abi!(MultiplexerClient, &js_value)?)
     }
 }

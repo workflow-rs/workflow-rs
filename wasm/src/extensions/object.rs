@@ -10,10 +10,22 @@ use wasm_bindgen::prelude::*;
 
 /// Custom trait implementing simplified property accessor functions for [`Object`].
 pub trait ObjectExtension {
+    fn get<T>(&self, prop: &str) -> Result<T, Error>
+    where
+        T: TryFrom<JsValue>,
+        <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display;
+
+    fn try_get<T>(&self, prop: &str) -> Result<Option<T>, Error>
+    where
+        T: TryFrom<JsValue>,
+        <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display;
+
     /// get `JsValue` property
-    fn get(&self, prop: &str) -> Result<JsValue, Error>;
+    fn get_value(&self, prop: &str) -> Result<JsValue, Error>;
     /// get `String` property
     fn get_string(&self, prop: &str) -> Result<String, Error>;
+    /// get `String` property
+    fn try_get_string(&self, prop: &str) -> Result<Option<String>, Error>;
     /// get `Number` property as `u8`
     fn get_u8(&self, prop: &str) -> Result<u8, Error>;
     /// get `Number` property as `u16`
@@ -26,6 +38,7 @@ pub trait ObjectExtension {
     fn get_f64(&self, prop: &str) -> Result<f64, Error>;
     /// get `Boolean` property as `bool`
     fn get_bool(&self, prop: &str) -> Result<bool, Error>;
+    fn try_get_bool(&self, prop: &str) -> Result<Option<bool>, Error>;
     /// get property as `Vec<JsValue>`
     fn get_vec(&self, prop: &str) -> Result<Vec<JsValue>, Error>;
     /// get `Vec<u8>` property from a hex string or an `Array`
@@ -45,12 +58,46 @@ pub trait ObjectExtension {
 }
 
 impl ObjectExtension for Object {
-    fn get(&self, prop: &str) -> Result<JsValue, Error> {
+    fn get<T>(&self, prop: &str) -> Result<T, Error>
+    where
+        T: TryFrom<JsValue>,
+        <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display,
+    {
+        let js_value = Reflect::get(self, &JsValue::from(prop))?;
+        T::try_from(js_value).map_err(Error::custom)
+    }
+
+    fn try_get<T>(&self, prop: &str) -> Result<Option<T>, Error>
+    where
+        T: TryFrom<JsValue>,
+        <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display,
+    {
+        let js_value = Reflect::get(self, &JsValue::from(prop))?;
+        if js_value.is_falsy() {
+            Ok(None)
+        } else {
+            Ok(Some(T::try_from(js_value).map_err(Error::custom)?))
+        }
+    }
+
+    fn get_value(&self, prop: &str) -> Result<JsValue, Error> {
         Ok(Reflect::get(self, &JsValue::from(prop))?)
     }
 
     fn get_string(&self, prop: &str) -> Result<String, Error> {
         try_get_string_from_prop(self, prop)
+    }
+
+    fn try_get_string(&self, prop: &str) -> Result<Option<String>, Error> {
+        Ok(self.get_value(prop)?.as_string())
+    }
+
+    fn get_bool(&self, prop: &str) -> Result<bool, Error> {
+        try_get_bool_from_prop(self, prop)
+    }
+
+    fn try_get_bool(&self, prop: &str) -> Result<Option<bool>, Error> {
+        Ok(self.get_value(prop)?.as_bool())
     }
 
     fn get_u8(&self, prop: &str) -> Result<u8, Error> {
@@ -67,10 +114,6 @@ impl ObjectExtension for Object {
 
     fn get_u64(&self, prop: &str) -> Result<u64, Error> {
         try_get_u64_from_prop(self, prop)
-    }
-
-    fn get_bool(&self, prop: &str) -> Result<bool, Error> {
-        try_get_bool_from_prop(self, prop)
     }
 
     fn get_vec(&self, prop: &str) -> Result<Vec<JsValue>, Error> {
