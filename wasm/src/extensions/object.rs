@@ -10,18 +10,23 @@ use wasm_bindgen::prelude::*;
 
 /// Custom trait implementing simplified property accessor functions for [`Object`].
 pub trait ObjectExtension {
+    /// Get a type that implements [`TryFrom<JsValue>`] from a property of the [`Object`].
     fn get<T>(&self, prop: &str) -> Result<T, Error>
     where
         T: TryFrom<JsValue>,
         <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display;
 
+    /// Try to get a type that implements [`TryFrom<JsValue>`] from a property of the [`Object`].
+    /// Returns `Ok(None)` if the property does not exist.
     fn try_get<T>(&self, prop: &str) -> Result<Option<T>, Error>
     where
         T: TryFrom<JsValue>,
         <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display;
 
-    /// get `JsValue` property
+    /// Get `JsValue` property
     fn get_value(&self, prop: &str) -> Result<JsValue, Error>;
+    /// Try Get `JsValue` property
+    fn try_get_value(&self, prop: &str) -> Result<Option<JsValue>, Error>;
     /// get `String` property
     fn get_string(&self, prop: &str) -> Result<String, Error>;
     /// get `String` property
@@ -82,6 +87,15 @@ impl ObjectExtension for Object {
 
     fn get_value(&self, prop: &str) -> Result<JsValue, Error> {
         Ok(Reflect::get(self, &JsValue::from(prop))?)
+    }
+
+    fn try_get_value(&self, prop: &str) -> Result<Option<JsValue>, Error> {
+        let js_value = Reflect::get(self, &JsValue::from(prop))?;
+        if js_value == JsValue::UNDEFINED {
+            Ok(None)
+        } else {
+            Ok(Some(js_value))
+        }
     }
 
     fn get_string(&self, prop: &str) -> Result<String, Error> {
