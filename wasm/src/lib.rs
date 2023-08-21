@@ -11,8 +11,9 @@
 //!
 
 extern crate self as workflow_wasm;
+use cfg_if::cfg_if;
 
-cfg_if::cfg_if! {
+cfg_if! {
     if #[cfg(not(target_os = "solana"))] {
         pub mod abi;
         pub mod error;
@@ -24,7 +25,6 @@ cfg_if::cfg_if! {
         pub mod prelude;
         pub mod promise;
         pub mod jserror;
-        pub mod channel;
         pub mod utils;
         pub mod serde;
         pub mod stream;
@@ -32,3 +32,6 @@ cfg_if::cfg_if! {
         pub mod extensions;
     }
 }
+
+#[cfg(all(feature = "channels", not(target_os = "solana")))]
+pub mod channel;

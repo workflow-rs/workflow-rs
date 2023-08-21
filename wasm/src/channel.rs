@@ -1,5 +1,5 @@
 //!
-//! Subscription-based channel multiplexer - WASM client.
+//! EventDispatcher - subscription-based channel multiplexer client - WASM client.
 //!
 
 use crate::abi::ref_from_abi;
@@ -24,22 +24,22 @@ pub struct Inner {
 }
 
 ///
-/// [`MultiplexerClient`] is an object meant to be used in WASM environment to
+/// [`EventDispatcher`] is an object meant to be used in WASM environment to
 /// process channel events.
 ///
 #[wasm_bindgen(inspectable)]
 #[derive(Clone)]
-pub struct MultiplexerClient {
+pub struct EventDispatcher {
     inner: Arc<Inner>,
 }
 
-impl Default for MultiplexerClient {
+impl Default for EventDispatcher {
     fn default() -> Self {
-        MultiplexerClient::new()
+        EventDispatcher::new()
     }
 }
 
-impl MultiplexerClient {
+impl EventDispatcher {
     pub async fn start_notification_task<T>(&self, multiplexer: &Multiplexer<T>) -> Result<()>
     where
         T: Clone + Serialize + Send + Sync + 'static,
@@ -86,10 +86,10 @@ impl MultiplexerClient {
 }
 
 #[wasm_bindgen]
-impl MultiplexerClient {
+impl EventDispatcher {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> MultiplexerClient {
-        MultiplexerClient {
+    pub fn new() -> EventDispatcher {
+        EventDispatcher {
             inner: Arc::new(Inner {
                 callback: Mutex::new(None),
                 task_running: AtomicBool::new(false),
@@ -99,7 +99,7 @@ impl MultiplexerClient {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn handler(&self) -> JsValue {
+    pub fn listener(&self) -> JsValue {
         if let Some(callback) = self.inner.callback.lock().unwrap().as_ref() {
             callback.as_ref().clone().into()
         } else {
@@ -107,8 +107,8 @@ impl MultiplexerClient {
         }
     }
 
-    #[wasm_bindgen(js_name = "setHandler")]
-    pub fn set_handler(&self, callback: JsValue) -> Result<()> {
+    #[wasm_bindgen(setter, js_name = "listener")]
+    pub fn listener_setter(&self, callback: JsValue) -> Result<()> {
         if callback.is_function() {
             let fn_callback: Function = callback.into();
             self.inner
@@ -117,15 +117,30 @@ impl MultiplexerClient {
                 .unwrap()
                 .replace(fn_callback.into());
         } else {
-            self.remove_handler()?;
+            self.remove_listener()?;
         }
         Ok(())
     }
 
-    /// `removeHandler` must be called when releasing ReflectorClient
+    #[wasm_bindgen(js_name = "registerListener")]
+    pub fn register_listener(&self, callback: JsValue) -> Result<()> {
+        if callback.is_function() {
+            let fn_callback: Function = callback.into();
+            self.inner
+                .callback
+                .lock()
+                .unwrap()
+                .replace(fn_callback.into());
+        } else {
+            self.remove_listener()?;
+        }
+        Ok(())
+    }
+
+    /// `removeListenet` must be called when releasing ReflectorClient
     /// to stop the background event processing task
-    #[wasm_bindgen(js_name = "removeHandler")]
-    pub fn remove_handler(&self) -> Result<()> {
+    #[wasm_bindgen(js_name = "removeListener")]
+    pub fn remove_listener(&self) -> Result<()> {
         *self.inner.callback.lock().unwrap() = None;
         Ok(())
     }
@@ -145,10 +160,10 @@ impl MultiplexerClient {
     }
 }
 
-impl TryFrom<JsValue> for MultiplexerClient {
+impl TryFrom<JsValue> for EventDispatcher {
     type Error = Error;
 
     fn try_from(js_value: JsValue) -> std::result::Result<Self, Self::Error> {
-        Ok(ref_from_abi!(MultiplexerClient, &js_value)?)
+        Ok(ref_from_abi!(EventDispatcher, &js_value)?)
     }
 }
