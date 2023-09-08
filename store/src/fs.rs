@@ -419,7 +419,7 @@ impl From<JsValue> for DirEntry {
 }
 
 impl From<String> for DirEntry {
-    fn from(s : String) -> Self {
+    fn from(s: String) -> Self {
         DirEntry {
             file_name: s,
             metadata: None,
