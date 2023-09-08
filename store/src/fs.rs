@@ -208,7 +208,17 @@ cfg_if! {
 
                 Ok(receiver.recv().await.unwrap().unwrap()?)
             } else {
-                panic!("readdir not supported on this platform")
+                let local_storage = local_storage();
+
+                let mut entries = vec![];
+                let length = local_storage.length().unwrap();
+                for i in 0..length {
+                    let key = local_storage.key(i)?;
+                    if let Some(key) = key {
+                        entries.push(DirEntry::from(key));
+                    }
+                }
+                Ok(entries)
             }
         }
 
@@ -403,6 +413,15 @@ impl From<JsValue> for DirEntry {
     fn from(de: JsValue) -> Self {
         DirEntry {
             file_name: de.as_string().unwrap(),
+            metadata: None,
+        }
+    }
+}
+
+impl From<String> for DirEntry {
+    fn from(s : String) -> Self {
+        DirEntry {
+            file_name: s,
             metadata: None,
         }
     }
