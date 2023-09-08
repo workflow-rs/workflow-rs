@@ -15,12 +15,11 @@ use wasm_bindgen::JsValue;
 use web_sys::Element;
 use workflow_core::channel::{unbounded, Receiver, Sender};
 use workflow_core::runtime::{self, platform, Platform};
-use workflow_dom::clipboard;
+use workflow_dom::clipboard::{self, ClipboardEvent};
 use workflow_dom::inject::*;
 use workflow_dom::utils::body;
 use workflow_dom::utils::*;
 use workflow_log::*;
-use workflow_wasm::jserror::*;
 use workflow_wasm::prelude::*;
 use workflow_wasm::utils::*;
 
@@ -353,6 +352,7 @@ impl Xterm {
         if runtime::is_macos() && !self.disable_clipboard_handling {
             self.init_clipboard_listener_for_macos(&xterm)?;
         }
+        self.init_clipboard_event_handler(&xterm)?;
 
         *self.xterm.lock().unwrap() = Some(xterm);
         *self.terminal.lock().unwrap() = Some(terminal.clone());
@@ -471,6 +471,42 @@ impl Xterm {
         Ok(())
     }
 
+    fn init_clipboard_event_handler(self: &Arc<Self>, _xterm: &XtermImpl) -> Result<()> {
+
+        let this = self.clone();
+        let paste_callback = callback!(
+            move |e: ClipboardEvent| -> std::result::Result<(), JsValue> {
+                e.prevent_default();
+log_info!("paste event: {:?}", e);
+                if let Some(clipboard_data) = e.clipboard_data() {
+                    let text = clipboard_data.get_data("text/plain")?;
+                    if !text.is_empty() {
+                        this.sink
+                            .sender
+                            .try_send(Ctl::Paste(Some(text)))
+                            .expect("Unable to send paste Ctl");
+                    }
+                } else {
+                    this.sink
+                        .sender
+                        .try_send(Ctl::Paste(None))
+                        .expect("Unable to send paste Ctl");
+                }
+
+                Ok(())
+            }
+        );
+
+        document()
+        // xterm
+            // .get_element()
+            .add_event_listener_with_callback("paste", paste_callback.as_ref())?;
+        self.callbacks.retain(paste_callback)?;
+
+
+        Ok(())
+    }
+
     fn init_kbd_listener(self: &Arc<Self>, xterm: &XtermImpl) -> Result<()> {
         let this = self.clone();
         let callback = callback!(move |e: XtermEvent| -> std::result::Result<(), JsValue> {
@@ -544,7 +580,7 @@ impl Xterm {
                         let clipboard = nw_sys::clipboard::get();
                         clipboard.set(&text);
                     } else if let Err(err) = clipboard::write_text(&text).await {
-                        log_error!("{}", JsErrorData::from(err));
+                        log_error!("{err}");
                     }
 
                     if let Some(handler) = self.event_handler() {
@@ -561,14 +597,21 @@ impl Xterm {
                             self.terminal().inject(text)?;
                         }
                     } else {
-                        let data_js_value = clipboard::read_text().await;
-                        if let Some(text) = data_js_value.as_string() {
-                            self.terminal().inject(text)?;
+                        match clipboard::read_text().await {
+                            Ok(text) => {
+                                if let Some(text) = text {
+                                    self.terminal().inject(text)?;
+                                }
+                            },
+                            Err(err) => {
+                                log_error!("Unable to read clipboard: {err}");
+                                continue;
+                            }
                         }
                     }
 
                     if let Some(handler) = self.event_handler() {
-                        handler(Event::Copy);
+                        handler(Event::Paste);
                     }
                 }
                 Ctl::Close => {

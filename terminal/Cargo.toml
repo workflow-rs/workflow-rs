@@ -60,6 +60,7 @@ features = [
     'Event',
     'EventTarget',
     'HtmlCollection',
+    'HtmlDocument',
     'KeyboardEvent',
     'Node',
     'NodeList',
