@@ -29,7 +29,7 @@ extern "C" {
     #[derive(Clone)]
     pub type Fs;
 
-    #[wasm_bindgen(js_name = readdir, method)]
+    #[wasm_bindgen(js_name = readdirSync, method)]
     pub fn fs_readdir_sync(this: &Fs, path: &str, callback: js_sys::Function);
 
     #[wasm_bindgen(catch, js_name = existsSync, method)]
