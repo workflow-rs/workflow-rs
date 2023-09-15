@@ -65,6 +65,10 @@ cfg_if! {
         use js_sys::Object;
 
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
+            exists_with_options_sync(filename, options)
+        }
+
+        pub fn exists_with_options_sync<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 Ok(node::fs::exists_sync(filename.as_ref())?)
@@ -75,6 +79,10 @@ cfg_if! {
         }
 
         pub async fn read_to_string_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<String> {
+            read_to_string_with_options_sync(filename,options)
+        }
+
+        pub fn read_to_string_with_options_sync<P : AsRef<Path>>(filename: P, options : Options) -> Result<String> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
@@ -93,6 +101,10 @@ cfg_if! {
         }
 
         pub async fn read_binary_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<Vec<u8>> {
+            read_binary_with_options_sync(filename, options)
+        }
+
+        pub fn read_binary_with_options_sync<P : AsRef<Path>>(filename: P, options : Options) -> Result<Vec<u8>> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
@@ -111,6 +123,10 @@ cfg_if! {
         }
 
         pub async fn write_string_with_options<P : AsRef<Path>>(filename: P, options: Options, text : &str) -> Result<()> {
+            write_string_with_options_sync(filename, options, text)
+        }
+
+        pub fn write_string_with_options_sync<P : AsRef<Path>>(filename: P, options: Options, text : &str) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
@@ -125,6 +141,10 @@ cfg_if! {
         }
 
         pub async fn write_binary_with_options<P : AsRef<Path>>(filename: P, options: Options, data : &[u8]) -> Result<()> {
+            write_binary_with_options_sync(filename, options, data)
+        }
+
+        pub fn write_binary_with_options_sync<P : AsRef<Path>>(filename: P, options: Options, data : &[u8]) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 let options = Object::new();
@@ -139,6 +159,10 @@ cfg_if! {
         }
 
         pub async fn remove_with_options<P : AsRef<Path>>(filename: P, options: Options) -> Result<()> {
+            remove_with_options_sync(filename, options)
+        }
+
+        pub fn remove_with_options_sync<P : AsRef<Path>>(filename: P, options: Options) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 node::fs::unlink_sync(&filename)?;
@@ -150,6 +174,10 @@ cfg_if! {
         }
 
         pub async fn create_dir_all<P : AsRef<Path>>(filename: P) -> Result<()> {
+            create_dir_all_sync(filename)
+        }
+
+        pub fn create_dir_all_sync<P : AsRef<Path>>(filename: P) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let options = Object::new();
                 Reflect::set(&options, &JsValue::from("recursive"), &JsValue::from_bool(true))?;
@@ -232,7 +260,15 @@ cfg_if! {
             Ok(filename.as_ref().exists())
         }
 
+        pub fn exists_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<bool> {
+            Ok(filename.as_ref().exists())
+        }
+
         pub async fn read_to_string_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<String> {
+            Ok(std::fs::read_to_string(filename)?)
+        }
+
+        pub fn read_to_string_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<String> {
             Ok(std::fs::read_to_string(filename)?)
         }
 
@@ -240,7 +276,15 @@ cfg_if! {
             Ok(std::fs::read(filename)?)
         }
 
+        pub fn read_binary_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<Vec<u8>> {
+            Ok(std::fs::read(filename)?)
+        }
+
         pub async fn write_string_with_options<P : AsRef<Path>>(filename: P, _options: Options, text : &str) -> Result<()> {
+            Ok(std::fs::write(filename, text)?)
+        }
+
+        pub fn write_string_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options, text : &str) -> Result<()> {
             Ok(std::fs::write(filename, text)?)
         }
 
@@ -248,7 +292,16 @@ cfg_if! {
             Ok(std::fs::write(filename, data)?)
         }
 
+        pub fn write_binary_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options, data : &[u8]) -> Result<()> {
+            Ok(std::fs::write(filename, data)?)
+        }
+
         pub async fn remove_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<()> {
+            std::fs::remove_file(filename)?;
+            Ok(())
+        }
+
+        pub fn remove_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<()> {
             std::fs::remove_file(filename)?;
             Ok(())
         }
@@ -258,6 +311,10 @@ cfg_if! {
             Ok(())
         }
 
+        pub fn create_dir_all_sync<P : AsRef<Path>>(dir: P) -> Result<()> {
+            std::fs::create_dir_all(dir)?;
+            Ok(())
+        }
 
         pub async fn readdir<P : AsRef<Path>>(path: P, metadata : bool) -> Result<Vec<DirEntry>> {
             let entries = std::fs::read_dir(path.as_ref())?;
@@ -274,8 +331,6 @@ cfg_if! {
             } else {
                 Ok(entries.map(|r|r.map(|e|e.into())).collect::<std::result::Result<Vec<_>,_>>()?)
             }
-
-
         }
 
     }
@@ -432,11 +487,23 @@ pub async fn exists<P: AsRef<Path>>(filename: P) -> Result<bool> {
     exists_with_options(filename, Options::default()).await
 }
 
-/// Read file contents to a string. If using wtihin the web browser
+/// Check if a file exists
+pub fn exists_sync<P: AsRef<Path>>(filename: P) -> Result<bool> {
+    exists_with_options_sync(filename, Options::default())
+}
+
+/// Read file contents to a string. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be used.
 pub async fn read_to_string(filename: &Path) -> Result<String> {
     read_to_string_with_options(filename, Options::default()).await
+}
+
+/// Read file contents to a string. If using within the web browser
+/// environment, a local storage key with the name of the file
+/// will be used.
+pub fn read_to_string_sync(filename: &Path) -> Result<String> {
+    read_to_string_with_options_sync(filename, Options::default())
 }
 
 /// Read binary file contents to a `Vec<u8>`. If using wtihin the web browser
@@ -446,11 +513,25 @@ pub async fn read(filename: &Path) -> Result<Vec<u8>> {
     read_binary_with_options(filename, Options::default()).await
 }
 
+/// Read binary file contents to a `Vec<u8>`. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be used and the data is assumed to be hex-encoded.
+pub fn read_sync(filename: &Path) -> Result<Vec<u8>> {
+    read_binary_with_options_sync(filename, Options::default())
+}
+
 /// Write a string to a text file. If using wtihin the web browser
 /// environment, a local storage key with the name of the file
 /// will be used.
 pub async fn write_string(filename: &Path, text: &str) -> Result<()> {
     write_string_with_options(filename, Options::default(), text).await
+}
+
+/// Write a string to a text file. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be used.
+pub fn write_string_sync(filename: &Path, text: &str) -> Result<()> {
+    write_string_with_options_sync(filename, Options::default(), text)
 }
 
 /// Write a `Vec<u8>` to a binary file. If using wtihin the web browser
@@ -460,11 +541,25 @@ pub async fn write(filename: &Path, data: &[u8]) -> Result<()> {
     write_binary_with_options(filename, Options::default(), data).await
 }
 
+/// Write a `Vec<u8>` to a binary file. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be used and the data will be hex-encoded.
+pub async fn write_sync(filename: &Path, data: &[u8]) -> Result<()> {
+    write_binary_with_options_sync(filename, Options::default(), data)
+}
+
 /// Remove the file at the given path. If using wtihin the web browser
 /// environment, a local storage key with the name of the file
 /// will be removed.
 pub async fn remove(filename: &Path) -> Result<()> {
     remove_with_options(filename, Options::default()).await
+}
+
+/// Remove the file at the given path. If using wtihin the web browser
+/// environment, a local storage key with the name of the file
+/// will be removed.
+pub fn remove_sync(filename: &Path) -> Result<()> {
+    remove_with_options_sync(filename, Options::default())
 }
 
 /// Read text file and deserialized it using `serde-json`.
@@ -473,6 +568,15 @@ where
     T: DeserializeOwned,
 {
     let text = read_to_string_with_options(filename, options).await?;
+    Ok(serde_json::from_str(&text)?)
+}
+
+/// Read text file and deserialized it using `serde-json`.
+pub fn read_json_with_options_sync<T>(filename: &Path, options: Options) -> Result<T>
+where
+    T: DeserializeOwned,
+{
+    let text = read_to_string_with_options_sync(filename, options)?;
     Ok(serde_json::from_str(&text)?)
 }
 
@@ -486,6 +590,16 @@ where
     Ok(())
 }
 
+/// Write a serializable value to a text file using `serde-json`.
+pub fn write_json_with_options_sync<T>(filename: &Path, options: Options, value: &T) -> Result<()>
+where
+    T: Serialize,
+{
+    let json = serde_json::to_string(value)?;
+    write_string_with_options_sync(filename, options, &json)?;
+    Ok(())
+}
+
 /// Read text file and deserialized it using `serde-json`.
 pub async fn read_json<T>(filename: &Path) -> Result<T>
 where
@@ -494,12 +608,28 @@ where
     read_json_with_options(filename, Options::default()).await
 }
 
+/// Read text file and deserialized it using `serde-json`.
+pub fn read_json_sync<T>(filename: &Path) -> Result<T>
+where
+    T: DeserializeOwned,
+{
+    read_json_with_options_sync(filename, Options::default())
+}
+
 /// Write a serializable value to a text file using `serde-json`.
 pub async fn write_json<T>(filename: &Path, value: &T) -> Result<()>
 where
     T: Serialize,
 {
     write_json_with_options(filename, Options::default(), value).await
+}
+
+/// Write a serializable value to a text file using `serde-json`.
+pub fn write_json_sync<T>(filename: &Path, value: &T) -> Result<()>
+where
+    T: Serialize,
+{
+    write_json_with_options_sync(filename, Options::default(), value)
 }
 
 /// Parses the supplied path resolving `~/` to the home directory.
