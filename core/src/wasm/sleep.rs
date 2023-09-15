@@ -41,6 +41,9 @@ struct SleepContext {
     closure: SleepClosure,
 }
 
+unsafe impl Sync for SleepContext {}
+unsafe impl Send for SleepContext {}
+
 struct Inner {
     ready: AtomicBool,
     consumed: AtomicBool,
@@ -57,9 +60,6 @@ struct Inner {
 pub struct Sleep {
     inner: Arc<Inner>,
 }
-
-unsafe impl Sync for Sleep {}
-unsafe impl Send for Sleep {}
 
 impl Sleep {
     /// Create a new `Sleep` future that will resolve after the given duration.

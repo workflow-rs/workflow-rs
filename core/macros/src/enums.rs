@@ -123,7 +123,7 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
                 .collect::<Vec<String>>()
                 .join(" ");
             let collapse_spaces_regex = regex::Regex::new(r"\s+").unwrap();
-            let wrappers = regex::Regex::new(r###"(^\"|\"$)"###).unwrap();
+            let wrappers = regex::Regex::new(r#"(^\"|\"$)"#).unwrap();
             let doc = wrappers
                 .replace_all(&doc, "")
                 .replace("\\\"", "\"")

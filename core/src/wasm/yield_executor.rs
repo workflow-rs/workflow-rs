@@ -59,6 +59,9 @@ struct Context {
     closure: JsValue,
 }
 
+unsafe impl Sync for Context {}
+unsafe impl Send for Context {}
+
 struct Inner {
     ready: AtomicBool,
     waker: AtomicWaker,
@@ -73,9 +76,6 @@ struct Inner {
 pub struct Yield {
     inner: Arc<Inner>,
 }
-
-unsafe impl Sync for Yield {}
-unsafe impl Send for Yield {}
 
 impl Default for Yield {
     fn default() -> Self {

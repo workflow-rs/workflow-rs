@@ -40,6 +40,9 @@ struct IntervalContext {
     closure: IntervalClosure,
 }
 
+unsafe impl Sync for IntervalContext {}
+unsafe impl Send for IntervalContext {}
+
 struct Inner {
     ready: AtomicBool,
     waker: AtomicWaker,
@@ -55,9 +58,6 @@ struct Inner {
 pub struct Interval {
     inner: Arc<Inner>,
 }
-
-unsafe impl Sync for Interval {}
-unsafe impl Send for Interval {}
 
 impl Interval {
     /// Create a new `Interval` stream that will resolve each given duration.

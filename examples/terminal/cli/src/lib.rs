@@ -52,7 +52,7 @@ impl Cli for ExampleCli {
         let argv = parse(&cmd);
         match argv[0].as_str() {
             "help" => {
-                let commands = vec![
+                let commands = [
                     "help - this list",
                     "hello - simple text output",
                     "test - log_trace!() macro output",
