@@ -28,40 +28,51 @@ cfg_if! {
         fn detect() -> (bool, bool) {
             unsafe { DETECT }.unwrap_or_else(||{
 
-                let result = js_sys::Function::new_no_args("
-                    let is_node_js = (
-                        typeof process === 'object' && 
-                        typeof process.versions === 'object' && 
-                        typeof process.versions.node !== 'undefined'
-                    );
+                cfg_if! {
+                    if #[cfg(all(feature = "no-unsafe-eval", target_arch = "wasm32"))] {
+                        unsafe { DETECT = Some((false,false)) };
+                        (false,false)
+                    } else {
 
-                    let is_node_webkit = false;
-                    if(is_node_js) {
-                        is_node_webkit = (typeof nw !== 'undefined' && typeof nw.Window !== 'undefined');
-                    }
+                        let result = js_sys::Function::new_no_args( // no-unsafe-eval
+                            "
+                            let is_node_js = (
+                                typeof process === 'object' && 
+                                typeof process.versions === 'object' && 
+                                typeof process.versions.node !== 'undefined'
+                            );
 
-                    return {
-                        is_node_js,
-                        is_node_webkit
-                    }
-                ").call0(&wasm_bindgen::JsValue::undefined());
+                            let is_node_webkit = false;
+                            if(is_node_js) {
+                                is_node_webkit = (typeof nw !== 'undefined' && typeof nw.Window !== 'undefined');
+                            }
 
-                let flags = match result {
-                    Ok(value) => {
-                        if value.is_undefined() {
-                            (false, false)
-                        } else {
-                            let info: __NodeJsNodeWebkitInfo__ = value.into();
-                            (info.is_node_js(), info.is_node_webkit())
-                        }
-                    }
-                    Err(_) => {
-                        (false, false)
-                    }
-                };
+                            return {
+                                is_node_js,
+                                is_node_webkit
+                            }
+                        ").call0(&wasm_bindgen::JsValue::undefined());
 
-                unsafe { DETECT = Some(flags) };
-                flags
+                        let flags = match result {
+                            Ok(value) => {
+                                if value.is_undefined() {
+                                    (false, false)
+                                } else {
+                                    let info: __NodeJsNodeWebkitInfo__ = value.into();
+                                    (info.is_node_js(), info.is_node_webkit())
+                                }
+                            }
+                            Err(_) => {
+                                (false, false)
+                            }
+                        };
+
+                        unsafe { DETECT = Some(flags) };
+                        flags
+                    }
+                }
+
+
             })
 
         }
@@ -206,8 +217,10 @@ pub enum Platform {
 }
 
 impl Platform {
+    #[cfg(not(feature = "no-unsafe-eval"))]
     pub fn from_node() -> Self {
         let result = js_sys::Function::new_no_args(
+            // no-unsafe-eval
             "
             return process.platform;
         ",
@@ -282,6 +295,8 @@ pub fn platform() -> Platform {
                 let platform = Platform::MacOS;
             } else if #[cfg(target_os = "linux")] {
                 let platform = Platform::Linux;
+            } else if #[cfg(all(target_arch = "wasm32", feature="no-unsafe-eval"))] {
+                let platform = Platform::from_web();
             } else if #[cfg(target_arch = "wasm32")] {
                 let platform = if is_node() {
                     Platform::from_node()

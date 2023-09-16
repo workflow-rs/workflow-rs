@@ -5,6 +5,7 @@
 
 #![allow(dead_code)]
 
+use cfg_if::cfg_if;
 use futures::task::AtomicWaker;
 use std::future::Future;
 use std::{
@@ -37,19 +38,24 @@ pub async fn yield_executor() {
 }
 
 static mut REQUEST_ANIMATION_FRAME_INITIALIZED: bool = false;
-
-fn init_request_animation_frame_fn() {
-    let _ = js_sys::Function::new_no_args(
-        "
-        if (!this.requestAnimationFrame){
-            if (this.setImmediate)
-                this.requestAnimationFrame = (callback)=>setImmediate(callback)
-            else
-                this.requestAnimationFrame = (callback)=>setTimeout(callback, 0)
+cfg_if! {
+    if #[cfg(all(feature = "no-unsafe-eval", target_arch = "wasm32"))] {
+        fn init_request_animation_frame_fn() {}
+    } else {
+        fn init_request_animation_frame_fn() {
+            let _ = js_sys::Function::new_no_args(
+                "
+                if (!this.requestAnimationFrame){
+                    if (this.setImmediate)
+                        this.requestAnimationFrame = (callback)=>setImmediate(callback)
+                    else
+                        this.requestAnimationFrame = (callback)=>setTimeout(callback, 0)
+                }
+            ",
+            )
+            .call0(&JsValue::undefined());
         }
-    ",
-    )
-    .call0(&JsValue::undefined());
+    }
 }
 
 struct Context {

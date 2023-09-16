@@ -35,7 +35,13 @@ pub fn data_dir() -> Option<PathBuf> {
 }
 
 cfg_if! {
-    if #[cfg(target_arch = "wasm32")] {
+    if #[cfg(all(feature = "no-unsafe-eval", target_arch = "wasm32"))] {
+        mod nodejs {
+            use std::path::PathBuf;
+            pub fn home_dir() -> Option<PathBuf> { None }
+            pub fn data_dir() -> Option<PathBuf> { None }
+        }
+    } else if #[cfg(target_arch = "wasm32")] {
         mod nodejs {
             use std::path::{Path,PathBuf};
             use wasm_bindgen::prelude::*;
@@ -44,7 +50,7 @@ cfg_if! {
             pub fn home_dir() -> Option<PathBuf> {
                 unsafe {
                     HOME_DIR.get_or_insert_with(|| {
-                        js_sys::Function::new_no_args(
+                        js_sys::Function::new_no_args( // no-unsafe-eval
                             "return require('os').homedir();"
                         )
                         .call0(&JsValue::UNDEFINED)
@@ -63,7 +69,7 @@ cfg_if! {
             pub fn data_dir() -> Option<PathBuf> {
                 unsafe {
                     DATA_DIR.get_or_insert_with(|| {
-                        js_sys::Function::new_no_args(
+                        js_sys::Function::new_no_args( // no-unsafe-eval
                             "
                             if (process.platform === 'win32') {
                                 return process.env['LOCALAPPDATA'];

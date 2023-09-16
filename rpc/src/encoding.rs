@@ -3,7 +3,7 @@
 //!
 
 use crate::error::Error;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Debug, Display, Formatter},
     str::FromStr,
@@ -12,7 +12,8 @@ use wasm_bindgen::prelude::*;
 
 /// RPC protocol encoding: `Borsh` or `SerdeJson`
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[serde(rename_all = "kebab-case")]
 pub enum Encoding {
     Borsh = 0,
     SerdeJson = 1,

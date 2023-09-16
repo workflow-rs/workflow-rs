@@ -12,7 +12,6 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
 };
-use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_tungstenite::{
@@ -145,7 +144,7 @@ impl WebSocketInterface {
             loop {
                 let url = this.url().clone();
                 let connect_future = connect_async_with_config(&url, ts_websocket_config, false);
-                let timeout_future = timeout(options_.timeout(), connect_future);
+                let timeout_future = timeout(options_.connect_timeout(), connect_future);
 
                 match timeout_future.await {
                     // connect success
@@ -174,7 +173,7 @@ impl WebSocketInterface {
                             }
                             break;
                         }
-                        workflow_core::task::sleep(Duration::from_millis(1000)).await;
+                        workflow_core::task::sleep(options_.retry_interval()).await;
                     }
                     // timeout error
                     Err(_) => {
@@ -192,7 +191,7 @@ impl WebSocketInterface {
                             }
                             break;
                         }
-                        workflow_core::task::sleep(Duration::from_millis(1000)).await;
+                        workflow_core::task::sleep(options_.retry_interval()).await;
                     }
                 };
 

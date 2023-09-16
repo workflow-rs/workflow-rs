@@ -4,15 +4,15 @@
 //!
 
 use cfg_if::cfg_if;
-use js_sys::{Function, Object, Reflect};
 use std::env::VarError;
-use wasm_bindgen::prelude::*;
 
-pub fn var(key: &str) -> Result<String, VarError> {
+pub fn var(_key: &str) -> Result<String, VarError> {
     cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
+        if #[cfg(all(feature = "no-unsafe-eval", target_arch = "wasm32"))] {
+            Err(VarError::NotPresent)
+        } else if #[cfg(target_arch = "wasm32")] {
             if crate::runtime::is_node() {
-                match get_nodejs_env_var(key)? {
+                match get_nodejs_env_var(_key)? {
                     Some(v) => Ok(v),
                     None => {
                         Err(VarError::NotPresent)
@@ -22,14 +22,19 @@ pub fn var(key: &str) -> Result<String, VarError> {
                 panic!("workflow_core::env::var() is not supported on this platform (must be native of nodejs)");
             }
         } else {
-            std::env::var(key)
+            std::env::var(_key)
         }
     }
 }
 
 #[allow(dead_code)]
+#[cfg(not(feature = "no-unsafe-eval"))]
 fn get_nodejs_env_var(key: &str) -> Result<Option<String>, VarError> {
-    let result = Function::new_no_args(
+    use js_sys::{Object, Reflect};
+    use wasm_bindgen::prelude::*;    
+
+    let result = js_sys::Function::new_no_args(
+        // no-unsafe-eval
         "
         return process.env;
     ",

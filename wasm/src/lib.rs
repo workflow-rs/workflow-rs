@@ -27,9 +27,11 @@ cfg_if! {
         pub mod jserror;
         pub mod utils;
         pub mod serde;
-        pub mod stream;
         pub mod printable;
         pub mod extensions;
+
+        #[cfg(not(feature = "no-unsafe-eval"))]
+        pub mod stream;
     }
 }
 

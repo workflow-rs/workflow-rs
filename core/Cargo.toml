@@ -12,6 +12,10 @@ description = """
 Utilities and curated re-exports for async rust native and browser development
 """
 
+[features]
+no-unsafe-eval = []
+default = []
+
 [lib]
 crate-type = ["cdylib", "lib"]
 doctest = false

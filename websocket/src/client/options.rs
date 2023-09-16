@@ -56,10 +56,15 @@ pub struct ConnectOptions {
     /// Optional `url` that will change the current URL of the WebSocket.
     pub url: Option<String>,
     /// Optional `timeout` that will change the timeout of the WebSocket connection process.
-    pub timeout: Option<Duration>,
+    /// `Timeout` is the period after which the async connection attempt is aborted. `Timeout`
+    /// is followed by the retry delay if the [`ConnectionStrategy`] is set to `Retry`.
+    pub connect_timeout: Option<Duration>,
+    /// Retry interval denotes the time to wait before attempting to reconnect.
+    pub retry_interval: Option<Duration>,
 }
 
 pub const DEFAULT_CONNECT_TIMEOUT_MILLIS: u64 = 5_000;
+pub const DEFAULT_CONNECT_RETRY_MILLIS: u64 = 5_000;
 
 impl Default for ConnectOptions {
     fn default() -> Self {
@@ -67,7 +72,8 @@ impl Default for ConnectOptions {
             block_async_connect: true,
             strategy: ConnectStrategy::Retry,
             url: None,
-            timeout: None,
+            connect_timeout: None,
+            retry_interval: None,
         }
     }
 }
@@ -78,7 +84,8 @@ impl ConnectOptions {
             block_async_connect: true,
             strategy: ConnectStrategy::Fallback,
             url: None,
-            timeout: None,
+            connect_timeout: None,
+            retry_interval: None,
         }
     }
     pub fn reconnect_defaults() -> Self {
@@ -86,13 +93,29 @@ impl ConnectOptions {
             block_async_connect: true,
             strategy: ConnectStrategy::Retry,
             url: None,
-            timeout: None,
+            connect_timeout: None,
+            retry_interval: None,
         }
     }
 
-    pub fn timeout(&self) -> Duration {
-        self.timeout
+    pub fn passive_retry_with_defaults() -> Self {
+        Self {
+            block_async_connect: false,
+            strategy: ConnectStrategy::Retry,
+            url: None,
+            connect_timeout: None,
+            retry_interval: None,
+        }
+    }
+
+    pub fn connect_timeout(&self) -> Duration {
+        self.connect_timeout
             .unwrap_or(Duration::from_millis(DEFAULT_CONNECT_TIMEOUT_MILLIS))
+    }
+
+    pub fn retry_interval(&self) -> Duration {
+        self.retry_interval
+            .unwrap_or(Duration::from_millis(DEFAULT_CONNECT_RETRY_MILLIS))
     }
 }
 
@@ -107,19 +130,25 @@ impl TryFrom<JsValue> for ConnectOptions {
                 .get_value("timeout")?
                 .as_f64()
                 .map(|f| Duration::from_millis(f as u64));
+            let retry_interval = args
+                .get_value("retry_interval")?
+                .as_f64()
+                .map(|f| Duration::from_millis(f as u64));
 
             ConnectOptions {
                 block_async_connect,
                 strategy,
                 url,
-                timeout,
+                connect_timeout: timeout,
+                retry_interval,
             }
         } else if let Some(retry) = args.as_bool() {
             ConnectOptions {
                 block_async_connect: true,
                 strategy: ConnectStrategy::new(retry),
                 url: None,
-                timeout: None,
+                connect_timeout: None,
+                retry_interval: None,
             }
         } else {
             ConnectOptions::default()
