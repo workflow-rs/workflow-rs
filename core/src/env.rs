@@ -31,7 +31,7 @@ pub fn var(_key: &str) -> Result<String, VarError> {
 #[cfg(not(feature = "no-unsafe-eval"))]
 fn get_nodejs_env_var(key: &str) -> Result<Option<String>, VarError> {
     use js_sys::{Object, Reflect};
-    use wasm_bindgen::prelude::*;    
+    use wasm_bindgen::prelude::*;
 
     let result = js_sys::Function::new_no_args(
         // no-unsafe-eval
