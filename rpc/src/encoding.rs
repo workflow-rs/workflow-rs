@@ -73,14 +73,10 @@ impl TryFrom<JsValue> for Encoding {
     }
 }
 
-const ENCODING: [Encoding; 2] = [
-    Encoding::Borsh,
-    Encoding::SerdeJson,
-];
+const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::SerdeJson];
 
 impl Encoding {
     pub fn iter() -> impl Iterator<Item = &'static Encoding> {
         ENCODING.iter()
     }
 }
-
