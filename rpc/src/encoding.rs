@@ -24,7 +24,7 @@ impl Display for Encoding {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             Encoding::Borsh => "Borsh",
-            Encoding::SerdeJson => "SerdeJson",
+            Encoding::SerdeJson => "JSON",
         };
         f.write_str(s)
     }
@@ -72,3 +72,15 @@ impl TryFrom<JsValue> for Encoding {
         }
     }
 }
+
+const ENCODING: [Encoding; 2] = [
+    Encoding::Borsh,
+    Encoding::SerdeJson,
+];
+
+impl Encoding {
+    pub fn iter() -> impl Iterator<Item = &'static Encoding> {
+        ENCODING.iter()
+    }
+}
+
