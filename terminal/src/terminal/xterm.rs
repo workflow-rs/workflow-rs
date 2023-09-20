@@ -8,6 +8,7 @@ use crate::terminal::TargetElement;
 use crate::terminal::Terminal;
 use crate::Result;
 use std::fmt::Debug;
+use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -162,18 +163,18 @@ pub struct XtermOptions {
 ///
 pub struct Xterm {
     pub element: Element,
-    xterm: Arc<Mutex<Option<XtermImpl>>>,
+    xterm: Rc<Mutex<Option<XtermImpl>>>,
     terminal: Arc<Mutex<Option<Arc<Terminal>>>>,
     listener: Arc<Mutex<Option<Callback<CallbackClosure<XtermEvent>>>>>,
     sink: Arc<Sink>,
-    resize: Arc<Mutex<Option<ResizeObserverInfo>>>,
-    fit: Arc<Mutex<Option<FitAddon>>>,
-    _web_links: Arc<Mutex<Option<WebLinksAddon>>>,
+    resize: Rc<Mutex<Option<ResizeObserverInfo>>>,
+    fit: Rc<Mutex<Option<FitAddon>>>,
+    _web_links: Rc<Mutex<Option<WebLinksAddon>>>,
     terminate: Arc<AtomicBool>,
     disable_clipboard_handling: bool,
     callbacks: CallbackMap,
     defaults: XtermOptions,
-    event_handler: Arc<Mutex<Option<EventHandlerFn>>>,
+    event_handler: Rc<Mutex<Option<EventHandlerFn>>>,
 }
 
 unsafe impl Send for Xterm {}
@@ -211,17 +212,17 @@ impl Xterm {
         let terminal = Xterm {
             element,
             listener: Arc::new(Mutex::new(None)),
-            xterm: Arc::new(Mutex::new(None)),
+            xterm: Rc::new(Mutex::new(None)),
             terminal: Arc::new(Mutex::new(None)),
             sink: Arc::new(Sink::default()),
-            resize: Arc::new(Mutex::new(None)),
+            resize: Rc::new(Mutex::new(None)),
             // addons: Arc::new(Mutex::new(Vec::new())),
-            fit: Arc::new(Mutex::new(None)),
-            _web_links: Arc::new(Mutex::new(None)),
+            fit: Rc::new(Mutex::new(None)),
+            _web_links: Rc::new(Mutex::new(None)),
             terminate: Arc::new(AtomicBool::new(false)),
             disable_clipboard_handling: options.disable_clipboard_handling,
             callbacks: CallbackMap::default(),
-            event_handler: Arc::new(Mutex::new(None)),
+            event_handler: Rc::new(Mutex::new(None)),
             defaults,
         };
         Ok(terminal)

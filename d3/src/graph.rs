@@ -4,6 +4,7 @@ use crate::container::*;
 use crate::d3::{self, D3};
 use crate::imports::*;
 use atomic_float::AtomicF64;
+use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use web_sys::{Element, HtmlCanvasElement};
 use workflow_core::time::*;
@@ -179,13 +180,13 @@ pub struct Graph {
     context: web_sys::CanvasRenderingContext2d,
 
     inner: Arc<Mutex<Inner>>,
-    x: Arc<d3::ScaleTime>,
-    y: Arc<d3::ScaleLinear>,
-    area: Arc<d3::Area>,
+    x: Rc<d3::ScaleTime>,
+    y: Rc<d3::ScaleLinear>,
+    area: Rc<d3::Area>,
     data_hirez: Array,
     data_lowrez: Array,
-    lowrez_cell: Arc<AtomicU64>,
-    lowrez_cell_value: Arc<AtomicF64>,
+    lowrez_cell: Rc<AtomicU64>,
+    lowrez_cell_value: Rc<AtomicF64>,
     x_tick_size: f64,
     y_tick_size: f64,
     x_tick_count: u32,
@@ -276,13 +277,13 @@ impl Graph {
                 duration,
                 retention,
             })),
-            x: Arc::new(D3::scale_time()),
-            y: Arc::new(D3::scale_linear()),
-            area: Arc::new(D3::area()),
+            x: Rc::new(D3::scale_time()),
+            y: Rc::new(D3::scale_linear()),
+            area: Rc::new(D3::area()),
             data_hirez: Array::new(),
             data_lowrez: Array::new(),
-            lowrez_cell: Arc::new(AtomicU64::new(0)),
-            lowrez_cell_value: Arc::new(AtomicF64::new(0.0)),
+            lowrez_cell: Rc::new(AtomicU64::new(0)),
+            lowrez_cell_value: Rc::new(AtomicF64::new(0.0)),
             canvas,
             context,
             x_tick_size: 6.0,

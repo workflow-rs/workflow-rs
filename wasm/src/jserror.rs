@@ -136,6 +136,6 @@ impl From<JsError> for JsErrorData {
 
 impl From<JsErrorData> for JsValue {
     fn from(error: JsErrorData) -> Self {
-        error.inner.origin.clone().into()
+        error.inner.origin.as_ref().clone()
     }
 }

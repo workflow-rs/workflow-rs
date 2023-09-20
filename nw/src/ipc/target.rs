@@ -2,7 +2,7 @@ use crate::ipc::imports::*;
 
 #[derive(Clone, Debug)]
 pub struct IpcTarget {
-    target: Arc<JsValue>,
+    target: Rc<JsValue>,
 }
 
 unsafe impl Send for IpcTarget {}
@@ -11,7 +11,7 @@ unsafe impl Sync for IpcTarget {}
 impl IpcTarget {
     pub fn new(target: &JsValue) -> IpcTarget {
         IpcTarget {
-            target: Arc::new(target.clone()),
+            target: Rc::new(target.clone()),
         }
     }
 }

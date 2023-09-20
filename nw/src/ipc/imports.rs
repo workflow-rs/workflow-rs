@@ -19,6 +19,7 @@ pub use std::fmt::Debug;
 pub use std::hash::Hash;
 pub use std::marker::PhantomData;
 pub use std::pin::Pin;
+pub use std::rc::Rc;
 pub use std::sync::atomic::{AtomicU64, Ordering};
 pub use wasm_bindgen::prelude::*;
 pub use workflow_core::channel::*;

@@ -7,6 +7,7 @@
 use crate::media::MediaStreamTrackKind;
 use crate::result::Result;
 use nw_sys::{prelude::*, utils};
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{MediaStream, MediaStreamTrack, MouseEvent};
@@ -28,7 +29,7 @@ pub fn app() -> Option<Arc<Application>> {
 #[derive(Clone)]
 pub struct Application {
     /// a storage for [MediaStream](web_sys::MediaStream)
-    pub media_stream: Arc<Mutex<Option<MediaStream>>>,
+    pub media_stream: Rc<Mutex<Option<MediaStream>>>,
 
     /// holds references to [Callback](workflow_wasm::callback::Callback)
     pub callbacks: CallbackMap,
@@ -46,7 +47,7 @@ impl Application {
         }
         let app = Arc::new(Self {
             callbacks: CallbackMap::new(),
-            media_stream: Arc::new(Mutex::new(None)),
+            media_stream: Rc::new(Mutex::new(None)),
         });
 
         unsafe {

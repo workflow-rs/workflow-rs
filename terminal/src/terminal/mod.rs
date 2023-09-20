@@ -96,7 +96,7 @@ struct UserInput {
     prompt: Arc<Mutex<Option<String>>>,
     buffer: Arc<Mutex<UnicodeString>>,
     enabled: Arc<AtomicBool>,
-    echo: Arc<AtomicBool>,
+    secret: Arc<AtomicBool>,
     kbhit: Arc<AtomicBool>,
     terminate: Arc<AtomicBool>,
     sender: Sender<String>,
@@ -110,7 +110,7 @@ impl UserInput {
             prompt: Arc::new(Mutex::new(None)),
             buffer: Arc::new(Mutex::new(UnicodeString::default())),
             enabled: Arc::new(AtomicBool::new(false)),
-            echo: Arc::new(AtomicBool::new(false)),
+            secret: Arc::new(AtomicBool::new(false)),
             kbhit: Arc::new(AtomicBool::new(false)),
             terminate: Arc::new(AtomicBool::new(false)),
             sender,
@@ -126,10 +126,10 @@ impl UserInput {
         self.buffer.lock().unwrap().clone().to_string()
     }
 
-    pub fn open(&self, echo: bool, kbhit: bool, prompt: Option<String>) -> Result<()> {
+    pub fn open(&self, secret: bool, kbhit: bool, prompt: Option<String>) -> Result<()> {
         *self.prompt.lock().unwrap() = prompt;
         self.enabled.store(true, Ordering::SeqCst);
-        self.echo.store(echo, Ordering::SeqCst);
+        self.secret.store(secret, Ordering::SeqCst);
         self.kbhit.store(kbhit, Ordering::SeqCst);
         self.terminate.store(false, Ordering::SeqCst);
         Ok(())
@@ -152,12 +152,12 @@ impl UserInput {
 
     pub async fn capture(
         &self,
-        echo: bool,
+        secret: bool,
         kbhit: bool,
         prompt: Option<String>,
         term: &Arc<Terminal>,
     ) -> Result<String> {
-        self.open(echo, kbhit, prompt)?;
+        self.open(secret, kbhit, prompt)?;
 
         let term = term.clone();
         let terminate = self.terminate.clone();
@@ -186,8 +186,8 @@ impl UserInput {
         self.enabled.load(Ordering::SeqCst)
     }
 
-    fn is_echo(&self) -> bool {
-        self.echo.load(Ordering::SeqCst)
+    fn is_secret(&self) -> bool {
+        self.secret.load(Ordering::SeqCst)
     }
 
     fn is_kbhit(&self) -> bool {
@@ -202,7 +202,7 @@ impl UserInput {
             }
             Key::Char(ch) => {
                 self.buffer.lock().unwrap().push(ch);
-                if !self.is_echo() {
+                if !self.is_secret() {
                     term.write(ch);
                 }
                 if self.is_kbhit() {
@@ -212,7 +212,7 @@ impl UserInput {
             }
             Key::Backspace => {
                 self.buffer.lock().unwrap().pop();
-                if !self.is_echo() {
+                if !self.is_secret() {
                     term.write("\x08 \x08");
                 }
             }
@@ -355,7 +355,7 @@ impl Terminal {
                 if let Some(prompt) = self.user_input.get_prompt() {
                     self.write(format!("{}{}\n\r", ClearLine, s.to_string()));
                     self.write(prompt);
-                    if !self.user_input.echo.load(Ordering::SeqCst) {
+                    if !self.user_input.secret.load(Ordering::SeqCst) {
                         self.write(self.user_input.get_buffer());
                     }
                 }
@@ -527,13 +527,13 @@ impl Terminal {
     }
 
     /// Ask a question (input a string until CRLF).
-    /// `secure` argument suppresses echoing of the
+    /// `secret` argument suppresses echoing of the
     /// user input (useful for password entry)
-    pub async fn ask(self: &Arc<Terminal>, echo: bool, prompt: &str) -> Result<String> {
+    pub async fn ask(self: &Arc<Terminal>, secret: bool, prompt: &str) -> Result<String> {
         self.reset_line_buffer();
         self.term().write(prompt.to_string());
         self.user_input
-            .capture(echo, false, Some(prompt.to_string()), self)
+            .capture(secret, false, Some(prompt.to_string()), self)
             .await
     }
 
