@@ -7,11 +7,12 @@ use crate::terminal::Options;
 use crate::terminal::TargetElement;
 use crate::terminal::Terminal;
 use crate::Result;
+use std::cell::{RefCell, RefMut};
 use std::fmt::Debug;
 use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 use wasm_bindgen::JsValue;
 use web_sys::Element;
 use workflow_core::channel::{unbounded, Receiver, Sender};
@@ -163,18 +164,18 @@ pub struct XtermOptions {
 ///
 pub struct Xterm {
     pub element: Element,
-    xterm: Rc<Mutex<Option<XtermImpl>>>,
+    xterm: Rc<RefCell<Option<XtermImpl>>>,
     terminal: Arc<Mutex<Option<Arc<Terminal>>>>,
     listener: Arc<Mutex<Option<Callback<CallbackClosure<XtermEvent>>>>>,
     sink: Arc<Sink>,
-    resize: Rc<Mutex<Option<ResizeObserverInfo>>>,
-    fit: Rc<Mutex<Option<FitAddon>>>,
-    _web_links: Rc<Mutex<Option<WebLinksAddon>>>,
+    resize: Rc<RefCell<Option<ResizeObserverInfo>>>,
+    fit: Rc<RefCell<Option<FitAddon>>>,
+    _web_links: Rc<RefCell<Option<WebLinksAddon>>>,
     terminate: Arc<AtomicBool>,
     disable_clipboard_handling: bool,
     callbacks: CallbackMap,
     defaults: XtermOptions,
-    event_handler: Rc<Mutex<Option<EventHandlerFn>>>,
+    event_handler: Rc<RefCell<Option<EventHandlerFn>>>,
 }
 
 unsafe impl Send for Xterm {}
@@ -212,17 +213,17 @@ impl Xterm {
         let terminal = Xterm {
             element,
             listener: Arc::new(Mutex::new(None)),
-            xterm: Rc::new(Mutex::new(None)),
+            xterm: Rc::new(RefCell::new(None)),
             terminal: Arc::new(Mutex::new(None)),
             sink: Arc::new(Sink::default()),
-            resize: Rc::new(Mutex::new(None)),
+            resize: Rc::new(RefCell::new(None)),
             // addons: Arc::new(Mutex::new(Vec::new())),
-            fit: Rc::new(Mutex::new(None)),
-            _web_links: Rc::new(Mutex::new(None)),
+            fit: Rc::new(RefCell::new(None)),
+            _web_links: Rc::new(RefCell::new(None)),
             terminate: Arc::new(AtomicBool::new(false)),
             disable_clipboard_handling: options.disable_clipboard_handling,
             callbacks: CallbackMap::default(),
-            event_handler: Rc::new(Mutex::new(None)),
+            event_handler: Rc::new(RefCell::new(None)),
             defaults,
         };
         Ok(terminal)
@@ -272,15 +273,18 @@ impl Xterm {
         Ok(term)
     }
 
-    pub fn xterm(&self) -> MutexGuard<Option<XtermImpl>> {
-        self.xterm.lock().unwrap()
+    // pub fn xterm(&self) -> MutexGuard<Option<XtermImpl>> {
+    pub fn xterm(&self) -> RefMut<'_, Option<XtermImpl>> {
+        //MutexGuard<Option<XtermImpl>> {
+        // self.xterm.lock().unwrap()
+        self.xterm.borrow_mut()
     }
 
     pub fn update_theme(&self) -> Result<()> {
         let el = self
             .xterm
-            .lock()
-            .unwrap()
+            .borrow_mut()
+            // .unwrap()
             .as_ref()
             .expect("xterm is missing")
             .get_element();
@@ -305,7 +309,7 @@ impl Xterm {
                 }
             }
 
-            let term = self.xterm.lock().unwrap();
+            let term = self.xterm.borrow_mut();
             let term = term.as_ref().expect("xterm is missing");
             term.set_theme(theme_obj);
         }
@@ -326,7 +330,7 @@ impl Xterm {
             }
         }
 
-        let term = self.xterm.lock().unwrap();
+        let term = self.xterm.borrow_mut();
         let term = term.as_ref().expect("xterm is missing");
         term.set_theme(theme_obj);
         Ok(())
@@ -335,7 +339,7 @@ impl Xterm {
     fn init_addons(&self, xterm: &XtermImpl) -> Result<()> {
         let fit = FitAddon::new();
         xterm.load_addon(fit.clone());
-        *self.fit.lock().unwrap() = Some(fit);
+        *self.fit.borrow_mut() = Some(fit);
         Ok(())
     }
 
@@ -355,7 +359,7 @@ impl Xterm {
             self.init_clipboard_listener_for_macos(&xterm)?;
         }
 
-        *self.xterm.lock().unwrap() = Some(xterm);
+        *self.xterm.borrow_mut() = Some(xterm);
         *self.terminal.lock().unwrap() = Some(terminal.clone());
 
         Ok(())
@@ -381,12 +385,12 @@ impl Xterm {
     }
 
     fn event_handler(&self) -> Option<EventHandlerFn> {
-        self.event_handler.lock().unwrap().clone()
+        self.event_handler.borrow().clone()
     }
 
     #[allow(dead_code)]
     pub(super) fn register_event_handler(self: &Arc<Self>, handler: EventHandlerFn) -> Result<()> {
-        self.event_handler.lock().unwrap().replace(handler);
+        self.event_handler.borrow_mut().replace(handler);
         Ok(())
     }
 
@@ -436,8 +440,7 @@ impl Xterm {
         });
         let resize_observer = ResizeObserver::new(resize_callback.as_ref())?;
         resize_observer.observe(&self.element);
-        *self.resize.lock().unwrap() =
-            Some(ResizeObserverInfo::new(resize_observer, resize_callback));
+        *self.resize.borrow_mut() = Some(ResizeObserverInfo::new(resize_observer, resize_callback));
 
         Ok(())
     }
@@ -633,15 +636,14 @@ impl Xterm {
         S: ToString,
     {
         self.xterm
-            .lock()
-            .unwrap()
+            .borrow_mut()
             .as_ref()
             .expect("Xterm is not initialized")
             .write(s);
     }
 
     pub fn measure(&self) -> Result<()> {
-        let xterm = self.xterm.lock().unwrap();
+        let xterm = self.xterm.borrow_mut();
         let xterm = xterm.as_ref().unwrap();
         let core = try_get_js_value_prop(xterm, "_core").expect("Unable to get xterm core");
         let char_size_service = try_get_js_value_prop(&core, "_charSizeService")
@@ -657,7 +659,7 @@ impl Xterm {
 
     pub fn resize(&self) -> Result<()> {
         //self.measure()?;
-        if let Some(xterm) = self.xterm.lock().unwrap().as_ref() {
+        if let Some(xterm) = self.xterm.borrow_mut().as_ref() {
             let el = xterm.get_element();
             let height = el.client_height();
             if height < 1 {
@@ -667,7 +669,7 @@ impl Xterm {
             return Ok(());
         }
 
-        let fit = self.fit.lock().unwrap();
+        let fit = self.fit.borrow();
         let fit = fit.as_ref().unwrap();
         // TODO review if this is correct
         //fit.propose_dimensions();
