@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 lazy_static! {
     static ref FS: Fs = require("fs").unchecked_into();
-    static ref FSP: FsPromises = require("fs-promises").unchecked_into();
+    static ref FSP: FsPromises = require("fs/promises").unchecked_into();
 }
 
 #[wasm_bindgen]
