@@ -40,7 +40,7 @@ impl<T> IdT for T where
 }
 
 /// `Id` generation trait. This is typically meant to be a random number
-/// generator for a cusom message `Id`, but you can also define it to use
+/// generator for a custom message `Id`, but you can also define it to use
 /// a sequential generation.
 pub trait Generator {
     fn generate() -> Self;
