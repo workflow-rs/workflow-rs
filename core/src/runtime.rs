@@ -394,11 +394,11 @@ pub fn is_chrome_extension() -> bool {
                     let global = js_sys::global();
                     let location = js_sys::Reflect::get(&global, &"location".into()).unwrap();
                     let protocol = js_sys::Reflect::get(&location, &"protocol".into()).unwrap();
-        
+
                     protocol == "chrome-extension:"
                 })
             }
-            
+
         } else {
             false
         }
