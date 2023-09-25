@@ -382,3 +382,25 @@ pub fn is_android() -> bool {
 pub fn is_unix() -> bool {
     is_macos() || is_linux() || is_freebsd() || is_openbsd() || is_netbsd()
 }
+
+pub fn is_chrome_extension() -> bool {
+    cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+
+            static mut IS_CHROME_EXTENSION : Option<bool> = None;
+
+            unsafe {
+                *IS_CHROME_EXTENSION.get_or_insert_with(||{
+                    let global = js_sys::global();
+                    let location = js_sys::Reflect::get(&global, &"location".into()).unwrap();
+                    let protocol = js_sys::Reflect::get(&location, &"protocol".into()).unwrap();
+        
+                    protocol == "chrome-extension:"
+                })
+            }
+            
+        } else {
+            false
+        }
+    }
+}
