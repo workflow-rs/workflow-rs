@@ -29,9 +29,23 @@ cfg_if! {
             unsafe { DETECT }.unwrap_or_else(||{
 
                 cfg_if! {
-                    if #[cfg(all(feature = "no-unsafe-eval", target_arch = "wasm32"))] {
-                        unsafe { DETECT = Some((false,false)) };
-                        (false,false)
+                    if #[cfg(feature = "no-unsafe-eval")] {
+                        let global = js_sys::global();
+                        let mut flags = (false, false);
+                        let _ = js_sys::Reflect::get(&global, &"process".into())
+                            .and_then(|process|js_sys::Reflect::get(&process, &"versions".into()))
+                            .and_then(|versions|js_sys::Reflect::get(&versions, &"node".into()))
+                            .and_then(|_node|{
+                                flags.0 = true;
+                                js_sys::Reflect::get(&global, &"nw".into())
+                            })
+                            .and_then(|nw|js_sys::Reflect::get(&nw, &"Window".into()))
+                            .map(|_window|{
+                                flags.1 = true;
+                            });
+
+                        unsafe { DETECT = Some(flags) };
+                        flags
                     } else {
 
                         let result = js_sys::Function::new_no_args( // no-unsafe-eval
