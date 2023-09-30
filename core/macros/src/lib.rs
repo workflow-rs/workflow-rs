@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 mod enums;
 mod seal;
+mod send;
 
 ///
 /// Attribute macro for automatic conversion of enums to their string representation
@@ -37,4 +38,9 @@ pub fn describe_enum(item: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn seal(input: TokenStream) -> TokenStream {
     seal::seal(input)
+}
+
+#[proc_macro]
+pub fn call_async_send(input: TokenStream) -> TokenStream {
+    send::call_async_send(input)
 }
