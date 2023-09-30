@@ -57,15 +57,44 @@ impl Options {
     }
 }
 
+pub async fn __chrome_storage_unit_test() {
+    cfg_if! {
+        if #[cfg(all(target_arch = "wasm32", debug_assertions))] {
+            if !runtime::is_chrome_extension(){
+                workflow_log::log_info!("ChromeStorage::test() FAILED: these are unit tests for chrome extension storage api.");
+                return
+            }
+            use chrome_sys::storage::LocalStorage as ChromeStorage;
+            match ChromeStorage::unit_tests().await{
+                Ok(_)=>workflow_log::log_info!("ChromeStorage::test() PASSED"),
+                Err(err)=>workflow_log::log_error!("ChromeStorage::test() FAILED: {err:?}")
+            };
+        }
+    }
+}
+
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
         use workflow_core::hex::*;
         use workflow_wasm::jserror::*;
         use workflow_node as node;
         use js_sys::Object;
+        use chrome_sys::storage::LocalStorage as ChromeStorage;
+
 
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
-            exists_with_options_sync(filename, options)
+            if runtime::is_node() || runtime::is_nw() {
+                let filename = filename.as_ref().to_platform_string();
+                Ok(node::fs::exists_sync(filename.as_ref())?)
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                //workflow_log::log_info!("CCCCCC");
+                if runtime::is_chrome_extension(){
+                    Ok(ChromeStorage::get_item(&key_name).await?.is_some())
+                }else{
+                    Ok(local_storage().get_item(&key_name)?.is_some())
+                }
+            }
         }
 
         pub fn exists_with_options_sync<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
@@ -74,12 +103,36 @@ cfg_if! {
                 Ok(node::fs::exists_sync(filename.as_ref())?)
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
-                Ok(local_storage().get_item(&key_name)?.is_some())
+                if runtime::is_chrome_extension(){
+                    Err(Error::Custom("localStorage api is unavailable, you can use exists_with_options() for chrome.storage.local api.".to_string()))
+                }else{
+                    Ok(local_storage().get_item(&key_name)?.is_some())
+                }
             }
         }
 
         pub async fn read_to_string_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<String> {
-            read_to_string_with_options_sync(filename,options)
+            if runtime::is_node() || runtime::is_nw() {
+                let filename = filename.as_ref().to_platform_string();
+                let options = Object::new();
+                Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
+                let js_value = node::fs::read_file_sync(&filename, options)?;
+                let text = js_value.as_string().ok_or(Error::DataIsNotAString(filename))?;
+                Ok(text)
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                if runtime::is_chrome_extension(){
+                    if let Some(text) = ChromeStorage::get_item(&key_name).await?{
+                        Ok(text)
+                    }else {
+                        Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
+                    }
+                }else if let Some(text) = local_storage().get_item(&key_name)? {
+                    Ok(text)
+                } else {
+                    Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
+                }
+            }
         }
 
         pub fn read_to_string_with_options_sync<P : AsRef<Path>>(filename: P, options : Options) -> Result<String> {
@@ -92,7 +145,9 @@ cfg_if! {
                 Ok(text)
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
-                if let Some(text) = local_storage().get_item(&key_name)? {
+                if runtime::is_chrome_extension(){
+                    Err(Error::Custom("localStorage api is unavailable, you can use exists_with_options() for chrome.storage.local api.".to_string()))
+                }else if let Some(text) = local_storage().get_item(&key_name)? {
                     Ok(text)
                 } else {
                     Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
@@ -123,7 +178,22 @@ cfg_if! {
         }
 
         pub async fn write_string_with_options<P : AsRef<Path>>(filename: P, options: Options, text : &str) -> Result<()> {
-            write_string_with_options_sync(filename, options, text)
+            if runtime::is_node() || runtime::is_nw() {
+                let filename = filename.as_ref().to_platform_string();
+                let options = Object::new();
+                Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
+                let data = JsValue::from(text);
+                node::fs::write_file_sync(&filename, data, options)?;
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                if runtime::is_chrome_extension(){
+                    ChromeStorage::set_item(&key_name, text).await?;
+                }else{
+                    local_storage().set_item(&key_name, text)?;
+                }
+            }
+
+            Ok(())
         }
 
         pub fn write_string_with_options_sync<P : AsRef<Path>>(filename: P, options: Options, text : &str) -> Result<()> {
@@ -134,8 +204,12 @@ cfg_if! {
                 let data = JsValue::from(text);
                 node::fs::write_file_sync(&filename, data, options)?;
             } else {
-                let key_name = options.local_storage_key(filename.as_ref());
-                local_storage().set_item(&key_name, text)?;
+                if runtime::is_chrome_extension(){
+                    return Err(Error::Custom("localStorage api is unavailable, you can use write_string_with_options() for chrome.storage.local api.".to_string()));
+                }else{
+                    let key_name = options.local_storage_key(filename.as_ref());
+                    local_storage().set_item(&key_name, text)?;
+                }
             }
             Ok(())
         }

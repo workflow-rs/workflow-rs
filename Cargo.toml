@@ -135,3 +135,4 @@ wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4.37"
 web-sys = "0.3.64"
 workflow-async-trait = "0.1.68"
+chrome-sys = {path = "../chrome-sys"}
