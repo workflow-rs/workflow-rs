@@ -88,7 +88,6 @@ cfg_if! {
                 Ok(node::fs::exists_sync(filename.as_ref())?)
             } else {
                 let key_name = options.local_storage_key(filename.as_ref());
-                //workflow_log::log_info!("CCCCCC");
                 if runtime::is_chrome_extension(){
                     Ok(ChromeStorage::get_item(&key_name).await?.is_some())
                 }else{
@@ -156,7 +155,27 @@ cfg_if! {
         }
 
         pub async fn read_binary_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<Vec<u8>> {
-            read_binary_with_options_sync(filename, options)
+            if runtime::is_node() || runtime::is_nw() {
+                let filename = filename.as_ref().to_platform_string();
+                let options = Object::new();
+                let buffer = node::fs::read_file_sync(&filename, options)?;
+                let data = buffer.dyn_into::<Uint8Array>()?;
+                Ok(data.to_vec())
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                let data = if runtime::is_chrome_extension(){
+                    ChromeStorage::get_item(&key_name).await?
+                }else{
+                    local_storage().get_item(&key_name)?
+                };
+
+                if let Some(text) = data{
+                    let data = Vec::<u8>::from_hex(&text)?;
+                    Ok(data)
+                } else {
+                    Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
+                }
+            }
         }
 
         pub fn read_binary_with_options_sync<P : AsRef<Path>>(filename: P, options : Options) -> Result<Vec<u8>> {
@@ -167,12 +186,16 @@ cfg_if! {
                 let data = buffer.dyn_into::<Uint8Array>()?;
                 Ok(data.to_vec())
             } else {
-                let key_name = options.local_storage_key(filename.as_ref());
-                if let Some(text) = local_storage().get_item(&key_name)? {
-                    let data = Vec::<u8>::from_hex(&text)?;
-                    Ok(data)
-                } else {
-                    Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
+                if runtime::is_chrome_extension(){
+                    Err(Error::Custom("localStorage api is unavailable, you can use read_binary_with_options() for chrome.storage.local api.".to_string()))
+                }else{
+                    let key_name = options.local_storage_key(filename.as_ref());
+                    if let Some(text) = local_storage().get_item(&key_name)? {
+                        let data = Vec::<u8>::from_hex(&text)?;
+                        Ok(data)
+                    } else {
+                        Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
+                    }
                 }
             }
         }
@@ -203,19 +226,31 @@ cfg_if! {
                 Reflect::set(&options, &"encoding".into(), &"utf-8".into())?;
                 let data = JsValue::from(text);
                 node::fs::write_file_sync(&filename, data, options)?;
-            } else {
-                if runtime::is_chrome_extension(){
-                    return Err(Error::Custom("localStorage api is unavailable, you can use write_string_with_options() for chrome.storage.local api.".to_string()));
-                }else{
-                    let key_name = options.local_storage_key(filename.as_ref());
-                    local_storage().set_item(&key_name, text)?;
-                }
+            } else if runtime::is_chrome_extension(){
+                return Err(Error::Custom("localStorage api is unavailable, you can use write_string_with_options() for chrome.storage.local api.".to_string()));
+            }else{
+                let key_name = options.local_storage_key(filename.as_ref());
+                local_storage().set_item(&key_name, text)?;
             }
             Ok(())
         }
 
         pub async fn write_binary_with_options<P : AsRef<Path>>(filename: P, options: Options, data : &[u8]) -> Result<()> {
-            write_binary_with_options_sync(filename, options, data)
+            if runtime::is_node() || runtime::is_nw() {
+                let filename = filename.as_ref().to_platform_string();
+                let options = Object::new();
+                let uint8_array = Uint8Array::from(data);
+                let buffer = Buffer::from_uint8_array(&uint8_array);
+                node::fs::write_file_sync(&filename, buffer.into(), options)?;
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                if runtime::is_chrome_extension(){
+                    ChromeStorage::set_item(&key_name, data.to_hex().as_str()).await?;
+                }else{
+                    local_storage().set_item(&key_name, data.to_hex().as_str())?;
+                }
+            }
+            Ok(())
         }
 
         pub fn write_binary_with_options_sync<P : AsRef<Path>>(filename: P, options: Options, data : &[u8]) -> Result<()> {
@@ -225,22 +260,38 @@ cfg_if! {
                 let uint8_array = Uint8Array::from(data);
                 let buffer = Buffer::from_uint8_array(&uint8_array);
                 node::fs::write_file_sync(&filename, buffer.into(), options)?;
-            } else {
+            } else if runtime::is_chrome_extension(){
+                return Err(Error::Custom("localStorage api is unavailable, you can use write_binary_with_options() for chrome.storage.local api.".to_string()));
+            }else{
                 let key_name = options.local_storage_key(filename.as_ref());
                 local_storage().set_item(&key_name, data.to_hex().as_str())?;
             }
+
             Ok(())
         }
 
         pub async fn remove_with_options<P : AsRef<Path>>(filename: P, options: Options) -> Result<()> {
-            remove_with_options_sync(filename, options)
+            if runtime::is_node() || runtime::is_nw() {
+                let filename = filename.as_ref().to_platform_string();
+                node::fs::unlink_sync(&filename)?;
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                if runtime::is_chrome_extension(){
+                    ChromeStorage::remove_item(&key_name).await?;
+                }else{
+                    local_storage().remove_item(&key_name)?;
+                }
+            }
+            Ok(())
         }
 
         pub fn remove_with_options_sync<P : AsRef<Path>>(filename: P, options: Options) -> Result<()> {
             if runtime::is_node() || runtime::is_nw() {
                 let filename = filename.as_ref().to_platform_string();
                 node::fs::unlink_sync(&filename)?;
-            } else {
+            } else if runtime::is_chrome_extension(){
+                return Err(Error::Custom("localStorage api is unavailable, you can use remove_with_options() for chrome.storage.local api.".to_string()));
+            }else{
                 let key_name = options.local_storage_key(filename.as_ref());
                 local_storage().remove_item(&key_name)?;
             }
@@ -309,7 +360,13 @@ cfg_if! {
                 });
 
                 Ok(receiver.recv().await.unwrap().unwrap()?)
-            } else {
+            } else if runtime::is_chrome_extension(){
+                let entries = ChromeStorage::keys().await?
+                    .into_iter()
+                    .map(|key|DirEntry::from(key))
+                    .collect::<Vec<_>>();
+                Ok(entries)
+            } else{
                 let local_storage = local_storage();
 
                 let mut entries = vec![];
