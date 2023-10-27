@@ -23,5 +23,5 @@ pub fn body() -> std::result::Result<Element, String> {
 
 pub fn location() -> Result<web_sys::Location, wasm_bindgen::JsValue> {
     let location = js_sys::Reflect::get(&js_sys::global(), &"location".into())?;
-    Ok(location.dyn_into()?)
+    location.dyn_into()
 }

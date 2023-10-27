@@ -363,7 +363,7 @@ cfg_if! {
             } else if runtime::is_chrome_extension(){
                 let entries = ChromeStorage::keys().await?
                     .into_iter()
-                    .map(|key|DirEntry::from(key))
+                    .map(DirEntry::from)
                     .collect::<Vec<_>>();
                 Ok(entries)
             } else{
