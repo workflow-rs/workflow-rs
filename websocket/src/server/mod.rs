@@ -54,6 +54,11 @@ where
     /// Context type used by impl trait to represent websocket connection
     type Context: Send + Sync;
 
+    /// Called to determine if the connection should be accepted.
+    fn accept(&self, _peer: &SocketAddr) -> bool {
+        true
+    }
+
     /// Called immediately when connection is established.
     /// This function should return an error to terminate the connection.
     /// If the server manages a client ban list, it should process it
@@ -234,8 +239,10 @@ where
         loop {
             select! {
                 stream = listener.accept().fuse() => {
-                    if let Ok((stream,_)) = stream {
-                        self.accept(stream, config).await;
+                    if let Ok((stream,socket_addr)) = stream {
+                        if self.handler.accept(&socket_addr) {
+                            self.accept(stream, config).await;
+                        }
                     }
                 },
                 _ = self.stop.request.receiver.recv().fuse() => break,

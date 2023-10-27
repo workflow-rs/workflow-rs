@@ -112,6 +112,11 @@ pub struct RpcContext {
 pub trait RpcHandler: Send + Sync + 'static {
     type Context: Send + Sync;
 
+    /// Called to determine if the connection should be accepted.
+    fn accept(&self, _peer: &SocketAddr) -> bool {
+        true
+    }
+
     /// Connection notification - issued when the server has opened a WebSocket
     /// connection, before any other interactions occur.  The supplied argument
     /// is the [`SocketAddr`] of the incoming connection. This function should
@@ -285,6 +290,10 @@ where
     Protocol: ProtocolHandler<ServerContext, ConnectionContext, Ops> + Send + Sync + 'static,
 {
     type Context = ConnectionContext;
+
+    fn accept(&self, peer: &SocketAddr) -> bool {
+        self.rpc_handler.accept(peer)
+    }
 
     async fn connect(self: &Arc<Self>, peer: &SocketAddr) -> WebSocketResult<()> {
         self.rpc_handler.clone().connect(peer).await
