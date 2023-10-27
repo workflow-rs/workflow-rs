@@ -10,7 +10,7 @@ use futures_util::{
 };
 use std::net::SocketAddr;
 use std::pin::Pin;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicU64,Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::{TcpListener, TcpStream};
@@ -112,9 +112,8 @@ where
     T: WebSocketHandler + Send + Sync + 'static,
 {
     pub fn new(handler: Arc<T>) -> Arc<Self> {
-        let connections = AtomicU64::new(0);
         Arc::new(WebSocketServer {
-            connections,
+            connections : AtomicU64::new(0),
             handler,
             stop: DuplexChannel::oneshot(),
         })
@@ -216,6 +215,8 @@ where
             .peer_addr()
             .expect("WebSocket connected streams should have a peer address");
 
+        self.connections.fetch_add(1, Ordering::Relaxed);
+        
         let self_ = self.clone();
         tokio::spawn(async move {
             if let Err(e) = self_.handle_connection(peer, stream, config).await {
@@ -226,6 +227,7 @@ where
                     err => log_error!("Error processing connection: {}", err),
                 }
             }
+            self_.connections.fetch_sub(1, Ordering::Relaxed)
         });
     }
 
