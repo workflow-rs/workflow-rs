@@ -147,9 +147,9 @@ mod tests {
     use std::time::Duration;
 
     use crate::task::sleep;
-    use async_std::channel::RecvError;
     use futures::join;
     use std::collections::HashMap;
+    use workflow_core::channel::RecvError;
 
     #[derive(thiserror::Error, Debug, Clone)]
     pub enum Error {

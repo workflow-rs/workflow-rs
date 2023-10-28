@@ -27,11 +27,10 @@ pub use message::*;
 pub use options::{ConnectOptions, ConnectStrategy, Options};
 pub use result::Result;
 
-use async_std::channel::{Receiver, Sender};
 use async_trait::async_trait;
 use std::pin::Pin;
 use std::sync::Arc;
-use workflow_core::channel::{oneshot, Channel};
+use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
 pub type ConnectResult<E> = std::result::Result<Option<Receiver<Result<()>>>, E>;
 
 pub type HandshakeFn = Arc<

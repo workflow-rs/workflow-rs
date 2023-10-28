@@ -1,0 +1,24 @@
+[package]
+name = "workflow-chrome"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = ["chrome"]
+categories = ["wasm","api-bindings"]
+description = """
+Chrome WASM API bindings.
+"""
+
+[lib]
+doctest = false
+
+[dependencies]
+chrome-sys.workspace = true
+js-sys.workspace = true
+wasm-bindgen.workspace = true
+workflow-core.workspace = true
+workflow-log.workspace = true
+thiserror.workspace = true
+cfg-if.workspace = true

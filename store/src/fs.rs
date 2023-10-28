@@ -3,8 +3,8 @@
 //! and the browser domain-associated local storage ([Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API)).
 //!
 //! Storage APIs abstracted:
-//! - Rust std sile I/O (fs::xxx)
-//! - NodeJS sile I/O (fs::read_file_sync)
+//! - Rust std file I/O (fs::xxx)
+//! - NodeJS file I/O (fs::read_file_sync)
 //! - Browser local storage
 //!
 //! By default, all I/O functions will use the name of the file as a key
@@ -57,29 +57,13 @@ impl Options {
     }
 }
 
-pub async fn __chrome_storage_unit_test() {
-    cfg_if! {
-        if #[cfg(all(target_arch = "wasm32", debug_assertions))] {
-            if !runtime::is_chrome_extension(){
-                workflow_log::log_info!("ChromeStorage::test() FAILED: these are unit tests for chrome extension storage api.");
-                return
-            }
-            use chrome_sys::storage::LocalStorage as ChromeStorage;
-            match ChromeStorage::unit_tests().await{
-                Ok(_)=>workflow_log::log_info!("ChromeStorage::test() PASSED"),
-                Err(err)=>workflow_log::log_error!("ChromeStorage::test() FAILED: {err:?}")
-            };
-        }
-    }
-}
-
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
         use workflow_core::hex::*;
         use workflow_wasm::jserror::*;
         use workflow_node as node;
         use js_sys::Object;
-        use chrome_sys::storage::LocalStorage as ChromeStorage;
+        use workflow_chrome::storage::LocalStorage as ChromeStorage;
 
 
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, options : Options) -> Result<bool> {
@@ -185,17 +169,15 @@ cfg_if! {
                 let buffer = node::fs::read_file_sync(&filename, options)?;
                 let data = buffer.dyn_into::<Uint8Array>()?;
                 Ok(data.to_vec())
-            } else {
-                if runtime::is_chrome_extension(){
+            } else if runtime::is_chrome_extension(){
                     Err(Error::Custom("localStorage api is unavailable, you can use read_binary_with_options() for chrome.storage.local api.".to_string()))
-                }else{
-                    let key_name = options.local_storage_key(filename.as_ref());
-                    if let Some(text) = local_storage().get_item(&key_name)? {
-                        let data = Vec::<u8>::from_hex(&text)?;
-                        Ok(data)
-                    } else {
-                        Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
-                    }
+            } else {
+                let key_name = options.local_storage_key(filename.as_ref());
+                if let Some(text) = local_storage().get_item(&key_name)? {
+                    let data = Vec::<u8>::from_hex(&text)?;
+                    Ok(data)
+                } else {
+                    Err(Error::NotFound(filename.as_ref().to_string_lossy().to_string()))
                 }
             }
         }
@@ -637,56 +619,56 @@ pub fn read_to_string_sync(filename: &Path) -> Result<String> {
     read_to_string_with_options_sync(filename, Options::default())
 }
 
-/// Read binary file contents to a `Vec<u8>`. If using wtihin the web browser
+/// Read binary file contents to a `Vec<u8>`. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be used and the data is assumed to be hex-encoded.
 pub async fn read(filename: &Path) -> Result<Vec<u8>> {
     read_binary_with_options(filename, Options::default()).await
 }
 
-/// Read binary file contents to a `Vec<u8>`. If using wtihin the web browser
+/// Read binary file contents to a `Vec<u8>`. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be used and the data is assumed to be hex-encoded.
 pub fn read_sync(filename: &Path) -> Result<Vec<u8>> {
     read_binary_with_options_sync(filename, Options::default())
 }
 
-/// Write a string to a text file. If using wtihin the web browser
+/// Write a string to a text file. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be used.
 pub async fn write_string(filename: &Path, text: &str) -> Result<()> {
     write_string_with_options(filename, Options::default(), text).await
 }
 
-/// Write a string to a text file. If using wtihin the web browser
+/// Write a string to a text file. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be used.
 pub fn write_string_sync(filename: &Path, text: &str) -> Result<()> {
     write_string_with_options_sync(filename, Options::default(), text)
 }
 
-/// Write a `Vec<u8>` to a binary file. If using wtihin the web browser
+/// Write a `Vec<u8>` to a binary file. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be used and the data will be hex-encoded.
 pub async fn write(filename: &Path, data: &[u8]) -> Result<()> {
     write_binary_with_options(filename, Options::default(), data).await
 }
 
-/// Write a `Vec<u8>` to a binary file. If using wtihin the web browser
+/// Write a `Vec<u8>` to a binary file. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be used and the data will be hex-encoded.
 pub async fn write_sync(filename: &Path, data: &[u8]) -> Result<()> {
     write_binary_with_options_sync(filename, Options::default(), data)
 }
 
-/// Remove the file at the given path. If using wtihin the web browser
+/// Remove the file at the given path. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be removed.
 pub async fn remove(filename: &Path) -> Result<()> {
     remove_with_options(filename, Options::default()).await
 }
 
-/// Remove the file at the given path. If using wtihin the web browser
+/// Remove the file at the given path. If using within the web browser
 /// environment, a local storage key with the name of the file
 /// will be removed.
 pub fn remove_sync(filename: &Path) -> Result<()> {
@@ -788,7 +770,7 @@ pub fn resolve_path(path: &str) -> Result<PathBuf> {
 
 /// Normalizes path, dereferencing relative references `.` and `..`
 /// and converting path separators to current platform separators.
-/// (detects platform nativly or via NodeJS if operating in WASM32
+/// (detects platform natively or via NodeJS if operating in WASM32
 /// environment)
 pub trait NormalizePath {
     fn normalize(&self) -> Result<PathBuf>;
@@ -842,7 +824,7 @@ impl ToPlatform for Path {
 
 /// Normalizes path, dereferencing relative references `.` and `..`
 /// and converting path separators to current platform separators.
-/// (detects platform nativly or via NodeJS if operating in WASM32
+/// (detects platform natively or via NodeJS if operating in WASM32
 /// environment). Uses [`ToPlatform`] to perform path conversion.
 pub fn normalize<P>(path: P) -> Result<PathBuf>
 where

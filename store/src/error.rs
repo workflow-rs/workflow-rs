@@ -5,8 +5,6 @@
 use base64::DecodeError;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
-// use workflow_core::sendable::Sendable;
-use chrome_sys::error::Error as ChromeError;
 use workflow_wasm::jserror::*;
 
 #[derive(Error, Debug)]
@@ -17,8 +15,8 @@ pub enum Error {
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
 
-    #[error("ChromeSys error: {0}")]
-    ChromeError(#[from] ChromeError),
+    #[error("Chrome error: {0}")]
+    ChromeError(#[from] workflow_chrome::error::Error),
 
     // #[error("JavaScript error: {0:?}")]
     // JsValue(Sendable<JsValue>),
