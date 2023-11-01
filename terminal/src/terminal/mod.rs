@@ -194,7 +194,7 @@ impl UserInput {
         self.kbhit.load(Ordering::SeqCst)
     }
 
-    fn inject(&self, key: Key, term: &Arc<Terminal>) -> Result<()> {
+    fn ingest(&self, key: Key, term: &Arc<Terminal>) -> Result<()> {
         match key {
             Key::Ctrl('c') => {
                 self.close()?;
@@ -223,6 +223,23 @@ impl UserInput {
             }
             _ => {}
         }
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn inject<S: ToString>(&self, text: S, term: &Terminal) -> Result<()> {
+        self.inject_impl(text.to_string().into(), term)?;
+        Ok(())
+    }
+
+    fn inject_impl(&self, text: UnicodeString, term: &Terminal) -> Result<()> {
+        let mut buffer = self.buffer.lock().unwrap();
+        if !self.is_secret() {
+            text.iter().for_each(|ch| {
+                term.write(ch);
+            });
+        }
+        buffer.extend(text);
         Ok(())
     }
 }
@@ -556,16 +573,19 @@ impl Terminal {
 
     pub fn inject<S: ToString>(&self, text: S) -> Result<()> {
         let mut data = self.inner()?;
-        self.inject_impl(&mut data, text.to_string().into())?;
-        Ok(())
+        self.inject_impl(&mut data, text.to_string().into())
     }
 
     fn inject_impl(&self, data: &mut Inner, text: UnicodeString) -> Result<()> {
-        let len = text.len();
-        data.buffer.insert(data.cursor, text);
-        self.trail(data.cursor, &data.buffer, true, false, len);
-        data.cursor += len;
-        Ok(())
+        if self.user_input.is_enabled() {
+            self.user_input.inject_impl(text, self)
+        } else {
+            let len = text.len();
+            data.buffer.insert(data.cursor, text);
+            self.trail(data.cursor, &data.buffer, true, false, len);
+            data.cursor += len;
+            Ok(())
+        }
     }
 
     pub fn inject_char(&self, ch: char) -> Result<()> {
@@ -583,7 +603,7 @@ impl Terminal {
 
     async fn ingest(self: &Arc<Terminal>, key: Key, _term_key: String) -> Result<()> {
         if self.user_input.is_enabled() {
-            self.user_input.inject(key, self)?;
+            self.user_input.ingest(key, self)?;
             return Ok(());
         }
 
@@ -870,7 +890,7 @@ impl Terminal {
     }
 }
 
-/// Utility function to strip multiple whitespaces and return a `Vec<String>`
+/// Utility function to strip multiple white spaces and return a `Vec<String>`
 pub fn parse(s: &str) -> Vec<String> {
     let regex = Regex::new(r"\s+").unwrap();
     let s = regex.replace_all(s.trim(), " ");

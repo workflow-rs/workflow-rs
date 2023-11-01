@@ -42,7 +42,15 @@ impl UnicodeString {
     }
 
     pub fn insert(&mut self, index: usize, us: UnicodeString) {
-        self.0.splice(index..index, us.0.iter().cloned());
+        self.0.splice(index..index, us.0);
+    }
+
+    pub fn extend(&mut self, us: UnicodeString) {
+        self.0.extend(us.0);
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &char> {
+        self.0.iter()
     }
 }
 
