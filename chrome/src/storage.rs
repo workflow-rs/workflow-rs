@@ -2,7 +2,6 @@ use cfg_if::cfg_if;
 use chrome_sys::storage;
 use js_sys::{Array, Object};
 use wasm_bindgen::prelude::*;
-use workflow_core::sendable::Sendable;
 use workflow_core::task::call_async_send;
 
 pub struct LocalStorage;
@@ -72,6 +71,8 @@ impl LocalStorage {
 
     #[cfg(debug_assertions)]
     pub async fn unit_tests() -> Result<(), String> {
+        use workflow_core::sendable::Sendable;
+
         let old_data = Sendable(Self::get_all().await.unwrap());
         let error = Sendable(test_impl().await.err());
         let old_data_clone = old_data.clone();
