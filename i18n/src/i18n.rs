@@ -14,16 +14,17 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 static mut DICT: Option<Arc<Dict>> = None;
-static mut LANG: Option<&'static str> = None;
+static mut LANG: Option<String> = None;
 
-pub fn init_i18n(lang_code: &'static str) -> Result<()> {
+pub fn init_i18n<S: Into<String>>(lang_code: S) -> Result<()> {
     let dict = Arc::new(Dict::default());
-    let code = dict.transpose(lang_code)?;
+    let lang_code: String = lang_code.into();
+    let code = dict.transpose(lang_code.as_str())?;
     unsafe {
         DICT = Some(dict.clone());
     }
     unsafe {
-        LANG = Some(code);
+        LANG = Some(code.into());
     }
     Ok(())
 }
