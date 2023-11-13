@@ -6,7 +6,10 @@
 //! <img src="https://img.shields.io/badge/platform- native -informational?style=for-the-badge&color=50a0f0" height="20">
 //! <img src="https://img.shields.io/badge/platform- wasm32/browser -informational?style=for-the-badge&color=50a0f0" height="20">
 //!
-//! This crate is under development
+//! i18n is a performance-oriented library for internationalization and translation embedding into Rust applications.
 //!
-mod i18n;
-pub use i18n::*;
+pub mod error;
+pub mod i18n;
+pub mod result;
+
+pub use i18n::i18n;
