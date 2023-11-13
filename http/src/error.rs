@@ -1,4 +1,3 @@
-use reqwest::Error as ReqwestError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -6,8 +5,9 @@ pub enum Error {
     #[error("Custom: {0}")]
     Custom(String),
 
+    #[cfg(not(target_arch = "wasm32"))]
     #[error("Reqwest: {0}")]
-    Reqwest(#[from] ReqwestError),
+    Reqwest(#[from] reqwest::Error),
 
     #[error("JSON: {0}")]
     Json(#[from] serde_json::Error),
