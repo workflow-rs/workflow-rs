@@ -1,57 +1,77 @@
 use crate::error::Error;
 use crate::result::Result;
+use arc_swap::*;
 use ritehash::FxHasher64;
 use std::collections::HashMap;
-use std::fs::read_dir;
 use std::hash::BuildHasherDefault;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, MutexGuard};
 pub type FxBuildHasher = BuildHasherDefault<FxHasher64>;
 pub type FxHashMap<K, V> = HashMap<K, V, FxBuildHasher>;
 
 static mut JSON_DATA: Option<String> = None;
-static mut DICTIONARY: Option<Dictionary> = None;
-static mut MISSING_ENTRIES_FILENAME: Option<PathBuf> = None;
+static mut JSON_DATA_GUARD: Option<Mutex<()>> = None;
+static DICTIONARY: ArcSwapOption<Dictionary> = ArcSwapOption::const_empty();
 
-/// Initializes the i18n subsystem. This function must be called at the beginning of the program execution.
-pub fn try_init(
-    current_code: impl Into<String>,
-    default_code: impl Into<String>,
-    json_data: Option<&'static str>,
-    missing_entries_path: Option<impl Into<PathBuf>>,
-) -> Result<()> {
-    let dictionary = Dictionary::try_new(json_data, current_code, default_code)?;
-    let default_code = dictionary.default_code();
-    let missing_entries_filename =
-        missing_entries_path.map(|s| s.into().join(format!("{default_code}.json")));
+pub type StoreFn = dyn Send + Sync + Fn(&str) -> Result<()> + 'static;
 
-    unsafe {
-        DICTIONARY = Some(dictionary);
-        MISSING_ENTRIES_FILENAME = missing_entries_filename;
-    }
-
-    Ok(())
+pub struct Builder {
+    current_code: String,
+    default_code: String,
+    static_json_data: Option<&'static str>,
+    string_json_data: Option<String>,
+    store_fn: Option<Arc<StoreFn>>,
 }
 
-/// Obtain the default path to the i18n storage directory.
-pub fn storage_path() -> Result<PathBuf> {
-    cfg_if::cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
-            None
-        } else {
-            let mut path = std::env::current_exe()?;
-            path.pop();
-            if path.ends_with("debug") || path.ends_with("release") {
-                path.pop();
-                if path.ends_with("target") {
-                    path.pop();
-                }
-                path.push("i18n");
-                Ok(path)
-            } else {
-                Ok(std::env::current_dir()?)
-            }
+impl Builder {
+    pub fn new(current_code: &str, default_code: &str) -> Self {
+        Builder {
+            current_code: current_code.to_string(),
+            default_code: default_code.to_string(),
+            static_json_data: None,
+            string_json_data: None,
+            store_fn: None,
         }
+    }
+
+    pub fn with_static_json_data(mut self, json_data: &'static str) -> Self {
+        self.static_json_data = Some(json_data);
+        self
+    }
+
+    pub fn with_string_json_data(mut self, json_data: Option<String>) -> Self {
+        self.string_json_data = json_data;
+        self
+    }
+
+    pub fn with_store(
+        mut self,
+        store_fn: impl Fn(&str) -> Result<()> + Send + Sync + 'static,
+    ) -> Self {
+        self.store_fn = Some(Arc::new(store_fn));
+        self
+    }
+
+    pub fn try_init(self) -> Result<()> {
+        let json_data = if let Some(json_data) = self.string_json_data {
+            unsafe {
+                JSON_DATA = Some(json_data);
+                JSON_DATA.as_deref()
+            }
+        } else {
+            self.static_json_data
+        };
+
+        let dictionary = Arc::new(Dictionary::try_new(
+            self.current_code,
+            self.default_code,
+            json_data,
+            self.store_fn,
+        )?);
+
+        DICTIONARY.swap(Some(dictionary.clone()));
+
+        Ok(())
     }
 }
 
@@ -67,23 +87,19 @@ pub fn create(i18n_folder: impl Into<PathBuf>) -> Result<()> {
 }
 
 /// Merge all files ending with `_XX.json` (where `XX` is a language code) into a single file `i18n.json`
-pub fn merge(
-    source_storage_path: Option<impl Into<PathBuf>>,
-    destination_storage_path: Option<impl Into<PathBuf>>,
-) -> Result<()> {
-    let suffixes = dictionary()
+#[cfg(not(target_arch = "wasm32"))]
+pub fn import_translation_files<P: AsRef<Path>>(source_folder_path: P, reload: bool) -> Result<()> {
+    let source_folder_path = source_folder_path.as_ref();
+
+    let dictionary = dictionary();
+
+    let suffixes = dictionary
         .language_codes()
         .iter()
         .map(|code| (code.to_string(), format!("_{code}.json")))
         .collect::<Vec<_>>();
-    let source_storage_path = source_storage_path
-        .map(|s| s.into())
-        .unwrap_or(storage_path()?);
-    let destination_storage_path = destination_storage_path
-        .map(|s| s.into())
-        .unwrap_or(source_storage_path.clone());
 
-    let files = read_dir(source_storage_path.clone())?
+    let files = std::fs::read_dir(source_folder_path)?
         .map(|result| result.map(|entry| entry.path()))
         .filter_map(|result| {
             result
@@ -115,38 +131,15 @@ pub fn merge(
                 .and_then(|json_data| {
                     serde_json::from_str::<FxHashMap<String, String>>(json_data.as_str())
                         .map_err(Error::from)
-                }) //;//.collect
+                })
                 .map(|translation| (code, translation))
         })
         .collect::<Result<FxHashMap<_, _>>>()?;
 
-    let dictionary = dictionary();
-    let i18n_data_filename = destination_storage_path.join("i18n.json");
-
-    static mut DATA: Option<String> = None;
-
-    let (enabled, aliases, languages) = if i18n_data_filename.exists() {
-        let Data {
-            enabled,
-            aliases,
-            languages,
-            ..
-        } = unsafe {
-            DATA = Some(std::fs::read_to_string(&i18n_data_filename)?);
-            serde_json::from_str::<Data>(DATA.as_ref().unwrap())?
-        };
-        (enabled, aliases, languages)
-    } else {
-        (
-            dictionary.enabled.clone(),
-            dictionary.aliases.clone(),
-            dictionary.languages.clone(),
-        )
-    };
     let data = Data {
-        enabled,
-        aliases,
-        languages,
+        enabled: dictionary.enabled.clone(),
+        aliases: dictionary.aliases.clone(),
+        languages: dictionary.languages.clone(),
         translations: merged_translations
             .iter()
             .map(|(code, translation)| {
@@ -163,71 +156,70 @@ pub fn merge(
             .collect(),
     };
 
-    std::fs::write(i18n_data_filename, serde_json::to_string_pretty(&data)?)?;
+    let json_data = serde_json::to_string_pretty(&data)?;
+    dictionary.store_fn().clone().unwrap()(json_data.as_str())?;
 
-    unsafe {
-        DATA = None;
+    if reload {
+        from_string(json_data)?;
     }
 
     Ok(())
 }
 
-#[inline(always)]
-pub fn dictionary() -> &'static mut Dictionary {
-    unsafe {
-        DICTIONARY
-            .as_mut()
-            .expect("i18n dictionary is not initialized")
-    }
-}
-
-fn missing_entries_filename() -> Option<&'static PathBuf> {
-    unsafe { MISSING_ENTRIES_FILENAME.as_ref() }
-}
-
-/// Store existing and missing default language entries to a file.
-pub fn store_default_dictionary(path: &Path) -> Result<()> {
-    let dict = dictionary();
-    let source = dict.default_translations();
+pub fn export_default_language(
+    store_fn: impl Fn(&str) -> Result<()> + Send + Sync + 'static,
+) -> Result<()> {
+    let dictionary = dictionary();
+    let source = dictionary.default_translations();
     let merged = source
         .iter()
         .map(|(k, v)| (k.to_string(), v.to_string()))
-        .chain(dict.missing.iter().map(|(k, v)| (k.clone(), v.clone())))
+        .chain(
+            dictionary
+                .missing
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone())),
+        )
         .collect::<FxHashMap<String, String>>();
-    std::fs::write(path, serde_json::to_string_pretty(&merged)?)?;
-
-    Ok(())
+    store_fn(serde_json::to_string_pretty(&merged)?.as_str())
 }
 
-pub fn store(i18n_folder: impl Into<PathBuf>) -> Result<()> {
-    let i18n_file = i18n_folder.into().join("i18n.json");
-    std::fs::write(i18n_file, to_string()?)?;
-    Ok(())
+#[inline(always)]
+pub fn dictionary() -> Arc<Dictionary> {
+    DICTIONARY.load().as_ref().unwrap().clone()
 }
 
-pub fn to_string() -> Result<String> {
-    let data = Data::from(&*dictionary());
-    Ok(serde_json::to_string_pretty(&data)?)
+pub fn guard() -> MutexGuard<'static, ()> {
+    unsafe { JSON_DATA_GUARD.as_ref().unwrap().lock().unwrap() }
 }
 
-pub fn load(i18n_folder: impl Into<PathBuf>) -> Result<()> {
-    let i18n_file = i18n_folder.into().join("i18n.json");
-    from_string(std::fs::read_to_string(i18n_file)?)?;
-
+pub fn load(json_data_file: impl AsRef<Path>) -> Result<()> {
+    from_string(std::fs::read_to_string(json_data_file)?)?;
     Ok(())
 }
 
 pub fn from_string(json_data: impl Into<String>) -> Result<()> {
-    let current_code = dictionary().current_code().to_string();
-    let default_code = dictionary().default_code().to_string();
+    let _guard = guard();
+
+    let (current_code, default_code, store_fn) = {
+        let dictionary = dictionary();
+        (
+            dictionary.current_code().to_string(),
+            dictionary.default_code().to_string(),
+            dictionary.store_fn().clone(),
+        )
+    };
 
     unsafe {
         JSON_DATA = Some(json_data.into());
-        DICTIONARY = Some(Dictionary::try_new(
-            Some(JSON_DATA.as_ref().unwrap().as_str()),
+        DICTIONARY.swap(Some(Arc::new(Dictionary::try_new(
             current_code,
             default_code,
-        )?);
+            Some(JSON_DATA.as_ref().unwrap().as_str()),
+            store_fn,
+        )?)));
     }
 
     Ok(())
@@ -235,18 +227,35 @@ pub fn from_string(json_data: impl Into<String>) -> Result<()> {
 
 /// Translate a string to the currently user-selected language.
 pub fn i18n(text: &str) -> &str {
-    let translation = dictionary().current_translations().get(text);
+    #[cfg(feature = "thread-safe")]
+    let _guard = guard();
 
-    match translation {
+    let dictionary = dictionary();
+
+    match dictionary.translate(text) {
         Some(translated) => translated,
         None => {
-            let dict = dictionary();
-            if !dict.missing.contains_key(text) {
-                dict.missing.insert(text.to_string(), text.to_string());
+            let needs_store = {
+                let mut missing = dictionary.missing.lock().unwrap();
+                if !missing.contains_key(text) {
+                    missing.insert(text.to_string(), text.to_string());
+                    true
+                } else {
+                    false
+                }
+            };
 
-                if let Some(path) = missing_entries_filename() {
-                    if let Err(err) = store_default_dictionary(path) {
-                        println!("i18n io error: {}", err);
+            if needs_store {
+                if let Some(store_fn) = dictionary.store_fn() {
+                    match dictionary.to_json() {
+                        Ok(json_data) => {
+                            if let Err(err) = store_fn(json_data.as_str()) {
+                                println!("i18n error: {}", err);
+                            }
+                        }
+                        Err(err) => {
+                            println!("i18n error: {}", err);
+                        }
                     }
                 }
             }
@@ -265,27 +274,33 @@ pub struct Dictionary {
     /// Map of translations {"ja": { "Hello" : "こんにちは" }}
     translations: FxHashMap<&'static str, Arc<FxHashMap<&'static str, &'static str>>>,
     /// Missing translation entries (default language)
-    missing: FxHashMap<String, String>,
+    missing: Mutex<FxHashMap<String, String>>,
     /// Enabled language codes ["en", "ja"]
     enabled: Vec<&'static str>,
     /// Current language code
-    current_code: String,
+    current_code: ArcSwap<String>,
     /// Current language title
-    current_title: String,
+    current_title: ArcSwap<String>,
     /// Current language translations {"Hello" : "こんにちは", ...}
-    current_translations: Arc<FxHashMap<&'static str, &'static str>>,
+    current_translations: ArcSwap<FxHashMap<&'static str, &'static str>>,
     /// Default language code (the language used in the source code)
     default_code: String,
     /// Default language translations {"Hello" : "Hello", ...}
     default_translations: Arc<FxHashMap<&'static str, &'static str>>,
+    // / Full data file path
+    // json_data_file_path: Option<PathBuf>,
+    /// Storage callback function
+    store_fn: Option<Arc<StoreFn>>,
 }
 
 impl Dictionary {
     /// Create a new dictionary from JSON data. JSON data must be `&'static str`, i.e. loaded by the application via the `include_str!()` macro.
     fn try_new(
-        json_data: Option<&'static str>,
         current_code: impl Into<String>,
         default_code: impl Into<String>,
+        json_data: Option<&'static str>,
+        // json_data_file_path: Option<&Path>,
+        store_fn: Option<Arc<StoreFn>>,
     ) -> Result<Self> {
         let Data {
             enabled,
@@ -334,13 +349,14 @@ impl Dictionary {
             languages,
             aliases,
             translations,
-            missing: FxHashMap::default(),
+            missing: Mutex::new(FxHashMap::default()),
             enabled,
-            current_code,
-            current_title,
-            current_translations,
+            current_code: ArcSwap::new(Arc::new(current_code)),
+            current_title: ArcSwap::new(Arc::new(current_title)),
+            current_translations: ArcSwap::new(current_translations),
             default_code,
             default_translations,
+            store_fn,
         })
     }
 
@@ -359,14 +375,18 @@ impl Dictionary {
         }
     }
 
-    #[inline(always)]
-    pub fn current_code(&self) -> &str {
-        &self.current_code
+    pub fn store_fn(&self) -> &Option<Arc<StoreFn>> {
+        &self.store_fn
     }
 
     #[inline(always)]
-    pub fn current_title(&self) -> &str {
-        &self.current_title
+    pub fn current_code(&self) -> Arc<String> {
+        self.current_code.load().clone()
+    }
+
+    #[inline(always)]
+    pub fn current_title(&self) -> Arc<String> {
+        self.current_title.load().clone()
     }
 
     #[inline(always)]
@@ -375,8 +395,14 @@ impl Dictionary {
     }
 
     #[inline(always)]
-    pub fn current_translations(&self) -> &Arc<FxHashMap<&'static str, &'static str>> {
-        &self.current_translations
+    pub fn current_translations(&self) -> Arc<FxHashMap<&'static str, &'static str>> {
+        self.current_translations.load().clone()
+    }
+
+    #[inline(always)]
+    pub fn translate(&self, text: &str) -> Option<&'static str> {
+        let current_translations = self.current_translations.load().clone();
+        current_translations.get(text).copied()
     }
 
     #[inline(always)]
@@ -393,7 +419,7 @@ impl Dictionary {
         }
     }
 
-    pub fn activate_language_code(&mut self, language_code: impl Into<String>) -> Result<()> {
+    pub fn activate_language_code(&self, language_code: impl Into<String>) -> Result<()> {
         let language_code: String = language_code.into();
         let current_code = self.resolve_aliases(language_code.as_str())?;
         let current_title = self.language_title(current_code.as_str())?.to_string();
@@ -403,9 +429,9 @@ impl Dictionary {
             .ok_or(Error::UnknownLanguageCode(language_code))?
             .clone();
 
-        self.current_code = current_code;
-        self.current_title = current_title;
-        self.current_translations = current_translations;
+        self.current_code.store(Arc::new(current_code));
+        self.current_title.store(Arc::new(current_title));
+        self.current_translations.store(current_translations);
 
         Ok(())
     }
@@ -422,6 +448,11 @@ impl Dictionary {
             .into_iter()
             .map(|s| (s, *self.languages.get(s).unwrap()))
             .collect()
+    }
+
+    pub fn to_json(&self) -> Result<String> {
+        let data = Storable::from(self);
+        Ok(serde_json::to_string_pretty(&data)?)
     }
 }
 
@@ -511,17 +542,47 @@ impl<'data> Default for Data<'data> {
     }
 }
 
-impl<'data> From<&Dictionary> for Data<'data> {
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct Storable {
+    enabled: Vec<&'static str>,
+    aliases: FxHashMap<&'static str, &'static str>,
+    languages: FxHashMap<&'static str, &'static str>,
+    translations: FxHashMap<&'static str, FxHashMap<String, String>>,
+}
+
+impl From<&Dictionary> for Storable {
     fn from(dict: &Dictionary) -> Self {
         let Dictionary {
             languages,
             aliases,
             translations,
+            missing,
+            default_code,
             enabled,
             ..
         } = dict;
 
-        Data {
+        let mut translations: FxHashMap<&'static str, FxHashMap<String, String>> = translations
+            .iter()
+            .map(|(code, language_translation)| {
+                let language_translation: FxHashMap<String, String> = language_translation
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.to_string()))
+                    .collect();
+                (*code, language_translation)
+            })
+            .collect();
+
+        let default_translations = translations.get_mut(default_code.as_str()).unwrap();
+        default_translations.extend(
+            missing
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string())),
+        );
+
+        Storable {
             enabled: enabled.clone(),
             aliases: aliases.clone(),
             languages: languages.clone(),

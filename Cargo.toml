@@ -9,6 +9,7 @@ members = [
     "features",
     "html",
     "html/macros",
+    "http",
     "i18n",
     "log",
     "macro-tools",
@@ -58,6 +59,7 @@ workflow-d3 = { version = "0.8.1", path = "d3" }
 workflow-dom = { version = "0.8.1", path = "dom" }
 workflow-html = { version = "0.8.1", path = "html" }
 workflow-html-macros = { version = "0.8.1", path = "html/macros" }
+workflow-http = { version = "0.8.1", path = "http" }
 workflow-i18n = { version = "0.8.1", path = "i18n" }
 workflow-log = { version = "0.8.1", path = "log" }
 workflow-macro-tools = { version = "0.8.1", path = "macro-tools" }
@@ -79,6 +81,7 @@ workflow-websocket = { version = "0.8.1", path = "websocket" }
 # external dependencies
 
 ahash = "0.8.6"
+arc-swap = "1.6.0"
 async-channel = "2.0.0"
 async-std = { version = "1.12.0", features = ['attributes'] }
 async-trait = "0.1.74"
@@ -118,6 +121,7 @@ proc-macro2 = { version = "1.0.50" }
 quote = "1.0.23"
 rand = { version = "0.8.5", features = ["getrandom"] }
 regex = "1.10.2"
+reqwest = "0.11.22"
 ritehash = "0.2.0"
 serde = { version = "1.0.190" , features = ["derive","rc"] }
 serde_json = "1.0.108"
