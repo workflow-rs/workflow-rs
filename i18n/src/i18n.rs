@@ -136,11 +136,8 @@ pub fn import_translation_files<P: AsRef<Path>>(source_folder_path: P, reload: b
         })
         .collect::<Result<FxHashMap<_, _>>>()?;
 
-    let data = Data {
-        enabled: dictionary.enabled.clone(),
-        aliases: dictionary.aliases.clone(),
-        languages: dictionary.languages.clone(),
-        translations: merged_translations
+    let translations = dictionary.translations.clone().into_iter().chain(
+        merged_translations
             .iter()
             .map(|(code, translation)| {
                 (
@@ -149,11 +146,17 @@ pub fn import_translation_files<P: AsRef<Path>>(source_folder_path: P, reload: b
                         translation
                             .iter()
                             .map(|(k, v)| (k.as_str(), v.as_str()))
-                            .collect(),
-                    ),
+                            .collect()
+                    )
                 )
             })
-            .collect(),
+    ).collect();
+
+    let data = Data {
+        enabled: dictionary.enabled.clone(),
+        aliases: dictionary.aliases.clone(),
+        languages: dictionary.languages.clone(),
+        translations,
     };
 
     let json_data = serde_json::to_string_pretty(&data)?;
