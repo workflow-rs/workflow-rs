@@ -1,0 +1,28 @@
+[package]
+name = "workflow-http"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = ["http","request","wasm"]
+categories = ["web-programming::http-client"]
+exclude = ["/.*", "/test"]
+description = """
+HTTP client for native and WASM32 targets.
+"""
+
+[lib]
+crate-type = ["cdylib", "lib"]
+doctest = false
+
+[dependencies]
+cfg-if.workspace = true
+thiserror.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+wasm-bindgen.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio.workspace = true
+reqwest.workspace = true
