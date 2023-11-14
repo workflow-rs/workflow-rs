@@ -136,21 +136,22 @@ pub fn import_translation_files<P: AsRef<Path>>(source_folder_path: P, reload: b
         })
         .collect::<Result<FxHashMap<_, _>>>()?;
 
-    let translations = dictionary.translations.clone().into_iter().chain(
-        merged_translations
-            .iter()
-            .map(|(code, translation)| {
-                (
-                    code.as_str(),
-                    Arc::new(
-                        translation
-                            .iter()
-                            .map(|(k, v)| (k.as_str(), v.as_str()))
-                            .collect()
-                    )
-                )
-            })
-    ).collect();
+    let translations = dictionary
+        .translations
+        .clone()
+        .into_iter()
+        .chain(merged_translations.iter().map(|(code, translation)| {
+            (
+                code.as_str(),
+                Arc::new(
+                    translation
+                        .iter()
+                        .map(|(k, v)| (k.as_str(), v.as_str()))
+                        .collect(),
+                ),
+            )
+        }))
+        .collect();
 
     let data = Data {
         enabled: dictionary.enabled.clone(),
