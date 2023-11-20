@@ -32,6 +32,9 @@ pub mod runtime;
 pub mod sendable;
 pub mod utils;
 
+#[cfg(feature = "version")]
+pub mod version;
+
 mod native;
 mod wasm;
 
