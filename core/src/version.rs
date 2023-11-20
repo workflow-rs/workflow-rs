@@ -9,9 +9,9 @@ pub const RUSTC_LLVM_VERSION: &str = env!("VERGEN_RUSTC_LLVM_VERSION");
 pub const RUSTC_SEMVER: &str = env!("VERGEN_RUSTC_SEMVER");
 
 pub fn version() -> String {
-    format!("{}-{GIT_DESCRIBE}",env!("CARGO_PKG_VERSION"))
+    format!("{}-{GIT_DESCRIBE}", env!("CARGO_PKG_VERSION"))
 }
 
-pub fn semver() -> String {
+pub fn semver() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
