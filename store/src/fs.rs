@@ -512,8 +512,6 @@ impl TryFrom<JsValue> for Metadata {
         if metadata.is_undefined() {
             return Err(Error::Metadata);
         }
-        // let object = Object::from(metadata);
-        workflow_log::log_info!("{:?}", metadata);
         let created = (Reflect::get(&metadata, &"birthtimeMs".into())
             .unwrap()
             .as_f64()
