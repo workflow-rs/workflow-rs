@@ -116,7 +116,7 @@ pub async fn server_main() -> RpcServerResult<()> {
         Arc<ConnectionContext>,
         TestOps,
         Id64,
-    >(encoding, handler.clone(), interface.clone());
+    >(encoding, handler.clone(), interface.clone(), None);
 
     let task = task!(|handler: Arc<ExampleRpcHandler>, stop| async move {
         let mut seq = 0;

@@ -19,8 +19,9 @@ pub use protocol::{BorshProtocol, ProtocolHandler, SerdeJsonProtocol};
 pub use std::net::SocketAddr;
 pub use tokio::sync::mpsc::UnboundedSender as TokioUnboundedSender;
 pub use workflow_websocket::server::{
-    Error as WebSocketError, Message, Result as WebSocketResult, WebSocketConfig, WebSocketHandler,
-    WebSocketReceiver, WebSocketSender, WebSocketServer, WebSocketServerTrait, WebSocketSink,
+    Error as WebSocketError, Message, Result as WebSocketResult, WebSocketConfig,
+    WebSocketCounters, WebSocketHandler, WebSocketReceiver, WebSocketSender, WebSocketServer,
+    WebSocketServerTrait, WebSocketSink,
 };
 pub mod handshake {
     //! WebSocket handshake helpers
@@ -389,6 +390,7 @@ impl RpcServer {
     pub fn new<ServerContext, ConnectionContext, Protocol, Ops>(
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
         interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
+        counters: Option<Arc<WebSocketCounters>>,
     ) -> RpcServer
     where
         ServerContext: Clone + Send + Sync + 'static,
@@ -403,9 +405,7 @@ impl RpcServer {
             Ops,
         >::new(rpc_handler, interface));
 
-        // let encoder = ws_handler.clone().downcast_arc::<Encoder<Ops>>();
-
-        let ws_server = WebSocketServer::new(ws_handler);
+        let ws_server = WebSocketServer::new(ws_handler, counters);
         RpcServer { ws_server }
     }
     /// Create a new [`RpcServer`] supplying an [`Arc`] of the previsouly-created
@@ -432,6 +432,7 @@ impl RpcServer {
         encoding: Encoding,
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
         interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
+        counters: Option<Arc<WebSocketCounters>>,
     ) -> RpcServer
     where
         ServerContext: Clone + Send + Sync + 'static,
@@ -445,13 +446,13 @@ impl RpcServer {
                 ConnectionContext,
                 BorshProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
-            >(rpc_handler, interface),
+            >(rpc_handler, interface, counters),
             Encoding::SerdeJson => RpcServer::new::<
                 ServerContext,
                 ConnectionContext,
                 SerdeJsonProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
-            >(rpc_handler, interface),
+            >(rpc_handler, interface, counters),
         }
     }
 

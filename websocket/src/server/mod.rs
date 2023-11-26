@@ -10,7 +10,7 @@ use futures_util::{
 };
 use std::net::SocketAddr;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::{TcpListener, TcpStream};
@@ -39,6 +39,31 @@ pub type WebSocketReceiver = SplitStream<WebSocketStream<TcpStream>>;
 /// `MPSC` channel that can be cloned and retained externally for the
 /// lifetime of the WebSocket connection.
 pub type WebSocketSink = TokioUnboundedSender<Message>;
+
+/// Atomic counters that allow tracking connection counts
+/// and cumulative message sizes in bytes (bandwidth consumption
+/// without accounting for the websocket framing overhead).
+/// These counters can be created and supplied externally or
+/// supplied as `None`.
+pub struct WebSocketCounters {
+    pub total_connections: Arc<AtomicUsize>,
+    pub active_connections: Arc<AtomicUsize>,
+    pub handshake_failures: Arc<AtomicUsize>,
+    pub rx_bytes: Arc<AtomicUsize>,
+    pub tx_bytes: Arc<AtomicUsize>,
+}
+
+impl Default for WebSocketCounters {
+    fn default() -> Self {
+        WebSocketCounters {
+            total_connections: Arc::new(AtomicUsize::new(0)),
+            active_connections: Arc::new(AtomicUsize::new(0)),
+            handshake_failures: Arc::new(AtomicUsize::new(0)),
+            rx_bytes: Arc::new(AtomicUsize::new(0)),
+            tx_bytes: Arc::new(AtomicUsize::new(0)),
+        }
+    }
+}
 
 /// WebSocketHandler trait that represents the WebSocket processor
 /// functionality.  This trait is supplied to the WebSocket
@@ -102,7 +127,8 @@ pub struct WebSocketServer<T>
 where
     T: WebSocketHandler + Send + Sync + 'static + Sized,
 {
-    pub connections: AtomicU64,
+    // pub connections: AtomicU64,
+    pub counters: Arc<WebSocketCounters>,
     pub handler: Arc<T>,
     pub stop: DuplexChannel,
 }
@@ -111,9 +137,9 @@ impl<T> WebSocketServer<T>
 where
     T: WebSocketHandler + Send + Sync + 'static,
 {
-    pub fn new(handler: Arc<T>) -> Arc<Self> {
+    pub fn new(handler: Arc<T>, counters: Option<Arc<WebSocketCounters>>) -> Arc<Self> {
         Arc::new(WebSocketServer {
-            connections: AtomicU64::new(0),
+            counters: counters.unwrap_or_default(),
             handler,
             stop: DuplexChannel::oneshot(),
         })
@@ -133,10 +159,19 @@ where
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
         let (sink_sender, sink_receiver) = tokio::sync::mpsc::unbounded_channel::<Message>();
 
-        let ctx = self
+        let ctx = match self
             .handler
             .handshake(&peer, &mut ws_sender, &mut ws_receiver, &sink_sender)
-            .await?;
+            .await
+        {
+            Ok(ctx) => ctx,
+            Err(err) => {
+                self.counters
+                    .handshake_failures
+                    .fetch_add(1, Ordering::Relaxed);
+                return Err(err);
+            }
+        };
 
         let result = self
             .connection_task(&ctx, ws_sender, ws_receiver, sink_sender, sink_receiver)
@@ -155,16 +190,34 @@ where
         sink_sender: TokioUnboundedSender<Message>,
         mut sink_receiver: TokioUnboundedReceiver<Message>,
     ) -> Result<()> {
-        // let mut interval = tokio::time::interval(Duration::from_millis(1000));
         loop {
             tokio::select! {
                 msg = sink_receiver.recv() => {
                     let msg = msg.unwrap();
-                    if let Message::Close(_) = msg {
-                        ws_sender.send(msg).await?;
-                        break;
-                    } else {
-                        ws_sender.send(msg).await?;
+                    match msg {
+                        Message::Binary(data)  => {
+                            self.counters.tx_bytes.fetch_add(data.len(), Ordering::Relaxed);
+                            ws_sender.send(Message::Binary(data)).await?;
+                        },
+                        Message::Text(text)  => {
+                            self.counters.tx_bytes.fetch_add(text.len(), Ordering::Relaxed);
+                            ws_sender.send(Message::Text(text)).await?;
+                        },
+                        Message::Close(_) => {
+                            ws_sender.send(msg).await?;
+                            break;
+                        },
+                        Message::Ping(data) => {
+                            self.counters.tx_bytes.fetch_add(data.len(), Ordering::Relaxed);
+                            ws_sender.send(Message::Ping(data)).await?;
+                        },
+                        Message::Pong(data) => {
+                            self.counters.tx_bytes.fetch_add(data.len(), Ordering::Relaxed);
+                            ws_sender.send(Message::Pong(data)).await?;
+                        },
+                        msg => {
+                            ws_sender.send(msg).await?;
+                        }
                     }
                 },
                 msg = ws_receiver.next() => {
@@ -172,15 +225,25 @@ where
                         Some(msg) => {
                             let msg = msg?;
                             match msg {
-                                Message::Binary(_) | Message::Text(_)  => {
-                                    self.handler.message(ctx, msg, &sink_sender).await?;
+                                Message::Binary(data)  => {
+                                    self.counters.rx_bytes.fetch_add(data.len(), Ordering::Relaxed);
+                                    self.handler.message(ctx, Message::Binary(data), &sink_sender).await?;
+                                },
+                                Message::Text(text)  => {
+                                    self.counters.rx_bytes.fetch_add(text.len(), Ordering::Relaxed);
+                                    self.handler.message(ctx, Message::Text(text), &sink_sender).await?;
                                 },
                                 Message::Close(_) => {
                                     self.handler.message(ctx, msg, &sink_sender).await?;
                                     break;
                                 },
-                                Message::Ping(_) | Message::Pong(_) => {
-                                    self.handler.ctl(msg, &mut ws_sender).await?;
+                                Message::Ping(data) => {
+                                    self.counters.rx_bytes.fetch_add(data.len(), Ordering::Relaxed);
+                                    self.handler.ctl(Message::Ping(data), &mut ws_sender).await?;
+                                },
+                                Message::Pong(data) => {
+                                    self.counters.rx_bytes.fetch_add(data.len(), Ordering::Relaxed);
+                                    self.handler.ctl(Message::Pong(data), &mut ws_sender).await?;
                                 },
                                 _ => {
                                 }
@@ -191,9 +254,6 @@ where
                         }
                     }
                 }
-                // _ = interval.tick() => {
-                //     ws_sender.send(Message::Ping([0].to_vec())).await?;
-                // }
             }
         }
 
@@ -215,7 +275,12 @@ where
             .peer_addr()
             .expect("WebSocket connected streams should have a peer address");
 
-        self.connections.fetch_add(1, Ordering::Relaxed);
+        self.counters
+            .total_connections
+            .fetch_add(1, Ordering::Relaxed);
+        self.counters
+            .active_connections
+            .fetch_add(1, Ordering::Relaxed);
 
         let self_ = self.clone();
         tokio::spawn(async move {
@@ -227,7 +292,10 @@ where
                     err => log_error!("Error processing connection: {}", err),
                 }
             }
-            self_.connections.fetch_sub(1, Ordering::Relaxed)
+            self_
+                .counters
+                .active_connections
+                .fetch_sub(1, Ordering::Relaxed)
         });
     }
 

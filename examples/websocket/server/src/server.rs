@@ -82,7 +82,7 @@ pub async fn server_example() -> Result<()> {
     // create our handler instance
     let handler = Arc::new(MyWsHandler {});
     // create websocket server and install our handler in it
-    let ws = WebSocketServer::<MyWsHandler>::new(handler);
+    let ws = WebSocketServer::<MyWsHandler>::new(handler, None);
     // listen for incoming connections
     ws.listen(addr, None).await?;
 
