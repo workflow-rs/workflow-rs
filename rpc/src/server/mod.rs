@@ -374,7 +374,7 @@ pub struct RpcServer {
 }
 
 impl RpcServer {
-    /// Create a new [`RpcServer`] supplying an [`Arc`] of the previsouly-created
+    /// Create a new [`RpcServer`] supplying an [`Arc`] of the previously-created
     /// [`RpcHandler`] trait and the [`Interface`] struct.
     /// This method takes 4 generics:
     /// - `ConnectionContext`: a struct used as [`RpcHandler::Context`] to
@@ -408,7 +408,7 @@ impl RpcServer {
         let ws_server = WebSocketServer::new(ws_handler, counters);
         RpcServer { ws_server }
     }
-    /// Create a new [`RpcServer`] supplying an [`Arc`] of the previsouly-created
+    /// Create a new [`RpcServer`] supplying an [`Arc`] of the previously-created
     /// [`RpcHandler`] trait and the [`Interface`] struct.
     /// This method takes 4 generics:
     /// - `ConnectionContext`: a struct used as [`RpcHandler::Context`] to
