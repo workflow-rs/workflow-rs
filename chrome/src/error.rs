@@ -19,6 +19,12 @@ pub enum Error {
 
     #[error("Channel recv() error")]
     RecvError,
+
+    #[error("No such key in storage {0}")]
+    MissingKey(String),
+
+    #[error("Key already exists in storage {0}")]
+    KeyExists(String),
 }
 
 impl Error {

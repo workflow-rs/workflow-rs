@@ -1,3 +1,4 @@
+use crate::error::Error;
 use cfg_if::cfg_if;
 use chrome_sys::storage;
 use js_sys::{Array, Object};
@@ -21,12 +22,6 @@ impl LocalStorage {
         let _key = key.to_string();
         let obj = call_async_send!(storage::get(_key).await)?;
         Ok(js_sys::Reflect::get(&obj, &key.into())?.as_string())
-        // let data = js_sys::Reflect::get(&obj, &key.into())?;
-        // if data.eq(&JsValue::UNDEFINED) {
-        //     Ok(None)
-        // } else {
-        //     Ok(data.as_string())
-        // }
     }
 
     pub async fn get_items(keys: Vec<&str>) -> Result<StorageData, JsValue> {
@@ -52,6 +47,22 @@ impl LocalStorage {
     pub async fn remove_item(key: &str) -> Result<(), JsValue> {
         let key = key.to_string();
         call_async_send!(storage::remove(key).await)
+    }
+
+    pub async fn rename_item(from_key: &str, to_key: &str) -> Result<(), Error> {
+        let from_key = from_key.to_string();
+        let to_key = to_key.to_string();
+
+        if Self::get_item(&to_key).await?.is_some() {
+            return Err(Error::KeyExists(to_key));
+        }
+        if let Some(existing) = Self::get_item(&from_key).await? {
+            Self::set_item(&to_key, &existing).await?;
+            Self::remove_item(&from_key).await?;
+            Ok(())
+        } else {
+            Err(Error::MissingKey(from_key))
+        }
     }
 
     pub async fn remove_items(keys: Vec<&str>) -> Result<(), JsValue> {
