@@ -49,6 +49,9 @@ pub enum Error {
 
     #[error(transparent)]
     FasterHex(#[from] faster_hex::Error),
+
+    #[error("This operation is not supported")]
+    NotSupported,
 }
 
 impl From<Error> for JsValue {

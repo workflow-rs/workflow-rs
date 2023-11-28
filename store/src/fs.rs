@@ -280,6 +280,28 @@ cfg_if! {
             Ok(())
         }
 
+        pub async fn rename<P : AsRef<Path>>(from: P, to: P) -> Result<()> {
+            if runtime::is_node() || runtime::is_nw() {
+                let from = from.as_ref().to_platform_string();
+                let to = to.as_ref().to_platform_string();
+                node::fs::rename_sync(&from,&to)?;
+                Ok(())
+            } else {
+                Err(Error::NotSupported)
+            }
+        }
+
+        pub fn rename_sync<P : AsRef<Path>>(from: P, to: P) -> Result<()> {
+            if runtime::is_node() || runtime::is_nw() {
+                let from = from.as_ref().to_platform_string();
+                let to = to.as_ref().to_platform_string();
+                node::fs::rename_sync(&from,&to)?;
+                Ok(())
+            } else {
+                Err(Error::NotSupported)
+            }
+        }
+
         pub async fn create_dir_all<P : AsRef<Path>>(filename: P) -> Result<()> {
             create_dir_all_sync(filename)
         }
@@ -416,6 +438,16 @@ cfg_if! {
 
         pub fn remove_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<()> {
             std::fs::remove_file(filename)?;
+            Ok(())
+        }
+
+        pub async fn rename<P : AsRef<Path>>(from: P, to: P) -> Result<()> {
+            std::fs::rename(from,to)?;
+            Ok(())
+        }
+
+        pub fn rename_sync<P : AsRef<Path>>(from: P, to: P) -> Result<()> {
+            std::fs::rename(from,to)?;
             Ok(())
         }
 
