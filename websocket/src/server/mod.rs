@@ -351,7 +351,7 @@ where
 }
 
 /// Base WebSocketServer trait allows the [`WebSocketServer<T>`] struct
-/// to be retained by the trait reference by castring it to the trait
+/// to be retained by the trait reference by casting it to the trait
 /// as follows:
 ///
 /// ```rust
