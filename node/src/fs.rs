@@ -53,6 +53,9 @@ extern "C" {
     #[wasm_bindgen(catch, js_name = mkdirSync, method)]
     fn fs_mkdir_sync(this: &Fs, path: &str, options: Object) -> std::result::Result<(), JsValue>;
 
+    #[wasm_bindgen(catch, js_name = renameSync, method)]
+    fn fs_rename_sync(this: &Fs, from: &str, to: &str) -> std::result::Result<(), JsValue>;
+
     #[wasm_bindgen(catch, js_name = unlinkSync, method)]
     fn fs_unlink_sync(this: &Fs, path: &str) -> std::result::Result<(), JsValue>;
 
@@ -110,6 +113,11 @@ pub fn mkdir_sync(path: &str, options: Object) -> std::result::Result<(), JsValu
 #[inline(always)]
 pub fn unlink_sync(path: &str) -> std::result::Result<(), JsValue> {
     FS.fs_unlink_sync(path)
+}
+
+#[inline(always)]
+pub fn rename_sync(from: &str, to: &str) -> std::result::Result<(), JsValue> {
+    FS.fs_rename_sync(from, to)
 }
 
 #[inline(always)]
