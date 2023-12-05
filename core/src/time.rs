@@ -65,7 +65,6 @@ cfg_if! {
         }
 
     } else {
-        // use time::OffsetDateTime;
         use chrono::{Local, TimeZone};
 
         #[inline(always)]
