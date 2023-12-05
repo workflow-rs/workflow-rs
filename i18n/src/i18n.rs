@@ -75,14 +75,10 @@ impl Builder {
     }
 }
 
-/// Create the default i18n configuration file `i18n.conf` in the supplied folder path.
-pub fn create(i18n_folder: impl Into<PathBuf>) -> Result<()> {
-    let i18n_folder = i18n_folder.into();
-    let target_filename = i18n_folder.join("i18n.data");
-    std::fs::write(
-        target_filename,
-        serde_json::to_string_pretty(&Data::default())?,
-    )?;
+/// Create the default i18n data file at the supplied path.
+pub fn create(i18n_file: impl Into<PathBuf>) -> Result<()> {
+    let i18n_file = i18n_file.into();
+    std::fs::write(i18n_file, serde_json::to_string_pretty(&Data::default())?)?;
     Ok(())
 }
 
