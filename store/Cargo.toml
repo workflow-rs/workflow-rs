@@ -38,6 +38,7 @@ workflow-wasm.workspace = true
 [target.'cfg(not(any(target_arch = "wasm32", target_os="solana")))'.dependencies]
 async-std.workspace = true
 home.workspace = true
+filetime.workspace = true
 
 [dependencies.web-sys]
 workspace = true
