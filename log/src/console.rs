@@ -81,7 +81,7 @@ pub fn style<'t>(text: &'t str) -> console_style::ConsoleStyle<'t> {
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "solana")] {
-        pub fn enable_colors(_:bool) { }
+        pub fn set_colors_enabled(_:bool) { }
     } else {
         pub fn set_colors_enabled(enable: bool) {
             console::set_colors_enabled(enable)
