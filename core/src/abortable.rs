@@ -66,4 +66,9 @@ impl Abortable {
             Ok(())
         }
     }
+
+    #[inline]
+    pub fn reset(&self) {
+        self.0.store(false, Ordering::SeqCst);
+    }
 }
