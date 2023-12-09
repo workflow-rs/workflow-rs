@@ -244,7 +244,7 @@ impl WebSocketInterface {
             if self_.reconnect.load(Ordering::SeqCst) {
                 workflow_core::task::sleep(
                     options
-                        .reconnect_interval
+                        .retry_interval
                         .unwrap_or(std::time::Duration::from_millis(1000)),
                 )
                 .await;
