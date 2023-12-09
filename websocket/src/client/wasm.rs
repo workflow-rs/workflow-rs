@@ -240,9 +240,13 @@ impl WebSocketInterface {
                 .dispatcher_task(&ws, options.clone(), connect_trigger)
                 .await
                 .unwrap_or_else(|err| log_trace!("WebSocket error: {err}"));
+            // if reconnect is true, we sleep for reconnect interval and try to reconnect
             if self_.reconnect.load(Ordering::SeqCst) {
-                workflow_core::task::sleep(std::time::Duration::from_millis(1000)).await;
-                self_.reconnect().await.ok();
+                workflow_core::task::sleep(options.reconnect_interval.unwrap_or(std::time::Duration::from_millis(1000))).await;
+                // check again if reconnect may have been disabled during sleep
+                if self_.reconnect.load(Ordering::SeqCst) {
+                    self_.reconnect().await.ok();
+                }
             }
         });
 
