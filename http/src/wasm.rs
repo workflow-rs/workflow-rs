@@ -5,13 +5,13 @@ use crate::result::Result;
 pub async fn get(url: impl Into<String>) -> Result<String> {
     let _url = url.into();
 
-    todo!();
+    Err(Error::NotImplemented)
 }
 
 pub async fn get_json<T: serde::de::DeserializeOwned>(url: impl Into<String>) -> Result<T> {
     let _url = url.into();
 
-    todo!();
+    Err(Error::NotImplemented)
 }
 
 pub struct Request {
@@ -33,10 +33,10 @@ impl Request {
     }
 
     pub async fn get(self) -> Result<String> {
-        todo!();
+        Err(Error::NotImplemented)
     }
 
     pub async fn get_json<T: serde::de::DeserializeOwned>(self) -> Result<T> {
-        todo!();
+        Err(Error::NotImplemented)
     }
 }

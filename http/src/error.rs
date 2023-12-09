@@ -11,6 +11,9 @@ pub enum Error {
 
     #[error("JSON: {0}")]
     Json(#[from] serde_json::Error),
+
+    #[error("Not implemented")]
+    NotImplemented,
 }
 
 impl From<String> for Error {
