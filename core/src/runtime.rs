@@ -8,105 +8,116 @@ use cfg_if::cfg_if;
 
 cfg_if! {
     if #[cfg(target_arch = "wasm32")]{
-        use js_sys::Object;
-        use wasm_bindgen::prelude::*;
+        use js_sys::Reflect;
+        use wasm_bindgen::prelude::JsValue;
 
-        #[wasm_bindgen]
-        extern "C" {
-            #[wasm_bindgen(extends = Object)]
-            #[derive(Debug)]
-            type __NodeJsNodeWebkitInfo__;
-
-            #[wasm_bindgen(method, getter)]
-            fn is_node_js(this: &__NodeJsNodeWebkitInfo__) -> bool;
-
-            #[wasm_bindgen(method, getter)]
-            fn is_node_webkit(this: &__NodeJsNodeWebkitInfo__) -> bool;
+        #[derive(Clone, Copy)]
+        struct JavaScriptRuntime {
+            // NodeJs environment
+            nodejs : bool,
+            // NWJS environment
+            nwjs : bool,
+            // Electron environment (browser or renderer)
+            electron : bool,
+            // Browser-capable environment
+            browser : bool,
+            // Pure web environment (no NodeJs, no NWJS, no Electron)
+            web : bool,
         }
 
-        static mut DETECT: Option<(bool,bool)> = None;
-        fn detect() -> (bool, bool) {
-            unsafe { DETECT }.unwrap_or_else(||{
+        #[inline(always)]
+        fn exists(property: &str) -> bool {
+            js_sys::Reflect::get(&js_sys::global(), &property.into()).map(|v|!v.is_falsy()).unwrap_or(false)
+        }
 
-                cfg_if! {
-                    if #[cfg(feature = "no-unsafe-eval")] {
-                        let global = js_sys::global();
-                        let mut flags = (false, false);
-                        let _ = js_sys::Reflect::get(&global, &"process".into())
-                            .and_then(|process|js_sys::Reflect::get(&process, &"versions".into()))
-                            .and_then(|versions|js_sys::Reflect::get(&versions, &"node".into()))
-                            .and_then(|_node|{
-                                flags.0 = true;
-                                js_sys::Reflect::get(&global, &"nw".into())
-                            })
-                            .and_then(|nw|js_sys::Reflect::get(&nw, &"Window".into()))
-                            .map(|_window|{
-                                flags.1 = true;
-                            });
+        fn exists_prop(object : &JsValue, property: &str) -> bool {
+            js_sys::Reflect::get(object, &property.into()).map(|v|!v.is_falsy()).unwrap_or(false)
+        }
 
-                        unsafe { DETECT = Some(flags) };
-                        flags
-                    } else {
+        #[inline]
+        fn detect() -> &'static JavaScriptRuntime {
+            static mut JAVASCRIPT_RUNTIME: Option<JavaScriptRuntime> = None;
+            unsafe {
+                JAVASCRIPT_RUNTIME.get_or_insert_with(||{
+                    let global = js_sys::global();
 
-                        let result = js_sys::Function::new_no_args( // no-unsafe-eval
-                            "
-                            let is_node_js = (
-                                typeof process === 'object' && 
-                                typeof process.versions === 'object' && 
-                                typeof process.versions.node !== 'undefined'
-                            );
+                    let mut browser = exists("window") && exists("document") && exists("location") && exists("navigator");
 
-                            let is_node_webkit = false;
-                            if(is_node_js) {
-                                is_node_webkit = (typeof nw !== 'undefined' && typeof nw.Window !== 'undefined');
-                            }
+                    let process = Reflect::get(&global, &"process".into());
+                    let versions = process
+                        .clone()
+                        .and_then(|process|Reflect::get(&process, &"versions".into()));
 
-                            return {
-                                is_node_js,
-                                is_node_webkit
-                            }
-                        ").call0(&wasm_bindgen::JsValue::undefined());
+                    let nodejs = versions
+                        .clone()
+                        .map(|versions|exists_prop(&versions, "node")).unwrap_or(false);
 
-                        let flags = match result {
-                            Ok(value) => {
-                                if value.is_undefined() {
-                                    (false, false)
-                                } else {
-                                    let info: __NodeJsNodeWebkitInfo__ = value.into();
-                                    (info.is_node_js(), info.is_node_webkit())
-                                }
-                            }
-                            Err(_) => {
-                                (false, false)
-                            }
-                        };
+                    let electron = versions
+                        .clone()
+                        .map(|versions|exists_prop(&versions, "electron")).unwrap_or(false);
 
-                        unsafe { DETECT = Some(flags) };
-                        flags
+
+                    if electron {
+                        if let Ok(process_type) = process.and_then(|process|Reflect::get(&process, &"type".into())) {
+                            browser = process_type.as_string().map(|v|v.as_str() == "renderer").unwrap_or(false);
+                        }
                     }
-                }
 
+                    let nwjs = Reflect::get(&global, &"nw".into())
+                        .map(|nw|exists_prop(&nw, "Window")).unwrap_or(false);
 
-            })
+                    let web = !nodejs && !nwjs && !electron;
 
+                    JavaScriptRuntime {
+                        nodejs,
+                        nwjs,
+                        electron,
+                        browser,
+                        web,
+                    }
+                })
+            }
         }
 
         /// Helper to test whether the application is running under
         /// NodeJs-compatible environment.
         pub fn is_node() -> bool {
-            detect().0
+            detect().nodejs
         }
 
         /// Helper to test whether the application is running under
         /// NW environment.
         pub fn is_nw() -> bool {
-            detect().1
+            detect().nwjs
+        }
+
+        /// Helper to test whether the application is running under
+        /// Electron.
+        pub fn is_electron() -> bool {
+            detect().electron
+        }
+
+        /// Helper to test whether the application is running under
+        /// Electron backend.
+        pub fn is_electron_server() -> bool {
+            detect().electron && !detect().browser
+        }
+
+        /// Helper to test whether the application is running under
+        /// Electron backend.
+        pub fn is_electron_client() -> bool {
+            detect().electron && detect().browser
+        }
+
+        /// Identifies web-capable environment (browser, NWJS window, Electron client)
+        pub fn is_web_capable() -> bool {
+            detect().browser
         }
 
         /// Helper to test whether the application is running under
         /// in a regular browser environment (not NodeJs and not NW).
         pub fn is_web()->bool{
-            !is_node() && !is_nw()
+            detect().web
         }
 
     }else{
@@ -124,8 +135,31 @@ cfg_if! {
         }
 
         /// Helper to test whether the application is running under
+        /// Electron.
+        pub fn is_electron() -> bool {
+            false
+        }
+
+        /// Helper to test whether the application is running under
+        /// Electron backend.
+        pub fn is_electron_server() -> bool {
+            false
+        }
+
+        /// Helper to test whether the application is running under
+        /// Electron backend.
+        pub fn is_electron_client() -> bool {
+            false
+        }
+
+        /// Identifies web-capable environment (browser, NWJS window, Electron client)
+        pub fn is_web_capable() -> bool {
+            false
+        }
+
+        /// Helper to test whether the application is running under
         /// in a regular browser environment.
-        pub fn is_web()->bool{
+        pub fn is_web()->bool {
             false
         }
     }
@@ -143,8 +177,8 @@ pub fn is_solana() -> bool {
     }
 }
 
-/// Helper to test whether the application is running under
-/// WASM32 architecture.
+/// Helper to test (at runtime) whether the
+/// application is running under WASM32 architecture.
 pub fn is_wasm() -> bool {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")]{
