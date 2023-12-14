@@ -16,11 +16,11 @@ pub struct Options {
     pub handshake: Option<Arc<dyn Handshake>>,
 }
 
-/// `ConnectionStrategy` specifies how the WebSockeet `async fn connect()`
+/// `ConnectionStrategy` specifies how the WebSocket `async fn connect()`
 /// function should behave during the first-time connectivity phase.
 #[derive(Default, Clone, Debug)]
 pub enum ConnectStrategy {
-    /// Continiously attempt to connect to the server. This behavior will
+    /// Continuously attempt to connect to the server. This behavior will
     /// block `connect()` function until the connection is established.
     #[default]
     Retry,

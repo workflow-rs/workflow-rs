@@ -102,12 +102,12 @@ pub struct Options {
     /// This flag triggers forceful process termination after a given period of time.
     /// At the termination, the process is issued a `SIGTERM` signal. If the process fails
     /// to exit after a given period of time and `use_force` is enabled, the process
-    /// will be issued a `SIGKILL` signal, triggering it's immediat termination.
+    /// will be issued a `SIGKILL` signal, triggering it's immediate termination.
     use_force: bool,
     /// Delay period after which to issue a `SIGKILL` signal.
     use_force_delay: Duration,
     /// Events relay [`Event`] enum that carries events emitted by the child process
-    /// this includes stdout and stderr output, [`Eevent::Exit`] in case of a graceful
+    /// this includes stdout and stderr output, [`Event::Exit`] in case of a graceful
     /// termination and [`Event::Error`] in case of an error.
     events: Channel<Event>,
     muted_buffer_capacity: Option<usize>,
@@ -441,7 +441,7 @@ impl Inner {
 
 /// The [`Process`] class facilitating execution of a Child Process in Node.js or NWJS
 /// environments. This wrapper runs the child process as a daemon, restarting it if
-/// it fails.  The process provides `stdout` and `stderr` output as channel [`Receiver`](workflow_core::channel::Receiver)
+/// it fails.  The process provides `stdout` and `stderr` output as channel [`Receiver`]
 /// channels, allowing for a passive capture of the process console output.
 #[derive(Clone)]
 pub struct Process {
@@ -505,7 +505,7 @@ impl Process {
         self.inner.uptime()
     }
 
-    /// Obtain a clone of the channel [`Receiver`](workflow_core::channel::Receiver) that captures
+    /// Obtain a clone of the channel [`Receiver`] that captures
     /// [`Event`] of the underlying process.
     pub fn events(&self) -> Receiver<Event> {
         self.inner.events.receiver.clone()
@@ -579,7 +579,7 @@ impl Process {
 }
 
 /// Execute the process single time with custom command-line arguments.
-/// Useful to obtain a verion via `--version` or perform single-task
+/// Useful to obtain a version via `--version` or perform single-task
 /// executions - not as a daemon.
 pub async fn exec(
     // &self,
