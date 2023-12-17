@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
+use regex::Regex;
 use sha2::{Digest, Sha256};
 use std::convert::Into;
 use syn::{
@@ -66,6 +67,7 @@ impl Parse for Seal {
         };
 
         let stmts = &expr_block.block.stmts;
+        // println!("stmts: {:#?}", stmts);
         let content = quote! {
             #(#stmts)*
         };
@@ -84,8 +86,8 @@ pub fn seal(input: TokenStream) -> TokenStream {
     let seal = parse_macro_input!(input as Seal);
     let content = seal.content;
     let content_ts = quote! { #content };
-    let content_str = content_ts.to_string();
-
+    let content_str = filter_rust_doc(content_ts.to_string().as_str());
+    // println!("content_str: {}", content_str);
     let mut sha256 = Sha256::new();
     sha256.update(content_str);
     let hash_nc: String = format!("{:X}", sha256.finalize());
@@ -110,4 +112,15 @@ pub fn seal(input: TokenStream) -> TokenStream {
     };
 
     output.into()
+}
+
+fn filter_rust_doc(input: &str) -> String {
+    let re = Regex::new(r#"\#\[\s*doc\s*=\s*"[^"]*"\s*\]\s*"#).unwrap();
+
+    let text = re.replace_all(input, "").to_string();
+
+    text.split('\n')
+        .filter(|line| !line.trim().is_empty())
+        .collect::<Vec<&str>>()
+        .join("\n")
 }
