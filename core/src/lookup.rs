@@ -34,7 +34,7 @@ pub type SenderList<V, E> = Vec<Sender<LookupResult<V, E>>>;
 /// declares a function `lookup()` that uses [`LookupHandler`] to queue requests
 /// and if there are no pending requests (request is new) performs the actual
 /// request by calling `lookup_impl()`. The [`LookupHandler::complete()`] will
-/// resolve all pending futures for the specifc key.
+/// resolve all pending futures for the specific key.
 ///
 /// Example:
 /// ```no_run
@@ -117,12 +117,9 @@ where
     /// Signal the lookup completion for key `K` by supplying a [`LookupResult`]
     /// with a resulting value `V` or an error `E`.
     pub async fn complete(&self, key: &K, result: LookupResult<V, E>) {
-        // let mut pending = self.map.lock().unwrap();
-
         let list = { self.map.lock().unwrap().remove(key) };
 
         if let Some(list) = list {
-            //pending.remove(&key) {
             self.pending.fetch_sub(1, Ordering::Relaxed);
             for sender in list {
                 sender

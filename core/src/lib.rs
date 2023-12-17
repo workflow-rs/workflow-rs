@@ -9,17 +9,17 @@
 //! <img src="https://img.shields.io/badge/platform- solana_os/ignored-informational?style=for-the-badge&color=777787" height="20">
 //!
 //! [`workflow_core`] is a part of the [`workflow-rs`](https://crates.io/workflow-rs)
-//! framework, subset of which is designed to function uniformally across multiple
+//! framework, subset of which is designed to function uniformly across multiple
 //! environments including native Rust, WASM-browser and Solana OS targets.
 //!
 //! This is a general-purpose crate that provides platform-uniform (native and WASM) abstractions for:
 //! - async channels
 //! - task spawn, sleep and interval functions
 //! - random identifiers
-//! - async-friendly and threadsafe event triggers
+//! - async-friendly and thread-safe event triggers
 //! - time (Instant and Duration) as well as functions to obtain UNIX time (native and WASM)
 //! - yield_executor() function to yield Rust executor to browser using `requestAnimationFrame()` (this prevents async Rust applications from locking down the Browser UX)
-//! - runtime autodetection, allowing to identify the operating environmnet at runtime
+//! - runtime auto detection, allowing to identify the operating environment at runtime
 //! - home and data folder access (useful when combined with `workflow_store` crate)
 
 extern crate self as workflow_core;
@@ -38,7 +38,7 @@ pub mod version;
 mod native;
 mod wasm;
 
-/// Seal macro that prevents acceidental modification of the enclosed source code
+/// Seal macro that prevents accidental modification of the enclosed source code
 /// by hashing the source code and comparing it to the supplied hash.  If the code
 /// is modified, the macro will fail to compile, and the developer will need to
 /// change the hash value.  This is useful for locking down sensitive parts of the

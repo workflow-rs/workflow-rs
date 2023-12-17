@@ -14,7 +14,7 @@ pub enum Error {
     Base58Decode(#[from] bs58::decode::Error),
     #[error("Invalid buffer size")]
     InvalidBufferSize,
-    #[error("Unabel to decode id: JsValue must be a string")]
+    #[error("Unable to decode id: JsValue must be a string")]
     JsValueNotString,
 }
 

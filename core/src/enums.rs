@@ -8,7 +8,7 @@ pub use workflow_core_macros::Describe;
 pub trait EnumTrait<T> {
     /// return all permutations of the enum
     fn list() -> Vec<T>;
-    /// return `rustdoc` text describing the enum value
+    /// return `rust doc` text describing the enum value
     fn descr(&self) -> &'static str;
     /// return enum value as a string without namespace (i.e. `Value`)
     fn as_str(&self) -> &'static str;
