@@ -152,7 +152,6 @@ where
         config: Option<WebSocketConfig>,
     ) -> Result<()> {
         let ws_stream = accept_async_with_config(stream, config).await?;
-        // let ws_stream = accept_async(stream, config).await?;
         self.handler.connect(&peer).await?;
         // log_trace!("WebSocket connected: {}", peer);
 
@@ -271,9 +270,13 @@ where
     }
 
     async fn accept(self: &Arc<Self>, stream: TcpStream, config: Option<WebSocketConfig>) {
-        let peer = stream
-            .peer_addr()
-            .expect("WebSocket connected streams should have a peer address");
+        let peer = match stream.peer_addr() {
+            Ok(peer_address) => peer_address,
+            Err(_) => {
+                self.counters.handshake_failures.fetch_add(1, Ordering::Relaxed);
+                return;
+            }
+        };
 
         self.counters
             .total_connections
