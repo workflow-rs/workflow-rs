@@ -273,7 +273,9 @@ where
         let peer = match stream.peer_addr() {
             Ok(peer_address) => peer_address,
             Err(_) => {
-                self.counters.handshake_failures.fetch_add(1, Ordering::Relaxed);
+                self.counters
+                    .handshake_failures
+                    .fetch_add(1, Ordering::Relaxed);
                 return;
             }
         };
