@@ -42,7 +42,7 @@ pub enum Error {
     NegotiationFailureWithReason(String),
 
     /// Error sending response via the
-    /// tokio mspc response channel
+    /// tokio MPSC response channel
     #[error("Response channel send error {0:?}")]
     ResponseChannelError(#[from] SendError<tungstenite::Message>),
 
@@ -51,7 +51,7 @@ pub enum Error {
     #[error("WebSocket error: {0}")]
     WebSocketError(#[from] tungstenite::Error),
 
-    /// Connection terminated absormally
+    /// Connection terminated abnormally
     #[error("Connection closed abnormally")]
     AbnormalClose,
 
@@ -67,6 +67,9 @@ pub enum Error {
 
     #[error("Error waiting for listener shutdown: {0}")]
     Join(String),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
 }
 
 impl From<String> for Error {
