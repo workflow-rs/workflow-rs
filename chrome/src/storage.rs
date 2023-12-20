@@ -3,7 +3,7 @@ use cfg_if::cfg_if;
 use chrome_sys::storage;
 use js_sys::{Array, Object};
 use wasm_bindgen::prelude::*;
-use workflow_core::task::call_async_send;
+use workflow_core::task::call_async_no_send;
 
 pub struct LocalStorage;
 
@@ -11,7 +11,7 @@ impl LocalStorage {
     pub async fn set_item(key: &str, value: &str) -> Result<JsValue, JsValue> {
         let key = key.to_string();
         let value = value.to_string();
-        call_async_send!(async move {
+        call_async_no_send!(async move {
             let data = Object::new();
             js_sys::Reflect::set(&data, &key.into(), &value.into())?;
             storage::set(data.into()).await
@@ -20,13 +20,13 @@ impl LocalStorage {
 
     pub async fn get_item(key: &str) -> Result<Option<String>, JsValue> {
         let _key = key.to_string();
-        let obj = call_async_send!(storage::get(_key).await)?;
+        let obj = call_async_no_send!(storage::get(_key).await)?;
         Ok(js_sys::Reflect::get(&obj, &key.into())?.as_string())
     }
 
     pub async fn get_items(keys: Vec<&str>) -> Result<StorageData, JsValue> {
         let keys = keys.iter().map(|k| k.to_string()).collect::<Vec<_>>();
-        Ok(call_async_send!(async move {
+        Ok(call_async_no_send!(async move {
             let query = Array::new();
             for key in keys {
                 query.push(&key.into());
@@ -37,7 +37,7 @@ impl LocalStorage {
     }
 
     pub async fn get_all() -> Result<StorageData, JsValue> {
-        Ok(call_async_send!(storage::get_all().await)?.try_into()?)
+        Ok(call_async_no_send!(storage::get_all().await)?.try_into()?)
     }
 
     pub async fn keys() -> Result<Vec<String>, JsValue> {
@@ -46,7 +46,7 @@ impl LocalStorage {
 
     pub async fn remove_item(key: &str) -> Result<(), JsValue> {
         let key = key.to_string();
-        call_async_send!(storage::remove(key).await)
+        call_async_no_send!(storage::remove(key).await)
     }
 
     pub async fn rename_item(from_key: &str, to_key: &str) -> Result<(), Error> {
@@ -67,7 +67,7 @@ impl LocalStorage {
 
     pub async fn remove_items(keys: Vec<&str>) -> Result<(), JsValue> {
         let keys = keys.iter().map(|k| k.to_string()).collect::<Vec<_>>();
-        call_async_send!(async move {
+        call_async_no_send!(async move {
             let query = Array::new();
             for key in keys {
                 query.push(&key.into());
@@ -77,7 +77,7 @@ impl LocalStorage {
     }
 
     pub async fn clear() -> Result<(), JsValue> {
-        call_async_send!(storage::clear().await)
+        call_async_no_send!(storage::clear().await)
     }
 
     #[cfg(debug_assertions)]
@@ -87,7 +87,7 @@ impl LocalStorage {
         let old_data = Sendable(Self::get_all().await.unwrap());
         let error = Sendable(test_impl().await.err());
         let old_data_clone = old_data.clone();
-        call_async_send!(storage::set(old_data.unwrap().inner.into()).await).unwrap();
+        call_async_no_send!(storage::set(old_data.unwrap().inner.into()).await).unwrap();
 
         let new_data = Self::get_all().await.unwrap();
         for key in new_data.keys() {

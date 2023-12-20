@@ -27,11 +27,8 @@ mod send;
 /// ```
 ///
 ///
-// #[proc_macro_attribute]
 #[proc_macro_derive(Describe, attributes(descr, describe))]
-// pub fn describe_enum(attr: TokenStream, item: TokenStream) -> TokenStream {
 pub fn describe_enum(item: TokenStream) -> TokenStream {
-    // enums::macro_handler(attr, item)
     enums::macro_handler(item)
 }
 
@@ -41,6 +38,6 @@ pub fn seal(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro]
-pub fn call_async_send(input: TokenStream) -> TokenStream {
-    send::call_async_send(input)
+pub fn call_async_no_send(input: TokenStream) -> TokenStream {
+    send::call_async_no_send(input)
 }

@@ -47,10 +47,10 @@ cfg_if! {
                 F: Future<Output = T> + 'static,
                 T: 'static,
             {
-                unimplemented!()
+                unreachable!()
             }
 
-            pub use workflow_core_macros::call_async_send;
+            pub use workflow_core_macros::call_async_no_send;
         }
 
         pub use native::*;
@@ -110,14 +110,14 @@ pub mod wasm {
                 sleep::{sleep,Sleep}
             };
             pub use async_std::task::yield_now;
-            pub use workflow_core_macros::call_async_send;
+            pub use workflow_core_macros::call_async_no_send;
         } else {
             pub use crate::native::{
                 interval::{interval,Interval},
             };
             pub use async_std::task::sleep;
             pub use async_std::task::yield_now;
-            pub use workflow_core_macros::call_async_send;
+            pub use workflow_core_macros::call_async_no_send;
         }
     }
 }
