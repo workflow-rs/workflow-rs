@@ -17,6 +17,7 @@ crate-type = ["cdylib", "lib"]
 doctest = false
 
 [dependencies]
+workflow-core.workspace = true
 cfg-if.workspace = true
 thiserror.workspace = true
 serde_json.workspace = true

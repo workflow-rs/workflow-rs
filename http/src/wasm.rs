@@ -1,28 +1,12 @@
 use crate::error::Error;
 use crate::result::Result;
-
+use workflow_core::task::call_async_no_send;
 pub async fn get(url: impl Into<String>) -> Result<String> {
-    let url = url.into();
-    let resp = reqwest::get(&url).await?;
-    let status = resp.status();
-    let text = resp.text().await?;
-    if status.is_success() {
-        Ok(text)
-    } else {
-        Err(Error::Custom(format!("{}: {}", status, text)))
-    }
+    Request::new(url).get().await
 }
 
-pub async fn get_json<T: serde::de::DeserializeOwned>(url: impl Into<String>) -> Result<T> {
-    let url = url.into();
-    let resp = reqwest::get(&url).await?;
-    let status = resp.status();
-    let text = resp.text().await?;
-    if status.is_success() {
-        Ok(serde_json::from_str(&text)?)
-    } else {
-        Err(Error::Custom(format!("{}: {}", status, text)))
-    }
+pub async fn get_json<T: serde::de::DeserializeOwned + 'static>(url: impl Into<String>) -> Result<T> {
+    Request::new(url).get_json().await
 }
 
 pub struct Request {
@@ -43,7 +27,7 @@ impl Request {
         self
     }
 
-    pub async fn get(self) -> Result<String> {
+    async fn get_not_send_impl(self) -> Result<String> {
         let mut req = reqwest::Client::new().get(&self.url);
         if let Some(user_agent) = self.user_agent {
             req = req.header("User-Agent", user_agent);
@@ -58,7 +42,11 @@ impl Request {
         }
     }
 
-    pub async fn get_json<T: serde::de::DeserializeOwned>(self) -> Result<T> {
+    pub async fn get(self) -> Result<String> {
+        call_async_no_send!(self.get_not_send_impl().await)
+    }
+
+    async fn get_json_not_send_impl<T: serde::de::DeserializeOwned + 'static>(self) -> Result<T> {
         let mut req = reqwest::Client::new().get(&self.url);
         if let Some(user_agent) = self.user_agent {
             req = req.header("User-Agent", user_agent);
@@ -72,63 +60,8 @@ impl Request {
             Err(Error::Custom(format!("{}: {}", status, text)))
         }
     }
+
+    pub async fn get_json<T: serde::de::DeserializeOwned + 'static>(self) -> Result<T> {
+        call_async_no_send!(self.get_json_not_send_impl().await)
+    }
 }
-
-// pub async fn get_json_with_user_agent<T: serde::de::DeserializeOwned>(url: impl Into<String>, user_agent: impl Into<String>) -> Result<T> {
-//     let url = url.into();
-
-//     let resp = reqwest::Client::builder()
-//         .user_agent(user_agent.into())
-//         .build()?
-//         .get(url)
-//         .send()
-//         .await?;
-
-//     let status = resp.status();
-//     let text = resp.text().await?;
-//     if status.is_success() {
-//         Ok(serde_json::from_str(&text)?)
-//     } else {
-//         Err(Error::Custom(format!("{}: {}", status, text)))
-//     }
-// }
-
-// pub async fn post(url : impl Into<String>, body : impl Into<String>) -> Result<String> {
-//     let url = url.into();
-//     let body = body.into();
-//     let resp = reqwest::Client::new().post(&url).body(body).send().await?;
-//     let status = resp.status();
-//     let text = resp.text().await?;
-//     if status.is_success() {
-//         Ok(text)
-//     } else {
-//         Err(Error::Custom(format!("{}: {}", status, text)))
-//     }
-// }
-
-// pub async fn post_json(url : impl Into<String>, body : impl Into<String>) -> Result<String> {
-//     let url = url.into();
-//     let body = body.into();
-//     let resp = reqwest::Client::new().post(&url).body(body).header("Content-Type", "application/json").send().await?;
-//     let status = resp.status();
-//     let text = resp.text().await?;
-//     if status.is_success() {
-//         Ok(text)
-//     } else {
-//         Err(Error::Custom(format!("{}: {}", status, text)))
-//     }
-// }
-
-// pub async fn post_json_with_auth(url : impl Into<String>, body : impl Into<String>, auth : impl Into<String>) -> Result<String> {
-//     let url = url.into();
-//     let body = body.into();
-//     let auth = auth.into();
-//     let resp = reqwest::Client::new().post(&url).body(body).header("Content-Type", "application/json").header("Authorization", auth).send().await?;
-//     let status = resp.status();
-//     let text = resp.text().await?;
-//     if status.is_success() {
-//         Ok(text)
-//     } else {
-//         Err(Error::Custom(format!("{}: {}", status, text)))
-//     }
-// }
