@@ -5,7 +5,6 @@ pub enum Error {
     #[error("Custom: {0}")]
     Custom(String),
 
-    #[cfg(not(target_arch = "wasm32"))]
     #[error("Reqwest: {0}")]
     Reqwest(#[from] reqwest::Error),
 
