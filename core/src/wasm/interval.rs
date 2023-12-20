@@ -1,6 +1,5 @@
 //!
-//! `Interval` stream is backed by
-//! the JavaScript `setInterval()` and `clearInterval()` APIs.
+//! `Interval` stream backed by the JavaScript `setInterval()` and `clearInterval()` APIs.
 //!
 
 #![allow(dead_code)]
@@ -49,11 +48,17 @@ struct Inner {
     ctx: Mutex<Option<IntervalContext>>,
 }
 
+/// 
 /// `Interval` stream used by the `interval()` function to provide a
-/// a time interval stream that is backed by the JavaScript `setInterval()`
-/// and `clearInterval()` APIs. The `Interval` future is meant only for
-/// use in WASM32 browser environments. It has an advantage of having
-/// `Send` and `Sync` markers.
+/// a time interval stream. The stream is backed by tokio interval 
+/// stream on native platforms and by by the JavaScript `setInterval()`
+/// and `clearInterval()` APIs in WASM32 environment. 
+/// 
+/// This Interval stream has an advantage of having `Send` and `Sync` markers.
+/// 
+/// Please note that the `Interval` fires upon creation to mimic
+/// the tokio-backed Interval stream available on the native target.
+/// 
 #[derive(Clone)]
 pub struct Interval {
     inner: Arc<Inner>,
@@ -63,7 +68,9 @@ impl Interval {
     /// Create a new `Interval` stream that will resolve each given duration.
     pub fn new(period: Duration) -> Self {
         let inner = Arc::new(Inner {
-            ready: AtomicBool::new(false),
+            // Interval is made to fire immediately
+            // to mimic the behavior of tokio interval.
+            ready: AtomicBool::new(true),
             ctx: Mutex::new(None),
             waker: AtomicWaker::new(),
         });
