@@ -5,7 +5,9 @@ pub async fn get(url: impl Into<String>) -> Result<String> {
     Request::new(url).get().await
 }
 
-pub async fn get_json<T: serde::de::DeserializeOwned + 'static>(url: impl Into<String>) -> Result<T> {
+pub async fn get_json<T: serde::de::DeserializeOwned + 'static>(
+    url: impl Into<String>,
+) -> Result<T> {
     Request::new(url).get_json().await
 }
 
