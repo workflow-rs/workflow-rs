@@ -24,17 +24,17 @@ struct Inner {
     period_ctl: Channel<Duration>,
 }
 
-/// 
+///
 /// `Interval` stream used by the `interval()` function to provide a
-/// a time interval stream. The stream is backed by tokio interval 
+/// a time interval stream. The stream is backed by tokio interval
 /// stream on native platforms and by by the JavaScript `setInterval()`
-/// and `clearInterval()` APIs in WASM32 environment. 
-/// 
+/// and `clearInterval()` APIs in WASM32 environment.
+///
 /// This Interval stream has an advantage of having `Send` and `Sync` markers.
-/// 
+///
 /// Please note that the `Interval` fires upon creation to mimic
 /// the tokio-backed Interval stream available on the native target.
-/// 
+///
 #[derive(Clone)]
 pub struct Interval {
     inner: Arc<Inner>,
