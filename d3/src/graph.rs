@@ -439,8 +439,6 @@ impl Graph {
         //     .curve(d3.curveStep)
         //     .context(context);
 
-        //let x_cb = js_sys::Function::new_with_args("d", "return d.date");
-        //let y_cb = js_sys::Function::new_with_args("d", "return d.value");
         let height = self.height();
         let that = self.clone();
         let x_cb = callback!(move |d: js_sys::Object| {

@@ -202,7 +202,7 @@ impl Inner {
     }
 
     fn program(&self) -> String {
-        self.argv.lock().unwrap().get(0).unwrap().clone()
+        self.argv.lock().unwrap().first().unwrap().clone()
     }
 
     fn args(&self) -> Vec<String> {

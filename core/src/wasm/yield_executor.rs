@@ -4,8 +4,8 @@
 //!
 
 #![allow(dead_code)]
+#![allow(unused_imports)]
 
-use cfg_if::cfg_if;
 use futures::task::AtomicWaker;
 use std::future::Future;
 use std::{
@@ -17,6 +17,7 @@ use std::{
     task::{Context as FutureContext, Poll},
 };
 use wasm_bindgen::prelude::*;
+use workflow_core::runtime::is_chrome_extension;
 
 #[wasm_bindgen]
 extern "C" {
@@ -38,23 +39,19 @@ pub async fn yield_executor() {
 }
 
 static mut REQUEST_ANIMATION_FRAME_INITIALIZED: bool = false;
-cfg_if! {
-    if #[cfg(all(feature = "no-unsafe-eval", target_arch = "wasm32"))] {
-        fn init_request_animation_frame_fn() {}
-    } else {
-        fn init_request_animation_frame_fn() {
-            let _ = js_sys::Function::new_no_args(
-                "
-                if (!this.requestAnimationFrame){
-                    if (this.setImmediate)
-                        this.requestAnimationFrame = (callback)=>setImmediate(callback)
-                    else
-                        this.requestAnimationFrame = (callback)=>setTimeout(callback, 0)
-                }
-            ",
-            )
-            .call0(&JsValue::undefined());
-        }
+fn init_request_animation_frame_fn() {
+    if !is_chrome_extension() {
+        let _ = js_sys::Function::new_no_args(
+            "
+            if (!this.requestAnimationFrame){
+                if (this.setImmediate)
+                    this.requestAnimationFrame = (callback)=>setImmediate(callback)
+                else
+                    this.requestAnimationFrame = (callback)=>setTimeout(callback, 0)
+            }
+        ",
+        )
+        .call0(&JsValue::undefined());
     }
 }
 

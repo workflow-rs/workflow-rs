@@ -17,11 +17,10 @@
 use cfg_if::cfg_if;
 cfg_if! {
     if #[cfg(not(target_os = "solana"))] {
-        mod prelude;
+        pub mod prelude;
         pub mod error;
         pub mod result;
         pub mod fs;
         pub mod store;
-        pub use prelude::*;
     }
 }

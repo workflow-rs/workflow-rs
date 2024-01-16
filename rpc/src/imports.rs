@@ -8,8 +8,8 @@ pub use async_trait::async_trait;
 pub use borsh::{BorshDeserialize, BorshSerialize};
 pub use core::time::Duration;
 pub use downcast_rs::*;
+pub use futures::future::FutureExt;
 pub use futures::Future;
-pub use futures::{future::FutureExt, select};
 pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
 pub use serde_json::{self, Value};
 pub use std::fmt::Debug;
@@ -18,9 +18,8 @@ pub use std::marker::PhantomData;
 pub use std::pin::Pin;
 pub use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 pub use std::sync::{Arc, Mutex};
-pub use workflow_core::channel::{oneshot, Channel, DuplexChannel, Receiver, Sender};
+pub use workflow_core::channel::{oneshot, DuplexChannel};
 pub use workflow_core::time::Instant;
-pub use workflow_core::trigger::Listener;
 pub use workflow_log::*;
 pub use workflow_websocket::client::{
     Error as WebSocketError, Handshake, Message as WebSocketMessage, Options as WebSocketOptions,

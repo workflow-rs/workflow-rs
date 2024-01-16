@@ -4,7 +4,6 @@ use super::{
     result::Result,
     ConnectOptions, ConnectResult, Handshake, Options, WebSocketConfig,
 };
-use cfg_if::cfg_if;
 use futures::{select, select_biased, FutureExt};
 use js_sys::{ArrayBuffer, Uint8Array};
 use std::ops::Deref;
@@ -477,23 +476,10 @@ impl TrySendMessage for WebSocket {
     }
 }
 
-static mut W3C_WEBSOCKET_AVAILABLE: Option<bool> = None;
 fn w3c_websocket_available() -> Result<bool> {
-    if let Some(available) = unsafe { W3C_WEBSOCKET_AVAILABLE } {
-        Ok(available)
-    } else {
-        cfg_if! {
-            if #[cfg(all(feature = "no-unsafe-eval", target_arch = "wasm32"))] {
-                Ok(true)
-            } else {
-                let result = js_sys::Function::new_no_args("return (typeof this.WebSocket != 'undefined');")
-                    .call0(&wasm_bindgen::JsValue::undefined());
-                let available = result?.as_bool().unwrap_or(false);
-                unsafe { W3C_WEBSOCKET_AVAILABLE = Some(available) };
-                Ok(available)
-            }
-        }
-    }
+    Ok(js_sys::Reflect::get(&js_sys::global(), &"WebSocket".into())
+        .map(|v| !v.is_falsy())
+        .unwrap_or(false))
 }
 
 fn sanity_checks() -> Result<()> {

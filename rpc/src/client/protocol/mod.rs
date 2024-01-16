@@ -1,5 +1,6 @@
 mod borsh;
 mod serde_json;
+#[allow(unused_imports)]
 pub use crate::client::error::Error;
 pub use crate::client::result::Result;
 use crate::imports::*;

@@ -265,18 +265,13 @@ pub enum Platform {
 }
 
 impl Platform {
-    #[cfg(not(feature = "no-unsafe-eval"))]
     pub fn from_node() -> Self {
-        let result = js_sys::Function::new_no_args(
-            // no-unsafe-eval
-            "
-            return process.platform;
-        ",
-        )
-        .call0(&wasm_bindgen::JsValue::undefined())
-        .expect("Unable to get nodejs process.platform");
+        let process = js_sys::Reflect::get(&js_sys::global(), &"process".into())
+            .expect("Unable to get nodejs process global");
+        let platform = js_sys::Reflect::get(&process, &"platform".into())
+            .expect("Unable to get nodejs process.platform");
 
-        let platform = match result
+        let platform = match platform
             .as_string()
             .expect("nodejs process.platform is not a string")
             .as_str()
@@ -429,6 +424,10 @@ pub fn is_android() -> bool {
 
 pub fn is_unix() -> bool {
     is_macos() || is_linux() || is_freebsd() || is_openbsd() || is_netbsd()
+}
+
+pub fn is_mobile() -> bool {
+    is_ios() || is_android()
 }
 
 pub fn is_chrome_extension() -> bool {
