@@ -41,7 +41,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.10.2"
+version = "0.10.3"
 authors = ["Anton Yemelyanov <anton.yemelyanov@gmail.com>", "Surinder Singh Matoo Mattaur <surinder83singh@gmail.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -52,31 +52,31 @@ repository = "https://github.com/workflow-rs/workflow-rs"
 
 # internal dependencies
 
-workflow-chrome = { version = "0.10.2", path = "chrome" }
-workflow-core = { version = "0.10.2", path = "core" }
-workflow-core-macros = { version = "0.10.2", path = "core/macros" }
-workflow-d3 = { version = "0.10.2", path = "d3" }
-workflow-dom = { version = "0.10.2", path = "dom" }
-workflow-html = { version = "0.10.2", path = "html" }
-workflow-html-macros = { version = "0.10.2", path = "html/macros" }
-workflow-http = { version = "0.10.2", path = "http" }
-workflow-i18n = { version = "0.10.2", path = "i18n" }
-workflow-log = { version = "0.10.2", path = "log" }
-workflow-macro-tools = { version = "0.10.2", path = "macro-tools" }
-workflow-node = { version = "0.10.2", path = "node" }
-workflow-nw = { version = "0.10.2", path = "nw" }
-workflow-panic-hook = { version = "0.10.2", path = "panic-hook" }
-workflow-rpc = { version = "0.10.2", path = "rpc" }
-workflow-rpc-macros = { version = "0.10.2", path = "rpc/macros" }
-workflow-rs = { version = "0.10.2", path = "features" }
-workflow-store = { version = "0.10.2", path = "store" }
-workflow-task = { version = "0.10.2", path = "task" }
-workflow-task-macros = { version = "0.10.2", path = "task/macros" }
-workflow-terminal = { version = "0.10.2", path = "terminal" }
-workflow-terminal-macros = { version = "0.10.2", path = "terminal/macros" }
-workflow-wasm = { version = "0.10.2", path = "wasm" }
-workflow-wasm-macros = { version = "0.10.2", path = "wasm/macros" }
-workflow-websocket = { version = "0.10.2", path = "websocket" }
+workflow-chrome = { version = "0.10.3", path = "chrome" }
+workflow-core = { version = "0.10.3", path = "core" }
+workflow-core-macros = { version = "0.10.3", path = "core/macros" }
+workflow-d3 = { version = "0.10.3", path = "d3" }
+workflow-dom = { version = "0.10.3", path = "dom" }
+workflow-html = { version = "0.10.3", path = "html" }
+workflow-html-macros = { version = "0.10.3", path = "html/macros" }
+workflow-http = { version = "0.10.3", path = "http" }
+workflow-i18n = { version = "0.10.3", path = "i18n" }
+workflow-log = { version = "0.10.3", path = "log" }
+workflow-macro-tools = { version = "0.10.3", path = "macro-tools" }
+workflow-node = { version = "0.10.3", path = "node" }
+workflow-nw = { version = "0.10.3", path = "nw" }
+workflow-panic-hook = { version = "0.10.3", path = "panic-hook" }
+workflow-rpc = { version = "0.10.3", path = "rpc" }
+workflow-rpc-macros = { version = "0.10.3", path = "rpc/macros" }
+workflow-rs = { version = "0.10.3", path = "features" }
+workflow-store = { version = "0.10.3", path = "store" }
+workflow-task = { version = "0.10.3", path = "task" }
+workflow-task-macros = { version = "0.10.3", path = "task/macros" }
+workflow-terminal = { version = "0.10.3", path = "terminal" }
+workflow-terminal-macros = { version = "0.10.3", path = "terminal/macros" }
+workflow-wasm = { version = "0.10.3", path = "wasm" }
+workflow-wasm-macros = { version = "0.10.3", path = "wasm/macros" }
+workflow-websocket = { version = "0.10.3", path = "websocket" }
 
 # external dependencies
 
