@@ -2,7 +2,7 @@ use crate::error::Error;
 use crate::result::Result;
 use arc_swap::*;
 use ritehash::FxHasher64;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::hash::BuildHasherDefault;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -125,12 +125,12 @@ pub fn import_translation_files<P: AsRef<Path>>(source_folder_path: P, reload: b
             std::fs::read_to_string(path)
                 .map_err(Error::from)
                 .and_then(|json_data| {
-                    serde_json::from_str::<FxHashMap<String, String>>(json_data.as_str())
+                    serde_json::from_str::<BTreeMap<String, String>>(json_data.as_str())
                         .map_err(Error::from)
                 })
                 .map(|translation| (code, translation))
         })
-        .collect::<Result<FxHashMap<_, _>>>()?;
+        .collect::<Result<BTreeMap<_, _>>>()?;
 
     let translations = dictionary
         .translations
@@ -182,7 +182,7 @@ pub fn export_default_language(
                 .iter()
                 .map(|(k, v)| (k.clone(), v.clone())),
         )
-        .collect::<FxHashMap<String, String>>();
+        .collect::<BTreeMap<String, String>>();
     store_fn(serde_json::to_string_pretty(&merged)?.as_str())
 }
 
@@ -268,13 +268,13 @@ pub fn i18n(text: &str) -> &str {
 /// Dictionary structure containing all translations and related data.
 pub struct Dictionary {
     /// list of languages {"en": "English", "ja": "日本語", ..."}
-    languages: FxHashMap<&'static str, &'static str>,
+    languages: BTreeMap<&'static str, &'static str>,
     /// list of aliases ("en-GB": "en"), ("en-US": "en"), ("zh-CN": "zh_HANS"), ("zh-TW": "zh_HANT") etc.
-    aliases: FxHashMap<&'static str, &'static str>,
+    aliases: BTreeMap<&'static str, &'static str>,
     /// Map of translations {"ja": { "Hello" : "こんにちは" }}
-    translations: FxHashMap<&'static str, Arc<FxHashMap<&'static str, &'static str>>>,
+    translations: BTreeMap<&'static str, Arc<BTreeMap<&'static str, &'static str>>>,
     /// Missing translation entries (default language)
-    missing: Mutex<FxHashMap<String, String>>,
+    missing: Mutex<BTreeMap<String, String>>,
     /// Enabled language codes ["en", "ja"]
     enabled: Vec<&'static str>,
     /// Current language code
@@ -282,11 +282,11 @@ pub struct Dictionary {
     /// Current language title
     current_title: ArcSwap<String>,
     /// Current language translations {"Hello" : "こんにちは", ...}
-    current_translations: ArcSwap<FxHashMap<&'static str, &'static str>>,
+    current_translations: ArcSwap<BTreeMap<&'static str, &'static str>>,
     /// Default language code (the language used in the source code)
     default_code: String,
     /// Default language translations {"Hello" : "Hello", ...}
-    default_translations: Arc<FxHashMap<&'static str, &'static str>>,
+    default_translations: Arc<BTreeMap<&'static str, &'static str>>,
     // / Full data file path
     // json_data_file_path: Option<PathBuf>,
     /// Storage callback function
@@ -349,7 +349,7 @@ impl Dictionary {
             languages,
             aliases,
             translations,
-            missing: Mutex::new(FxHashMap::default()),
+            missing: Mutex::new(BTreeMap::default()),
             enabled,
             current_code: ArcSwap::new(Arc::new(current_code)),
             current_title: ArcSwap::new(Arc::new(current_title)),
@@ -395,7 +395,7 @@ impl Dictionary {
     }
 
     #[inline(always)]
-    pub fn current_translations(&self) -> Arc<FxHashMap<&'static str, &'static str>> {
+    pub fn current_translations(&self) -> Arc<BTreeMap<&'static str, &'static str>> {
         self.current_translations.load().clone()
     }
 
@@ -406,7 +406,7 @@ impl Dictionary {
     }
 
     #[inline(always)]
-    pub fn default_translations(&self) -> &Arc<FxHashMap<&'static str, &'static str>> {
+    pub fn default_translations(&self) -> &Arc<BTreeMap<&'static str, &'static str>> {
         &self.default_translations
     }
 
@@ -461,14 +461,14 @@ impl Dictionary {
 #[serde(bound(deserialize = "'de: 'data"))]
 pub struct Data<'data> {
     enabled: Vec<&'data str>,
-    aliases: FxHashMap<&'data str, &'data str>,
-    languages: FxHashMap<&'data str, &'data str>,
-    translations: FxHashMap<&'data str, Arc<FxHashMap<&'data str, &'data str>>>,
+    aliases: BTreeMap<&'data str, &'data str>,
+    languages: BTreeMap<&'data str, &'data str>,
+    translations: BTreeMap<&'data str, Arc<BTreeMap<&'data str, &'data str>>>,
 }
 
 impl<'data> Default for Data<'data> {
     fn default() -> Self {
-        let languages: FxHashMap<_, _> = [
+        let languages: BTreeMap<_, _> = [
             ("af", "Afrikaans"),
             ("ar", "Arabic"),
             ("bg", "Bulgarian"),
@@ -519,7 +519,7 @@ impl<'data> Default for Data<'data> {
         .into_iter()
         .collect();
 
-        let aliases: FxHashMap<_, _> = [
+        let aliases: BTreeMap<_, _> = [
             ("en-GB", "en"),
             ("en-US", "en"),
             ("zh-CN", "zh_HANS"),
@@ -528,9 +528,9 @@ impl<'data> Default for Data<'data> {
         .into_iter()
         .collect();
 
-        let mut translations = FxHashMap::default();
+        let mut translations = BTreeMap::default();
         languages.iter().for_each(|(code, _)| {
-            translations.insert(*code, Arc::new(FxHashMap::default()));
+            translations.insert(*code, Arc::new(BTreeMap::default()));
         });
 
         Data {
@@ -545,9 +545,9 @@ impl<'data> Default for Data<'data> {
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Storable {
     enabled: Vec<&'static str>,
-    aliases: FxHashMap<&'static str, &'static str>,
-    languages: FxHashMap<&'static str, &'static str>,
-    translations: FxHashMap<&'static str, FxHashMap<String, String>>,
+    aliases: BTreeMap<&'static str, &'static str>,
+    languages: BTreeMap<&'static str, &'static str>,
+    translations: BTreeMap<&'static str, BTreeMap<String, String>>,
 }
 
 impl From<&Dictionary> for Storable {
@@ -562,10 +562,10 @@ impl From<&Dictionary> for Storable {
             ..
         } = dict;
 
-        let mut translations: FxHashMap<&'static str, FxHashMap<String, String>> = translations
+        let mut translations: BTreeMap<&'static str, BTreeMap<String, String>> = translations
             .iter()
             .map(|(code, language_translation)| {
-                let language_translation: FxHashMap<String, String> = language_translation
+                let language_translation: BTreeMap<String, String> = language_translation
                     .iter()
                     .map(|(k, v)| (k.to_string(), v.to_string()))
                     .collect();
