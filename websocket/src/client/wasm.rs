@@ -2,6 +2,7 @@ use super::{
     error::Error,
     message::{Ack, Message},
     result::Result,
+    websocket::{WebSocket as WebSysWebSocket, WebSocketClientConfig},
     ConnectOptions, ConnectResult, Handshake, Options, WebSocketConfig,
 };
 use futures::{select, select_biased, FutureExt};
@@ -14,7 +15,6 @@ use std::sync::{
 use wasm_bindgen::JsCast;
 use web_sys::{
     CloseEvent as WsCloseEvent, ErrorEvent as WsErrorEvent, MessageEvent as WsMessageEvent,
-    WebSocket as WebSysWebSocket,
 };
 use workflow_core::runtime::*;
 use workflow_core::{
@@ -23,6 +23,7 @@ use workflow_core::{
 };
 use workflow_log::*;
 use workflow_wasm::callback::*;
+use workflow_wasm::options::OptionsTrait;
 
 impl TryFrom<WsMessageEvent> for Message {
     type Error = Error;
@@ -63,8 +64,14 @@ impl WebSocket {
     #[allow(dead_code)]
     const CLOSED: u16 = WebSysWebSocket::CLOSED;
 
+    #[allow(dead_code)]
     pub fn new(url: &str) -> Result<Self> {
         let ws = WebSysWebSocket::new(url)?;
+        Ok(WebSocket(ws))
+    }
+
+    pub fn new_with_client_config(url: &str, config: WebSocketClientConfig) -> Result<Self> {
+        let ws = WebSysWebSocket::new_with_client_config(url, config)?;
         Ok(WebSocket(ws))
     }
 
@@ -182,7 +189,9 @@ impl WebSocketInterface {
         let connect_trigger = Arc::new(Mutex::new(connect_trigger));
 
         self.reconnect.store(true, Ordering::SeqCst);
-        let ws = WebSocket::new(&self.url())?;
+        let ws_client_config =
+            WebSocketClientConfig::new().max_received_frame_size(1024 * 1024 * 2);
+        let ws = WebSocket::new_with_client_config(&self.url(), ws_client_config)?;
         ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
 
         // - Message
