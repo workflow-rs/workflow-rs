@@ -1,0 +1,3 @@
+cargo build --release --workspace --all --tests --benches
+cargo nextest run --release --workspace
+cargo test --doc --release --workspace

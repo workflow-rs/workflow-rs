@@ -15,7 +15,7 @@ the value passed to a method this way gets consumed (mimicking Rust semantics).
 See [this issue](https://github.com/rustwasm/wasm-bindgen/issues/2370).
 `Option<&T>` is not currently supported, but an equivalent behavior can be implemented manually.
 
-```no_run
+```ignore
 extern crate alloc;
 use js_sys::Error;
 use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
@@ -59,7 +59,7 @@ The workaround is similar to that for the optional arguments, with one step adde
 where we try to cast the [`JsValue`](`wasm_bindgen::JsValue`) into [`Array`](`js_sys::Array`).
 The following example also shows how to return an array with elements having an exported type.
 
-```no_run
+```ignore
 extern crate alloc;
 use js_sys::Error;
 use wasm_bindgen::JsCast;
