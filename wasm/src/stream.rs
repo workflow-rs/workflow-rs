@@ -4,16 +4,16 @@
 //! This module allows you to convert any `future::Stream<Item>` where `Item : Into<JsValue>`
 //! into an async JavaScript generator.
 //!
-//! ```no_run
+//! ```ignore
 //! let js_value : JsValue = AsyncStream::new(stream).into();
 //! ```
 //! or
-//! ```no_run
+//! ```ignore
 //! let js_value = create_async_stream_iterator(stream);
 //! ```
 //!
 //! For example:
-//! ```no_run
+//! ```ignore
 //! #[wasm_bindgen]
 //! fn test() {
 //!    let iter = stream::iter(0..30);

@@ -230,7 +230,7 @@ mod test {
         let tree = tree! {
             <div class={"abc"} ?active ?disabled ?active2={false} user data-user-name="test-node" string2>
                 123 "hello" {world} {num} {num} {num} {string} {true}
-                {1.2 as f64}
+                {1.2_f64}
                 <h1>"hello 123" {num}</h1>
                 "10"
                 11
@@ -254,7 +254,7 @@ mod test {
         );
     }
 
-    fn print_hr<'a>(_title: &'a str) {
+    fn print_hr(_title: &str) {
         //println!("\n☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁☁\n");
         println!("\n☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰☰\n")
     }

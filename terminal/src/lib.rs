@@ -31,11 +31,14 @@
 //! struct ExampleCli;
 //! #[async_trait]
 //! impl Cli for ExampleCli {
-//!     async fn digest(&self, _term: Arc<Terminal>, _cmd: String) -> Result<()>{
+//!     async fn digest(self : Arc<Self>, _term: Arc<Terminal>, _cmd: String) -> Result<()> {
 //!         Ok(())
 //!     }
-//!     async fn complete(&self, _term: Arc<Terminal>, _cmd: String) -> Result<Vec<String>>{
-//!         Ok(vec![])
+//!     async fn complete(self : Arc<Self>, _term: Arc<Terminal>, _cmd: String) -> Result<Option<Vec<String>>> {
+//!         Ok(None)
+//!     }
+//!     fn prompt(&self) -> Option<String> {
+//!         Some("$ ".to_string())
 //!     }
 //! }
 //!
@@ -64,11 +67,14 @@
 //! struct ExampleCli;
 //! #[async_trait]
 //! impl Cli for ExampleCli {
-//!     async fn digest(&self, _term: Arc<Terminal>, _cmd: String) -> Result<()>{
+//!     async fn digest(self : Arc<Self>, _term: Arc<Terminal>, _cmd: String) -> Result<()> {
 //!         Ok(())
 //!     }
-//!     async fn complete(&self, _term: Arc<Terminal>, _cmd: String) -> Result<Vec<String>>{
-//!         Ok(vec![])
+//!     async fn complete(self : Arc<Self>, _term: Arc<Terminal>, _cmd: String) -> Result<Option<Vec<String>>> {
+//!         Ok(None)
+//!     }
+//!     fn prompt(&self) -> Option<String> {
+//!         Some("$ ".to_string())
 //!     }
 //! }
 //!

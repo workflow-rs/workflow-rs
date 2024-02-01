@@ -1,6 +1,6 @@
-use super::{error::Error, ts_types::IConnectOptionsOrUndefined};
 use super::result::Result;
 use super::Handshake;
+use super::{error::Error, ts_types::IConnectOptionsOrUndefined};
 use js_sys::Object;
 use std::sync::Arc;
 use wasm_bindgen::JsCast;

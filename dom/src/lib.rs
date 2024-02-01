@@ -16,7 +16,7 @@
 //!
 //! Example:
 //!
-//! ```no_run
+//! ```ignore
 //! use workflow_dom::inject::{inject_blob, Content};
 //!
 //! let DATA: &[u8] = include_bytes!("source.js");

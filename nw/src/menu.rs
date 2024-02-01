@@ -56,7 +56,7 @@
 //!     .build()?;
 //!     
 //!     
-//! MenubarBuilder::new("Example App")
+//! MenubarBuilder::new("Example App", false)
 //!     //.mac_hide_edit(true)
 //!     .mac_hide_window(true)
 //!     .append(item)

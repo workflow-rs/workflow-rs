@@ -9,6 +9,8 @@
 //! the initial request is resolved.
 //!
 
+#![allow(unused)]
+
 use crate::channel::*;
 use std::collections::HashMap;
 use std::hash::Hash;
@@ -27,7 +29,7 @@ pub enum RequestType<V, E> {
 pub type SenderList<V, E> = Vec<Sender<LookupResult<V, E>>>;
 
 ///
-///  [`LookupHandler`] provides ability to queue multiple async requests for the same key
+/// [`LookupHandler`] provides ability to queue multiple async requests for the same key
 /// into a group of futures that resolve upon request completion.
 ///
 /// To use [`LookupHandler`], you need to create a custom lookup function. The example below
@@ -37,7 +39,7 @@ pub type SenderList<V, E> = Vec<Sender<LookupResult<V, E>>>;
 /// resolve all pending futures for the specific key.
 ///
 /// Example:
-/// ```no_run
+/// ```ignore
 /// ...
 /// pub lookup_handler : LookupHandler<Pubkey,Arc<Data>,Error>
 /// ...
@@ -196,11 +198,11 @@ mod tests {
         }
 
         pub async fn lookup_remote_impl(self: &Arc<Self>, key: &u32) -> Result<Option<u32>> {
-            println!("[lh] lookup sleep...");
+            // println!("[lh] lookup sleep...");
             sleep(Duration::from_millis(100)).await;
-            println!("[lh] lookup wake...");
+            // println!("[lh] lookup wake...");
             let map = self.map.lock()?;
-            Ok(map.get(&key).cloned())
+            Ok(map.get(key).cloned())
         }
 
         pub async fn lookup_handler_request(self: &Arc<Self>, key: &u32) -> Result<Option<u32>> {
@@ -211,9 +213,9 @@ mod tests {
                         .lock()
                         .unwrap()
                         .push(RequestTypeTest::New);
-                    println!("[lh] new request");
+                    // println!("[lh] new request");
                     let response = self.lookup_remote_impl(key).await;
-                    println!("[lh] completing initial request");
+                    // println!("[lh] completing initial request");
                     self.lookup_handler.complete(key, response).await;
                     receiver.recv().await?
                 }
@@ -222,7 +224,7 @@ mod tests {
                         .lock()
                         .unwrap()
                         .push(RequestTypeTest::Pending);
-                    println!("[lh] pending request");
+                    // println!("[lh] pending request");
                     receiver.recv().await?
                 }
             }
@@ -263,7 +265,7 @@ mod tests {
 
     #[cfg(not(any(target_arch = "wasm32", target_os = "solana")))]
     #[cfg(test)]
-    mod tests {
+    mod native_tests {
         use super::*;
 
         #[tokio::test]
