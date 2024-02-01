@@ -344,7 +344,7 @@ mod test {
                     workflow_core::task::sleep(Duration::from_millis(500)).await;
                 }
                 println!("exiting task...");
-                return format!("finished {args}");
+                format!("finished {args}")
             })
         });
 
