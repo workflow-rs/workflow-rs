@@ -81,7 +81,7 @@ where
     /// macro to declare the notification as follows:
     ///
     ///
-    /// ```
+    /// ```ignore
     /// interface.notification(MyOps::Notify, notification!(
     ///   | connection_ctx: ConnectionCtx,
     ///     server_ctx: ServerContext,

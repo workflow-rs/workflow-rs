@@ -362,13 +362,13 @@ where
 /// ```rust
 /// use std::sync::Arc;
 /// use async_trait::async_trait;
-/// use workflow_websocket::server::{Result,WebSocketServerTrait};
+/// use workflow_websocket::server::{Result,WebSocketServerTrait,WebSocketConfig};
 ///
 /// struct Server{}
 ///
 /// #[async_trait]
 /// impl WebSocketServerTrait for Server{
-///     async fn listen(self: Arc<Self>, addr: &str) -> Result<()>{
+///     async fn listen(self: Arc<Self>, addr: &str, config: Option<WebSocketConfig>) -> Result<()>{
 ///         Ok(())
 ///     }
 ///     fn stop(&self) -> Result<()>{
