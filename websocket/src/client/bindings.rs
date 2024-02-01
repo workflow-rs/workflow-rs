@@ -1,23 +1,12 @@
 #![allow(unused_imports)]
 #![allow(clippy::all)]
 use super::*;
-// use tungstenite::client;
-use wasm_bindgen::prelude::*;
-//use web_sys::WebSocket as WebSocketSys;
 use std::result::Result;
+use wasm_bindgen::prelude::*;
 use workflow_wasm::options::OptionsTrait;
 
 #[wasm_bindgen]
 extern "C" {
-    // #[wasm_bindgen (extends = web_sys::EventTarget , extends = WebSocketSys , js_name = WebSocket , typescript_type = "WebSocket")]
-    // #[derive(Debug, Clone, PartialEq, Eq)]
-    // #[doc = "The `WebSocket` class."]
-    // #[doc = ""]
-    // #[doc = "[MDN Documentation](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)"]
-    // #[doc = ""]
-    // #[doc = "*This API requires the following crate features to be activated: `WebSocket`*"]
-    // pub type WebSocket;
-
     # [wasm_bindgen (extends = :: web_sys :: EventTarget , extends = :: js_sys :: Object , js_name = WebSocket , typescript_type = "WebSocket")]
     #[derive(Debug, Clone, PartialEq, Eq)]
     #[doc = "The `WebSocket` class."]
@@ -266,15 +255,8 @@ impl WebSocket {
 
     pub fn new_with_config(
         url: &str,
-        // client_config: WebSocketClientConfig,
         config: &WebSocketConfig,
     ) -> super::result::Result<WebSocket> {
-        // ) -> std::result::Result<WebSocket, JsValue> {
-
-        // TODO - combine WebSocketConfig and WebSocketClientConfig
-        // let client_config = WebSocketClientConfig::new()
-        // .max_received_frame_size(config.max_frame_size.unwrap_or(usize::MAX));
-
         Ok(Self::new_with_config_impl(
             url,
             JsValue::UNDEFINED,
@@ -282,15 +264,6 @@ impl WebSocket {
             JsValue::UNDEFINED,
             JsValue::UNDEFINED,
             config.try_into()?,
-            // client_config,
         )?)
     }
 }
-
-// impl OptionsTrait for WebSocketClientConfig {}
-
-// impl WebSocketClientConfig {
-//     pub fn max_received_frame_size(self, frame_size: usize) -> Self {
-//         self.set("maxReceivedFrameSize", JsValue::from(frame_size))
-//     }
-// }

@@ -23,7 +23,6 @@ use workflow_core::{
 };
 use workflow_log::*;
 use workflow_wasm::callback::*;
-// use workflow_wasm::options::OptionsTrait;
 
 impl TryFrom<WsMessageEvent> for Message {
     type Error = Error;
@@ -155,7 +154,6 @@ impl WebSocketInterface {
         self.is_open.load(Ordering::SeqCst)
     }
 
-    // pub async fn connect(self: &Arc<Self>, block: bool) -> Result<Option<Listener>> {
     pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
         let (connect_trigger, connect_listener) = oneshot::<Result<()>>();
 
@@ -189,8 +187,6 @@ impl WebSocketInterface {
         let connect_trigger = Arc::new(Mutex::new(connect_trigger));
 
         self.reconnect.store(true, Ordering::SeqCst);
-        // let ws_client_config =
-        //     WebSocketClientConfig::new().max_received_frame_size(1024 * 1024 * 2);
         let ws = WebSocket::new_with_config(&self.url(), &self.config)?;
         ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
 
@@ -299,7 +295,6 @@ impl WebSocketInterface {
                     });
             });
 
-            // let handshake_rx = self.handshake_channel.receiver.clone();
             loop {
                 select_biased! {
                     result = accept_rx.recv().fuse() => {
@@ -308,7 +303,6 @@ impl WebSocketInterface {
                     msg = sender_rx.recv().fuse() => {
                         if let Ok(msg) = msg {
                             ws.try_send(&msg)?;
-                            // ws_sender.send(msg.into()).await?;
                         }
                     },
                     msg = self.event_channel.recv().fuse() => {

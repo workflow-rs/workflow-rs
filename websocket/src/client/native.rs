@@ -65,16 +65,9 @@ struct Settings {
     url: String,
 }
 
-// #[allow(dead_code)]
-// struct Inner {
-//     ws_stream: Option<WebSocketStream<MaybeTlsStream<TcpStream>>>,
-// }
-
 pub struct WebSocketInterface {
-    // inner: Arc<Mutex<Option<Inner>>>,
     settings: Arc<Mutex<Settings>>,
     config: Option<WebSocketConfig>,
-    // reconnect : Arc<Mutex<bool>>,
     reconnect: AtomicBool,
     is_open: AtomicBool,
     receiver_channel: Channel<Message>,
