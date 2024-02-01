@@ -68,7 +68,7 @@ const TS_WEBSOCKET_CONFIG: &'static str = r#"
  * `WebSocketConfig` is used to configure the `WebSocket`.
  */
 export interface IWebSocketConfig {
-    maxFrameSize: number,
+    maxReceivedFrameSize: number,
 }
 "#;
 
@@ -80,7 +80,8 @@ extern "C" {
 
 impl Default for IWebSocketConfig {
     fn default() -> Self {
-        Object::new().dyn_into().unwrap()
+        //Object::new().dyn_into().expect("UNABLE to convert Object into IWebSocketConfig")//.dyn_into::<IWebSocketConfig>().unwrap()
+        wasm_bindgen::JsCast::unchecked_into(Object::new())
     }
 }
 
@@ -89,7 +90,7 @@ impl TryFrom<IWebSocketConfig> for WebSocketConfig {
     fn try_from(args: IWebSocketConfig) -> Result<Self> {
         let options = if let Some(args) = args.dyn_ref::<Object>() {
             let max_frame_size = args
-                .get_value("maxFrameSize")?
+                .get_value("maxReceivedFrameSize")?
                 .as_f64()
                 .map(|f| f as usize)
                 .unwrap_or(usize::MAX);
@@ -107,7 +108,7 @@ impl TryFrom<IWebSocketConfig> for WebSocketConfig {
 impl TryFrom<&WebSocketConfig> for IWebSocketConfig {
     type Error = Error;
     fn try_from(config: &WebSocketConfig) -> Result<Self> {
-        let js_config = IWebSocketConfig::default();
+        let js_config: IWebSocketConfig = IWebSocketConfig::default();
         js_config.set(
             "maxReceivedFrameSize",
             &JsValue::from(config.max_frame_size.unwrap_or(usize::MAX)),

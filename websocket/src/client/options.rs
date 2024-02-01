@@ -175,9 +175,9 @@ extern "C" {
     pub type IConnectOptions;
 }
 
-impl TryFrom<IConnectOptions> for ConnectOptions {
+impl TryFrom<&IConnectOptions> for ConnectOptions {
     type Error = Error;
-    fn try_from(args: IConnectOptions) -> Result<Self> {
+    fn try_from(args: &IConnectOptions) -> Result<Self> {
         let options = if let Some(args) = args.dyn_ref::<Object>() {
             let url = args.get_value("url")?.as_string();
             let block_async_connect = args
@@ -216,3 +216,14 @@ impl TryFrom<IConnectOptions> for ConnectOptions {
         Ok(options)
     }
 }
+
+// impl TryFrom<JsValue> for ConnectOptions {
+//     type Error = Error;
+//     fn try_from(value: JsValue) -> Result<Self> {
+//         if let Some(options) = value.dyn_ref::<IConnectOptions>() {
+//             options.try_into()
+//         } else {
+//             Ok(ConnectOptions::default())
+//         }
+//     }
+// }
