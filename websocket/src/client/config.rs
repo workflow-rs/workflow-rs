@@ -1,7 +1,15 @@
-/// Configuration struct for WebSocket client (native Tungstenite connections only)
-/// This `WebSocketConfig` is mirrored from Tungstenite, and has no effect when
-/// used in the WASM (browser) environment due to lack of control in browser
-/// websockets.
+//!
+//! WebSocket client configuration options
+//!
+
+use super::{error::Error, result::Result};
+use js_sys::Object;
+use wasm_bindgen::prelude::*;
+use workflow_wasm::extensions::object::*;
+
+///
+/// Configuration struct for WebSocket client (native Tungstenite and NodeJs connections only)
+///
 #[derive(Clone, Debug)]
 pub struct WebSocketConfig {
     /// The target minimum size of the write buffer to reach before writing the data
@@ -50,5 +58,60 @@ impl Default for WebSocketConfig {
             max_frame_size: Some(16 << 20),
             accept_unmasked_frames: false,
         }
+    }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_WEBSOCKET_CONFIG: &'static str = r#"
+
+/**
+ * `WebSocketConfig` is used to configure the `WebSocket`.
+ */
+export interface IWebSocketConfig {
+    maxFrameSize: number,
+}
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(extends = js_sys::Object, typescript_type = "IWebSocketConfig | undefined")]
+    pub type IWebSocketConfig;
+}
+
+impl Default for IWebSocketConfig {
+    fn default() -> Self {
+        Object::new().dyn_into().unwrap()
+    }
+}
+
+impl TryFrom<IWebSocketConfig> for WebSocketConfig {
+    type Error = Error;
+    fn try_from(args: IWebSocketConfig) -> Result<Self> {
+        let options = if let Some(args) = args.dyn_ref::<Object>() {
+            let max_frame_size = args
+                .get_value("maxFrameSize")?
+                .as_f64()
+                .map(|f| f as usize)
+                .unwrap_or(usize::MAX);
+            WebSocketConfig {
+                max_frame_size: Some(max_frame_size),
+                ..Default::default()
+            }
+        } else {
+            Default::default()
+        };
+        Ok(options)
+    }
+}
+
+impl TryFrom<&WebSocketConfig> for IWebSocketConfig {
+    type Error = Error;
+    fn try_from(config: &WebSocketConfig) -> Result<Self> {
+        let js_config = IWebSocketConfig::default();
+        js_config.set(
+            "maxReceivedFrameSize",
+            &JsValue::from(config.max_frame_size.unwrap_or(usize::MAX)),
+        )?;
+        Ok(js_config)
     }
 }

@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 #![allow(clippy::all)]
 use super::*;
+// use tungstenite::client;
 use wasm_bindgen::prelude::*;
 //use web_sys::WebSocket as WebSocketSys;
 use std::result::Result;
@@ -236,12 +237,13 @@ extern "C" {
         origin: JsValue,
         headers: JsValue,
         request_options: JsValue,
-        client_config: WebSocketClientConfig,
+        client_config: config::IWebSocketConfig,
+        // client_config: WebSocketClientConfig,
     ) -> std::result::Result<WebSocket, JsValue>;
 
-    #[wasm_bindgen (extends = js_sys::Object, typescript_type = "WebSocketClientConfig")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
-    pub type WebSocketClientConfig;
+    // #[wasm_bindgen (extends = js_sys::Object, typescript_type = "WebSocketClientConfig")]
+    // #[derive(Debug, Clone, PartialEq, Eq)]
+    // pub type WebSocketClientConfig;
 }
 
 impl WebSocket {
@@ -262,25 +264,33 @@ impl WebSocket {
     #[doc = "*This API requires the following crate features to be activated: `WebSocket`*"]
     pub const CLOSED: u16 = 3u64 as u16;
 
-    pub fn new_with_client_config(
+    pub fn new_with_config(
         url: &str,
-        client_config: WebSocketClientConfig,
-    ) -> std::result::Result<WebSocket, JsValue> {
-        Self::new_with_config_impl(
+        // client_config: WebSocketClientConfig,
+        config: &WebSocketConfig,
+    ) -> super::result::Result<WebSocket> {
+        // ) -> std::result::Result<WebSocket, JsValue> {
+
+        // TODO - combine WebSocketConfig and WebSocketClientConfig
+        // let client_config = WebSocketClientConfig::new()
+        // .max_received_frame_size(config.max_frame_size.unwrap_or(usize::MAX));
+
+        Ok(Self::new_with_config_impl(
             url,
             JsValue::UNDEFINED,
             JsValue::UNDEFINED,
             JsValue::UNDEFINED,
             JsValue::UNDEFINED,
-            client_config,
-        )
+            config.try_into()?,
+            // client_config,
+        )?)
     }
 }
 
-impl OptionsTrait for WebSocketClientConfig {}
+// impl OptionsTrait for WebSocketClientConfig {}
 
-impl WebSocketClientConfig {
-    pub fn max_received_frame_size(self, frame_size: u64) -> Self {
-        self.set("maxReceivedFrameSize", JsValue::from(frame_size))
-    }
-}
+// impl WebSocketClientConfig {
+//     pub fn max_received_frame_size(self, frame_size: usize) -> Self {
+//         self.set("maxReceivedFrameSize", JsValue::from(frame_size))
+//     }
+// }

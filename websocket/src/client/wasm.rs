@@ -1,8 +1,8 @@
 use super::{
+    bindings::WebSocket as W3CWebSocket,
     error::Error,
     message::{Ack, Message},
     result::Result,
-    websocket::{WebSocket as WebSysWebSocket, WebSocketClientConfig},
     ConnectOptions, ConnectResult, Handshake, Options, WebSocketConfig,
 };
 use futures::{select, select_biased, FutureExt};
@@ -23,7 +23,7 @@ use workflow_core::{
 };
 use workflow_log::*;
 use workflow_wasm::callback::*;
-use workflow_wasm::options::OptionsTrait;
+// use workflow_wasm::options::OptionsTrait;
 
 impl TryFrom<WsMessageEvent> for Message {
     type Error = Error;
@@ -44,35 +44,33 @@ impl TryFrom<WsMessageEvent> for Message {
 }
 
 #[derive(Clone)]
-pub struct WebSocket(WebSysWebSocket);
+pub struct WebSocket(W3CWebSocket);
 unsafe impl Send for WebSocket {}
 unsafe impl Sync for WebSocket {}
 impl Deref for WebSocket {
-    type Target = WebSysWebSocket;
-    fn deref(&self) -> &WebSysWebSocket {
+    type Target = W3CWebSocket;
+    fn deref(&self) -> &W3CWebSocket {
         &self.0
     }
 }
 
 impl WebSocket {
     #[allow(dead_code)]
-    const CONNECTING: u16 = WebSysWebSocket::CONNECTING;
+    const CONNECTING: u16 = W3CWebSocket::CONNECTING;
     #[allow(dead_code)]
-    const OPEN: u16 = WebSysWebSocket::OPEN;
+    const OPEN: u16 = W3CWebSocket::OPEN;
     #[allow(dead_code)]
-    const CLOSING: u16 = WebSysWebSocket::CLOSING;
+    const CLOSING: u16 = W3CWebSocket::CLOSING;
     #[allow(dead_code)]
-    const CLOSED: u16 = WebSysWebSocket::CLOSED;
+    const CLOSED: u16 = W3CWebSocket::CLOSED;
 
     #[allow(dead_code)]
     pub fn new(url: &str) -> Result<Self> {
-        let ws = WebSysWebSocket::new(url)?;
-        Ok(WebSocket(ws))
+        Ok(WebSocket(W3CWebSocket::new(url)?))
     }
 
-    pub fn new_with_client_config(url: &str, config: WebSocketClientConfig) -> Result<Self> {
-        let ws = WebSysWebSocket::new_with_client_config(url, config)?;
-        Ok(WebSocket(ws))
+    pub fn new_with_config(url: &str, config: &WebSocketConfig) -> Result<Self> {
+        Ok(WebSocket(W3CWebSocket::new_with_config(url, config)?))
     }
 
     fn cleanup(&self) {
@@ -83,8 +81,8 @@ impl WebSocket {
     }
 }
 
-impl From<WebSysWebSocket> for WebSocket {
-    fn from(ws: WebSysWebSocket) -> Self {
+impl From<W3CWebSocket> for WebSocket {
+    fn from(ws: W3CWebSocket) -> Self {
         WebSocket(ws)
     }
 }
@@ -112,6 +110,7 @@ pub struct WebSocketInterface {
     receiver_channel: Channel<Message>,
     handshake: Option<Arc<dyn Handshake>>,
     dispatcher_shutdown: DuplexChannel,
+    config: WebSocketConfig,
 }
 
 impl WebSocketInterface {
@@ -120,7 +119,7 @@ impl WebSocketInterface {
         sender_channel: Channel<(Message, Ack)>,
         receiver_channel: Channel<Message>,
         options: Options,
-        _config: Option<WebSocketConfig>,
+        config: Option<WebSocketConfig>,
     ) -> Result<WebSocketInterface> {
         sanity_checks()?;
 
@@ -138,6 +137,7 @@ impl WebSocketInterface {
             is_open: AtomicBool::new(false),
             handshake: options.handshake,
             dispatcher_shutdown: DuplexChannel::unbounded(),
+            config: config.unwrap_or_default(),
         };
 
         Ok(iface)
@@ -189,9 +189,9 @@ impl WebSocketInterface {
         let connect_trigger = Arc::new(Mutex::new(connect_trigger));
 
         self.reconnect.store(true, Ordering::SeqCst);
-        let ws_client_config =
-            WebSocketClientConfig::new().max_received_frame_size(1024 * 1024 * 2);
-        let ws = WebSocket::new_with_client_config(&self.url(), ws_client_config)?;
+        // let ws_client_config =
+        //     WebSocketClientConfig::new().max_received_frame_size(1024 * 1024 * 2);
+        let ws = WebSocket::new_with_config(&self.url(), &self.config)?;
         ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
 
         // - Message

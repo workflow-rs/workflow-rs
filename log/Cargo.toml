@@ -18,15 +18,16 @@ doctest = false
 
 [features]
 default = ["sink"]
-full = ["external-logger","sink","solana"]
+full = ["external-logger","sink"]
+# full = ["external-logger","sink","solana"]
 sink = []
 # ignored for BPF target
 external-logger = []
-solana=["dep:solana-program"]
+# solana=["dep:solana-program"]
 
 [dependencies]
 cfg-if.workspace = true
-solana-program = { version = "1.14.18", optional = true }
+# solana-program = { version = "1.18.1", optional = true }
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 console.workspace = true

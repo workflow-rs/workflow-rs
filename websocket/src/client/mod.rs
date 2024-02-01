@@ -14,13 +14,12 @@ cfg_if! {
     }
 }
 
+pub mod bindings;
 pub mod config;
 pub mod error;
 pub mod message;
 pub mod options;
 pub mod result;
-pub mod websocket;
-pub mod ts_types;
 
 pub use config::WebSocketConfig;
 pub use error::Error;
@@ -97,8 +96,6 @@ impl WebSocket {
             url,
             sender_channel.clone(),
             receiver_channel.clone(),
-            // receiver_tx,
-            // sender_tx_rx,
             options,
             config,
         )?);
