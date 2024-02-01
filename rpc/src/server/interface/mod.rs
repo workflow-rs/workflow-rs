@@ -47,7 +47,7 @@ where
     /// macro to declare the method as follows:
     ///
     ///
-    /// ```no_run
+    /// ```ignore
     /// interface.method(MyOps::Method, method!(
     ///   | connection_ctx: ConnectionCtx,
     ///     server_ctx: ServerContext,

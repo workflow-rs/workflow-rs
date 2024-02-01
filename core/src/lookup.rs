@@ -27,7 +27,7 @@ pub enum RequestType<V, E> {
 pub type SenderList<V, E> = Vec<Sender<LookupResult<V, E>>>;
 
 ///
-///  [`LookupHandler`] provides ability to queue multiple async requests for the same key
+/// [`LookupHandler`] provides ability to queue multiple async requests for the same key
 /// into a group of futures that resolve upon request completion.
 ///
 /// To use [`LookupHandler`], you need to create a custom lookup function. The example below
@@ -37,7 +37,7 @@ pub type SenderList<V, E> = Vec<Sender<LookupResult<V, E>>>;
 /// resolve all pending futures for the specific key.
 ///
 /// Example:
-/// ```no_run
+/// ```ignore
 /// ...
 /// pub lookup_handler : LookupHandler<Pubkey,Arc<Data>,Error>
 /// ...
