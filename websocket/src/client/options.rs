@@ -1,9 +1,9 @@
-use super::error::Error;
+use super::{error::Error, ts_types::IConnectOptionsOrUndefined};
 use super::result::Result;
 use super::Handshake;
 use js_sys::Object;
 use std::sync::Arc;
-use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen::JsCast;
 use workflow_core::time::Duration;
 use workflow_wasm::extensions::object::*;
 
@@ -119,9 +119,9 @@ impl ConnectOptions {
     }
 }
 
-impl TryFrom<JsValue> for ConnectOptions {
+impl TryFrom<IConnectOptionsOrUndefined> for ConnectOptions {
     type Error = Error;
-    fn try_from(args: JsValue) -> Result<Self> {
+    fn try_from(args: IConnectOptionsOrUndefined) -> Result<Self> {
         let options = if let Some(args) = args.dyn_ref::<Object>() {
             let url = args.get_value("url")?.as_string();
             let block_async_connect = args.get_value("block")?.as_bool().unwrap_or(true);

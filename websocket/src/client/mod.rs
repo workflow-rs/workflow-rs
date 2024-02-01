@@ -19,6 +19,7 @@ pub mod error;
 pub mod message;
 pub mod options;
 pub mod result;
+mod ts_types;
 
 pub use config::WebSocketConfig;
 pub use error::Error;
