@@ -79,12 +79,6 @@ extern "C" {
     pub type IWebSocketConfig;
 }
 
-impl Default for IWebSocketConfig {
-    fn default() -> Self {
-        wasm_bindgen::JsCast::unchecked_into(Object::new())
-    }
-}
-
 impl TryFrom<IWebSocketConfig> for WebSocketConfig {
     type Error = Error;
     fn try_from(args: IWebSocketConfig) -> Result<Self> {
