@@ -68,7 +68,8 @@ const TS_WEBSOCKET_CONFIG: &'static str = r#"
  * `WebSocketConfig` is used to configure the `WebSocket`.
  */
 export interface IWebSocketConfig {
-    maxReceivedFrameSize: number,
+    maxFrameSize: number,
+    maxMessageSize: number,
 }
 "#;
 
@@ -80,7 +81,6 @@ extern "C" {
 
 impl Default for IWebSocketConfig {
     fn default() -> Self {
-        //Object::new().dyn_into().expect("UNABLE to convert Object into IWebSocketConfig")//.dyn_into::<IWebSocketConfig>().unwrap()
         wasm_bindgen::JsCast::unchecked_into(Object::new())
     }
 }
@@ -88,31 +88,65 @@ impl Default for IWebSocketConfig {
 impl TryFrom<IWebSocketConfig> for WebSocketConfig {
     type Error = Error;
     fn try_from(args: IWebSocketConfig) -> Result<Self> {
-        let options = if let Some(args) = args.dyn_ref::<Object>() {
-            let max_frame_size = args
-                .get_value("maxReceivedFrameSize")?
-                .as_f64()
-                .map(|f| f as usize)
-                .unwrap_or(usize::MAX);
-            WebSocketConfig {
-                max_frame_size: Some(max_frame_size),
-                ..Default::default()
+        let config = if let Some(args) = args.dyn_ref::<Object>() {
+            let mut config = WebSocketConfig::default();
+            if let Some(max_frame_size) = args.get_value("maxFrameSize")?.as_f64() {
+                config.max_frame_size = Some(max_frame_size as usize);
             }
+            if let Some(max_message_size) = args.get_value("maxMessageSize")?.as_f64() {
+                config.max_message_size = Some(max_message_size as usize);
+            }
+            config
         } else {
             Default::default()
         };
-        Ok(options)
+        Ok(config)
     }
 }
 
-impl TryFrom<&WebSocketConfig> for IWebSocketConfig {
-    type Error = Error;
-    fn try_from(config: &WebSocketConfig) -> Result<Self> {
-        let js_config: IWebSocketConfig = IWebSocketConfig::default();
-        js_config.set(
-            "maxReceivedFrameSize",
-            &JsValue::from(config.max_frame_size.unwrap_or(usize::MAX)),
-        )?;
-        Ok(js_config)
+pub(crate) struct WebSocketNodeJsConfig {
+    pub protocols: JsValue,
+    pub origin: JsValue,
+    pub headers: JsValue,
+    pub request_options: JsValue,
+    pub client_config: JsValue,
+}
+
+impl Default for WebSocketNodeJsConfig {
+    fn default() -> Self {
+        Self {
+            protocols: JsValue::UNDEFINED,
+            origin: JsValue::UNDEFINED,
+            headers: JsValue::UNDEFINED,
+            request_options: JsValue::UNDEFINED,
+            client_config: JsValue::UNDEFINED,
+        }
     }
 }
+
+impl TryFrom<&WebSocketConfig> for WebSocketNodeJsConfig {
+    type Error = Error;
+    fn try_from(config: &WebSocketConfig) -> Result<Self> {
+        // let mut nodejs_config = WebSocketNodeJsConfig::default();
+
+        let client_config = Object::new();
+        if let Some(max_frame_size) = config.max_frame_size {
+            client_config.set("maxReceivedFrameSize", &JsValue::from(max_frame_size))?;
+        }
+
+        if let Some(max_message_size) = config.max_message_size {
+            client_config.set("maxReceivedMessageSize", &JsValue::from(max_message_size))?;
+        }
+
+        let nodejs_config = WebSocketNodeJsConfig {
+            protocols: JsValue::UNDEFINED,
+            origin: JsValue::UNDEFINED,
+            headers: JsValue::UNDEFINED,
+            request_options: JsValue::UNDEFINED,
+            client_config: client_config.into(),
+        };
+
+        Ok(nodejs_config)
+    }
+}
+

@@ -1,8 +1,10 @@
 #![allow(unused_imports)]
 #![allow(clippy::all)]
+use super::config::*;
 use super::*;
 use std::result::Result;
 use wasm_bindgen::prelude::*;
+use workflow_core::runtime::*;
 use workflow_wasm::options::OptionsTrait;
 
 #[wasm_bindgen]
@@ -220,19 +222,15 @@ extern "C" {
     #[doc = "[MDN Documentation](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/WebSocket)"]
     #[doc = ""]
     #[doc = "*This API requires the following crate features to be activated: `WebSocket`*"]
-    pub fn new_with_config_impl(
+    pub fn new_with_nodejs_config_impl(
         url: &str,
         protocols: JsValue,
         origin: JsValue,
         headers: JsValue,
         request_options: JsValue,
-        client_config: config::IWebSocketConfig,
-        // client_config: WebSocketClientConfig,
+        client_config: JsValue,
     ) -> std::result::Result<WebSocket, JsValue>;
 
-    // #[wasm_bindgen (extends = js_sys::Object, typescript_type = "WebSocketClientConfig")]
-    // #[derive(Debug, Clone, PartialEq, Eq)]
-    // pub type WebSocketClientConfig;
 }
 
 impl WebSocket {
@@ -257,13 +255,25 @@ impl WebSocket {
         url: &str,
         config: &WebSocketConfig,
     ) -> super::result::Result<WebSocket> {
-        Ok(Self::new_with_config_impl(
-            url,
-            JsValue::UNDEFINED,
-            JsValue::UNDEFINED,
-            JsValue::UNDEFINED,
-            JsValue::UNDEFINED,
-            config.try_into()?,
-        )?)
+        if is_node() {
+            let WebSocketNodeJsConfig {
+                protocols,
+                origin,
+                headers,
+                request_options,
+                client_config,
+            } = WebSocketNodeJsConfig::try_from(config)?;
+
+            Ok(Self::new_with_nodejs_config_impl(
+                url,
+                protocols,
+                origin,
+                headers,
+                request_options,
+                client_config,
+            )?)
+        } else {
+            Ok(Self::new(url)?)
+        }
     }
 }
