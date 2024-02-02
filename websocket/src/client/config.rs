@@ -149,4 +149,3 @@ impl TryFrom<&WebSocketConfig> for WebSocketNodeJsConfig {
         Ok(nodejs_config)
     }
 }
-
