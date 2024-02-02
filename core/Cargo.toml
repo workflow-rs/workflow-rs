@@ -39,7 +39,6 @@ rand.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 triggered.workspace = true
-workflow-async-trait.workspace = true
 wasm-bindgen.workspace = true
 js-sys.workspace = true
 serde-wasm-bindgen.workspace = true

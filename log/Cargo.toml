@@ -18,15 +18,12 @@ doctest = false
 
 [features]
 default = ["sink"]
-full = ["external-logger","sink","solana"]
+full = ["external-logger","sink"]
 sink = []
-# ignored for BPF target
 external-logger = []
-solana=["dep:solana-program"]
 
 [dependencies]
 cfg-if.workspace = true
-solana-program = { version = "1.14.18", optional = true }
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 console.workspace = true
@@ -36,6 +33,3 @@ lazy_static.workspace = true
 log.workspace = true
 termcolor.workspace = true
 wasm-bindgen.workspace = true
-
-# [target.'cfg(target_os = "solana")'.dependencies]
-# solana-program = "0.15.0"

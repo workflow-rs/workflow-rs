@@ -33,7 +33,6 @@ that are compatible with async Rust environment requiring `Send` markers.
 Crates that are a part of this project but are currently outside of this repository:
 
 * [`workflow-ux`](https://github.com/workflow-rs/workflow-ux) Async Rust + HTML Web Component driven application user interface library.
-* [`workflow-async-trait`](https://github.com/workflow-rs/workflow-async-trait) Customized `async_trait` macro that exposes `#[async_trait(?Send)]` as a `#[async_trait_no_send]`.
 
 
 ## Examples

@@ -1,7 +1,15 @@
-/// Configuration struct for WebSocket client (native Tungstenite connections only)
-/// This `WebSocketConfig` is mirrored from Tungstenite, and has no effect when
-/// used in the WASM (browser) environment due to lack of control in browser
-/// websockets.
+//!
+//! WebSocket client configuration options
+//!
+
+use super::{error::Error, result::Result};
+use js_sys::Object;
+use wasm_bindgen::prelude::*;
+use workflow_wasm::extensions::object::*;
+
+///
+/// Configuration struct for WebSocket client (native Tungstenite and NodeJs connections only)
+///
 #[derive(Clone, Debug)]
 pub struct WebSocketConfig {
     /// The target minimum size of the write buffer to reach before writing the data
@@ -50,5 +58,91 @@ impl Default for WebSocketConfig {
             max_frame_size: Some(16 << 20),
             accept_unmasked_frames: false,
         }
+    }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_WEBSOCKET_CONFIG: &'static str = r#"
+
+/**
+ * `WebSocketConfig` is used to configure the `WebSocket`.
+ */
+export interface IWebSocketConfig {
+    maxFrameSize: number,
+    maxMessageSize: number,
+}
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(extends = js_sys::Object, typescript_type = "IWebSocketConfig | undefined")]
+    pub type IWebSocketConfig;
+}
+
+impl Default for IWebSocketConfig {
+    fn default() -> Self {
+        wasm_bindgen::JsCast::unchecked_into(Object::new())
+    }
+}
+
+impl TryFrom<IWebSocketConfig> for WebSocketConfig {
+    type Error = Error;
+    fn try_from(args: IWebSocketConfig) -> Result<Self> {
+        let config = if let Some(args) = args.dyn_ref::<Object>() {
+            let mut config = WebSocketConfig::default();
+            if let Some(max_frame_size) = args.get_value("maxFrameSize")?.as_f64() {
+                config.max_frame_size = Some(max_frame_size as usize);
+            }
+            if let Some(max_message_size) = args.get_value("maxMessageSize")?.as_f64() {
+                config.max_message_size = Some(max_message_size as usize);
+            }
+            config
+        } else {
+            Default::default()
+        };
+        Ok(config)
+    }
+}
+
+pub(crate) struct WebSocketNodeJsConfig {
+    pub protocols: JsValue,
+    pub origin: JsValue,
+    pub headers: JsValue,
+    pub request_options: JsValue,
+    pub client_config: JsValue,
+}
+
+impl Default for WebSocketNodeJsConfig {
+    fn default() -> Self {
+        Self {
+            protocols: JsValue::UNDEFINED,
+            origin: JsValue::UNDEFINED,
+            headers: JsValue::UNDEFINED,
+            request_options: JsValue::UNDEFINED,
+            client_config: JsValue::UNDEFINED,
+        }
+    }
+}
+
+impl TryFrom<&WebSocketConfig> for WebSocketNodeJsConfig {
+    type Error = Error;
+    fn try_from(config: &WebSocketConfig) -> Result<Self> {
+        let client_config = Object::new();
+        if let Some(max_frame_size) = config.max_frame_size {
+            client_config.set("maxReceivedFrameSize", &JsValue::from(max_frame_size))?;
+        }
+        if let Some(max_message_size) = config.max_message_size {
+            client_config.set("maxReceivedMessageSize", &JsValue::from(max_message_size))?;
+        }
+
+        let nodejs_config = WebSocketNodeJsConfig {
+            protocols: JsValue::UNDEFINED,
+            origin: JsValue::UNDEFINED,
+            headers: JsValue::UNDEFINED,
+            request_options: JsValue::UNDEFINED,
+            client_config: client_config.into(),
+        };
+
+        Ok(nodejs_config)
     }
 }

@@ -1,5 +1,6 @@
 use std::sync::PoisonError;
 use thiserror::Error;
+// use tokio::sync::broadcast::error;
 use wasm_bindgen::JsValue;
 use workflow_core::channel::*;
 use workflow_core::sendable::*;
@@ -79,6 +80,22 @@ pub enum Error {
 
     #[error("Connection timeout")]
     ConnectionTimeout,
+
+    #[error("Invalid connect strategy argument: {0}")]
+    InvalidConnectStrategyArg(String),
+
+    #[error("Invalid connect strategy")]
+    InvalidConnectStrategy,
+}
+
+impl From<Error> for JsValue {
+    fn from(error: Error) -> JsValue {
+        JsValue::from_str(&error.to_string())
+        // match error {
+        //     Error::JsValue(sendable) => sendable.into(),
+        //     _ => JsValue::from_str(&error.to_string()),
+        // }
+    }
 }
 
 impl From<JsValue> for Error {

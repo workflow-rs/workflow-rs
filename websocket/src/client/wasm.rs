@@ -1,4 +1,5 @@
 use super::{
+    bindings::WebSocket as W3CWebSocket,
     error::Error,
     message::{Ack, Message},
     result::Result,
@@ -14,7 +15,6 @@ use std::sync::{
 use wasm_bindgen::JsCast;
 use web_sys::{
     CloseEvent as WsCloseEvent, ErrorEvent as WsErrorEvent, MessageEvent as WsMessageEvent,
-    WebSocket as WebSysWebSocket,
 };
 use workflow_core::runtime::*;
 use workflow_core::{
@@ -43,29 +43,33 @@ impl TryFrom<WsMessageEvent> for Message {
 }
 
 #[derive(Clone)]
-pub struct WebSocket(WebSysWebSocket);
+pub struct WebSocket(W3CWebSocket);
 unsafe impl Send for WebSocket {}
 unsafe impl Sync for WebSocket {}
 impl Deref for WebSocket {
-    type Target = WebSysWebSocket;
-    fn deref(&self) -> &WebSysWebSocket {
+    type Target = W3CWebSocket;
+    fn deref(&self) -> &W3CWebSocket {
         &self.0
     }
 }
 
 impl WebSocket {
     #[allow(dead_code)]
-    const CONNECTING: u16 = WebSysWebSocket::CONNECTING;
+    const CONNECTING: u16 = W3CWebSocket::CONNECTING;
     #[allow(dead_code)]
-    const OPEN: u16 = WebSysWebSocket::OPEN;
+    const OPEN: u16 = W3CWebSocket::OPEN;
     #[allow(dead_code)]
-    const CLOSING: u16 = WebSysWebSocket::CLOSING;
+    const CLOSING: u16 = W3CWebSocket::CLOSING;
     #[allow(dead_code)]
-    const CLOSED: u16 = WebSysWebSocket::CLOSED;
+    const CLOSED: u16 = W3CWebSocket::CLOSED;
 
+    #[allow(dead_code)]
     pub fn new(url: &str) -> Result<Self> {
-        let ws = WebSysWebSocket::new(url)?;
-        Ok(WebSocket(ws))
+        Ok(WebSocket(W3CWebSocket::new(url)?))
+    }
+
+    pub fn new_with_config(url: &str, config: &WebSocketConfig) -> Result<Self> {
+        Ok(WebSocket(W3CWebSocket::new_with_config(url, config)?))
     }
 
     fn cleanup(&self) {
@@ -76,8 +80,8 @@ impl WebSocket {
     }
 }
 
-impl From<WebSysWebSocket> for WebSocket {
-    fn from(ws: WebSysWebSocket) -> Self {
+impl From<W3CWebSocket> for WebSocket {
+    fn from(ws: W3CWebSocket) -> Self {
         WebSocket(ws)
     }
 }
@@ -105,6 +109,7 @@ pub struct WebSocketInterface {
     receiver_channel: Channel<Message>,
     handshake: Option<Arc<dyn Handshake>>,
     dispatcher_shutdown: DuplexChannel,
+    config: WebSocketConfig,
 }
 
 impl WebSocketInterface {
@@ -113,7 +118,7 @@ impl WebSocketInterface {
         sender_channel: Channel<(Message, Ack)>,
         receiver_channel: Channel<Message>,
         options: Options,
-        _config: Option<WebSocketConfig>,
+        config: Option<WebSocketConfig>,
     ) -> Result<WebSocketInterface> {
         sanity_checks()?;
 
@@ -131,6 +136,7 @@ impl WebSocketInterface {
             is_open: AtomicBool::new(false),
             handshake: options.handshake,
             dispatcher_shutdown: DuplexChannel::unbounded(),
+            config: config.unwrap_or_default(),
         };
 
         Ok(iface)
@@ -148,7 +154,6 @@ impl WebSocketInterface {
         self.is_open.load(Ordering::SeqCst)
     }
 
-    // pub async fn connect(self: &Arc<Self>, block: bool) -> Result<Option<Listener>> {
     pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
         let (connect_trigger, connect_listener) = oneshot::<Result<()>>();
 
@@ -182,7 +187,7 @@ impl WebSocketInterface {
         let connect_trigger = Arc::new(Mutex::new(connect_trigger));
 
         self.reconnect.store(true, Ordering::SeqCst);
-        let ws = WebSocket::new(&self.url())?;
+        let ws = WebSocket::new_with_config(&self.url(), &self.config)?;
         ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
 
         // - Message
@@ -290,7 +295,6 @@ impl WebSocketInterface {
                     });
             });
 
-            // let handshake_rx = self.handshake_channel.receiver.clone();
             loop {
                 select_biased! {
                     result = accept_rx.recv().fuse() => {
@@ -299,7 +303,6 @@ impl WebSocketInterface {
                     msg = sender_rx.recv().fuse() => {
                         if let Ok(msg) = msg {
                             ws.try_send(&msg)?;
-                            // ws_sender.send(msg.into()).await?;
                         }
                     },
                     msg = self.event_channel.recv().fuse() => {

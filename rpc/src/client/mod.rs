@@ -18,7 +18,7 @@ pub use protocol::{BorshProtocol, SerdeJsonProtocol};
 use std::fmt::Debug;
 use workflow_core::{channel::Multiplexer, task::yield_now};
 pub use workflow_websocket::client::{
-    ConnectOptions, ConnectResult, ConnectStrategy, WebSocketConfig,
+    options::IConnectOptions, ConnectOptions, ConnectResult, ConnectStrategy, WebSocketConfig,
 };
 
 ///
