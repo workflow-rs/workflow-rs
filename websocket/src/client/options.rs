@@ -216,14 +216,3 @@ impl TryFrom<&IConnectOptions> for ConnectOptions {
         Ok(options)
     }
 }
-
-// impl TryFrom<JsValue> for ConnectOptions {
-//     type Error = Error;
-//     fn try_from(value: JsValue) -> Result<Self> {
-//         if let Some(options) = value.dyn_ref::<IConnectOptions>() {
-//             options.try_into()
-//         } else {
-//             Ok(ConnectOptions::default())
-//         }
-//     }
-// }

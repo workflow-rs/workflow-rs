@@ -142,7 +142,6 @@ tungstenite = { version = "0.21.0", features = ["handshake"] }
 wasm-bindgen = "0.2.90"
 wasm-bindgen-futures = "0.4.40"
 web-sys = "0.3.67"
-# workflow-async-trait = "0.1.68"
 # chrome-sys = {path = "../chrome-sys"}
 chrome-sys = { version = "0.1.0" }
 

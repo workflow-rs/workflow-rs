@@ -127,13 +127,10 @@ impl Default for WebSocketNodeJsConfig {
 impl TryFrom<&WebSocketConfig> for WebSocketNodeJsConfig {
     type Error = Error;
     fn try_from(config: &WebSocketConfig) -> Result<Self> {
-        // let mut nodejs_config = WebSocketNodeJsConfig::default();
-
         let client_config = Object::new();
         if let Some(max_frame_size) = config.max_frame_size {
             client_config.set("maxReceivedFrameSize", &JsValue::from(max_frame_size))?;
         }
-
         if let Some(max_message_size) = config.max_message_size {
             client_config.set("maxReceivedMessageSize", &JsValue::from(max_message_size))?;
         }
