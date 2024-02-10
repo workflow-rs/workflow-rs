@@ -35,31 +35,32 @@ pub fn data_dir() -> Option<PathBuf> {
 }
 
 cfg_if! {
-    if #[cfg(all(feature = "no-unsafe-eval", target_arch = "wasm32"))] {
-        mod nodejs {
-            use std::path::PathBuf;
-            pub fn home_dir() -> Option<PathBuf> { None }
-            pub fn data_dir() -> Option<PathBuf> { None }
-        }
-    } else if #[cfg(target_arch = "wasm32")] {
+    if #[cfg(target_arch = "wasm32")] {
         mod nodejs {
             use std::path::{Path,PathBuf};
             use wasm_bindgen::prelude::*;
+            use js_sys::Reflect;
+
+            #[wasm_bindgen]
+            extern "C" {
+                pub fn require(s: &str) -> JsValue;
+            }
 
             static mut HOME_DIR: Option<PathBuf> = None;
             pub fn home_dir() -> Option<PathBuf> {
                 unsafe {
                     HOME_DIR.get_or_insert_with(|| {
-                        js_sys::Function::new_no_args( // no-unsafe-eval
-                            "return require('os').homedir();"
-                        )
-                        .call0(&JsValue::UNDEFINED)
-                        .expect("Unable to get nodejs homedir")
-                        .as_string()
-                        .as_ref()
-                        .map(Path::new)
-                        .map(PathBuf::from)
-                        .expect("Unable to get nodejs homedir")
+                        Reflect::get(&require("os"), &JsValue::from_str("homedir"))
+                            .expect("Unable to get homedir")
+                            .dyn_into::<js_sys::Function>()
+                            .expect("os.homedir is not a function")
+                            .call0(&JsValue::UNDEFINED)
+                            .expect("Unable to get homedir")
+                            .as_string()
+                            .as_ref()
+                            .map(Path::new)
+                            .map(PathBuf::from)
+                            .expect("Unable to get nodejs homedir")
                     });
                     HOME_DIR.clone()
                 }
@@ -69,22 +70,16 @@ cfg_if! {
             pub fn data_dir() -> Option<PathBuf> {
                 unsafe {
                     DATA_DIR.get_or_insert_with(|| {
-                        js_sys::Function::new_no_args( // no-unsafe-eval
-                            "
-                            if (process.platform === 'win32') {
-                                return process.env['LOCALAPPDATA'];
-                            } else {
-                                return require('os').homedir();
-                            }
-                            ",
-                        )
-                        .call0(&JsValue::UNDEFINED)
-                        .expect("Unable to get nodejs homedir")
-                        .as_string()
-                        .as_ref()
-                        .map(Path::new)
-                        .map(PathBuf::from)
-                        .expect("Unable to get nodejs homedir")
+                        if crate::runtime::is_windows() {
+                            crate::env::var("LOCALAPPDATA")
+                                .ok()
+                                .map(PathBuf::from)
+                                .expect("Unable to get LOCALAPPDATA")
+
+                        } else {
+                            home_dir()
+                                .expect("Unable to get nodejs data_dir (unable to get home_dir)")
+                        }
                     });
                     DATA_DIR.clone()
                 }
