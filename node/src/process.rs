@@ -682,8 +682,8 @@ pub fn trim(mut s: String) -> String {
     s
 }
 
-#[wasm_bindgen]
-pub async fn test() {
+// #[wasm_bindgen]
+pub async fn test_child_process() {
     log_info!("running rust test() fn");
     workflow_wasm::panic::init_console_panic_hook();
 

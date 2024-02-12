@@ -8,6 +8,7 @@ use std::sync::{
     Arc,
 };
 
+/// @category General
 #[wasm_bindgen]
 pub struct Aborted;
 
@@ -29,13 +30,14 @@ impl std::fmt::Display for Aborted {
 /// Abortable trigger wraps an `Arc<AtomicBool>`, which can be cloned
 /// to signal task terminating using an atomic bool.
 ///
-/// ```ignore
+/// ```text
 /// let abortable = Abortable::default();
 /// let result = my_task(abortable).await?;
 /// // ... elsewhere
 /// abortable.abort();
 /// ```
 ///
+/// @category General
 #[derive(Default, Clone)]
 #[wasm_bindgen]
 pub struct Abortable(Arc<AtomicBool>);

@@ -37,6 +37,11 @@ use js_sys::Object;
 use std::pin::Pin;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
+/// Converts a Rust stream into an async JavaScript generator.
+/// WARNING: This feature uses `eval` and can not be used in environments
+/// where dynamically-created code can not be executed such as web browser
+/// extensions.
+/// @category General
 #[wasm_bindgen]
 struct AsyncStreamProxy(Pin<Box<dyn Stream<Item = JsValue>>>);
 

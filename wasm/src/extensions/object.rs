@@ -78,7 +78,7 @@ impl ObjectExtension for Object {
         <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display,
     {
         let js_value = Reflect::get(self, &JsValue::from(prop))?;
-        if js_value.is_falsy() {
+        if js_value.is_undefined() {
             Ok(None)
         } else {
             Ok(Some(T::try_from(js_value).map_err(Error::custom)?))

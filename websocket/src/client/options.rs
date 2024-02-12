@@ -21,6 +21,7 @@ pub struct Options {
 
 /// `ConnectionStrategy` specifies how the WebSocket `async fn connect()`
 /// function should behave during the first-time connectivity phase.
+/// @category WebSocket
 #[wasm_bindgen]
 #[derive(Default, Clone, Debug)]
 pub enum ConnectStrategy {
@@ -74,6 +75,7 @@ impl TryFrom<JsValue> for ConnectStrategy {
 ///
 /// `ConnectOptions` is used to configure the `WebSocket` connectivity behavior.
 ///
+/// @category WebSocket
 #[derive(Clone, Debug)]
 pub struct ConnectOptions {
     /// Indicates if the `async fn connect()` method should return immediately
@@ -152,6 +154,8 @@ const TS_CONNECT_OPTIONS: &'static str = r#"
 
 /**
  * `ConnectOptions` is used to configure the `WebSocket` connectivity behavior.
+ * 
+ * @category WebSocket
  */
 export interface IConnectOptions {
     // Indicates if the `async fn connect()` method should return immediately

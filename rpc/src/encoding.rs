@@ -8,14 +8,16 @@ use std::{
     fmt::{Debug, Display, Formatter},
     str::FromStr,
 };
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{convert::TryFromJsValue, prelude::*};
 
-/// RPC protocol encoding: `Borsh` or `SerdeJson`
+/// wRPC protocol encoding: `Borsh` or `SerdeJson`
+/// @category Transport
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum Encoding {
     Borsh = 0,
+    #[serde(rename = "json")]
     SerdeJson = 1,
 }
 
@@ -61,7 +63,9 @@ impl TryFrom<u8> for Encoding {
 impl TryFrom<JsValue> for Encoding {
     type Error = Error;
     fn try_from(value: JsValue) -> Result<Self, Self::Error> {
-        if let Some(v) = value.as_f64() {
+        if let Ok(encoding) = Encoding::try_from_js_value(value.clone()) {
+            Ok(encoding)
+        } else if let Some(v) = value.as_f64() {
             Ok(Encoding::try_from(v as u8)?)
         } else if let Some(string) = value.as_string() {
             Encoding::from_str(&string)

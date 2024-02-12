@@ -25,7 +25,7 @@ pub async fn client_example(json: bool, message_delay: Duration) -> Result<()> {
         encoding,
         interface.into(),
         RpcClientOptions {
-            url,
+            url: Some(url),
             ..RpcClientOptions::default()
         },
         None,

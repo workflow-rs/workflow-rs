@@ -8,6 +8,10 @@ cfg_if! {
 
         /// Deferred promise - an object that has `resolve()` and `reject()`
         /// functions that can be called outside of the promise body.
+        /// WARNING: This function uses `eval` and can not be used in environments
+        /// where dynamically-created code can not be executed such as web browser
+        /// extensions.
+        /// @category General
         #[wasm_bindgen]
         pub fn defer() -> js_sys::Promise {
             js_sys::Function::new_no_args(

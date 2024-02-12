@@ -75,9 +75,15 @@ pub struct WebSocket {
 
 impl WebSocket {
     /// Create a new WebSocket instance connecting to the given URL.
-    pub fn new(url: &str, options: Options, config: Option<WebSocketConfig>) -> Result<WebSocket> {
-        if !url.starts_with("ws://") && !url.starts_with("wss://") {
-            return Err(Error::AddressSchema(url.to_string()));
+    pub fn new(
+        url: Option<&str>,
+        options: Options,
+        config: Option<WebSocketConfig>,
+    ) -> Result<WebSocket> {
+        if let Some(url) = url {
+            if !url.starts_with("ws://") && !url.starts_with("wss://") {
+                return Err(Error::AddressSchema(url.to_string()));
+            }
         }
 
         let receiver_channel = if let Some(cap) = options.receiver_channel_cap {
@@ -108,7 +114,7 @@ impl WebSocket {
     }
 
     /// Get current websocket connection URL
-    pub fn url(&self) -> String {
+    pub fn url(&self) -> Option<String> {
         self.inner.client.url()
     }
 

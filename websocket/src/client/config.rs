@@ -66,10 +66,14 @@ const TS_WEBSOCKET_CONFIG: &'static str = r#"
 
 /**
  * `WebSocketConfig` is used to configure the `WebSocket`.
+ * 
+ * @category WebSocket
  */
 export interface IWebSocketConfig {
-    maxFrameSize: number,
+    /** Maximum size of the WebSocket message. */
     maxMessageSize: number,
+    /** Maximum size of the WebSocket frame. */
+    maxFrameSize: number,
 }
 "#;
 

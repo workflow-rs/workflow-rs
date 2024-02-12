@@ -87,7 +87,7 @@ impl From<W3CWebSocket> for WebSocket {
 }
 
 struct Settings {
-    url: String,
+    url: Option<String>,
 }
 
 #[allow(dead_code)]
@@ -114,7 +114,7 @@ pub struct WebSocketInterface {
 
 impl WebSocketInterface {
     pub fn new(
-        url: &str,
+        url: Option<&str>,
         sender_channel: Channel<(Message, Ack)>,
         receiver_channel: Channel<Message>,
         options: Options,
@@ -123,7 +123,7 @@ impl WebSocketInterface {
         sanity_checks()?;
 
         let settings = Settings {
-            url: url.to_string(),
+            url: url.map(String::from),
         };
 
         let iface = WebSocketInterface {
@@ -142,12 +142,12 @@ impl WebSocketInterface {
         Ok(iface)
     }
 
-    pub fn url(self: &Arc<Self>) -> String {
+    pub fn url(self: &Arc<Self>) -> Option<String> {
         self.settings.lock().unwrap().url.clone()
     }
 
     pub fn set_url(self: &Arc<Self>, url: &str) {
-        self.settings.lock().unwrap().url = url.into();
+        self.settings.lock().unwrap().url.replace(url.to_string());
     }
 
     pub fn is_open(self: &Arc<Self>) -> bool {
@@ -159,6 +159,10 @@ impl WebSocketInterface {
 
         if let Some(url) = options.url.as_ref() {
             self.set_url(url);
+        }
+
+        if self.url().is_none() {
+            return Err(Error::MissingUrl);
         }
 
         self.connect_impl(options.clone(), Some(connect_trigger))?;
@@ -187,7 +191,8 @@ impl WebSocketInterface {
         let connect_trigger = Arc::new(Mutex::new(connect_trigger));
 
         self.reconnect.store(true, Ordering::SeqCst);
-        let ws = WebSocket::new_with_config(&self.url(), &self.config)?;
+        let url = self.url().expect("Missing WebSocket URL");
+        let ws = WebSocket::new_with_config(&url, &self.config)?;
         ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
 
         // - Message
@@ -380,7 +385,7 @@ impl WebSocketInterface {
 
                                         let connect_trigger = connect_trigger.lock().unwrap().take();
                                         if let Some(connect_trigger) = connect_trigger {
-                                            connect_trigger.send(Err(Error::Connect(self.url()))).await.ok();
+                                            connect_trigger.send(Err(Error::Connect(self.url().unwrap()))).await.ok();
                                         }
                                     }
 

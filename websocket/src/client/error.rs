@@ -14,6 +14,9 @@ pub enum Error {
     #[error("PoisonError")]
     PoisonError,
 
+    #[error("Missing WebSocket URL (must be supplied in constructor or the connect() method)")]
+    MissingUrl,
+
     #[error("WebSocket URL must start with ws:// or wss:// - supplied argument is:`{0}`")]
     AddressSchema(String),
 

@@ -70,7 +70,7 @@ pub trait NotificationHandler: Send + Sync + 'static {
 pub struct Options<'url> {
     pub ctl_multiplexer: Option<Multiplexer<Ctl>>,
     pub handshake: Option<Arc<dyn Handshake>>,
-    pub url: &'url str,
+    pub url: Option<&'url str>,
 }
 
 struct Inner<Ops> {
@@ -345,9 +345,10 @@ where
             ..WebSocketOptions::default()
         };
 
-        let url = sanitize_url(options.url)?;
+        // let url = sanitize_url(options.url)?;
+        let url = options.url.map(sanitize_url).transpose()?;
 
-        let ws = Arc::new(WebSocket::new(&url, ws_options, config)?);
+        let ws = Arc::new(WebSocket::new(url.as_deref(), ws_options, config)?);
         let protocol: Arc<dyn ProtocolHandler<Ops>> = Arc::new(T::new(ws.clone(), interface));
         let inner = Arc::new(Inner::new::<T>(ws, protocol.clone(), options)?);
 
@@ -384,7 +385,7 @@ where
         self.inner.ws.is_open()
     }
 
-    pub fn url(&self) -> String {
+    pub fn url(&self) -> Option<String> {
         self.inner.ws.url()
     }
 

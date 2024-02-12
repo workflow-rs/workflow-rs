@@ -62,7 +62,7 @@ impl From<WebSocketConfig> for TsWebSocketConfig {
 }
 
 struct Settings {
-    url: String,
+    url: Option<String>,
 }
 
 pub struct WebSocketInterface {
@@ -78,14 +78,14 @@ pub struct WebSocketInterface {
 
 impl WebSocketInterface {
     pub fn new(
-        url: &str,
+        url: Option<&str>,
         sender_channel: Channel<(Message, Ack)>,
         receiver_channel: Channel<Message>,
         options: Options,
         config: Option<WebSocketConfig>,
     ) -> Result<WebSocketInterface> {
         let settings = Settings {
-            url: url.to_string(),
+            url: url.map(String::from),
         };
 
         let iface = WebSocketInterface {
@@ -102,12 +102,12 @@ impl WebSocketInterface {
         Ok(iface)
     }
 
-    pub fn url(self: &Arc<Self>) -> String {
+    pub fn url(self: &Arc<Self>) -> Option<String> {
         self.settings.lock().unwrap().url.clone()
     }
 
     pub fn set_url(self: &Arc<Self>, url: &str) {
-        self.settings.lock().unwrap().url = url.into();
+        self.settings.lock().unwrap().url.replace(url.to_string());
     }
 
     pub fn is_open(self: &Arc<Self>) -> bool {
@@ -131,11 +131,15 @@ impl WebSocketInterface {
             self.set_url(url);
         }
 
+        if this.url().is_none() {
+            return Err(Error::MissingUrl);
+        }
+
         let ts_websocket_config = self.config.clone().map(|config| config.into());
 
         core::task::spawn(async move {
             loop {
-                let url = this.url().clone();
+                let url = this.url().clone().expect("missing URL");
                 let connect_future = connect_async_with_config(&url, ts_websocket_config, false);
                 let timeout_future = timeout(options_.connect_timeout(), connect_future);
 
@@ -159,7 +163,7 @@ impl WebSocketInterface {
                     }
                     // connect error
                     Ok(Err(e)) => {
-                        log_trace!("WebSocket failed to connect to {}: {}", this.url(), e);
+                        log_trace!("WebSocket failed to connect to {}: {}", url, e);
                         if matches!(options_.strategy, ConnectStrategy::Fallback) {
                             if options.block_async_connect && connect_trigger.is_some() {
                                 connect_trigger.take().unwrap().try_send(Err(e.into())).ok();
@@ -170,10 +174,7 @@ impl WebSocketInterface {
                     }
                     // timeout error
                     Err(_) => {
-                        log_trace!(
-                            "WebSocket connection timeout while connecting to {}",
-                            this.url()
-                        );
+                        log_trace!("WebSocket connection timeout while connecting to {}", url);
                         if matches!(options_.strategy, ConnectStrategy::Fallback) {
                             if options.block_async_connect && connect_trigger.is_some() {
                                 connect_trigger

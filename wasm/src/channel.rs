@@ -24,9 +24,9 @@ pub struct Inner {
 }
 
 ///
-/// [`EventDispatcher`] is an object meant to be used in WASM environment to
-/// process channel events.
-///
+/// [`EventDispatcher`] is a WASM channel bridge that provides
+/// access to Rust channel events in WASM32 environment.
+/// @category General
 #[wasm_bindgen(inspectable)]
 #[derive(Clone)]
 pub struct EventDispatcher {
