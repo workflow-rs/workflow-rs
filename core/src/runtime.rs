@@ -338,8 +338,6 @@ pub fn platform() -> Platform {
                 let platform = Platform::MacOS;
             } else if #[cfg(target_os = "linux")] {
                 let platform = Platform::Linux;
-            } else if #[cfg(all(target_arch = "wasm32", feature="no-unsafe-eval"))] {
-                let platform = Platform::from_web();
             } else if #[cfg(target_arch = "wasm32")] {
                 let platform = if is_node() {
                     Platform::from_node()

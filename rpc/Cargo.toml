@@ -22,7 +22,7 @@ crate-type = ["cdylib", "lib"]
 doctest = false
 
 [features]
-no-unsafe-eval = ["workflow-websocket/no-unsafe-eval"]
+wasm32-sdk = ["workflow-websocket/wasm32-sdk"]
 native-tls = ["workflow-websocket/native-tls"]
 native-tls-vendored = ["workflow-websocket/native-tls-vendored"]
 rustls-tls-native-roots = ["workflow-websocket/rustls-tls-native-roots"]

@@ -3,6 +3,7 @@
 //!
 
 use super::{error::Error, result::Result};
+use cfg_if::cfg_if;
 use js_sys::Object;
 use wasm_bindgen::prelude::*;
 use workflow_wasm::extensions::object::*;
@@ -61,44 +62,49 @@ impl Default for WebSocketConfig {
     }
 }
 
-#[wasm_bindgen(typescript_custom_section)]
-const TS_WEBSOCKET_CONFIG: &'static str = r#"
+cfg_if! {
+    if #[cfg(feature = "wasm32-sdk")] {
 
-/**
- * `WebSocketConfig` is used to configure the `WebSocket`.
- * 
- * @category WebSocket
- */
-export interface IWebSocketConfig {
-    /** Maximum size of the WebSocket message. */
-    maxMessageSize: number,
-    /** Maximum size of the WebSocket frame. */
-    maxFrameSize: number,
-}
-"#;
+        #[wasm_bindgen(typescript_custom_section)]
+        const TS_WEBSOCKET_CONFIG: &'static str = r#"
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(extends = js_sys::Object, typescript_type = "IWebSocketConfig | undefined")]
-    pub type IWebSocketConfig;
-}
+        /**
+         * `WebSocketConfig` is used to configure the `WebSocket`.
+         * 
+         * @category WebSocket
+         */
+        export interface IWebSocketConfig {
+            /** Maximum size of the WebSocket message. */
+            maxMessageSize: number,
+            /** Maximum size of the WebSocket frame. */
+            maxFrameSize: number,
+        }
+        "#;
 
-impl TryFrom<IWebSocketConfig> for WebSocketConfig {
-    type Error = Error;
-    fn try_from(args: IWebSocketConfig) -> Result<Self> {
-        let config = if let Some(args) = args.dyn_ref::<Object>() {
-            let mut config = WebSocketConfig::default();
-            if let Some(max_frame_size) = args.get_value("maxFrameSize")?.as_f64() {
-                config.max_frame_size = Some(max_frame_size as usize);
+        #[wasm_bindgen]
+        extern "C" {
+            #[wasm_bindgen(extends = js_sys::Object, typescript_type = "IWebSocketConfig | undefined")]
+            pub type IWebSocketConfig;
+        }
+
+        impl TryFrom<IWebSocketConfig> for WebSocketConfig {
+            type Error = Error;
+            fn try_from(args: IWebSocketConfig) -> Result<Self> {
+                let config = if let Some(args) = args.dyn_ref::<Object>() {
+                    let mut config = WebSocketConfig::default();
+                    if let Some(max_frame_size) = args.get_value("maxFrameSize")?.as_f64() {
+                        config.max_frame_size = Some(max_frame_size as usize);
+                    }
+                    if let Some(max_message_size) = args.get_value("maxMessageSize")?.as_f64() {
+                        config.max_message_size = Some(max_message_size as usize);
+                    }
+                    config
+                } else {
+                    Default::default()
+                };
+                Ok(config)
             }
-            if let Some(max_message_size) = args.get_value("maxMessageSize")?.as_f64() {
-                config.max_message_size = Some(max_message_size as usize);
-            }
-            config
-        } else {
-            Default::default()
-        };
-        Ok(config)
+        }
     }
 }
 

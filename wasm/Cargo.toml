@@ -13,6 +13,7 @@ WASM utilities for in-browser use (timers, callbacks, etc.)
 """
 
 [features]
+no-unsafe-eval = []
 channels=[]
 default = ["channels"]
 
