@@ -1,14 +1,12 @@
 use super::error::Error;
 use super::result::Result;
 use super::Handshake;
-use js_sys::Object;
+use cfg_if::cfg_if;
 use std::str::FromStr;
 use std::sync::Arc;
 use wasm_bindgen::convert::TryFromJsValue;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 use workflow_core::time::Duration;
-use workflow_wasm::extensions::object::*;
 
 #[derive(Default)]
 pub struct Options {
@@ -149,74 +147,89 @@ impl ConnectOptions {
     }
 }
 
-#[wasm_bindgen(typescript_custom_section)]
-const TS_CONNECT_OPTIONS: &'static str = r#"
+cfg_if! {
+    if #[cfg(feature = "wasm32-sdk")] {
+        use js_sys::Object;
+        use wasm_bindgen::JsCast;
+        use workflow_wasm::extensions::object::*;
 
-/**
- * `ConnectOptions` is used to configure the `WebSocket` connectivity behavior.
- * 
- * @category WebSocket
- */
-export interface IConnectOptions {
-    // Indicates if the `async fn connect()` method should return immediately
-    // or wait for connection to occur or fail before returning.
-    blockAsyncConnect : boolean,
-    // ConnectStrategy used to configure the retry or fallback behavior.
-    // In retry mode, the WebSocket will continuously attempt to connect to the server.
-    strategy: ConnectStrategy | string | undefined,
-    // A custom URL that will change the current URL of the WebSocket.
-    url: string | undefined,
-    // A custom connection timeout in milliseconds.
-    timeoutDurationMsec: number,
-    // A custom retry interval in milliseconds.
-    retryIntervalMsec: number,
-}
-"#;
+        #[wasm_bindgen(typescript_custom_section)]
+        const TS_CONNECT_OPTIONS: &'static str = r#"
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "IConnectOptions | undefined")]
-    pub type IConnectOptions;
-}
+        /**
+         * `ConnectOptions` is used to configure the `WebSocket` connectivity behavior.
+         * 
+         * @category WebSocket
+         */
+        export interface IConnectOptions {
+            // Indicates if the `async fn connect()` method should return immediately
+            // or wait for connection to occur or fail before returning.
+            blockAsyncConnect : boolean,
+            // ConnectStrategy used to configure the retry or fallback behavior.
+            // In retry mode, the WebSocket will continuously attempt to connect to the server.
+            strategy: ConnectStrategy | string | undefined,
+            // A custom URL that will change the current URL of the WebSocket.
+            url: string | undefined,
+            // A custom connection timeout in milliseconds.
+            timeoutDurationMsec: number,
+            // A custom retry interval in milliseconds.
+            retryIntervalMsec: number,
+        }
+        "#;
 
-impl TryFrom<&IConnectOptions> for ConnectOptions {
-    type Error = Error;
-    fn try_from(args: &IConnectOptions) -> Result<Self> {
-        let options = if let Some(args) = args.dyn_ref::<Object>() {
-            let url = args.get_value("url")?.as_string();
-            let block_async_connect = args
-                .get_value("blockAsyncConnect")?
-                .as_bool()
-                .unwrap_or(true);
-            let strategy = ConnectStrategy::try_from(args.get_value("strategy")?)?;
-            let timeout = args
-                .get_value("timeoutDurationMsec")?
-                .as_f64()
-                .map(|f| Duration::from_millis(f as u64));
-            let retry_interval = args
-                .get_value("retryIntervalMsec")?
-                .as_f64()
-                .map(|f| Duration::from_millis(f as u64));
+        #[wasm_bindgen]
+        extern "C" {
+            #[wasm_bindgen(typescript_type = "IConnectOptions | undefined")]
+            pub type IConnectOptions;
+        }
 
-            ConnectOptions {
-                block_async_connect,
-                strategy,
-                url,
-                connect_timeout: timeout,
-                retry_interval,
+        impl TryFrom<IConnectOptions> for ConnectOptions {
+            type Error = Error;
+            fn try_from(args: IConnectOptions) -> Result<Self> {
+                Self::try_from(&args)
             }
-        } else if let Some(retry) = args.as_bool() {
-            ConnectOptions {
-                block_async_connect: true,
-                strategy: ConnectStrategy::new(retry),
-                url: None,
-                connect_timeout: None,
-                retry_interval: None,
-            }
-        } else {
-            ConnectOptions::default()
-        };
+        }
 
-        Ok(options)
+        impl TryFrom<&IConnectOptions> for ConnectOptions {
+            type Error = Error;
+            fn try_from(args: &IConnectOptions) -> Result<Self> {
+                let options = if let Some(args) = args.dyn_ref::<Object>() {
+                    let url = args.get_value("url")?.as_string();
+                    let block_async_connect = args
+                        .get_value("blockAsyncConnect")?
+                        .as_bool()
+                        .unwrap_or(true);
+                    let strategy = ConnectStrategy::try_from(args.get_value("strategy")?)?;
+                    let timeout = args
+                        .get_value("timeoutDurationMsec")?
+                        .as_f64()
+                        .map(|f| Duration::from_millis(f as u64));
+                    let retry_interval = args
+                        .get_value("retryIntervalMsec")?
+                        .as_f64()
+                        .map(|f| Duration::from_millis(f as u64));
+
+                    ConnectOptions {
+                        block_async_connect,
+                        strategy,
+                        url,
+                        connect_timeout: timeout,
+                        retry_interval,
+                    }
+                } else if let Some(retry) = args.as_bool() {
+                    ConnectOptions {
+                        block_async_connect: true,
+                        strategy: ConnectStrategy::new(retry),
+                        url: None,
+                        connect_timeout: None,
+                        retry_interval: None,
+                    }
+                } else {
+                    ConnectOptions::default()
+                };
+
+                Ok(options)
+            }
+        }
     }
 }

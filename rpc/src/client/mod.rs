@@ -18,8 +18,11 @@ pub use protocol::{BorshProtocol, SerdeJsonProtocol};
 use std::fmt::Debug;
 use workflow_core::{channel::Multiplexer, task::yield_now};
 pub use workflow_websocket::client::{
-    options::IConnectOptions, ConnectOptions, ConnectResult, ConnectStrategy, WebSocketConfig,
+    ConnectOptions, ConnectResult, ConnectStrategy, WebSocketConfig,
 };
+
+#[cfg(feature = "wasm32-sdk")]
+pub use workflow_websocket::client::options::IConnectOptions;
 
 ///
 /// notification!() macro for declaration of RPC notification handlers
