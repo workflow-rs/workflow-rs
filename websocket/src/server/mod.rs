@@ -2,6 +2,7 @@
 //! async WebSocket server functionality (requires tokio executor)
 //!
 use async_trait::async_trait;
+use cfg_if::cfg_if;
 use downcast_rs::*;
 use futures::{future::FutureExt, select};
 use futures_util::{
@@ -115,7 +116,13 @@ where
         sink: &WebSocketSink,
     ) -> Result<()>;
 
-    async fn ctl(self: &Arc<Self>, _msg: Message, _sender: &mut WebSocketSender) -> Result<()> {
+    async fn ctl(self: &Arc<Self>, msg: Message, sender: &mut WebSocketSender) -> Result<()> {
+        match msg {
+            Message::Ping(data) => {
+                sender.send(Message::Pong(data)).await?;
+            }
+            _ => (),
+        }
         Ok(())
     }
 }
@@ -238,11 +245,23 @@ where
                                 },
                                 Message::Ping(data) => {
                                     self.counters.rx_bytes.fetch_add(data.len(), Ordering::Relaxed);
-                                    self.handler.ctl(Message::Ping(data), &mut ws_sender).await?;
+                                    cfg_if! {
+                                        if #[cfg(feature = "ping-pong")] {
+                                            self.handler.ctl(Message::Ping(data), &mut ws_sender).await?;
+                                        } else {
+                                            ws_sender.send(Message::Pong(data)).await?;
+                                        }
+                                    }
                                 },
                                 Message::Pong(data) => {
                                     self.counters.rx_bytes.fetch_add(data.len(), Ordering::Relaxed);
-                                    self.handler.ctl(Message::Pong(data), &mut ws_sender).await?;
+                                    cfg_if! {
+                                        if #[cfg(feature = "ping-pong")] {
+                                            self.handler.ctl(Message::Pong(data), &mut ws_sender).await?;
+                                        } else {
+                                            // ignore pong
+                                        }
+                                    }
                                 },
                                 _ => {
                                 }

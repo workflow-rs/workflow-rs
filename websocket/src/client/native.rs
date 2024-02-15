@@ -281,7 +281,9 @@ impl WebSocketInterface {
                                         .send(msg.into())
                                         .await?;
                                 }
-                                TsMessage::Ping(_) => { },
+                                TsMessage::Ping(data) => {
+                                    ws_sender.send(TsMessage::Pong(data)).await?;
+                                },
                                 TsMessage::Pong(_) => { },
                                 TsMessage::Frame(_frame) => { },
                             }

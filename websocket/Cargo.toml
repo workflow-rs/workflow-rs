@@ -20,7 +20,10 @@ crate-type = ["cdylib", "lib"]
 doctest = false
 
 [features]
+# enable to make connection options available in the generated TypeScript bindings
 wasm32-sdk = []
+# enable to provide manual control over the WebSocket Ping messages
+ping-pong = []
 native-tls = ["tokio-tungstenite/native-tls"]
 native-tls-vendored = ["tokio-tungstenite/native-tls-vendored"]
 rustls-tls-native-roots = ["tokio-tungstenite/rustls-tls-native-roots"]
