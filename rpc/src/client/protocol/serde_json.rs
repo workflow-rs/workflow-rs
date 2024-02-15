@@ -11,7 +11,7 @@ pub type JsonResponseFn =
     Arc<Box<(dyn Fn(Result<Value>, Option<&Duration>) -> Result<()> + Sync + Send)>>;
 
 /// Serde JSON RPC message handler and dispatcher
-pub struct SerdeJsonProtocol<Ops, Id>
+pub struct JsonProtocol<Ops, Id>
 where
     Ops: OpsT,
     Id: IdT,
@@ -23,13 +23,13 @@ where
     id: PhantomData<Id>,
 }
 
-impl<Ops, Id> SerdeJsonProtocol<Ops, Id>
+impl<Ops, Id> JsonProtocol<Ops, Id>
 where
     Id: IdT,
     Ops: OpsT,
 {
     fn new(ws: Arc<WebSocket>, interface: Option<Arc<Interface<Ops>>>) -> Self {
-        SerdeJsonProtocol::<Ops, Id> {
+        JsonProtocol::<Ops, Id> {
             ws,
             pending: Arc::new(Mutex::new(AHashMap::new())),
             interface,
@@ -41,13 +41,13 @@ where
 
 type MessageInfo<Ops, Id> = (Option<Id>, Option<Ops>, Result<Value>);
 
-impl<Ops, Id> SerdeJsonProtocol<Ops, Id>
+impl<Ops, Id> JsonProtocol<Ops, Id>
 where
     Ops: OpsT,
     Id: IdT,
 {
     fn decode(&self, server_message: &str) -> Result<MessageInfo<Ops, Id>> {
-        let msg: SerdeJsonServerMessage<Ops, Id> = serde_json::from_str(server_message)?;
+        let msg: JSONServerMessage<Ops, Id> = serde_json::from_str(server_message)?;
 
         if let Some(error) = msg.error {
             Ok((msg.id, None, Err(error.into())))
@@ -84,7 +84,7 @@ where
         }
 
         let payload = serde_json::to_value(req)?;
-        let client_message = SerdeJsonClientMessage::new(Some(id), op, payload);
+        let client_message = JsonClientMessage::new(Some(id), op, payload);
         let json = serde_json::to_string(&client_message)?;
 
         self.ws.post(WebSocketMessage::Text(json)).await?;
@@ -101,7 +101,7 @@ where
         Msg: Serialize + Send + Sync + 'static,
     {
         let payload = serde_json::to_value(data)?;
-        let client_message = SerdeJsonClientMessage::<Ops, Id>::new(None, op, payload);
+        let client_message = JsonClientMessage::<Ops, Id>::new(None, op, payload);
         let json = serde_json::to_string(&client_message)?;
         self.ws.post(WebSocketMessage::Text(json)).await?;
         Ok(())
@@ -122,7 +122,7 @@ where
 }
 
 #[async_trait]
-impl<Ops, Id> ProtocolHandler<Ops> for SerdeJsonProtocol<Ops, Id>
+impl<Ops, Id> ProtocolHandler<Ops> for JsonProtocol<Ops, Id>
 where
     Ops: OpsT,
     Id: IdT,
@@ -131,7 +131,7 @@ where
     where
         Self: Sized,
     {
-        SerdeJsonProtocol::new(ws, interface)
+        JsonProtocol::new(ws, interface)
     }
 
     async fn handle_timeout(&self, timeout: Duration) {

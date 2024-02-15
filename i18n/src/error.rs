@@ -21,7 +21,7 @@ pub enum Error {
     StoragePath,
 
     #[error("i18n: serde json failure: {0}")]
-    SerdeJson(#[from] serde_json::Error),
+    JSON(#[from] serde_json::Error),
 
     #[error("i18n: io failure: {0}")]
     Io(#[from] std::io::Error),

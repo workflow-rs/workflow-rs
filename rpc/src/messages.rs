@@ -8,16 +8,16 @@ pub mod serde_json {
     use serde_json::{self, Value};
 
     #[derive(Debug, Serialize, Deserialize)]
-    pub struct SerdeJsonClientMessage<Ops, Id> {
+    pub struct JsonClientMessage<Ops, Id> {
         // pub jsonrpc: String,
         pub id: Option<Id>,
         pub method: Ops,
         pub params: Value,
     }
 
-    impl<Ops, Id> SerdeJsonClientMessage<Ops, Id> {
+    impl<Ops, Id> JsonClientMessage<Ops, Id> {
         pub fn new(id: Option<Id>, method: Ops, payload: Value) -> Self {
-            SerdeJsonClientMessage {
+            JsonClientMessage {
                 // jsonrpc: "2.0".to_owned(),
                 id,
                 method,
@@ -27,7 +27,7 @@ pub mod serde_json {
     }
 
     #[derive(Debug, Serialize, Deserialize)]
-    pub struct SerdeJsonServerMessage<Ops, Id> {
+    pub struct JSONServerMessage<Ops, Id> {
         // pub jsonrpc: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub id: Option<Id>,
@@ -38,18 +38,18 @@ pub mod serde_json {
         // #[serde(skip_serializing_if = "Option::is_none")]
         // pub result: Option<Value>,
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub error: Option<SerdeJsonServerError>,
+        pub error: Option<JsonServerError>,
     }
 
-    impl<Ops, Id> SerdeJsonServerMessage<Ops, Id> {
+    impl<Ops, Id> JSONServerMessage<Ops, Id> {
         pub fn new(
             id: Option<Id>,
             method: Option<Ops>,
             params: Option<Value>,
             // result: Option<Value>,
-            error: Option<SerdeJsonServerError>,
+            error: Option<JsonServerError>,
         ) -> Self {
-            SerdeJsonServerMessage {
+            JSONServerMessage {
                 // jsonrpc: "2.0".to_owned(),
                 method,
                 params,
@@ -61,13 +61,13 @@ pub mod serde_json {
     }
 
     #[derive(Debug, Serialize, Deserialize)]
-    pub struct SerdeJsonServerError {
+    pub struct JsonServerError {
         code: u64,
         message: String,
         data: Option<Value>,
     }
 
-    impl std::fmt::Display for SerdeJsonServerError {
+    impl std::fmt::Display for JsonServerError {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
             write!(
                 f,
@@ -77,9 +77,9 @@ pub mod serde_json {
         }
     }
 
-    impl From<crate::error::ServerError> for SerdeJsonServerError {
+    impl From<crate::error::ServerError> for JsonServerError {
         fn from(err: crate::error::ServerError) -> Self {
-            SerdeJsonServerError {
+            JsonServerError {
                 code: 0, //err.code,
                 message: err.to_string(),
                 data: None, //err.data,

@@ -6,7 +6,7 @@ pub use crate::client::result::Result;
 use crate::imports::*;
 
 pub use self::borsh::BorshProtocol;
-pub use self::serde_json::SerdeJsonProtocol;
+pub use self::serde_json::JsonProtocol;
 use crate::client::Interface;
 
 #[async_trait]

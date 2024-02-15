@@ -3,7 +3,7 @@
 //!
 
 use crate::error::ServerError;
-use crate::messages::serde_json::SerdeJsonServerError;
+use crate::messages::serde_json::JsonServerError;
 use serde::*;
 use std::fmt::Display;
 use thiserror::Error;
@@ -97,7 +97,7 @@ pub enum Error {
     ServerError(ServerError),
 
     #[error("{0}")]
-    SerdeJsonServerError(SerdeJsonServerError),
+    JsonServerError(JsonServerError),
     // #[error("{0}")]
     // RegexError(#[from] regex::Error),
 }
@@ -145,8 +145,8 @@ impl ser::Error for Error {
     }
 }
 
-impl From<SerdeJsonServerError> for Error {
-    fn from(err: SerdeJsonServerError) -> Self {
-        Error::SerdeJsonServerError(err)
+impl From<JsonServerError> for Error {
+    fn from(err: JsonServerError) -> Self {
+        Error::JsonServerError(err)
     }
 }

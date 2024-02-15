@@ -3,6 +3,6 @@
 //!
 pub use crate::client::{
     notification, result::Result as ClientResult, BorshProtocol, ConnectOptions, ConnectStrategy,
-    Interface, Options as RpcClientOptions, RpcClient, SerdeJsonProtocol,
+    Interface, JsonProtocol, Options as RpcClientOptions, RpcClient,
 };
 pub use crate::encoding::Encoding;

@@ -14,7 +14,7 @@ use crate::imports::*;
 use futures_util::select_biased;
 pub use interface::{Interface, Notification};
 use protocol::ProtocolHandler;
-pub use protocol::{BorshProtocol, SerdeJsonProtocol};
+pub use protocol::{BorshProtocol, JsonProtocol};
 use std::fmt::Debug;
 use workflow_core::{channel::Multiplexer, task::yield_now};
 pub use workflow_websocket::client::{
@@ -260,7 +260,7 @@ where
     Id: IdT,
 {
     Borsh(Arc<BorshProtocol<Ops, Id>>),
-    SerdeJson(Arc<SerdeJsonProtocol<Ops, Id>>),
+    JSON(Arc<JsonProtocol<Ops, Id>>),
 }
 
 impl<Ops, Id> From<Arc<dyn ProtocolHandler<Ops>>> for Protocol<Ops, Id>
@@ -271,11 +271,8 @@ where
     fn from(protocol: Arc<dyn ProtocolHandler<Ops>>) -> Self {
         if let Ok(protocol) = protocol.clone().downcast_arc::<BorshProtocol<Ops, Id>>() {
             Protocol::Borsh(protocol)
-        } else if let Ok(protocol) = protocol
-            .clone()
-            .downcast_arc::<SerdeJsonProtocol<Ops, Id>>()
-        {
-            Protocol::SerdeJson(protocol)
+        } else if let Ok(protocol) = protocol.clone().downcast_arc::<JsonProtocol<Ops, Id>>() {
+            Protocol::JSON(protocol)
         } else {
             panic!()
         }
@@ -307,7 +304,7 @@ where
     /// are:
     ///
     /// - [`Encoding::Borsh`]
-    /// - [`Encoding::SerdeJson`]
+    /// - [`Encoding::JSON`]
     ///
     ///
     pub fn new_with_encoding(
@@ -318,9 +315,7 @@ where
     ) -> Result<RpcClient<Ops, Id>> {
         match encoding {
             Encoding::Borsh => Self::new::<BorshProtocol<Ops, Id>>(interface, options, config),
-            Encoding::SerdeJson => {
-                Self::new::<SerdeJsonProtocol<Ops, Id>>(interface, options, config)
-            }
+            Encoding::JSON => Self::new::<JsonProtocol<Ops, Id>>(interface, options, config),
         }
     }
 
@@ -332,7 +327,7 @@ where
     /// supported are:
     ///
     /// - [`BorshProtocol`]
-    /// - [`SerdeJsonProtocol`]
+    /// - [`JsonProtocol`]
     ///
     ///
     pub fn new<T>(
@@ -416,7 +411,7 @@ where
             Protocol::Borsh(protocol) => {
                 protocol.notify(op, payload).await?;
             }
-            Protocol::SerdeJson(protocol) => {
+            Protocol::JSON(protocol) => {
                 protocol.notify(op, payload).await?;
             }
         }
@@ -443,7 +438,7 @@ where
 
         match &self.protocol {
             Protocol::Borsh(protocol) => Ok(protocol.request(op, req).await?),
-            Protocol::SerdeJson(protocol) => Ok(protocol.request(op, req).await?),
+            Protocol::JSON(protocol) => Ok(protocol.request(op, req).await?),
         }
     }
 }

@@ -2,7 +2,7 @@
 //! RPC server module (native only). This module encapsulates
 //! server-side types used to create an RPC server: [`RpcServer`],
 //! [`RpcHandler`], [`Messenger`], [`Interface`] and the
-//! protocol handlers: [`BorshProtocol`] and [`SerdeJsonProtocol`].
+//! protocol handlers: [`BorshProtocol`] and [`JsonProtocol`].
 //!
 
 pub mod error;
@@ -15,7 +15,7 @@ pub use super::error::*;
 pub use crate::encoding::Encoding;
 use crate::imports::*;
 pub use interface::{Interface, Method, Notification};
-pub use protocol::{BorshProtocol, ProtocolHandler, SerdeJsonProtocol};
+pub use protocol::{BorshProtocol, JsonProtocol, ProtocolHandler};
 pub use std::net::SocketAddr;
 pub use tokio::sync::mpsc::UnboundedSender as TokioUnboundedSender;
 pub use workflow_websocket::server::{
@@ -196,7 +196,7 @@ impl Messenger {
                         op, msg,
                     )?)?;
             }
-            Encoding::SerdeJson => {
+            Encoding::JSON => {
                 self.sink
                     .send(protocol::serde_json::create_serialized_notification_message(op, msg)?)?;
             }
@@ -220,7 +220,7 @@ impl Messenger {
             Encoding::Borsh => Ok(protocol::borsh::create_serialized_notification_message(
                 op, msg,
             )?),
-            Encoding::SerdeJson => {
+            Encoding::JSON => {
                 Ok(protocol::serde_json::create_serialized_notification_message(op, msg)?)
             }
         }
@@ -424,9 +424,9 @@ impl RpcServer {
     /// Ids such as [`Id32`] and [`Id64`] can be found in the [`id`](crate::id) module.
     ///
     /// This function call receives an `encoding`: [`Encoding`] argument containing
-    /// [`Encoding::Borsh`] or [`Encoding::SerdeJson`], based on which it will
+    /// [`Encoding::Borsh`] or [`Encoding::JSON`], based on which it will
     /// instantiate the corresponding protocol handler ([`BorshProtocol`] or
-    /// [`SerdeJsonProtocol`] respectively).
+    /// [`JsonProtocol`] respectively).
     ///
     pub fn new_with_encoding<ServerContext, ConnectionContext, Ops, Id>(
         encoding: Encoding,
@@ -447,10 +447,10 @@ impl RpcServer {
                 BorshProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
             >(rpc_handler, interface, counters),
-            Encoding::SerdeJson => RpcServer::new::<
+            Encoding::JSON => RpcServer::new::<
                 ServerContext,
                 ConnectionContext,
-                SerdeJsonProtocol<ServerContext, ConnectionContext, Ops, Id>,
+                JsonProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
             >(rpc_handler, interface, counters),
         }

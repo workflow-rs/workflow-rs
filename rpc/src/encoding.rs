@@ -10,7 +10,7 @@ use std::{
 };
 use wasm_bindgen::{convert::TryFromJsValue, prelude::*};
 
-/// wRPC protocol encoding: `Borsh` or `SerdeJson`
+/// wRPC protocol encoding: `Borsh` or `JSON`
 /// @category Transport
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, Eq, PartialEq)]
@@ -18,15 +18,15 @@ use wasm_bindgen::{convert::TryFromJsValue, prelude::*};
 pub enum Encoding {
     Borsh = 0,
     #[serde(rename = "json")]
-    SerdeJson = 1,
+    JSON = 1,
 }
 
 impl Display for Encoding {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Encoding::Borsh => "Borsh",
-            Encoding::SerdeJson => "JSON",
+            Encoding::Borsh => "borsh",
+            Encoding::JSON => "json",
         };
         f.write_str(s)
     }
@@ -37,8 +37,8 @@ impl FromStr for Encoding {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "borsh" => Ok(Encoding::Borsh),
-            "json" => Ok(Encoding::SerdeJson),
-            "serde-json" => Ok(Encoding::SerdeJson),
+            "json" => Ok(Encoding::JSON),
+            "serde-json" => Ok(Encoding::JSON),
             _ => Err(Error::Encoding(
                 "invalid encoding: {s} (must be: 'borsh' or 'json')".to_string(),
             )),
@@ -51,9 +51,9 @@ impl TryFrom<u8> for Encoding {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Encoding::Borsh),
-            1 => Ok(Encoding::SerdeJson),
+            1 => Ok(Encoding::JSON),
             _ => Err(Error::Encoding(
-                "invalid encoding: {value} (must be: Encoding.Borsh (0) or Encoding.SerdeJson (1))"
+                "invalid encoding: {value} (must be: Encoding.Borsh (0) or Encoding.JSON (1))"
                     .to_string(),
             )),
         }
@@ -77,7 +77,7 @@ impl TryFrom<JsValue> for Encoding {
     }
 }
 
-const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::SerdeJson];
+const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::JSON];
 
 impl Encoding {
     pub fn iter() -> impl Iterator<Item = &'static Encoding> {

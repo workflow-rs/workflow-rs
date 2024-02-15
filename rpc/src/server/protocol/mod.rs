@@ -13,9 +13,9 @@ use crate::server::Interface;
 use workflow_websocket::server::{Message, Result as WebSocketResult, WebSocketSink};
 
 pub use self::borsh::BorshProtocol;
-pub use self::serde_json::SerdeJsonProtocol;
+pub use self::serde_json::JsonProtocol;
 
-/// Base trait for [`BorshProtocol`] and [`SerdeJsonProtocol`] protocol handlers
+/// Base trait for [`BorshProtocol`] and [`JsonProtocol`] protocol handlers
 #[async_trait]
 pub trait ProtocolHandler<ServerContext, ConnectionContext, Ops>:
     DowncastSync + Sized + Send + Sync

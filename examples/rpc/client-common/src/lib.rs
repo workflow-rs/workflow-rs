@@ -6,7 +6,7 @@ use workflow_rpc::client::{prelude::*, result::Result};
 
 pub async fn client_example(json: bool, message_delay: Duration) -> Result<()> {
     let encoding = if json {
-        Encoding::SerdeJson
+        Encoding::JSON
     } else {
         Encoding::Borsh
     };
