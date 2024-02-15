@@ -26,7 +26,7 @@ impl Display for Encoding {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             Encoding::Borsh => "borsh",
-            Encoding::JSON => "json",
+            Encoding::Json => "json",
         };
         f.write_str(s)
     }
@@ -37,8 +37,8 @@ impl FromStr for Encoding {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "borsh" => Ok(Encoding::Borsh),
-            "json" => Ok(Encoding::JSON),
-            "serde-json" => Ok(Encoding::JSON),
+            "json" => Ok(Encoding::Json),
+            "serde-json" => Ok(Encoding::Json),
             _ => Err(Error::Encoding(
                 "invalid encoding: {s} (must be: 'borsh' or 'json')".to_string(),
             )),
@@ -51,7 +51,7 @@ impl TryFrom<u8> for Encoding {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Encoding::Borsh),
-            1 => Ok(Encoding::JSON),
+            1 => Ok(Encoding::Json),
             _ => Err(Error::Encoding(
                 "invalid encoding: {value} (must be: Encoding.Borsh (0) or Encoding.JSON (1))"
                     .to_string(),
@@ -77,7 +77,7 @@ impl TryFrom<JsValue> for Encoding {
     }
 }
 
-const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::JSON];
+const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::Json];
 
 impl Encoding {
     pub fn iter() -> impl Iterator<Item = &'static Encoding> {

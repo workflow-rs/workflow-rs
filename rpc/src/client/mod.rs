@@ -304,7 +304,7 @@ where
     /// are:
     ///
     /// - [`Encoding::Borsh`]
-    /// - [`Encoding::JSON`]
+    /// - [`Encoding::Json`]
     ///
     ///
     pub fn new_with_encoding(
@@ -315,7 +315,7 @@ where
     ) -> Result<RpcClient<Ops, Id>> {
         match encoding {
             Encoding::Borsh => Self::new::<BorshProtocol<Ops, Id>>(interface, options, config),
-            Encoding::JSON => Self::new::<JsonProtocol<Ops, Id>>(interface, options, config),
+            Encoding::Json => Self::new::<JsonProtocol<Ops, Id>>(interface, options, config),
         }
     }
 
