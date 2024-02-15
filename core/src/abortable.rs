@@ -8,6 +8,7 @@ use std::sync::{
     Arc,
 };
 
+/// Error emitted by [`Abortable`].
 /// @category General
 #[wasm_bindgen]
 pub struct Aborted;
