@@ -107,7 +107,7 @@ pub async fn server_main() -> RpcServerResult<()> {
 
     let handler = Arc::new(ExampleRpcHandler::new());
     let encoding = if json {
-        Encoding::Json
+        Encoding::SerdeJson
     } else {
         Encoding::Borsh
     };

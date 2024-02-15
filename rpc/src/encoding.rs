@@ -18,7 +18,7 @@ use wasm_bindgen::{convert::TryFromJsValue, prelude::*};
 pub enum Encoding {
     Borsh = 0,
     #[serde(rename = "json")]
-    Json = 1,
+    SerdeJson = 1,
 }
 
 impl Display for Encoding {
@@ -26,7 +26,7 @@ impl Display for Encoding {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             Encoding::Borsh => "borsh",
-            Encoding::Json => "json",
+            Encoding::SerdeJson => "json",
         };
         f.write_str(s)
     }
@@ -37,8 +37,8 @@ impl FromStr for Encoding {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "borsh" => Ok(Encoding::Borsh),
-            "json" => Ok(Encoding::Json),
-            "serde-json" => Ok(Encoding::Json),
+            "json" => Ok(Encoding::SerdeJson),
+            "serde-json" => Ok(Encoding::SerdeJson),
             _ => Err(Error::Encoding(
                 "invalid encoding: {s} (must be: 'borsh' or 'json')".to_string(),
             )),
@@ -51,7 +51,7 @@ impl TryFrom<u8> for Encoding {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Encoding::Borsh),
-            1 => Ok(Encoding::Json),
+            1 => Ok(Encoding::SerdeJson),
             _ => Err(Error::Encoding(
                 "invalid encoding: {value} (must be: Encoding.Borsh (0) or Encoding.JSON (1))"
                     .to_string(),
@@ -77,7 +77,7 @@ impl TryFrom<JsValue> for Encoding {
     }
 }
 
-const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::Json];
+const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::SerdeJson];
 
 impl Encoding {
     pub fn iter() -> impl Iterator<Item = &'static Encoding> {

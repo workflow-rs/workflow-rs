@@ -48,7 +48,7 @@ where
     }
 
     fn encoding(&self) -> Encoding {
-        Encoding::Json
+        Encoding::SerdeJson
     }
 
     async fn handle_message(

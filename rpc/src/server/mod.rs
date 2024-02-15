@@ -196,7 +196,7 @@ impl Messenger {
                         op, msg,
                     )?)?;
             }
-            Encoding::Json => {
+            Encoding::SerdeJson => {
                 self.sink
                     .send(protocol::serde_json::create_serialized_notification_message(op, msg)?)?;
             }
@@ -220,7 +220,7 @@ impl Messenger {
             Encoding::Borsh => Ok(protocol::borsh::create_serialized_notification_message(
                 op, msg,
             )?),
-            Encoding::Json => {
+            Encoding::SerdeJson => {
                 Ok(protocol::serde_json::create_serialized_notification_message(op, msg)?)
             }
         }
@@ -424,7 +424,7 @@ impl RpcServer {
     /// Ids such as [`Id32`] and [`Id64`] can be found in the [`id`](crate::id) module.
     ///
     /// This function call receives an `encoding`: [`Encoding`] argument containing
-    /// [`Encoding::Borsh`] or [`Encoding::Json`], based on which it will
+    /// [`Encoding::Borsh`] or [`Encoding::SerdeJson`], based on which it will
     /// instantiate the corresponding protocol handler ([`BorshProtocol`] or
     /// [`JsonProtocol`] respectively).
     ///
@@ -447,7 +447,7 @@ impl RpcServer {
                 BorshProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
             >(rpc_handler, interface, counters),
-            Encoding::Json => RpcServer::new::<
+            Encoding::SerdeJson => RpcServer::new::<
                 ServerContext,
                 ConnectionContext,
                 JsonProtocol<ServerContext, ConnectionContext, Ops, Id>,
