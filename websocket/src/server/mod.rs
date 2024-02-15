@@ -117,11 +117,8 @@ where
     ) -> Result<()>;
 
     async fn ctl(self: &Arc<Self>, msg: Message, sender: &mut WebSocketSender) -> Result<()> {
-        match msg {
-            Message::Ping(data) => {
-                sender.send(Message::Pong(data)).await?;
-            }
-            _ => (),
+        if let Message::Ping(data) = msg {
+            sender.send(Message::Pong(data)).await?;
         }
         Ok(())
     }

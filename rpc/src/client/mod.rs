@@ -260,7 +260,7 @@ where
     Id: IdT,
 {
     Borsh(Arc<BorshProtocol<Ops, Id>>),
-    JSON(Arc<JsonProtocol<Ops, Id>>),
+    Json(Arc<JsonProtocol<Ops, Id>>),
 }
 
 impl<Ops, Id> From<Arc<dyn ProtocolHandler<Ops>>> for Protocol<Ops, Id>
@@ -272,7 +272,7 @@ where
         if let Ok(protocol) = protocol.clone().downcast_arc::<BorshProtocol<Ops, Id>>() {
             Protocol::Borsh(protocol)
         } else if let Ok(protocol) = protocol.clone().downcast_arc::<JsonProtocol<Ops, Id>>() {
-            Protocol::JSON(protocol)
+            Protocol::Json(protocol)
         } else {
             panic!()
         }
@@ -411,7 +411,7 @@ where
             Protocol::Borsh(protocol) => {
                 protocol.notify(op, payload).await?;
             }
-            Protocol::JSON(protocol) => {
+            Protocol::Json(protocol) => {
                 protocol.notify(op, payload).await?;
             }
         }
@@ -438,7 +438,7 @@ where
 
         match &self.protocol {
             Protocol::Borsh(protocol) => Ok(protocol.request(op, req).await?),
-            Protocol::JSON(protocol) => Ok(protocol.request(op, req).await?),
+            Protocol::Json(protocol) => Ok(protocol.request(op, req).await?),
         }
     }
 }

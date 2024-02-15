@@ -18,7 +18,7 @@ use wasm_bindgen::{convert::TryFromJsValue, prelude::*};
 pub enum Encoding {
     Borsh = 0,
     #[serde(rename = "json")]
-    JSON = 1,
+    Json = 1,
 }
 
 impl Display for Encoding {
