@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 cargo fmt --all
 cargo clippy --workspace --tests --benches
 if [ $? -eq 0 ]; then
