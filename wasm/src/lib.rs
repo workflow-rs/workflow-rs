@@ -34,6 +34,3 @@ cfg_if! {
         pub mod stream;
     }
 }
-
-#[cfg(all(feature = "channels", not(target_os = "solana")))]
-pub mod channel;
