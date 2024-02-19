@@ -11,26 +11,23 @@
 //!
 
 extern crate self as workflow_wasm;
-use cfg_if::cfg_if;
 
-cfg_if! {
-    if #[cfg(not(target_os = "solana"))] {
-        pub mod abi;
-        pub mod error;
-        pub mod result;
-        pub mod callback;
-        pub mod init;
-        pub mod options;
-        pub mod panic;
-        pub mod prelude;
-        pub mod promise;
-        pub mod jserror;
-        pub mod utils;
-        pub mod serde;
-        pub mod printable;
-        pub mod extensions;
+pub mod abi;
+pub mod callback;
+pub mod error;
+pub mod extensions;
+pub mod init;
+pub mod jserror;
+pub mod options;
+pub mod panic;
+pub mod prelude;
+pub mod printable;
+pub mod result;
+pub mod serde;
+pub mod utils;
 
-        #[cfg(not(feature = "no-unsafe-eval"))]
-        pub mod stream;
-    }
-}
+#[cfg(feature = "defer")]
+pub mod defer;
+
+#[cfg(feature = "async-stream")]
+pub mod stream;

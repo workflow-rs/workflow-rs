@@ -14,7 +14,9 @@ WASM utilities for in-browser use (timers, callbacks, etc.)
 
 [features]
 no-unsafe-eval = []
-default = []
+async-stream = []
+defer = []
+default = ["defer"]
 
 [lib]
 crate-type = ["cdylib", "lib"]

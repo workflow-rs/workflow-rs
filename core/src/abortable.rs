@@ -1,6 +1,7 @@
 //!
 //! Abortable trigger, can be used to cancel (abort) an asynchronous task.
 //!
+
 use wasm_bindgen::prelude::*;
 
 use std::sync::{
