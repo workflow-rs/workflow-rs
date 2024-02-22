@@ -25,7 +25,7 @@ pub use config::WebSocketConfig;
 pub use error::Error;
 use futures::Future;
 pub use message::*;
-pub use options::{ConnectOptions, ConnectStrategy, Options};
+pub use options::{ConnectOptions, ConnectStrategy};
 pub use result::Result;
 
 use async_trait::async_trait;
@@ -44,6 +44,13 @@ pub trait Handshake: Send + Sync + 'static {
     async fn handshake(&self, sender: &Sender<Message>, receiver: &Receiver<Message>)
         -> Result<()>;
 }
+
+#[async_trait]
+pub trait Resolver: Send + Sync + 'static {
+    async fn resolve_url(&self) -> ResolverResult;
+}
+pub type ResolverResult = Result<String>;
+pub type WebSocketError = Error;
 
 struct Inner {
     client: Arc<WebSocketInterface>,
@@ -75,24 +82,22 @@ pub struct WebSocket {
 
 impl WebSocket {
     /// Create a new WebSocket instance connecting to the given URL.
-    pub fn new(
-        url: Option<&str>,
-        options: Options,
-        config: Option<WebSocketConfig>,
-    ) -> Result<WebSocket> {
+    pub fn new(url: Option<&str>, config: Option<WebSocketConfig>) -> Result<WebSocket> {
         if let Some(url) = url {
             if !url.starts_with("ws://") && !url.starts_with("wss://") {
                 return Err(Error::AddressSchema(url.to_string()));
             }
         }
 
-        let receiver_channel = if let Some(cap) = options.receiver_channel_cap {
+        let config = config.unwrap_or_default();
+
+        let receiver_channel = if let Some(cap) = config.receiver_channel_cap {
             Channel::bounded(cap)
         } else {
             Channel::<Message>::unbounded()
         };
 
-        let sender_channel = if let Some(cap) = options.sender_channel_cap {
+        let sender_channel = if let Some(cap) = config.sender_channel_cap {
             Channel::bounded(cap)
         } else {
             Channel::<(Message, Ack)>::unbounded()
@@ -100,10 +105,9 @@ impl WebSocket {
 
         let client = Arc::new(WebSocketInterface::new(
             url,
+            Some(config),
             sender_channel.clone(),
             receiver_channel.clone(),
-            options,
-            config,
         )?);
 
         let websocket = WebSocket {
@@ -115,14 +119,22 @@ impl WebSocket {
 
     /// Get current websocket connection URL
     pub fn url(&self) -> Option<String> {
-        self.inner.client.url()
+        self.inner.client.current_url()
     }
 
     /// Changes WebSocket connection URL.
     /// Following this call, you must invoke
     /// `WebSocket::reconnect().await` manually
     pub fn set_url(&self, url: &str) {
-        self.inner.client.set_url(url);
+        self.inner.client.set_default_url(url);
+    }
+
+    /// Configure WebSocket connection settings
+    /// Can be supplied after the WebSocket has been
+    /// has been created to alter the configuration
+    /// for the next connection.
+    pub fn configure(&self, config: WebSocketConfig) {
+        self.inner.client.configure(config);
     }
 
     /// Returns the reference to the Sender channel

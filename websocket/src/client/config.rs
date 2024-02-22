@@ -2,16 +2,17 @@
 //! WebSocket client configuration options
 //!
 
-use super::{error::Error, result::Result};
+use super::{error::Error, result::Result, Handshake, Resolver};
 use cfg_if::cfg_if;
 use js_sys::Object;
+use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use workflow_wasm::extensions::object::*;
 
 ///
 /// Configuration struct for WebSocket client (native Tungstenite and NodeJs connections only)
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct WebSocketConfig {
     /// The target minimum size of the write buffer to reach before writing the data
     /// to the underlying stream.
@@ -48,6 +49,19 @@ pub struct WebSocketConfig {
     /// some popular libraries that are sending unmasked frames, ignoring the RFC.
     /// By default this option is set to `false`, i.e. according to RFC 6455.
     pub accept_unmasked_frames: bool,
+    /// The capacity of the channel used to queue incoming messages from WebSocket.
+    pub receiver_channel_cap: Option<usize>,
+    /// The capacity of the channel used to queue outgoing messages to WebSocket.
+    pub sender_channel_cap: Option<usize>,
+    /// Handshake handler for WebSocket connections. If supplied, it will be called
+    /// when the connection is established. The handshake handler can be used to
+    /// perform additional validation or setup before the connection is used.
+    pub handshake: Option<Arc<dyn Handshake>>,
+    /// Resolver for WebSocket connections. If supplied, it will be called to resolve
+    /// the URL before the connection is established. The resolver can be used as
+    /// an alternative to supplying the URL and will be invoked each time the
+    /// websocket needs to be connected or reconnected.
+    pub resolver: Option<Arc<dyn Resolver>>,
 }
 
 impl Default for WebSocketConfig {
@@ -58,6 +72,10 @@ impl Default for WebSocketConfig {
             max_message_size: Some(64 << 20),
             max_frame_size: Some(16 << 20),
             accept_unmasked_frames: false,
+            receiver_channel_cap: None,
+            sender_channel_cap: None,
+            handshake: None,
+            resolver: None,
         }
     }
 }

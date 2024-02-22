@@ -9,6 +9,9 @@ use workflow_wasm::printable::*;
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("{0}")]
+    Custom(String),
+
+    #[error("{0}")]
     JsValue(Sendable<Printable>),
 
     #[error("PoisonError")]
@@ -89,6 +92,24 @@ pub enum Error {
 
     #[error("Invalid connect strategy")]
     InvalidConnectStrategy,
+}
+
+impl Error {
+    pub fn custom<T: std::fmt::Display>(message: T) -> Self {
+        Error::Custom(message.to_string())
+    }
+}
+
+impl From<String> for Error {
+    fn from(error: String) -> Error {
+        Error::Custom(error)
+    }
+}
+
+impl From<&str> for Error {
+    fn from(error: &str) -> Error {
+        Error::Custom(error.to_string())
+    }
 }
 
 impl From<Error> for JsValue {

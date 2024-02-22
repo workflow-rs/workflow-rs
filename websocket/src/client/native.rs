@@ -1,6 +1,6 @@
 use super::{
     error::Error, message::Message, result::Result, Ack, ConnectOptions, ConnectResult,
-    ConnectStrategy, Handshake, Options, WebSocketConfig,
+    ConnectStrategy, Handshake, Resolver, WebSocketConfig,
 };
 use futures::{
     select_biased,
@@ -61,57 +61,101 @@ impl From<WebSocketConfig> for TsWebSocketConfig {
     }
 }
 
+#[derive(Default)]
 struct Settings {
-    url: Option<String>,
+    default_url: Option<String>,
+    current_url: Option<String>,
 }
 
 pub struct WebSocketInterface {
-    settings: Arc<Mutex<Settings>>,
-    config: Option<WebSocketConfig>,
+    settings: Mutex<Settings>,
+    config: Mutex<WebSocketConfig>,
     reconnect: AtomicBool,
     is_open: AtomicBool,
     receiver_channel: Channel<Message>,
     sender_channel: Channel<(Message, Ack)>,
     shutdown: DuplexChannel<()>,
-    handshake: Option<Arc<dyn Handshake>>,
 }
 
 impl WebSocketInterface {
     pub fn new(
         url: Option<&str>,
+        config: Option<WebSocketConfig>,
         sender_channel: Channel<(Message, Ack)>,
         receiver_channel: Channel<Message>,
-        options: Options,
-        config: Option<WebSocketConfig>,
     ) -> Result<WebSocketInterface> {
         let settings = Settings {
-            url: url.map(String::from),
+            default_url: url.map(String::from),
+            ..Default::default()
         };
 
         let iface = WebSocketInterface {
-            settings: Arc::new(Mutex::new(settings)),
-            config,
+            settings: Mutex::new(settings),
+            config: Mutex::new(config.unwrap_or_default()),
             receiver_channel,
             sender_channel,
             reconnect: AtomicBool::new(true),
             is_open: AtomicBool::new(false),
             shutdown: DuplexChannel::unbounded(),
-            handshake: options.handshake,
         };
 
         Ok(iface)
     }
 
-    pub fn url(self: &Arc<Self>) -> Option<String> {
-        self.settings.lock().unwrap().url.clone()
+    pub fn default_url(self: &Arc<Self>) -> Option<String> {
+        self.settings.lock().unwrap().default_url.clone()
     }
 
-    pub fn set_url(self: &Arc<Self>, url: &str) {
-        self.settings.lock().unwrap().url.replace(url.to_string());
+    pub fn current_url(self: &Arc<Self>) -> Option<String> {
+        self.settings.lock().unwrap().current_url.clone()
+    }
+
+    pub fn set_default_url(self: &Arc<Self>, url: &str) {
+        self.settings
+            .lock()
+            .unwrap()
+            .default_url
+            .replace(url.to_string());
+    }
+
+    pub fn set_current_url(self: &Arc<Self>, url: &str) {
+        self.settings
+            .lock()
+            .unwrap()
+            .current_url
+            .replace(url.to_string());
     }
 
     pub fn is_open(self: &Arc<Self>) -> bool {
         self.is_open.load(Ordering::SeqCst)
+    }
+
+    fn resolver(&self) -> Option<Arc<dyn Resolver>> {
+        self.config.lock().unwrap().resolver.clone()
+    }
+
+    fn handshake(&self) -> Option<Arc<dyn Handshake>> {
+        self.config.lock().unwrap().handshake.clone()
+    }
+
+    pub fn configure(&self, config: WebSocketConfig) {
+        *self.config.lock().unwrap() = config;
+    }
+
+    fn config(&self) -> WebSocketConfig {
+        self.config.lock().unwrap().clone()
+    }
+
+    async fn resolve_url(self: &Arc<Self>, options: &ConnectOptions) -> Result<String> {
+        let url = if let Some(url) = options.url.as_ref().or(self.default_url().as_ref()) {
+            url.clone()
+        } else if let Some(resolver) = self.resolver() {
+            resolver.resolve_url().await?
+        } else {
+            return Err(Error::MissingUrl);
+        };
+        self.set_current_url(&url);
+        Ok(url)
     }
 
     pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
@@ -126,76 +170,87 @@ impl WebSocketInterface {
 
         this.reconnect.store(true, Ordering::SeqCst);
 
-        let options_ = options.clone();
-        if let Some(url) = options.url.as_ref() {
-            self.set_url(url);
-        }
-
-        if this.url().is_none() {
-            return Err(Error::MissingUrl);
-        }
-
-        let ts_websocket_config = self.config.clone().map(|config| config.into());
+        let block_async_connect = options.block_async_connect;
+        let ts_websocket_config = Some(self.config().into());
 
         core::task::spawn(async move {
-            loop {
-                let url = this.url().clone().expect("missing URL");
-                let connect_future = connect_async_with_config(&url, ts_websocket_config, false);
-                let timeout_future = timeout(options_.connect_timeout(), connect_future);
+            'outer: loop {
+                match this.resolve_url(&options).await {
+                    Ok(url) => {
+                        let connect_future =
+                            connect_async_with_config(&url, ts_websocket_config, false);
+                        let timeout_future = timeout(options.connect_timeout(), connect_future);
 
-                match timeout_future.await {
-                    // connect success
-                    Ok(Ok(stream)) => {
-                        // log_trace!("connected...");
+                        match timeout_future.await {
+                            // connect success
+                            Ok(Ok(stream)) => {
+                                // log_trace!("connected...");
 
-                        this.is_open.store(true, Ordering::SeqCst);
-                        let (mut ws_stream, _) = stream;
+                                this.is_open.store(true, Ordering::SeqCst);
+                                let (mut ws_stream, _) = stream;
 
-                        if connect_trigger.is_some() {
-                            connect_trigger.take().unwrap().try_send(Ok(())).ok();
-                        }
+                                if connect_trigger.is_some() {
+                                    connect_trigger.take().unwrap().try_send(Ok(())).ok();
+                                }
 
-                        if let Err(err) = this.dispatcher(&mut ws_stream).await {
-                            log_trace!("WebSocket dispatcher error: {}", err);
-                        }
+                                if let Err(err) = this.dispatcher(&mut ws_stream).await {
+                                    log_trace!("WebSocket dispatcher error: {}", err);
+                                }
 
-                        this.is_open.store(false, Ordering::SeqCst);
-                    }
-                    // connect error
-                    Ok(Err(e)) => {
-                        log_trace!("WebSocket failed to connect to {}: {}", url, e);
-                        if matches!(options_.strategy, ConnectStrategy::Fallback) {
-                            if options.block_async_connect && connect_trigger.is_some() {
-                                connect_trigger.take().unwrap().try_send(Err(e.into())).ok();
+                                this.is_open.store(false, Ordering::SeqCst);
                             }
-                            break;
-                        }
-                        workflow_core::task::sleep(options_.retry_interval()).await;
-                    }
-                    // timeout error
-                    Err(_) => {
-                        log_trace!("WebSocket connection timeout while connecting to {}", url);
-                        if matches!(options_.strategy, ConnectStrategy::Fallback) {
-                            if options.block_async_connect && connect_trigger.is_some() {
-                                connect_trigger
-                                    .take()
-                                    .unwrap()
-                                    .try_send(Err(Error::ConnectionTimeout))
-                                    .ok();
+                            // connect error
+                            Ok(Err(e)) => {
+                                log_trace!("WebSocket failed to connect to {}: {}", url, e);
+                                if matches!(options.strategy, ConnectStrategy::Fallback) {
+                                    if options.block_async_connect && connect_trigger.is_some() {
+                                        connect_trigger
+                                            .take()
+                                            .unwrap()
+                                            .try_send(Err(e.into()))
+                                            .ok();
+                                    }
+                                    break;
+                                }
+                                workflow_core::task::sleep(options.retry_interval()).await;
                             }
-                            break;
-                        }
-                        workflow_core::task::sleep(options_.retry_interval()).await;
-                    }
-                };
+                            // timeout error
+                            Err(_) => {
+                                log_trace!(
+                                    "WebSocket connection timeout while connecting to {}",
+                                    url
+                                );
+                                if matches!(options.strategy, ConnectStrategy::Fallback) {
+                                    if options.block_async_connect && connect_trigger.is_some() {
+                                        connect_trigger
+                                            .take()
+                                            .unwrap()
+                                            .try_send(Err(Error::ConnectionTimeout))
+                                            .ok();
+                                    }
+                                    break;
+                                }
+                                workflow_core::task::sleep(options.retry_interval()).await;
+                            }
+                        };
 
-                if !this.reconnect.load(Ordering::SeqCst) {
-                    break;
-                };
+                        if !this.reconnect.load(Ordering::SeqCst) {
+                            break 'outer;
+                        };
+                    }
+                    Err(err) => {
+                        log_trace!("WebSocket failed to get session URL: {}", err);
+                        if !this.reconnect.load(Ordering::SeqCst) {
+                            break 'outer;
+                        } else {
+                            workflow_core::task::sleep(options.retry_interval()).await;
+                        }
+                    }
+                }
             }
         });
 
-        match options.block_async_connect {
+        match block_async_connect {
             true => match connect_listener.recv().await? {
                 Ok(_) => Ok(None),
                 Err(e) => Err(e),
@@ -204,12 +259,12 @@ impl WebSocketInterface {
         }
     }
 
-    async fn handshake(
+    async fn handshake_impl(
         self: &Arc<Self>,
         ws_sender: &mut SplitSink<&mut WebSocketStream<MaybeTlsStream<TcpStream>>, TsMessage>,
         ws_receiver: &mut SplitStream<&mut WebSocketStream<MaybeTlsStream<TcpStream>>>,
     ) -> Result<()> {
-        if let Some(handshake) = self.handshake.as_ref().cloned() {
+        if let Some(handshake) = self.handshake() {
             let (sender_tx, sender_rx) = unbounded();
             let (receiver_tx, receiver_rx) = unbounded();
             let (accept_tx, accept_rx) = oneshot();
@@ -253,7 +308,8 @@ impl WebSocketInterface {
     ) -> Result<()> {
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
 
-        self.handshake(&mut ws_sender, &mut ws_receiver).await?;
+        self.handshake_impl(&mut ws_sender, &mut ws_receiver)
+            .await?;
 
         self.receiver_channel.send(Message::Open).await?;
 
@@ -307,8 +363,6 @@ impl WebSocketInterface {
                 }
             }
         }
-
-        // *self.inner.lock().unwrap() = None;
 
         Ok(())
     }

@@ -18,7 +18,8 @@ pub use protocol::{BorshProtocol, JsonProtocol};
 use std::fmt::Debug;
 use workflow_core::{channel::Multiplexer, task::yield_now};
 pub use workflow_websocket::client::{
-    ConnectOptions, ConnectResult, ConnectStrategy, WebSocketConfig,
+    ConnectOptions, ConnectResult, ConnectStrategy, Resolver, ResolverResult, WebSocketConfig,
+    WebSocketError,
 };
 
 #[cfg(feature = "wasm32-sdk")]
@@ -72,8 +73,23 @@ pub trait NotificationHandler: Send + Sync + 'static {
 #[derive(Default)]
 pub struct Options<'url> {
     pub ctl_multiplexer: Option<Multiplexer<Ctl>>,
-    pub handshake: Option<Arc<dyn Handshake>>,
     pub url: Option<&'url str>,
+}
+
+impl<'url> Options<'url> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_url(mut self, url: &'url str) -> Self {
+        self.url = Some(url);
+        self
+    }
+
+    pub fn with_ctl_multiplexer(mut self, ctl_multiplexer: Multiplexer<Ctl>) -> Self {
+        self.ctl_multiplexer = Some(ctl_multiplexer);
+        self
+    }
 }
 
 struct Inner<Ops> {
@@ -97,7 +113,7 @@ where
     fn new<T>(
         ws: Arc<WebSocket>,
         protocol: Arc<dyn ProtocolHandler<Ops>>,
-        options: Options<'_>,
+        options: Options,
     ) -> Result<Self>
     where
         T: ProtocolHandler<Ops> + Send + Sync + 'static,
@@ -310,7 +326,7 @@ where
     pub fn new_with_encoding(
         encoding: Encoding,
         interface: Option<Arc<Interface<Ops>>>,
-        options: Options<'_>,
+        options: Options,
         config: Option<WebSocketConfig>,
     ) -> Result<RpcClient<Ops, Id>> {
         match encoding {
@@ -332,21 +348,15 @@ where
     ///
     pub fn new<T>(
         interface: Option<Arc<Interface<Ops>>>,
-        options: Options<'_>,
+        options: Options,
         config: Option<WebSocketConfig>,
     ) -> Result<RpcClient<Ops, Id>>
     where
         T: ProtocolHandler<Ops> + Send + Sync + 'static,
     {
-        let ws_options = WebSocketOptions {
-            handshake: options.handshake.clone(),
-            ..WebSocketOptions::default()
-        };
-
-        // let url = sanitize_url(options.url)?;
         let url = options.url.map(sanitize_url).transpose()?;
 
-        let ws = Arc::new(WebSocket::new(url.as_deref(), ws_options, config)?);
+        let ws = Arc::new(WebSocket::new(url.as_deref(), config)?);
         let protocol: Arc<dyn ProtocolHandler<Ops>> = Arc::new(T::new(ws.clone(), interface));
         let inner = Arc::new(Inner::new::<T>(ws, protocol.clone(), options)?);
 
@@ -383,13 +393,25 @@ where
         self.inner.ws.is_open()
     }
 
+    /// Obtain the current URL of the underlying WebSocket
     pub fn url(&self) -> Option<String> {
         self.inner.ws.url()
     }
 
+    /// Change the URL of the underlying WebSocket
+    /// (applicable only to the next connection).
+    /// Alternatively, the new URL can be supplied
+    /// in the `connect()` method using [`ConnectOptions`].
     pub fn set_url(&self, url: &str) -> Result<()> {
         self.inner.ws.set_url(url);
         Ok(())
+    }
+
+    /// Change the configuration of the underlying WebSocket.
+    /// This method can be used to alter the configuration
+    /// for the next connection.
+    pub fn configure(&self, config: WebSocketConfig) {
+        self.inner.ws.configure(config);
     }
 
     ///
@@ -448,7 +470,4 @@ fn sanitize_url(url: &str) -> Result<String> {
         .replace("wrpc://", "ws://")
         .replace("wrpcs://", "wss://");
     Ok(url)
-    // let url = Regex::new(r"^wrpc://")?.replace(url, "ws://");
-    // let url = Regex::new(r"^wrpcs://")?.replace(&url, "wss://");
-    // url.to_string()
 }

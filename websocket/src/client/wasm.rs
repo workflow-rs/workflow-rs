@@ -3,7 +3,7 @@ use super::{
     error::Error,
     message::{Ack, Message},
     result::Result,
-    ConnectOptions, ConnectResult, Handshake, Options, WebSocketConfig,
+    ConnectOptions, ConnectResult, Handshake, Resolver, WebSocketConfig,
 };
 use futures::{select, select_biased, FutureExt};
 use js_sys::{ArrayBuffer, Uint8Array};
@@ -86,8 +86,12 @@ impl From<W3CWebSocket> for WebSocket {
     }
 }
 
+#[derive(Default)]
 struct Settings {
-    url: Option<String>,
+    // default url WebSocket should connect to
+    default_url: Option<String>,
+    // URL WebSocket is currently connected to
+    current_url: Option<String>,
 }
 
 #[allow(dead_code)]
@@ -102,70 +106,101 @@ unsafe impl Sync for Inner {}
 pub struct WebSocketInterface {
     inner: Arc<Mutex<Option<Inner>>>,
     settings: Arc<Mutex<Settings>>,
+    config: Mutex<WebSocketConfig>,
     reconnect: AtomicBool,
     is_open: AtomicBool,
     event_channel: Channel<Message>,
     sender_channel: Channel<(Message, Ack)>,
     receiver_channel: Channel<Message>,
-    handshake: Option<Arc<dyn Handshake>>,
     dispatcher_shutdown: DuplexChannel,
-    config: WebSocketConfig,
 }
 
 impl WebSocketInterface {
     pub fn new(
         url: Option<&str>,
+        config: Option<WebSocketConfig>,
         sender_channel: Channel<(Message, Ack)>,
         receiver_channel: Channel<Message>,
-        options: Options,
-        config: Option<WebSocketConfig>,
     ) -> Result<WebSocketInterface> {
         sanity_checks()?;
 
         let settings = Settings {
-            url: url.map(String::from),
+            default_url: url.map(String::from),
+            ..Default::default()
         };
 
         let iface = WebSocketInterface {
             inner: Arc::new(Mutex::new(None)),
             settings: Arc::new(Mutex::new(settings)),
+            config: Mutex::new(config.unwrap_or_default()),
             sender_channel,
             receiver_channel,
             event_channel: Channel::unbounded(),
             reconnect: AtomicBool::new(true),
             is_open: AtomicBool::new(false),
-            handshake: options.handshake,
             dispatcher_shutdown: DuplexChannel::unbounded(),
-            config: config.unwrap_or_default(),
         };
 
         Ok(iface)
     }
 
-    pub fn url(self: &Arc<Self>) -> Option<String> {
-        self.settings.lock().unwrap().url.clone()
+    pub fn default_url(self: &Arc<Self>) -> Option<String> {
+        self.settings.lock().unwrap().default_url.clone()
     }
 
-    pub fn set_url(self: &Arc<Self>, url: &str) {
-        self.settings.lock().unwrap().url.replace(url.to_string());
+    pub fn current_url(self: &Arc<Self>) -> Option<String> {
+        self.settings.lock().unwrap().current_url.clone()
+    }
+
+    pub fn set_default_url(self: &Arc<Self>, url: &str) {
+        self.settings
+            .lock()
+            .unwrap()
+            .default_url
+            .replace(url.to_string());
+    }
+
+    pub fn set_current_url(self: &Arc<Self>, url: &str) {
+        self.settings
+            .lock()
+            .unwrap()
+            .current_url
+            .replace(url.to_string());
     }
 
     pub fn is_open(self: &Arc<Self>) -> bool {
         self.is_open.load(Ordering::SeqCst)
     }
 
+    fn resolver(&self) -> Option<Arc<dyn Resolver>> {
+        self.config.lock().unwrap().resolver.clone()
+    }
+
+    fn handshake(&self) -> Option<Arc<dyn Handshake>> {
+        self.config.lock().unwrap().handshake.clone()
+    }
+
+    pub fn configure(&self, config: WebSocketConfig) {
+        *self.config.lock().unwrap() = config;
+    }
+
+    async fn resolve_url(self: &Arc<Self>, options: &ConnectOptions) -> Result<String> {
+        let url = if let Some(url) = options.url.as_ref().or(self.default_url().as_ref()) {
+            url.clone()
+        } else if let Some(resolver) = self.resolver() {
+            resolver.resolve_url().await?
+        } else {
+            return Err(Error::MissingUrl);
+        };
+        self.set_current_url(&url);
+        Ok(url)
+    }
+
     pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
         let (connect_trigger, connect_listener) = oneshot::<Result<()>>();
 
-        if let Some(url) = options.url.as_ref() {
-            self.set_url(url);
-        }
-
-        if self.url().is_none() {
-            return Err(Error::MissingUrl);
-        }
-
-        self.connect_impl(options.clone(), Some(connect_trigger))?;
+        let connect_trigger = Arc::new(Mutex::new(Some(connect_trigger)));
+        self.connect_impl(options.clone(), connect_trigger).await?;
 
         match options.block_async_connect {
             true => match connect_listener.recv().await? {
@@ -176,23 +211,72 @@ impl WebSocketInterface {
         }
     }
 
-    fn connect_impl(
+    fn retry_connect_impl(
+        self: Arc<Self>,
+        options: ConnectOptions,
+        connect_trigger: Arc<Mutex<Option<Sender<Result<()>>>>>,
+    ) -> futures::future::BoxFuture<'static, Result<()>> {
+        Box::pin(async move { self.connect_impl(options, connect_trigger).await })
+            as futures::future::BoxFuture<'static, Result<()>>
+    }
+
+    async fn connect_impl(
         self: &Arc<Self>,
         options: ConnectOptions,
-        connect_trigger: Option<Sender<Result<()>>>,
+        connect_trigger: Arc<Mutex<Option<Sender<Result<()>>>>>,
     ) -> Result<()> {
-        let mut inner = self.inner.lock().unwrap();
-        if inner.is_some() {
+        if self.inner.lock().unwrap().is_some() {
             log_warning!("WebSocket::connect() called while already initialized");
 
             return Err(Error::AlreadyInitialized);
         }
 
-        let connect_trigger = Arc::new(Mutex::new(connect_trigger));
-
         self.reconnect.store(true, Ordering::SeqCst);
-        let url = self.url().expect("Missing WebSocket URL");
-        let ws = WebSocket::new_with_config(&url, &self.config)?;
+
+        let url = match self.resolve_url(&options).await {
+            Ok(url) => url,
+            Err(err) => {
+                log_trace!("WebSocket unable to resolve URL: {err}");
+                let self_ = self.clone();
+
+                if options.strategy.is_fallback() {
+                    self.reconnect.store(false, Ordering::SeqCst);
+
+                    // let connect_trigger = connect_trigger.lock().unwrap().take();
+                    // if let Some(connect_trigger) = connect_trigger {
+                    //     connect_trigger.send(Err(err)).await.ok();
+                    // }
+
+                    return Err(err);
+                }
+
+                let connect_trigger_ = connect_trigger.clone();
+                spawn(async move {
+                    // if reconnect is true, we sleep for reconnect interval and try to reconnect
+                    if self_.reconnect.load(Ordering::SeqCst) {
+                        workflow_core::task::sleep(
+                            options
+                                .retry_interval
+                                .unwrap_or(std::time::Duration::from_millis(1000)),
+                        )
+                        .await;
+                        // check again if reconnect may have been disabled during sleep
+                        if self_.reconnect.load(Ordering::SeqCst) {
+                            self_
+                                .retry_connect_impl(options, connect_trigger_)
+                                .await
+                                .ok();
+                        }
+                    }
+                });
+
+                return Ok(());
+            }
+        };
+
+        let mut inner = self.inner.lock().unwrap();
+
+        let ws = WebSocket::new_with_config(&url, &self.config.lock().unwrap())?;
         ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
 
         // - Message
@@ -246,7 +330,7 @@ impl WebSocketInterface {
         let self_ = self.clone();
         spawn(async move {
             self_
-                .dispatcher_task(&ws, options.clone(), connect_trigger)
+                .dispatcher_task(&ws, options.clone(), connect_trigger.clone())
                 .await
                 .unwrap_or_else(|err| log_trace!("WebSocket error: {err}"));
             // if reconnect is true, we sleep for reconnect interval and try to reconnect
@@ -259,7 +343,7 @@ impl WebSocketInterface {
                 .await;
                 // check again if reconnect may have been disabled during sleep
                 if self_.reconnect.load(Ordering::SeqCst) {
-                    self_.reconnect().await.ok();
+                    self_.reconnect(options, connect_trigger).await.ok();
                 }
             }
         });
@@ -285,8 +369,8 @@ impl WebSocketInterface {
         }
     }
 
-    async fn handshake(self: &Arc<Self>, ws: &WebSocket) -> Result<()> {
-        if let Some(handshake) = self.handshake.as_ref().cloned() {
+    async fn handshake_impl(self: &Arc<Self>, ws: &WebSocket) -> Result<()> {
+        if let Some(handshake) = self.handshake() {
             let (sender_tx, sender_rx) = unbounded();
             let (receiver_tx, receiver_rx) = unbounded();
             let (accept_tx, accept_rx) = oneshot();
@@ -344,7 +428,7 @@ impl WebSocketInterface {
                                     // log_info!("WebSocket connected to {}",self.url());
 
                                     // handle handshake failure
-                                    if let Err(err) = self.handshake(ws).await {
+                                    if let Err(err) = self.handshake_impl(ws).await {
                                         log_info!("WebSocket handshake negotiation error: {err}");
 
                                         if options.strategy.is_fallback() {
@@ -385,7 +469,7 @@ impl WebSocketInterface {
 
                                         let connect_trigger = connect_trigger.lock().unwrap().take();
                                         if let Some(connect_trigger) = connect_trigger {
-                                            connect_trigger.send(Err(Error::Connect(self.url().unwrap()))).await.ok();
+                                            connect_trigger.send(Err(Error::Connect(self.current_url().unwrap()))).await.ok();
                                         }
                                     }
 
@@ -449,10 +533,16 @@ impl WebSocketInterface {
         Ok(())
     }
 
-    async fn reconnect(self: &Arc<Self>) -> Result<()> {
+    async fn reconnect(
+        self: &Arc<Self>,
+        options: ConnectOptions,
+        connect_trigger: Arc<Mutex<Option<Sender<Result<()>>>>>,
+    ) -> Result<()> {
         self.close().await?;
 
-        self.connect_impl(ConnectOptions::reconnect_defaults(), None)?;
+        self.clone()
+            .retry_connect_impl(options, connect_trigger)
+            .await?;
 
         Ok(())
     }

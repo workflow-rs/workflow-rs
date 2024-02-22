@@ -21,7 +21,4 @@ pub use std::sync::{Arc, Mutex};
 pub use workflow_core::channel::{oneshot, DuplexChannel};
 pub use workflow_core::time::Instant;
 pub use workflow_log::*;
-pub use workflow_websocket::client::{
-    Error as WebSocketError, Handshake, Message as WebSocketMessage, Options as WebSocketOptions,
-    WebSocket,
-};
+pub use workflow_websocket::client::{Message as WebSocketMessage, WebSocket};

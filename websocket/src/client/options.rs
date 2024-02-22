@@ -1,21 +1,10 @@
 use super::error::Error;
 use super::result::Result;
-use super::Handshake;
 use cfg_if::cfg_if;
 use std::str::FromStr;
-use std::sync::Arc;
 use wasm_bindgen::convert::TryFromJsValue;
 use wasm_bindgen::prelude::*;
 use workflow_core::time::Duration;
-
-#[derive(Default)]
-pub struct Options {
-    // placeholder for future settings
-    // TODO review if it makes sense to impl `reconnect_interval`
-    pub receiver_channel_cap: Option<usize>,
-    pub sender_channel_cap: Option<usize>,
-    pub handshake: Option<Arc<dyn Handshake>>,
-}
 
 /// `ConnectionStrategy` specifies how the WebSocket `async fn connect()`
 /// function should behave during the first-time connectivity phase.
@@ -82,6 +71,7 @@ pub struct ConnectOptions {
     /// [`ConnectStrategy`] used to configure the retry or fallback behavior.
     pub strategy: ConnectStrategy,
     /// Optional `url` that will change the current URL of the WebSocket.
+    /// Note that the URL overrides the use of resolver.
     pub url: Option<String>,
     /// Optional `timeout` that will change the timeout of the WebSocket connection process.
     /// `Timeout` is the period after which the async connection attempt is aborted. `Timeout`
@@ -162,18 +152,31 @@ cfg_if! {
          * @category WebSocket
          */
         export interface IConnectOptions {
-            // Indicates if the `async fn connect()` method should return immediately
-            // or wait for connection to occur or fail before returning.
-            blockAsyncConnect : boolean,
-            // ConnectStrategy used to configure the retry or fallback behavior.
-            // In retry mode, the WebSocket will continuously attempt to connect to the server.
-            strategy: ConnectStrategy | string | undefined,
-            // A custom URL that will change the current URL of the WebSocket.
-            url: string | undefined,
-            // A custom connection timeout in milliseconds.
-            timeoutDurationMsec: number,
-            // A custom retry interval in milliseconds.
-            retryIntervalMsec: number,
+            /**
+             * Indicates if the `async fn connect()` method should return immediately
+             * or wait for connection to occur or fail before returning.
+             * (default is `true`)
+             */
+            blockAsyncConnect? : boolean,
+            /**
+             * ConnectStrategy used to configure the retry or fallback behavior.
+             * In retry mode, the WebSocket will continuously attempt to connect to the server.
+             * (default is {link ConnectStrategy.Retry}).
+             */
+            strategy?: ConnectStrategy | string,
+            /** 
+             * A custom URL that will change the current URL of the WebSocket.
+             * If supplied, the URL will override the use of resolver.
+             */
+            url?: string,
+            /**
+             * A custom connection timeout in milliseconds.
+             */
+            timeoutDuration?: number,
+            /** 
+             * A custom retry interval in milliseconds.
+             */
+            retryInterval?: number,
         }
         "#;
 
@@ -201,11 +204,11 @@ cfg_if! {
                         .unwrap_or(true);
                     let strategy = ConnectStrategy::try_from(args.get_value("strategy")?)?;
                     let timeout = args
-                        .get_value("timeoutDurationMsec")?
+                        .get_value("timeoutDuration")?
                         .as_f64()
                         .map(|f| Duration::from_millis(f as u64));
                     let retry_interval = args
-                        .get_value("retryIntervalMsec")?
+                        .get_value("retryInterval")?
                         .as_f64()
                         .map(|f| Duration::from_millis(f as u64));
 
@@ -215,6 +218,7 @@ cfg_if! {
                         url,
                         connect_timeout: timeout,
                         retry_interval,
+                        ..Default::default()
                     }
                 } else if let Some(retry) = args.as_bool() {
                     ConnectOptions {
@@ -223,6 +227,7 @@ cfg_if! {
                         url: None,
                         connect_timeout: None,
                         retry_interval: None,
+                        ..Default::default()
                     }
                 } else {
                     ConnectOptions::default()
