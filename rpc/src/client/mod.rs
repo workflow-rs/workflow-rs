@@ -16,6 +16,7 @@ pub use interface::{Interface, Notification};
 use protocol::ProtocolHandler;
 pub use protocol::{BorshProtocol, JsonProtocol};
 use std::fmt::Debug;
+use std::str::FromStr;
 use workflow_core::{channel::Multiplexer, task::yield_now};
 pub use workflow_websocket::client::{
     ConnectOptions, ConnectResult, ConnectStrategy, Resolver, ResolverResult, WebSocketConfig,
@@ -59,10 +60,31 @@ pub use workflow_websocket::client::options::IConnectOptions;
 ///
 pub use workflow_rpc_macros::client_notification as notification;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Ctl {
     Open,
     Close,
+}
+
+impl std::fmt::Display for Ctl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Ctl::Open => write!(f, "open"),
+            Ctl::Close => write!(f, "close"),
+        }
+    }
+}
+
+impl FromStr for Ctl {
+    type Err = Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "open" => Ok(Ctl::Open),
+            "close" => Ok(Ctl::Close),
+            _ => Err(Error::InvalidEvent(s.to_string())),
+        }
+    }
 }
 
 #[async_trait]
@@ -462,6 +484,13 @@ where
             Protocol::Borsh(protocol) => Ok(protocol.request(op, req).await?),
             Protocol::Json(protocol) => Ok(protocol.request(op, req).await?),
         }
+    }
+
+    /// Triggers a disconnection on the underlying WebSocket.
+    /// This is intended for debug purposes only.
+    /// Can be used to test application reconnection logic.
+    pub fn trigger_abort(&self) -> Result<()> {
+        Ok(self.inner.ws.trigger_abort()?)
     }
 }
 

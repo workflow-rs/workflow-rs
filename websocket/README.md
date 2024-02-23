@@ -26,13 +26,12 @@ Workflow-WebSocket crate is currently (as of Q3 2022) one of the few available a
 
 This web socket crate offers an async message send API as well as provides access to [Receiver](https://docs.rs/async-channel/latest/async_channel/struct.Receiver.html) and [Sender](https://docs.rs/async-channel/latest/async_channel/struct.Sender.html) async_std channels ([async_channel])(https://docs.rs/async-channel/latest/async_channel/) that can be used to send and receive WebSocket messages asynchronously.
 
-NOTE: to use `workflow-websocket` in the Node.js environment, you need to introduce a W3C WebSocket object before loading the WASM32 library.
-You can use any Node.js module that exposes a W3C-compatible WebSocket implementation. Two of such modules are [WebSocket](https://www.npmjs.com/package/websocket) (provides a custom implementation) and [isomorphic-ws](https://www.npmjs.com/package/isomorphic-ws) (built on top of the [`ws`](https://www.npmjs.com/package/ws) WebSocket module).
-
-You can use the following shims:
+To use `workflow-websocket` in the Node.js environment, you need to introduce a W3C WebSocket object before loading the WASM32 library
+to simulate the global `WebSocket` object available in Web Browsers.
+The [WebSocket](https://www.npmjs.com/package/websocket) NPM module provides W3C WebSocket compatible implementation and can
+be used as follows:
 ```
 // WebSocket
 globalThis.WebSocket = require('websocket').w3cwebsocket;
-// isomorphic-ws
-globalThis.WebSocket = require('isomorphic-ws');
+// Load WASM32 library ...
 ```

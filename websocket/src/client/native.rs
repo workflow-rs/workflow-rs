@@ -397,4 +397,11 @@ impl WebSocketInterface {
         self.close().await?;
         Ok(())
     }
+
+    pub fn trigger_abort(self: &Arc<Self>) -> Result<()> {
+        if self.is_open.load(Ordering::SeqCst) {
+            self.receiver_channel.try_send(Message::Close)?;
+        }
+        Ok(())
+    }
 }

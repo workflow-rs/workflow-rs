@@ -552,6 +552,15 @@ impl WebSocketInterface {
         self.close().await.ok();
         Ok(())
     }
+
+    pub fn trigger_abort(self: &Arc<Self>) -> Result<()> {
+        if self.is_open.load(Ordering::SeqCst) {
+            if let Some(ws) = self.ws() {
+                ws.close()?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Drop for WebSocketInterface {

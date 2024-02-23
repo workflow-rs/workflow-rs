@@ -229,4 +229,11 @@ impl WebSocket {
     pub async fn recv(&self) -> Result<Message> {
         Ok(self.inner.receiver_channel.receiver.recv().await?)
     }
+
+    /// Triggers a disconnection on the underlying WebSocket.
+    /// This is intended for debug purposes only.
+    /// Can be used to test application reconnection logic.
+    pub fn trigger_abort(&self) -> Result<()> {
+        self.inner.client.trigger_abort()
+    }
 }

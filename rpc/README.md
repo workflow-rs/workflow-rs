@@ -83,13 +83,13 @@ Differences between JSON-RPC and JSON-wRPC:
 
 ## Node.js compatibility
 
-NOTE: `workflow-rpc` is built on top of the [`workflow-websocket`](https://crates.io/crates/workflow-websocket) crate. To use `workflow-rpc` in the Node.js environment, you need to introduce a W3C WebSocket object before loading the WASM32 library.
-You can use any Node.js module that exposes a W3C-compatible WebSocket implementation. Two of such modules are [WebSocket](https://www.npmjs.com/package/websocket) (provides a custom implementation) and [isomorphic-ws](https://www.npmjs.com/package/isomorphic-ws) (built on top of the [`ws`](https://www.npmjs.com/package/ws) WebSocket module).
-
-You can use the following shims:
+NOTE: `workflow-rpc` is built on top of the [`workflow-websocket`](https://crates.io/crates/workflow-websocket) crate. 
+To use `workflow-rpc` in the Node.js environment, you need to introduce a W3C WebSocket object before loading the WASM32 library
+to simulate the global `WebSocket` object available in Web Browsers.
+The [WebSocket](https://www.npmjs.com/package/websocket) NPM module provides W3C WebSocket compatible implementation and can
+be used as follows:
 ```
 // WebSocket
 globalThis.WebSocket = require('websocket').w3cwebsocket;
-// isomorphic-ws
-globalThis.WebSocket = require('isomorphic-ws');
+// Load WASM32 library ...
 ```

@@ -13,6 +13,9 @@ pub use workflow_websocket::client::error::Error as WebSocketError;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("Invalid event '{0}'")]
+    InvalidEvent(String),
+
     #[error("Invalid URL {0}")]
     InvalidUrl(String),
 
@@ -24,6 +27,7 @@ pub enum Error {
 
     #[error("WebSocket disconnected")]
     Disconnect,
+
     #[error("Missing method in notification message")]
     NotificationMethod,
 
