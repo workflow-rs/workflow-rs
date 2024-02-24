@@ -31,6 +31,6 @@ This crate offers the following macros:
 * `log_trace!()`
 * `log_debug!()`
 * `log_info!()`
-* `log_warning!()`
+* `log_warn!()`
 * `log_error!()`
 

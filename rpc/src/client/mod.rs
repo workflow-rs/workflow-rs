@@ -168,9 +168,7 @@ where
             self.clone().timeout_task();
             self.clone().receiver_task();
         } else {
-            log_warning!(
-                "wRPC services are already running: rpc::start() was called multiple times"
-            );
+            log_warn!("wRPC services are already running: rpc::start() was called multiple times");
         }
         Ok(())
     }

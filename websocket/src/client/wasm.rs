@@ -226,7 +226,7 @@ impl WebSocketInterface {
         connect_trigger: Arc<Mutex<Option<Sender<Result<()>>>>>,
     ) -> Result<()> {
         if self.inner.lock().unwrap().is_some() {
-            log_warning!("WebSocket::connect() called while already initialized");
+            log_warn!("WebSocket::connect() called while already initialized");
 
             return Err(Error::AlreadyInitialized);
         }

@@ -348,7 +348,7 @@ macro_rules! log_error {
 
 /// Format and log message with [`Level::Warn`]
 #[macro_export]
-macro_rules! log_warning {
+macro_rules! log_warn {
     (target: $target:expr, $($arg:tt)+) => (
         workflow_log::impls::warn_impl(Some($target),&format_args!($($t)*))
     );
@@ -398,7 +398,7 @@ pub use log_debug;
 pub use log_error;
 pub use log_info;
 pub use log_trace;
-pub use log_warning;
+pub use log_warn;
 
 /// Prints (using [`log_trace`]) a data slice
 /// formatted as a hex data dump.
