@@ -156,7 +156,10 @@ pub fn import_translation_files<P: AsRef<Path>>(source_folder_path: P, reload: b
         translations,
     };
 
-    let json_data = serde_json::to_string_pretty(&data)?;
+    let json = serde_json::to_value(&data)?;
+    let json_data = crate::json::to_json(&json);
+    // let json_data = serde_json::to_string_pretty(&data)?;
+
     dictionary.store_fn().clone().unwrap()(json_data.as_str())?;
 
     if reload {
@@ -183,7 +186,11 @@ pub fn export_default_language(
                 .map(|(k, v)| (k.clone(), v.clone())),
         )
         .collect::<FxHashMap<String, String>>();
-    store_fn(serde_json::to_string_pretty(&merged)?.as_str())
+
+    let json = serde_json::to_value(merged)?;
+    let json_data = crate::json::to_json(&json);
+    store_fn(json_data.as_str())
+    // store_fn(serde_json::to_string_pretty(&merged)?.as_str())
 }
 
 #[inline(always)]
@@ -452,7 +459,10 @@ impl Dictionary {
 
     pub fn to_json(&self) -> Result<String> {
         let data = Storable::from(self);
-        Ok(serde_json::to_string_pretty(&data)?)
+        let json = serde_json::to_value(data)?;
+        let json_data = crate::json::to_json(&json);
+        Ok(json_data)
+        // Ok(serde_json::to_string_pretty(&data)?)
     }
 }
 
@@ -513,8 +523,7 @@ impl<'data> Default for Data<'data> {
             ("ur", "Urdu"),
             ("vi", "Vietnamese"),
             ("mn", "Mongolian"),
-            ("zh_HANS", "中文"),
-            ("zh_HANT", "繁體中文"),
+            ("zh", "中文"),
         ]
         .into_iter()
         .collect();
@@ -522,8 +531,8 @@ impl<'data> Default for Data<'data> {
         let aliases: FxHashMap<_, _> = [
             ("en-GB", "en"),
             ("en-US", "en"),
-            ("zh-CN", "zh_HANS"),
-            ("zh-TW", "zh_HANT"),
+            ("zh-CN", "zh"),
+            ("zh-TW", "zh"),
         ]
         .into_iter()
         .collect();

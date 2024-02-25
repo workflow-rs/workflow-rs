@@ -107,6 +107,7 @@ getrandom = {version = "0.2.10", features=["js"]}
 hexplay = "0.3.0"
 home = "0.5.5"
 instant = { version ="0.1.12", features = ['wasm-bindgen'] }
+itertools = "0.12.1"
 js-sys = "0.3.64"
 lazy_static = "1.4.0"
 log = "0.4.20"

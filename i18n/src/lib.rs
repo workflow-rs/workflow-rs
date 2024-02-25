@@ -10,6 +10,11 @@
 //!
 pub mod error;
 pub mod i18n;
+pub mod json;
 pub mod result;
 
 pub use i18n::i18n;
+
+// #[macro_use]
+// extern crate serde_json;
+// pub use serde_json::json;
