@@ -721,7 +721,6 @@ pub async fn test_child_process() {
 
     sleep(Duration::from_millis(5_000)).await;
 
-    log_info!("### === STOPPING PROCESS ...");
     proc.stop_and_join()
         .await
         .expect("proc.stop_and_join() failure");
