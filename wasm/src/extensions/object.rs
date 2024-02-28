@@ -25,6 +25,10 @@ pub trait ObjectExtension {
 
     /// Get `JsValue` property
     fn get_value(&self, prop: &str) -> Result<JsValue, Error>;
+    /// Get `Object` property
+    fn get_object(&self, prop: &str) -> Result<Object, Error>;
+    /// Get `Object` property
+    fn try_get_object(&self, prop: &str) -> Result<Option<Object>, Error>;
     /// Try Get `JsValue` property
     fn try_get_value(&self, prop: &str) -> Result<Option<JsValue>, Error>;
     /// get `String` property
@@ -87,6 +91,17 @@ impl ObjectExtension for Object {
 
     fn get_value(&self, prop: &str) -> Result<JsValue, Error> {
         Ok(Reflect::get(self, &JsValue::from(prop))?)
+    }
+
+    fn get_object(&self, prop: &str) -> Result<Object, Error> {
+        let value = Reflect::get(self, &JsValue::from(prop))?;
+        let object = Object::try_from(&value).ok_or(Error::MissingProperty(prop.to_string()))?;
+        Ok(object.clone())
+    }
+
+    fn try_get_object(&self, prop: &str) -> Result<Option<Object>, Error> {
+        let value = Reflect::get(self, &JsValue::from(prop))?;
+        Ok(Object::try_from(&value).cloned())
     }
 
     fn try_get_value(&self, prop: &str) -> Result<Option<JsValue>, Error> {
