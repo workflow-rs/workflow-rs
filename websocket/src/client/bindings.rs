@@ -276,4 +276,12 @@ impl WebSocket {
             Ok(Self::new(url)?)
         }
     }
+
+    pub fn close_if_open(&self) -> super::result::Result<()> {
+        let ready_state = self.ready_state();
+        if ready_state != Self::CLOSED && ready_state != Self::CLOSING {
+            self.close()?;
+        }
+        Ok(())
+    }
 }

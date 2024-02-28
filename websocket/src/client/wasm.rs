@@ -523,7 +523,7 @@ impl WebSocketInterface {
     pub async fn close(self: &Arc<Self>) -> Result<()> {
         if let Some(inner) = self.inner.lock().unwrap().take() {
             inner.ws.cleanup();
-            inner.ws.close()?;
+            inner.ws.close_if_open()?;
         }
 
         if self.is_open.load(Ordering::SeqCst) {
@@ -556,7 +556,7 @@ impl WebSocketInterface {
     pub fn trigger_abort(self: &Arc<Self>) -> Result<()> {
         if self.is_open.load(Ordering::SeqCst) {
             if let Some(ws) = self.ws() {
-                ws.close()?;
+                ws.close_if_open()?;
             }
         }
         Ok(())
