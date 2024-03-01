@@ -215,12 +215,17 @@ pub fn derive_try_from_jsvalue(input: TokenStream) -> TokenStream {
                 use ::alloc::borrow::ToOwned;
                 ::core::stringify!(#name).to_owned()
             }
-        }
+        // }
 
-        impl ::core::convert::TryFrom<&::wasm_bindgen::JsValue> for #name {
-            type Error = String;
+        // impl ::core::convert::TryFrom<&::wasm_bindgen::JsValue> for #name {
+        //     type Error = String;
 
-            fn try_from(js: &::wasm_bindgen::JsValue) -> std::result::Result<Self, Self::Error> {
+            // fn try_from(js: &::wasm_bindgen::JsValue) -> std::result::Result<Self, Self::Error> {
+            fn try_clone_from_js_value(js: &::wasm_bindgen::JsValue) -> std::result::Result<Self, Self::Error> {
+                try_ref_from_js_value(js).map(|instance| instance.clone())
+            }
+
+            fn try_ref_from_js_value(js: &::wasm_bindgen::JsValue) -> std::result::Result<std::cell::Ref<'_, Self>, Self::Error> {
                 use ::alloc::borrow::ToOwned;
                 use ::alloc::string::ToString;
                 use ::wasm_bindgen::JsCast;
@@ -266,7 +271,8 @@ pub fn derive_try_from_jsvalue(input: TokenStream) -> TokenStream {
                         .map_err(|err| format!("{:?}", err))?
                         as u32;
                     let instance_ref = unsafe { #name::ref_from_abi(ptr_u32) };
-                    Ok(instance_ref.clone())
+                    Ok(instance_ref)
+                    // Ok(instance_ref.clone())
                 } else {
                     Err(format!("Cannot convert {} to {}", object_classname, classname))
                 }
