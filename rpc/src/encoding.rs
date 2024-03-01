@@ -8,12 +8,13 @@ use std::{
     fmt::{Debug, Display, Formatter},
     str::FromStr,
 };
-use wasm_bindgen::{convert::TryFromJsValue, prelude::*};
+use wasm_bindgen::convert::TryFromJsValue;
+use wasm_bindgen::prelude::*;
 
 /// wRPC protocol encoding: `Borsh` or `JSON`
 /// @category Transport
-#[wasm_bindgen]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[wasm_bindgen]
 #[serde(rename_all = "kebab-case")]
 pub enum Encoding {
     Borsh = 0,

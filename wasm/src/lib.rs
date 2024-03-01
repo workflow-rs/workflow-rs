@@ -12,8 +12,8 @@
 
 extern crate self as workflow_wasm;
 
-pub mod abi;
 pub mod callback;
+pub mod convert;
 pub mod error;
 pub mod extensions;
 pub mod init;

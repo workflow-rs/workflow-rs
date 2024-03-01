@@ -442,11 +442,11 @@ impl Graph {
         let height = self.height();
         let that = self.clone();
         let x_cb = callback!(move |d: js_sys::Object| {
-            that.x.call1(&JsValue::NULL, &d.get("date").unwrap())
+            that.x.call1(&JsValue::NULL, &d.get_value("date").unwrap())
         });
         let that = self.clone();
         let y_cb = callback!(move |d: js_sys::Object| {
-            that.y.call1(&JsValue::NULL, &d.get("value").unwrap())
+            that.y.call1(&JsValue::NULL, &d.get_value("value").unwrap())
         });
         self.area
             .x(x_cb.get_fn())

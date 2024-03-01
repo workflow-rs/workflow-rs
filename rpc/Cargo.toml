@@ -49,6 +49,7 @@ workflow-log.workspace = true
 workflow-rpc-macros.workspace = true
 workflow-task.workspace = true
 workflow-websocket.workspace = true
+workflow-wasm.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom.workspace = true
