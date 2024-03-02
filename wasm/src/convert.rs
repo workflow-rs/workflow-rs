@@ -1,13 +1,35 @@
-//! WASM bindgen casting and utility functions
-
-use std::borrow::Borrow;
-use std::ops::Deref;
+//!
+//! WASM bindgen casting and utility functions.
+//!
+//! This module provides a `CastFromJs` trait and derive macro
+//! that allows for easy casting of JavaScript objects into Rust.
+//! The secondary goal of this module is to provide the ability
+//! to dynamically interpret user-supplied JavaScript data that
+//! instead of a Rust object may container other data that can
+//! be used (interpreted) to create a Rust object.
+//!
+//! To accommodate this a [`TryCastFromJs`] trait is provided
+//! where user needs to implement `try_cast_from` function that
+//! can attempt to cast a JsValue into a Rust object or interpret
+//! the source data and create a temporary struct owned by by the
+//! [`Cast`] enum.
+//!
+//!
 
 use crate::error::Error;
+pub use std::borrow::Borrow;
+pub use std::ops::Deref;
 use wasm_bindgen::convert::{LongRefFromWasmAbi, RefFromWasmAbi, RefMutFromWasmAbi};
 use wasm_bindgen::prelude::*;
 pub use workflow_wasm_macros::CastFromJs;
 
+/// A wrapper for a Rust object that can be either a reference or a value.
+/// This wrapper is used to carry a Rust (WASM ABI) reference provided by
+/// `wasm_bindgen`, but at the same time allows creation of a temporary
+/// object that can be created by interpreting the source user-supplied data.
+/// [`Cast`] then provides [`Cast::as_ref()`] to obtain the internally held
+/// reference and [`Cast::into_owned()`] where the latter will consume the
+/// value or clone the reference.
 pub enum Cast<T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
@@ -35,6 +57,7 @@ impl<T> AsRef<T> for Cast<T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
 {
+    /// Obtain a reference to the internally held value.
     fn as_ref(&self) -> &T {
         match self {
             Cast::Ref(r) => r,
@@ -48,6 +71,8 @@ impl<T> Cast<T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + Clone, // + ToOwned,
 {
+    /// Consume the [`Cast`] and return the owned value. If the
+    /// [`Cast`] holds a reference, it will be cloned.
     pub fn into_owned(self) -> T {
         match self {
             Cast::Ref(r) => (*r).clone(),
@@ -57,6 +82,7 @@ where
     }
 }
 
+/// Cast T value (struct) into `Cast<T>`
 impl<T> From<T> for Cast<T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
@@ -66,6 +92,9 @@ where
     }
 }
 
+/// `CastFromJs` trait is automatically implemented by deriving
+/// the `CastFromJs` derive macro. This trait provides functions
+/// for accessing Rust references from the WASM ABI.
 pub trait CastFromJs
 where
     Self: Sized + RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
@@ -74,12 +103,29 @@ where
     fn try_ref_from_js_value(
         js: impl AsRef<JsValue>,
     ) -> std::result::Result<<Self as RefFromWasmAbi>::Anchor, Error>;
+
+    fn try_ref_from_js_value_as_cast(
+        js: impl AsRef<JsValue>,
+    ) -> std::result::Result<Cast<Self>, Error> {
+        Ok(Self::try_ref_from_js_value(js).map(Cast::Ref)?)
+    }
+
     /// Obtain safe long reference from [`JsValue`]
     fn try_long_ref_from_js_value(
         js: impl AsRef<JsValue>,
-    ) -> std::result::Result<<Self as RefFromWasmAbi>::Anchor, Error>;
+    ) -> std::result::Result<<Self as LongRefFromWasmAbi>::Anchor, Error>;
+
+    fn try_long_ref_from_js_value_as_cast(
+        js: impl AsRef<JsValue>,
+    ) -> std::result::Result<Cast<Self>, Error> {
+        Ok(Self::try_long_ref_from_js_value(js).map(Cast::LongRef)?)
+    }
 }
 
+/// `TryCastFromJs` trait is meant to be implemented by the developer
+/// on any struct implementing `CastFromJs` trait. This trait provides
+/// a way to attempt to cast a JsValue into a Rust object or interpret
+/// the source data and create a temporary struct owned by by the [`Cast`].
 pub trait TryCastFromJs
 where
     Self: CastFromJs + RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + Clone,
@@ -90,23 +136,14 @@ where
     /// This should be user-defined function that
     /// attempts to cast a JsValue into a Rust object
     /// or interpret a source data and create a
-    /// temporary struct owned by by the [`Container`].
+    /// temporary struct owned by by the [`Cast`].
     fn try_cast_from(value: impl AsRef<JsValue>) -> std::result::Result<Cast<Self>, Self::Error>;
 
     /// Perform a user cast and consume the [`Cast`] container.
     /// This function will return a temporary user-created
     /// object created during [`try_cast_from`] or a clone of the casted reference.
-    fn try_value_from(value: impl AsRef<JsValue>) -> std::result::Result<Self, Self::Error> {
+    fn try_owned_from(value: impl AsRef<JsValue>) -> std::result::Result<Self, Self::Error> {
         Self::try_cast_from(value).map(|c| c.into_owned())
-    }
-    /// Try to cast a JsValue into a Rust object.
-    /// Returns `Some(Ok(Container<T>))` if the JsValue
-    /// was casted successfully. Returns `None` if the
-    /// cast has failed.
-    fn try_ref_from(
-        js: impl AsRef<JsValue>,
-    ) -> Result<Cast<Self>, Self::Error> {
-        Ok(Self::try_ref_from_js_value(js).map(Cast::Ref)?)
     }
 
     /// Try to cast a JsValue into a Rust object, in cast of failure
@@ -121,6 +158,20 @@ where
             .or_else(|_| create().map(Cast::<Self>::Value))
     }
 
+    /// Try to cast a JsValue into a Rust object, in cast of failure
+    /// invoke a user-supplied closure that can try to create an instance
+    /// of the object based on the supplied JsValue. Unlike the [`resolve`]
+    /// function, this function expects `create` closure to return a [`Cast`].
+    /// This is useful when routing the creation of the object to another
+    /// function that is capable of creating a compatible Cast wrapper.
+    fn resolve_cast(
+        js: impl AsRef<JsValue>,
+        create: impl FnOnce() -> std::result::Result<Cast<Self>, Self::Error>,
+    ) -> std::result::Result<Cast<Self>, Self::Error> {
+        Self::try_ref_from_js_value(js)
+            .map(Cast::<Self>::Ref)
+            .or_else(|_| create())
+    }
 }
 
 pub trait TryCastJsInto<T>
@@ -128,8 +179,8 @@ where
     T: TryCastFromJs,
 {
     type Error: From<Error>;
-    fn try_cast_into(&self) -> std::result::Result<Cast<T>, Self::Error>;
-    fn try_ref_into(&self) -> std::result::Result<Cast<T>, Self::Error>;
+    fn try_into_cast(&self) -> std::result::Result<Cast<T>, Self::Error>;
+    fn try_into_owned(&self) -> std::result::Result<T, Self::Error>;
 }
 
 impl<T> TryCastJsInto<T> for JsValue
@@ -138,12 +189,12 @@ where
     <T as TryCastFromJs>::Error: From<Error>,
 {
     type Error = <T as TryCastFromJs>::Error;
-    fn try_cast_into(&self) -> std::result::Result<Cast<T>, Self::Error> {
+    fn try_into_cast(&self) -> std::result::Result<Cast<T>, Self::Error> {
         T::try_cast_from(self)
     }
 
-    fn try_ref_into(&self) -> std::result::Result<Cast<T>, Self::Error> {
-        T::try_ref_from(self)
+    fn try_into_owned(&self) -> std::result::Result<T, Self::Error> {
+        T::try_owned_from(self)
     }
 }
 
@@ -253,7 +304,7 @@ where
 }
 
 /// Create a reference to a Rust object from a WASM ABI.
-/// Returns None is the supplied value is `null` or `undefined`, 
+/// Returns None is the supplied value is `null` or `undefined`,
 /// otherwise attempts to cast the object.
 #[inline]
 pub fn try_ref_from_abi_safe_as_option<T>(
