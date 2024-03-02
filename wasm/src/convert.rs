@@ -107,7 +107,7 @@ where
     fn try_ref_from_js_value_as_cast(
         js: impl AsRef<JsValue>,
     ) -> std::result::Result<Cast<Self>, Error> {
-        Ok(Self::try_ref_from_js_value(js).map(Cast::Ref)?)
+        Self::try_ref_from_js_value(js).map(Cast::Ref)
     }
 
     /// Obtain safe long reference from [`JsValue`]
@@ -118,7 +118,7 @@ where
     fn try_long_ref_from_js_value_as_cast(
         js: impl AsRef<JsValue>,
     ) -> std::result::Result<Cast<Self>, Error> {
-        Ok(Self::try_long_ref_from_js_value(js).map(Cast::LongRef)?)
+        Self::try_long_ref_from_js_value(js).map(Cast::LongRef)
     }
 }
 

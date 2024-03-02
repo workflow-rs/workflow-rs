@@ -24,11 +24,14 @@ pub trait ObjectExtension {
         T: TryFrom<JsValue>,
         <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display;
 
+    /// Obtain a [`Cast`] from a property of the [`Object`].
     fn get_cast<T>(&self, prop: &str) -> Result<Cast<T>, Error>
     where
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display;
 
+    /// Try to obtain a [`Cast`] from a property of the [`Object`].
+    /// Returns `Ok(None)` if the property does not exist (`null` or `undefined`).
     fn try_get_cast<T>(&self, prop: &str) -> Result<Option<Cast<T>>, Error>
     where
         T: TryCastFromJs,
@@ -102,16 +105,16 @@ impl ObjectExtension for Object {
 
     fn get_cast<T>(&self, prop: &str) -> Result<Cast<T>, Error>
     where
-        T: TryCastFromJs, //TryFrom<JsValue>,
+        T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display,
     {
         let js_value = Reflect::get(self, &JsValue::from(prop))?;
-        Ok(T::try_cast_from(js_value).map_err(Error::custom)?)
+        T::try_cast_from(js_value).map_err(Error::custom)
     }
 
     fn try_get_cast<T>(&self, prop: &str) -> Result<Option<Cast<T>>, Error>
     where
-        T: TryCastFromJs, //TryFrom<JsValue>,
+        T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display,
     {
         let js_value = Reflect::get(self, &JsValue::from(prop))?;
