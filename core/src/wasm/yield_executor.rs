@@ -30,11 +30,13 @@ extern "C" {
 pub use async_std::task::yield_now;
 
 pub async fn yield_executor() {
-    if !unsafe { REQUEST_ANIMATION_FRAME_INITIALIZED } {
-        init_request_animation_frame_fn();
-        unsafe { REQUEST_ANIMATION_FRAME_INITIALIZED = true };
-    } else {
-        Yield::new().await
+    if !is_chrome_extension() {
+        if !unsafe { REQUEST_ANIMATION_FRAME_INITIALIZED } {
+            init_request_animation_frame_fn();
+            unsafe { REQUEST_ANIMATION_FRAME_INITIALIZED = true };
+        } else {
+            Yield::new().await
+        }
     }
 }
 
