@@ -1,4 +1,5 @@
 use proc_macro::TokenStream;
+// mod attribute_cleaner;
 mod enums;
 mod seal;
 mod send;
@@ -41,3 +42,8 @@ pub fn seal(input: TokenStream) -> TokenStream {
 pub fn call_async_no_send(input: TokenStream) -> TokenStream {
     send::call_async_no_send(input)
 }
+
+// #[proc_macro_attribute]
+// pub fn clean_attributes(_attr: TokenStream, item: TokenStream) -> TokenStream {
+//     attribute_cleaner::clean_attributes(_attr, item)
+// }

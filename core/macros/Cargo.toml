@@ -25,3 +25,4 @@ sha2.workspace = true
 syn.workspace = true
 workflow-macro-tools.workspace = true
 regex.workspace = true
+# syn = {version="2.0",features=["full","fold","extra-traits","parsing","proc-macro"]}
