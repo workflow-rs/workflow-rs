@@ -17,11 +17,57 @@
 //!
 
 use crate::error::Error;
+use crate::extensions::ObjectExtension;
+use js_sys::Object;
 pub use std::borrow::Borrow;
 pub use std::ops::Deref;
 use wasm_bindgen::convert::{LongRefFromWasmAbi, RefFromWasmAbi, RefMutFromWasmAbi};
 use wasm_bindgen::prelude::*;
 pub use workflow_wasm_macros::CastFromJs;
+
+#[wasm_bindgen(typescript_custom_section)]
+const IWASM32_BINDINGS_CONFIG: &'static str = r#"
+/**
+ * Interface for configuring workflow-rs WASM32 bindings.
+ * 
+ * @category General
+ */
+export interface IWASM32BindingsConfig {
+    /**
+     * This option can be used to disable the validation of class names
+     * for instances of classes exported by Rust WASM32 when passing
+     * these classes to WASM32 functions.
+     * 
+     * This can be useful to programmatically disable checks when using
+     * a bundler that mangles class symbol names.
+     */
+    validateClassNames : boolean;
+}
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(extends = Object, typescript_type = "IWASM32BindingsConfig")]
+    pub type IWASM32BindingsConfig;
+}
+
+static mut VALIDATE_CLASS_NAMES: bool = true;
+/// Configuration for the WASM32 bindings runtime interface.
+/// @see {@link IWASM32BindingsConfig}
+/// @category General
+#[wasm_bindgen(js_name = "initWASM32Bindings")]
+pub fn init_wasm32_bindings(config: IWASM32BindingsConfig) -> std::result::Result<(), Error> {
+    if let Some(enable) = config.try_get_bool("validateClassNames")? {
+        unsafe {
+            VALIDATE_CLASS_NAMES = enable;
+        }
+    }
+    Ok(())
+}
+#[inline(always)]
+pub fn validate_class_names() -> bool {
+    unsafe { VALIDATE_CLASS_NAMES }
+}
 
 /// A wrapper for a Rust object that can be either a reference or a value.
 /// This wrapper is used to carry a Rust (WASM ABI) reference provided by
@@ -213,19 +259,21 @@ fn get_ptr_u32_safe(
         return Err(Error::NotAnObjectOfClass(class.to_string()));
     }
 
-    let ctor = ::js_sys::Reflect::get(js, &JsValue::from_str("constructor"))?;
-    if ctor.is_undefined() {
-        return Err(Error::NoConstructorOfClass(class.to_string()));
-    } else {
-        let name = ::js_sys::Reflect::get(&ctor, &JsValue::from_str("name"))?;
-        if name.is_undefined() {
-            return Err(Error::UnableToObtainConstructorName(class.to_string()));
+    if validate_class_names() {
+        let ctor = ::js_sys::Reflect::get(js, &JsValue::from_str("constructor"))?;
+        if ctor.is_undefined() {
+            return Err(Error::NoConstructorOfClass(class.to_string()));
         } else {
-            let name = name
-                .as_string()
-                .ok_or(Error::UnableToObtainConstructorName(class.to_string()))?;
-            if name != class {
-                return Err(Error::ClassConstructorMatch(name, class.to_string()));
+            let name = ::js_sys::Reflect::get(&ctor, &JsValue::from_str("name"))?;
+            if name.is_undefined() {
+                return Err(Error::UnableToObtainConstructorName(class.to_string()));
+            } else {
+                let name = name
+                    .as_string()
+                    .ok_or(Error::UnableToObtainConstructorName(class.to_string()))?;
+                if name != class {
+                    return Err(Error::ClassConstructorMatch(name, class.to_string()));
+                }
             }
         }
     }
