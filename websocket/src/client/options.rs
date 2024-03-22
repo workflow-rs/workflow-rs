@@ -10,7 +10,7 @@ use workflow_core::time::Duration;
 /// function should behave during the first-time connectivity phase.
 /// @category WebSocket
 #[wasm_bindgen]
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ConnectStrategy {
     /// Continuously attempt to connect to the server. This behavior will
     /// block `connect()` function until the connection is established.
