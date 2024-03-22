@@ -106,9 +106,9 @@ cfg_if! {
             pub type LogLevelT;
         }
 
-        /// Set the logger log level using a string representation.
-        /// Available variants are: "off", "error", "warn", "info", "debug", "trace"
-        /// @category General
+        #[doc="Set the logger log level using a string representation."]
+        #[doc="Available variants are: 'off', 'error', 'warn', 'info', 'debug', 'trace'"]
+        #[doc="@category General"]
         #[wasm_bindgen(js_name = "setLogLevel")]
         // pub fn set_log_level_str(level: &str) {
         pub fn set_log_level_wasm(level: LogLevelT) {
