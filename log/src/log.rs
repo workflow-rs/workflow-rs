@@ -90,7 +90,7 @@ cfg_if! {
     } else if #[cfg(target_arch = "wasm32")] {
         use wasm_bindgen::prelude::*;
 
-        static mut LEVEL_FILTER : LevelFilter = LevelFilter::Trace;
+        static mut LEVEL_FILTER : LevelFilter = LevelFilter::Info;
         #[inline(always)]
         pub fn log_level_enabled(level: Level) -> bool {
             unsafe { LEVEL_FILTER >= level }
