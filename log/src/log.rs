@@ -88,6 +88,8 @@ cfg_if! {
             true
         }
     } else if #[cfg(target_arch = "wasm32")] {
+        use wasm_bindgen::prelude::*;
+
         static mut LEVEL_FILTER : LevelFilter = LevelFilter::Trace;
         #[inline(always)]
         pub fn log_level_enabled(level: Level) -> bool {
@@ -96,6 +98,36 @@ cfg_if! {
         pub fn set_log_level(level: LevelFilter) {
             unsafe { LEVEL_FILTER = level };
         }
+
+        #[wasm_bindgen]
+        extern "C" {
+            #[wasm_bindgen(typescript_type = r###""off" | "error" | "warn" | "info" | "debug" | "trace""###)]
+            #[derive(Debug)]
+            pub type LogLevelT;
+        }
+
+        /// Set the logger log level using a string representation.
+        /// Available variants are: "off", "error", "warn", "info", "debug", "trace"
+        /// @category General
+        #[wasm_bindgen(js_name = "setLogLevel")]
+        // pub fn set_log_level_str(level: &str) {
+        pub fn set_log_level_wasm(level: LogLevelT) {
+            if let Some(level) = level.as_string() {
+                let level = match level.as_str() {
+                    "off" => LevelFilter::Off,
+                    "error" => LevelFilter::Error,
+                    "warn" => LevelFilter::Warn,
+                    "info" => LevelFilter::Info,
+                    "debug" => LevelFilter::Debug,
+                    "trace" => LevelFilter::Trace,
+                    _ => panic!("Invalid log level: {level}"),
+                };
+                set_log_level(level);
+            } else {
+                panic!("log level must be a string, received: {level:?}");
+            }
+        }
+
         cfg_if! {
             if #[cfg(feature = "sink")] {
                 static mut SINK : Option<SinkHandler> = None;
@@ -208,7 +240,7 @@ cfg_if! {
 #[cfg(target_arch = "wasm32")]
 pub mod wasm_log {
     use wasm_bindgen::prelude::*;
-    // use super::*;
+
     #[wasm_bindgen]
     extern "C" {
         #[wasm_bindgen(js_namespace = console)]
