@@ -176,9 +176,11 @@ where
     pub async fn shutdown(self: &Arc<Self>) -> Result<()> {
         self.ws.disconnect().await?;
         yield_now().await;
-        self.stop_timeout().await?;
-        self.stop_receiver().await?;
-        self.is_running.store(false, Ordering::SeqCst);
+        if self.is_running.load(Ordering::Relaxed) {
+            self.stop_timeout().await?;
+            self.stop_receiver().await?;
+            self.is_running.store(false, Ordering::SeqCst);
+        }
         Ok(())
     }
 
