@@ -425,8 +425,7 @@ impl WebSocketInterface {
                                     self.receiver_channel.sender.send(msg).await.unwrap();
                                 },
                                 Message::Open => {
-                                    // log_info!("WebSocket connected to {}",self.url());
-
+                                    // log_info!("WebSocket Message::Open");
                                     // handle handshake failure
                                     if let Err(err) = self.handshake_impl(ws).await {
                                         log_info!("WebSocket handshake negotiation error: {err}");
@@ -453,7 +452,7 @@ impl WebSocketInterface {
                                     self.receiver_channel.sender.send(msg).await.unwrap();
                                 },
                                 Message::Close => {
-                                    // log_info!("WebSocket disconnecting from {}",self.url());
+                                    // log_info!("WebSocket Message::Close");
 
                                     if let Some(inner) = self.inner.lock().unwrap().take() {
                                         inner.ws.cleanup();
