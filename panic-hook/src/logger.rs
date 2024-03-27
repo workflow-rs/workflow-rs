@@ -1,4 +1,5 @@
 use std::result::Result;
+use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element};
 
@@ -6,11 +7,15 @@ pub fn document() -> Document {
     let window = web_sys::window().expect("no global `window` exists");
     window.document().expect("unable to get `document` node")
 }
+
+#[derive(Clone)]
 struct Logger {
     element: Element,
 }
 
-static mut LOGGER: Option<Logger> = None;
+unsafe impl Send for Logger {}
+
+static LOGGER: Mutex<Option<Logger>> = Mutex::new(None);
 
 impl Logger {
     fn new() -> Result<Self, JsValue> {
@@ -25,11 +30,8 @@ impl Logger {
         Ok(Self { element })
     }
 
-    fn get<'a>() -> Option<&'a Logger> {
-        match unsafe { &LOGGER } {
-            Some(l) => Some(l),
-            None => None,
-        }
+    fn get() -> Option<Logger> {
+        LOGGER.lock().unwrap().clone()
     }
 
     fn log_error(&self, msg: String) {
@@ -50,7 +52,7 @@ pub fn error(msg: String) {
 
 pub fn init_logger() {
     match Logger::new() {
-        Ok(l) => unsafe { LOGGER = Some(l) },
+        Ok(l) => *LOGGER.lock().unwrap() = Some(l),
         Err(_e) => {
             panic!("unable to create Logger");
         }

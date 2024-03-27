@@ -130,18 +130,18 @@ cfg_if! {
 
         cfg_if! {
             if #[cfg(feature = "sink")] {
-                static mut SINK : Option<SinkHandler> = None;
+                use std::sync::Mutex;
+                static SINK : Mutex<Option<SinkHandler>> = Mutex::new(None);
                 // pub fn pipe(sink : Arc<dyn Sink + Send + Sync + 'static>) {
                 pub fn pipe(sink : Option<Arc<dyn Sink>>) {
                     match sink {
-                        Some(sink) => { unsafe { SINK = Some(SinkHandler { sink }); } },
-                        None => { unsafe { SINK = None; } }
+                        Some(sink) => { *SINK.lock().unwrap() = Some(SinkHandler { sink }); },
+                        None => { *SINK.lock().unwrap() = None; }
                     }
                 }
                 #[inline(always)]
                 fn to_sink(target: Option<&str>, level : Level, args : &fmt::Arguments<'_>) -> bool {
-                    let sink = unsafe { &SINK };
-                    match sink {
+                    match SINK.lock().unwrap().as_ref() {
                         Some(handler) => {
                             handler.sink.write(target, level, args)
                         },
