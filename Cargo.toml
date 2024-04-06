@@ -145,5 +145,5 @@ wasm-bindgen = "0.2.90"
 wasm-bindgen-futures = "0.4.40"
 web-sys = "0.3.67"
 # chrome-sys = {path = "../chrome-sys"}
-chrome-sys = { version = "0.1.0" }
+chrome-sys = { version = "0.2.0" }
 
