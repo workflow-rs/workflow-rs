@@ -71,7 +71,7 @@ pub struct WebSocketInterface {
     settings: Mutex<Settings>,
     config: Mutex<WebSocketConfig>,
     reconnect: AtomicBool,
-    is_open: AtomicBool,
+    is_connected: AtomicBool,
     receiver_channel: Channel<Message>,
     sender_channel: Channel<(Message, Ack)>,
     shutdown: DuplexChannel<()>,
@@ -95,7 +95,7 @@ impl WebSocketInterface {
             receiver_channel,
             sender_channel,
             reconnect: AtomicBool::new(true),
-            is_open: AtomicBool::new(false),
+            is_connected: AtomicBool::new(false),
             shutdown: DuplexChannel::unbounded(),
         };
 
@@ -126,8 +126,8 @@ impl WebSocketInterface {
             .replace(url.to_string());
     }
 
-    pub fn is_open(self: &Arc<Self>) -> bool {
-        self.is_open.load(Ordering::SeqCst)
+    pub fn is_connected(self: &Arc<Self>) -> bool {
+        self.is_connected.load(Ordering::SeqCst)
     }
 
     fn resolver(&self) -> Option<Arc<dyn Resolver>> {
@@ -161,7 +161,7 @@ impl WebSocketInterface {
     pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
         let this = self.clone();
 
-        if self.is_open.load(Ordering::SeqCst) {
+        if self.is_connected.load(Ordering::SeqCst) {
             return Err(Error::AlreadyConnected);
         }
 
@@ -186,7 +186,7 @@ impl WebSocketInterface {
                             Ok(Ok(stream)) => {
                                 // log_trace!("connected...");
 
-                                this.is_open.store(true, Ordering::SeqCst);
+                                this.is_connected.store(true, Ordering::SeqCst);
                                 let (mut ws_stream, _) = stream;
 
                                 if connect_trigger.is_some() {
@@ -197,7 +197,7 @@ impl WebSocketInterface {
                                     log_trace!("WebSocket dispatcher error: {}", err);
                                 }
 
-                                this.is_open.store(false, Ordering::SeqCst);
+                                this.is_connected.store(false, Ordering::SeqCst);
                             }
                             // connect error
                             Ok(Err(e)) => {
@@ -369,7 +369,7 @@ impl WebSocketInterface {
 
     pub async fn close(self: &Arc<Self>) -> Result<()> {
         // if self.inner.lock().unwrap().is_some() {
-        if self.is_open.load(Ordering::SeqCst) {
+        if self.is_connected.load(Ordering::SeqCst) {
             // } self.inner.lock().unwrap().is_some() {
             self.shutdown
                 .request
@@ -399,7 +399,7 @@ impl WebSocketInterface {
     }
 
     pub fn trigger_abort(self: &Arc<Self>) -> Result<()> {
-        if self.is_open.load(Ordering::SeqCst) {
+        if self.is_connected.load(Ordering::SeqCst) {
             self.receiver_channel.try_send(Message::Close)?;
         }
         Ok(())

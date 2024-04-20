@@ -62,15 +62,15 @@ pub use workflow_rpc_macros::client_notification as notification;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Ctl {
-    Open,
-    Close,
+    Connect,
+    Disconnect,
 }
 
 impl std::fmt::Display for Ctl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Ctl::Open => write!(f, "open"),
-            Ctl::Close => write!(f, "close"),
+            Ctl::Connect => write!(f, "connect"),
+            Ctl::Disconnect => write!(f, "disconnect"),
         }
     }
 }
@@ -80,8 +80,8 @@ impl FromStr for Ctl {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
-            "open" => Ok(Ctl::Open),
-            "close" => Ok(Ctl::Close),
+            "connect" => Ok(Ctl::Connect),
+            "disconnect" => Ok(Ctl::Disconnect),
             _ => Err(Error::InvalidEvent(s.to_string())),
         }
     }
@@ -117,7 +117,7 @@ impl<'url> Options<'url> {
 struct Inner<Ops> {
     ws: Arc<WebSocket>,
     is_running: AtomicBool,
-    is_open: AtomicBool,
+    is_connected: AtomicBool,
     receiver_is_running: AtomicBool,
     timeout_is_running: AtomicBool,
     receiver_shutdown: DuplexChannel,
@@ -143,7 +143,7 @@ where
         let inner = Inner {
             ws,
             is_running: AtomicBool::new(false),
-            is_open: AtomicBool::new(false),
+            is_connected: AtomicBool::new(false),
             receiver_is_running: AtomicBool::new(false),
             receiver_shutdown: DuplexChannel::oneshot(),
             timeout_is_running: AtomicBool::new(false),
@@ -222,20 +222,20 @@ where
                                         .unwrap_or_else(|err|log_trace!("wRPC error: `{err}`"));
                                     }
                                     WebSocketMessage::Open => {
-                                        self.is_open.store(true, Ordering::SeqCst);
+                                        self.is_connected.store(true, Ordering::SeqCst);
                                         if let Some(ctl_channel) = &self.ctl_multiplexer {
-                                            ctl_channel.try_broadcast(Ctl::Open).expect("ctl_channel.try_broadcast(Ctl::Open)");
+                                            ctl_channel.try_broadcast(Ctl::Connect).expect("ctl_channel.try_broadcast(Ctl::Connect)");
                                         }
                                     }
                                     WebSocketMessage::Close => {
-                                        self.is_open.store(false, Ordering::SeqCst);
+                                        self.is_connected.store(false, Ordering::SeqCst);
 
                                         self.protocol.handle_disconnect().await.unwrap_or_else(|err|{
                                             log_error!("wRPC error during protocol disconnect: {err}");
                                         });
 
                                         if let Some(ctl_channel) = &self.ctl_multiplexer {
-                                            ctl_channel.try_broadcast(Ctl::Close).expect("ctl_channel.try_broadcast(Ctl::Close)");
+                                            ctl_channel.try_broadcast(Ctl::Disconnect).expect("ctl_channel.try_broadcast(Ctl::Disconnect)");
                                         }
                                     }
                                 }
@@ -411,8 +411,8 @@ where
     }
 
     /// Test if the underlying WebSocket is currently open
-    pub fn is_open(&self) -> bool {
-        self.inner.ws.is_open()
+    pub fn is_connected(&self) -> bool {
+        self.inner.ws.is_connected()
     }
 
     /// Obtain the current URL of the underlying WebSocket
@@ -447,7 +447,7 @@ where
     where
         Msg: BorshSerialize + Serialize + Send + Sync + 'static,
     {
-        if !self.is_open() {
+        if !self.is_connected() {
             return Err(WebSocketError::NotConnected.into());
         }
 
@@ -476,7 +476,7 @@ where
         Req: MsgT,
         Resp: MsgT,
     {
-        if !self.is_open() {
+        if !self.is_connected() {
             return Err(WebSocketError::NotConnected.into());
         }
 

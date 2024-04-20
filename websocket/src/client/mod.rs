@@ -148,8 +148,8 @@ impl WebSocket {
     }
 
     /// Returns true if websocket is connected, false otherwise
-    pub fn is_open(&self) -> bool {
-        self.inner.client.is_open()
+    pub fn is_connected(&self) -> bool {
+        self.inner.client.is_connected()
     }
 
     /// Connects the websocket to the destination URL.
@@ -188,7 +188,7 @@ impl WebSocket {
     /// potential blockage of the executor if it is being executed
     /// in tight loops.
     pub async fn post(&self, message: Message) -> Result<&Self> {
-        if !self.inner.client.is_open() {
+        if !self.inner.client.is_connected() {
             return Err(Error::NotConnected);
         }
 
@@ -206,7 +206,7 @@ impl WebSocket {
     /// will block until until the message was relayed to the
     /// underlying websocket implementation.
     pub async fn send(&self, message: Message) -> std::result::Result<&Self, Arc<Error>> {
-        if !self.inner.client.is_open() {
+        if !self.inner.client.is_connected() {
             return Err(Arc::new(Error::NotConnected));
         }
 
