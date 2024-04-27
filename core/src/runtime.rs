@@ -436,11 +436,14 @@ pub fn is_chrome_extension() -> bool {
 
             unsafe {
                 *IS_CHROME_EXTENSION.get_or_insert_with(||{
-                    let global = js_sys::global();
-                    let location = js_sys::Reflect::get(&global, &"location".into()).unwrap();
-                    let protocol = js_sys::Reflect::get(&location, &"protocol".into()).unwrap();
-
-                    protocol == "chrome-extension:"
+                    if is_web_capable(){
+                        let global = js_sys::global();
+                        let location = js_sys::Reflect::get(&global, &"location".into()).unwrap();
+                        let protocol = js_sys::Reflect::get(&location, &"protocol".into()).unwrap();
+                        protocol == "chrome-extension:"
+                    }else{
+                        false
+                    }
                 })
             }
 
