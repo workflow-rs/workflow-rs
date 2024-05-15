@@ -1,12 +1,19 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
+use js_sys::Reflect;
 use wasm_bindgen::prelude::*;
-use web_sys::{console, window, Blob, BlobPropertyBag, Url, Worker};
+use web_sys::{window, Blob, BlobPropertyBag, Url, Worker};
+
+use crate::runtime::is_web;
 
 #[wasm_bindgen]
 pub struct TimerManager {
-    worker: Worker, // Used to run the JavaScript code in a separate thread
-    next_id: u32, // Used to generate unique IDs for intervals and timeouts
+    worker: Worker,         // Used to run the JavaScript code in a separate thread
+    next_id: u32,           // Used to generate unique IDs for intervals and timeouts
     callbacks: js_sys::Map, // Used to store the callbacks that will be called when the interval/timeout is triggered
 }
 
@@ -59,7 +66,7 @@ impl TimerManager {
         // Create a blob with the code
         let blob = Blob::new_with_str_sequence_and_options(
             &blob_parts.into(), // Convert the array to a sequence
-            &BlobPropertyBag::new().type_("application/javascript"), // Set the type to JavaScript
+            BlobPropertyBag::new().type_("application/javascript"), // Set the type to JavaScript
         )
         .expect("failed to create blob");
 
@@ -140,7 +147,6 @@ impl TimerManager {
 
     #[wasm_bindgen(js_name = "clearInterval")]
     pub fn clear_interval(&mut self, id: u32) {
-
         let request = js_sys::Object::new();
 
         // Set the name of the function to call which is clearInterval
@@ -163,7 +169,6 @@ impl TimerManager {
 
     #[wasm_bindgen(js_name = "setTimeout")]
     pub fn set_timeout(&mut self, callback: &JsValue, time: u32) -> u32 {
-
         // Since we are adding a new function, we need to increment the ID
         let id = self.next_id;
         self.next_id += 1;
@@ -183,7 +188,7 @@ impl TimerManager {
         // Set the ID of the timeout
         js_sys::Reflect::set(&request, &JsValue::from("id"), &JsValue::from(id)).unwrap();
 
-        // Set the time of the timeout 
+        // Set the time of the timeout
         js_sys::Reflect::set(&request, &JsValue::from("time"), &JsValue::from(time)).unwrap();
 
         // Post the message to the worker
@@ -194,7 +199,6 @@ impl TimerManager {
 
     #[wasm_bindgen(js_name = "clearTimeout")]
     pub fn clear_timeout(&mut self, id: u32) {
-
         // Create a new object to send to the worker
         let request = js_sys::Object::new();
 
@@ -210,17 +214,58 @@ impl TimerManager {
         js_sys::Reflect::set(&request, &JsValue::from("id"), &JsValue::from(id)).unwrap();
         self.worker.post_message(&request).unwrap();
 
-        // Delete the callback from the map 
+        // Delete the callback from the map
         self.callbacks.delete(&JsValue::from(id));
     }
 }
 
-#[wasm_bindgen]
+impl Default for TimerManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+static INITIALIZED: AtomicBool = AtomicBool::new(false);
+static DISABLED: AtomicBool = AtomicBool::new(false);
+
+pub fn disable_persistent_timer_overrides() {
+    DISABLED.store(true, Ordering::Relaxed);
+}
+
 pub fn init_timer_overrides() -> Result<(), JsValue> {
+    // If already initialized exit
+    if INITIALIZED.load(Ordering::Relaxed) {
+        return Ok(());
+    } else {
+        INITIALIZED.store(true, Ordering::Relaxed);
+    }
+
+    // If disabled exit
+    if DISABLED.load(Ordering::Relaxed) {
+        return Ok(());
+    }
+
+    // Persistent timers shall only be injected in a web context.
+    if !is_web() {
+        return Ok(());
+    }
+
     // Get the global window object
     let window = window().unwrap();
 
-    // Create a new TimerManager and wrap it in an Rc<RefCell<_>> so 
+    if Reflect::get(&window, &JsValue::from_str("__persistent_timers")).is_err() {
+        // This means __persistent_timers is not yet set, so we set it.
+        Reflect::set(
+            &window,
+            &JsValue::from_str("__persistent_timers"),
+            &JsValue::from(true),
+        )?;
+    } else {
+        // Do not allow initializing persistent timers if already set.
+        return Ok(());
+    }
+
+    // Create a new TimerManager and wrap it in an Rc<RefCell<_>> so
     // that it can be shared across functions and still share mutable state.
     let timer_manager = Rc::new(RefCell::new(TimerManager::new()));
 
@@ -237,7 +282,6 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     let clear_interval_closure = {
         let timer_manager = timer_manager.clone();
         Closure::wrap(Box::new(move |id: u32| {
-
             timer_manager.borrow_mut().clear_interval(id);
         }) as Box<dyn FnMut(u32)>)
     };
@@ -246,7 +290,6 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     let set_timeout_closure = {
         let timer_manager = timer_manager.clone();
         Closure::wrap(Box::new(move |callback: JsValue, time: u32| -> JsValue {
-
             let id = timer_manager.borrow_mut().set_timeout(&callback, time);
             JsValue::from_f64(id as f64) // Convert the ID to JsValue and return
         }) as Box<dyn FnMut(JsValue, u32) -> JsValue>)
@@ -256,7 +299,6 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     let clear_timeout_closure = {
         let timer_manager = timer_manager.clone();
         Closure::wrap(Box::new(move |id: u32| {
-            console::log_1(&JsValue::from_str("cleartimeout"));
             timer_manager.borrow_mut().clear_timeout(id);
         }) as Box<dyn FnMut(u32)>)
     };
