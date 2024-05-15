@@ -165,8 +165,6 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     let set_interval_closure = {
         let timer_manager = timer_manager.clone();
         Closure::wrap(Box::new(move |callback: JsValue, time: u32| -> JsValue {
-            console::log_1(&JsValue::from_str("setinterval"));
-
             let id = timer_manager.borrow_mut().set_interval(&callback, time);
             JsValue::from_f64(id as f64) // Convert the ID to JsValue and return
         }) as Box<dyn FnMut(JsValue, u32) -> JsValue>)
