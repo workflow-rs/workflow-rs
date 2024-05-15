@@ -58,6 +58,7 @@ workspace = true
 features = [
     'Window',
     'Navigator',
+    'Worker',
 ]
 
 [build-dependencies]
