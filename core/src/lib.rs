@@ -36,7 +36,7 @@ pub mod utils;
 pub mod version;
 
 mod native;
-mod wasm;
+pub mod wasm;
 
 /// Seal macro that prevents accidental modification of the enclosed source code
 /// by hashing the source code and comparing it to the supplied hash.  If the code
