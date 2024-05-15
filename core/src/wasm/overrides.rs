@@ -63,11 +63,13 @@ impl TimerManager {
 
         let worker_clone = worker.clone();
         let callbacks_clone = callbacks.clone();
+            
+
         let closure = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
             if let Ok(id) = js_sys::Reflect::get(&event.data(), &JsValue::from_str("id")) {
                 let callback = callbacks_clone.get(&id);
-                let exists = callback.is_undefined();
-                if exists {
+                let undefined = callback.is_undefined();
+                if !undefined {
                     if let Some(func) = callback.dyn_ref::<js_sys::Function>() {
                         func.call0(&JsValue::NULL).unwrap();
                     }
