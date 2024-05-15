@@ -165,7 +165,7 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     let set_interval_closure = {
         let timer_manager = timer_manager.clone();
         Closure::wrap(Box::new(move |callback: JsValue, time: u32| -> JsValue {
-            console::log_1(&JsValue::from_str("banana"));
+            console::log_1(&JsValue::from_str("setinterval"));
 
             let id = timer_manager.borrow_mut().set_interval(&callback, time);
             JsValue::from_f64(id as f64) // Convert the ID to JsValue and return
@@ -176,7 +176,7 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     let clear_interval_closure = {
         let timer_manager = timer_manager.clone();
         Closure::wrap(Box::new(move |id: u32| {
-            console::log_1(&JsValue::from_str("banana"));
+            console::log_1(&JsValue::from_str("clearinterval"));
 
             timer_manager.borrow_mut().clear_interval(id);
         }) as Box<dyn FnMut(u32)>)
@@ -186,7 +186,7 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     let set_timeout_closure = {
         let timer_manager = timer_manager.clone();
         Closure::wrap(Box::new(move |callback: JsValue, time: u32| -> JsValue {
-            console::log_1(&JsValue::from_str("banana"));
+            console::log_1(&JsValue::from_str("settimeout"));
 
             let id = timer_manager.borrow_mut().set_timeout(&callback, time);
             JsValue::from_f64(id as f64) // Convert the ID to JsValue and return
@@ -197,7 +197,7 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     let clear_timeout_closure = {
         let timer_manager = timer_manager.clone();
         Closure::wrap(Box::new(move |id: u32| {
-            console::log_1(&JsValue::from_str("banana"));
+            console::log_1(&JsValue::from_str("cleartimeout"));
             timer_manager.borrow_mut().clear_timeout(id);
         }) as Box<dyn FnMut(u32)>)
     };
