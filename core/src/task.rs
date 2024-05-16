@@ -113,6 +113,7 @@ pub mod wasm {
             pub use workflow_core_macros::call_async_no_send;
         } else {
             pub use crate::native::{
+                overrides::{disable_persistent_timer_overrides,init_timer_overrides},
                 interval::{interval,Interval},
             };
             pub use async_std::task::sleep;

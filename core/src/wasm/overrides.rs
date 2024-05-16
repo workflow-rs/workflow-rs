@@ -232,7 +232,7 @@ pub fn disable_persistent_timer_overrides() {
     DISABLED.store(true, Ordering::Relaxed);
 }
 
-pub fn init_timer_overrides() -> Result<(), JsValue> {
+pub fn init_timer_overrides() -> Result<(), String> {
     // If already initialized exit
     if INITIALIZED.load(Ordering::Relaxed) {
         return Ok(());
@@ -255,11 +255,11 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
 
     if Reflect::get(&window, &JsValue::from_str("__persistent_timers")).is_err() {
         // This means __persistent_timers is not yet set, so we set it.
-        Reflect::set(
+        let _ = Reflect::set(
             &window,
             &JsValue::from_str("__persistent_timers"),
             &JsValue::from(true),
-        )?;
+        ).map_err(|err| err.as_string());
     } else {
         // Do not allow initializing persistent timers if already set.
         return Ok(());
@@ -307,23 +307,23 @@ pub fn init_timer_overrides() -> Result<(), JsValue> {
     js_sys::Reflect::set(
         &window,
         &JsValue::from("setInterval"),
-        set_interval_closure.as_ref().unchecked_ref(),
-    )?;
+        set_interval_closure.as_ref(),
+    ).expect("Unable to override setInterval");
     js_sys::Reflect::set(
         &window,
         &JsValue::from("clearInterval"),
-        clear_interval_closure.as_ref().unchecked_ref(),
-    )?;
+        clear_interval_closure.as_ref(),
+    ).expect("Unable to override clearInterval");
     js_sys::Reflect::set(
         &window,
         &JsValue::from("setTimeout"),
-        set_timeout_closure.as_ref().unchecked_ref(),
-    )?;
+        set_timeout_closure.as_ref(),
+    ).expect("Unable to override setTimeout");
     js_sys::Reflect::set(
         &window,
         &JsValue::from("clearTimeout"),
-        clear_timeout_closure.as_ref().unchecked_ref(),
-    )?;
+        clear_timeout_closure.as_ref(),
+    ).expect("Unable to override clearTimeout");
 
     // Ensure Closures are kept alive long enough
     set_interval_closure.forget();
