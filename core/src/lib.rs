@@ -35,8 +35,10 @@ pub mod utils;
 #[cfg(feature = "version")]
 pub mod version;
 
+#[cfg(target_arch = "wasm32")]
+mod wasm;
+#[cfg(not(target_arch = "wasm32"))]
 mod native;
-pub mod wasm;
 
 /// Seal macro that prevents accidental modification of the enclosed source code
 /// by hashing the source code and comparing it to the supplied hash.  If the code
@@ -45,7 +47,11 @@ pub mod wasm;
 /// code to prevent their accidental change.
 pub use workflow_core_macros::seal;
 
+
+
 cfg_if::cfg_if! {
+
+
     if #[cfg(not(target_os = "solana"))] {
         // Generic 8-byte identifier
         pub mod id;

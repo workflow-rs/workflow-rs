@@ -105,6 +105,7 @@ pub mod wasm {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             pub use crate::wasm::{
+                overrides::disable_persistent_timer_overrides,
                 interval::{interval,Interval},
                 yield_executor::{yield_executor,Yield},
                 sleep::{sleep,Sleep}
@@ -113,7 +114,7 @@ pub mod wasm {
             pub use workflow_core_macros::call_async_no_send;
         } else {
             pub use crate::native::{
-                overrides::{disable_persistent_timer_overrides,init_timer_overrides},
+                overrides::disable_persistent_timer_overrides,
                 interval::{interval,Interval},
             };
             pub use async_std::task::sleep;
