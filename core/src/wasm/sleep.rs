@@ -19,6 +19,8 @@ use std::{
 };
 use wasm_bindgen::prelude::*;
 
+use super::overrides::init_timer_overrides;
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen (catch, js_name = setTimeout)]
@@ -64,6 +66,9 @@ pub struct Sleep {
 impl Sleep {
     /// Create a new `Sleep` future that will resolve after the given duration.
     pub fn new(duration: Duration) -> Self {
+        if let Err(e) = init_timer_overrides() {
+            workflow_log::log_error!(e);
+        }
         let inner = Arc::new(Inner {
             ready: AtomicBool::new(false),
             consumed: AtomicBool::new(false),

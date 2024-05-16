@@ -25,6 +25,7 @@ borsh.workspace = true
 cfg-if.workspace = true
 wasm-bindgen.workspace = true
 workflow-core-macros.workspace = true
+workflow-log.workspace = true
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 # getrandom = {version = "^0.2", features=["js"]}
@@ -58,6 +59,11 @@ workspace = true
 features = [
     'Window',
     'Navigator',
+    'Worker',
+    'Blob',
+    'BlobPropertyBag',
+    'Url',
+    'MessageEvent',
 ]
 
 [build-dependencies]

@@ -216,12 +216,9 @@ impl Parse for Args {
                     // },
                     Item::String(lit_str) => {
                         let default = Ident::new("default", Span::call_site());
-                        if map.get(&default).is_none() {
-                            map.insert(
-                                default,
-                                Some(Value::EvaluationValue(EvaluationValue::String(lit_str))),
-                            );
-                        }
+                        map.entry(default).or_insert(Some(Value::EvaluationValue(
+                            EvaluationValue::String(lit_str),
+                        )));
                     }
                     _ => {
                         println!("invalid attributes");
