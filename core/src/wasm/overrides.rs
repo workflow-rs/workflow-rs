@@ -5,21 +5,17 @@ use std::{
 };
 
 use js_sys::Reflect;
-use wasm_bindgen::prelude::*;
 use web_sys::{window, Blob, BlobPropertyBag, Url, Worker};
 
 use crate::runtime::is_web;
 
-#[wasm_bindgen]
 pub struct TimerManager {
     worker: Worker,         // Used to run the JavaScript code in a separate thread
     next_id: u32,           // Used to generate unique IDs for intervals and timeouts
     callbacks: js_sys::Map, // Used to store the callbacks that will be called when the interval/timeout is triggered
 }
 
-#[wasm_bindgen]
 impl TimerManager {
-    #[wasm_bindgen(constructor)]
     pub fn new() -> TimerManager {
         // The JavaScript code that will run in the worker
         // It listens for messages and sets/clears intervals and timeouts
@@ -114,7 +110,6 @@ impl TimerManager {
     }
 
     /// Replacement for setInterval
-    #[wasm_bindgen(js_name = "setInterval")]
     pub fn set_interval(&mut self, callback: &JsValue, time: u32) -> u32 {
         // Get the current ID and increment it
         let id = self.next_id;
@@ -145,7 +140,6 @@ impl TimerManager {
         id
     }
 
-    #[wasm_bindgen(js_name = "clearInterval")]
     pub fn clear_interval(&mut self, id: u32) {
         let request = js_sys::Object::new();
 
@@ -167,7 +161,6 @@ impl TimerManager {
         self.callbacks.delete(&JsValue::from(id));
     }
 
-    #[wasm_bindgen(js_name = "setTimeout")]
     pub fn set_timeout(&mut self, callback: &JsValue, time: u32) -> u32 {
         // Since we are adding a new function, we need to increment the ID
         let id = self.next_id;
@@ -197,7 +190,6 @@ impl TimerManager {
         id
     }
 
-    #[wasm_bindgen(js_name = "clearTimeout")]
     pub fn clear_timeout(&mut self, id: u32) {
         // Create a new object to send to the worker
         let request = js_sys::Object::new();
@@ -279,6 +271,14 @@ pub fn init_timer_overrides() -> Result<(), String> {
         }) as Box<dyn FnMut(JsValue, u32) -> JsValue>)
     };
 
+    // Override the setInterval function on the window object
+    js_sys::Reflect::set(
+        &window,
+        &JsValue::from("setInterval"),
+        set_interval_closure.as_ref(),
+    )
+    .expect("Unable to override setInterval");
+
     // Wrap the clearInterval function
     let clear_interval_closure = {
         let timer_manager = timer_manager.clone();
@@ -286,6 +286,14 @@ pub fn init_timer_overrides() -> Result<(), String> {
             timer_manager.borrow_mut().clear_interval(id);
         }) as Box<dyn FnMut(u32)>)
     };
+
+    // Override the clearInterval function on the window object
+    js_sys::Reflect::set(
+        &window,
+        &JsValue::from("clearInterval"),
+        clear_interval_closure.as_ref(),
+    )
+    .expect("Unable to override clearInterval");
 
     // Wrap the setTimeout function so it returns the timer ID
     let set_timeout_closure = {
@@ -296,6 +304,14 @@ pub fn init_timer_overrides() -> Result<(), String> {
         }) as Box<dyn FnMut(JsValue, u32) -> JsValue>)
     };
 
+    // Override the setTimeout function on the window object
+    js_sys::Reflect::set(
+        &window,
+        &JsValue::from("setTimeout"),
+        set_timeout_closure.as_ref(),
+    )
+    .expect("Unable to override setTimeout");
+
     // Wrap the clearTimeout function
     let clear_timeout_closure = {
         let timer_manager = timer_manager.clone();
@@ -304,25 +320,7 @@ pub fn init_timer_overrides() -> Result<(), String> {
         }) as Box<dyn FnMut(u32)>)
     };
 
-    // Set the new functions on the window object
-    js_sys::Reflect::set(
-        &window,
-        &JsValue::from("setInterval"),
-        set_interval_closure.as_ref(),
-    )
-    .expect("Unable to override setInterval");
-    js_sys::Reflect::set(
-        &window,
-        &JsValue::from("clearInterval"),
-        clear_interval_closure.as_ref(),
-    )
-    .expect("Unable to override clearInterval");
-    js_sys::Reflect::set(
-        &window,
-        &JsValue::from("setTimeout"),
-        set_timeout_closure.as_ref(),
-    )
-    .expect("Unable to override setTimeout");
+    // Override the clearTimeout function on the window object
     js_sys::Reflect::set(
         &window,
         &JsValue::from("clearTimeout"),
