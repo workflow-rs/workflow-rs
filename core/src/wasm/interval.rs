@@ -70,7 +70,7 @@ impl Interval {
     /// Create a new `Interval` stream that will resolve each given duration.
     pub fn new(period: Duration) -> Self {
         if let Err(e) = init_timer_overrides() {
-            workflow_log::log_error!(e);
+            workflow_log::log_error!("{e}");
         }
         let inner = Arc::new(Inner {
             // Interval is made to fire immediately

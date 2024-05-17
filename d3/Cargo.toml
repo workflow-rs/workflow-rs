@@ -37,3 +37,6 @@ features = [
     'CanvasRenderingContext2d',
     'TextMetrics'
 ]
+
+[lints.clippy]
+empty_docs = "allow"

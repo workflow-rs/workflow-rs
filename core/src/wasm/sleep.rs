@@ -67,7 +67,7 @@ impl Sleep {
     /// Create a new `Sleep` future that will resolve after the given duration.
     pub fn new(duration: Duration) -> Self {
         if let Err(e) = init_timer_overrides() {
-            workflow_log::log_error!(e);
+            workflow_log::log_error!("{e}");
         }
         let inner = Arc::new(Inner {
             ready: AtomicBool::new(false),

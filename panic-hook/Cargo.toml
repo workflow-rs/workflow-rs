@@ -24,3 +24,6 @@ features = [
     'HtmlElement',
     'Window',
 ]
+
+[lints.clippy]
+empty_docs = "allow"

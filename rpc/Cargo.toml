@@ -58,3 +58,7 @@ getrandom.workspace = true
 futures-util.workspace = true
 tokio.workspace = true
 tungstenite.workspace = true
+
+
+[lints.clippy]
+multiple_bound_locations = "allow"

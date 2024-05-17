@@ -28,3 +28,6 @@ workflow-log.workspace = true
 workflow-wasm.workspace = true
 workflow-task.workspace = true
 lazy_static.workspace = true
+
+[lints.clippy]
+empty_docs = "allow"

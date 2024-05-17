@@ -70,3 +70,6 @@ features = [
     "ProgressEvent",
     "WebSocket",
 ]
+
+[lints.clippy]
+multiple_bound_locations = "allow"

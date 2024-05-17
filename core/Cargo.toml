@@ -68,3 +68,6 @@ features = [
 
 [build-dependencies]
 vergen = { version = "8.2.6", features = ["build", "git", "gitcl", "rustc", "cargo"] }
+
+[lints.clippy]
+empty_docs = "allow"

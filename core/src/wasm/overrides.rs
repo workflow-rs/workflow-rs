@@ -5,6 +5,7 @@ use std::{
 };
 
 use js_sys::Reflect;
+use wasm_bindgen::prelude::*;
 use web_sys::{window, Blob, BlobPropertyBag, Url, Worker};
 
 use crate::runtime::is_web;
@@ -220,6 +221,7 @@ impl Default for TimerManager {
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 static DISABLED: AtomicBool = AtomicBool::new(false);
 
+#[allow(dead_code)]
 pub fn disable_persistent_timer_overrides() {
     DISABLED.store(true, Ordering::Relaxed);
 }

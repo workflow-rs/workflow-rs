@@ -33,3 +33,6 @@ lazy_static.workspace = true
 log.workspace = true
 termcolor.workspace = true
 wasm-bindgen.workspace = true
+
+[lints.clippy]
+empty_docs = "allow"
