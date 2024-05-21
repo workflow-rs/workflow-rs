@@ -466,10 +466,10 @@ pub fn format_hex_with_colors<'a>(
 }
 #[cfg(not(target_os = "solana"))]
 pub mod color_log {
-    pub use super::*;
-    pub type Index = usize;
-    pub type Length = usize;
-    pub type Color<'a> = &'a str;
+    use super::*;
+    type Index = usize;
+    type Length = usize;
+    type Color<'a> = &'a str;
     type Result<T> = std::result::Result<T, String>;
     pub trait ColoLogTrace {
         fn log_data(&self) -> Vec<u8>;
