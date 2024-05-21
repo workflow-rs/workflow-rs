@@ -23,6 +23,7 @@ pub use workflow_websocket::server::{
     WebSocketCounters, WebSocketHandler, WebSocketReceiver, WebSocketSender, WebSocketServer,
     WebSocketServerTrait, WebSocketSink,
 };
+pub use workflow_core::task::spawn;
 pub mod handshake {
     //! WebSocket handshake helpers
     pub use workflow_websocket::server::handshake::*;
@@ -255,6 +256,7 @@ where
 {
     rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
     protocol: Arc<Protocol>,
+    enable_async_handling: bool,
     _server_ctx: PhantomData<ServerContext>,
     _ops: PhantomData<Ops>,
 }
@@ -270,11 +272,13 @@ where
     pub fn new(
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
         interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
+        enable_async_handling: bool,
     ) -> Self {
         let protocol = Arc::new(Protocol::new(interface));
         Self {
             rpc_handler,
             protocol,
+            enable_async_handling,
             _server_ctx: PhantomData,
             _ops: PhantomData,
         }
@@ -325,44 +329,23 @@ where
         msg: Message,
         sink: &WebSocketSink,
     ) -> WebSocketResult<()> {
-        self.protocol
-            .handle_message((*connection_ctx).clone(), msg, sink)
-            .await
+        let connection_ctx = (*connection_ctx).clone();
+        if self.enable_async_handling {
+            let sink = sink.clone();
+            let this = self.clone();
+            spawn(async move {
+                this.protocol
+                    .handle_message(connection_ctx, msg, &sink)
+                    .await
+            });
+            Ok(())
+        } else {
+            self.protocol
+                .handle_message(connection_ctx, msg, sink)
+                .await
+        }
     }
 }
-
-// trait Encoder<Ops> : DowncastSync + Sized + Send + Sync {
-//     fn serialize_notification_message<Msg>(
-//         &self,
-//         op: Ops,
-//         msg: Msg,
-//     ) -> Result<tungstenite::Message>
-//     where
-//         Msg: BorshSerialize + BorshDeserialize + Serialize + Send + Sync + 'static;
-// }
-
-// // impl_downcast!(sync Encoder<Ops> where Ops: Send + Sync + 'static);
-
-// impl<ServerContext, ConnectionContext, Protocol, Ops> Encoder<Ops>
-//     for RpcWebSocketHandler<ServerContext, ConnectionContext, Protocol, Ops>
-// where
-//     Ops: OpsT,
-//     ServerContext: Clone + Send + Sync + 'static,
-//     ConnectionContext: Clone + Send + Sync + 'static,
-//     Protocol: ProtocolHandler<ServerContext, ConnectionContext, Ops> + Send + Sync + 'static,
-// {
-//     fn serialize_notification_message<Msg>(
-//         &self,
-//         op: Ops,
-//         msg: Msg,
-//     ) -> Result<tungstenite::Message>
-//     where
-//         Ops: OpsT,
-//         Msg: BorshSerialize + BorshDeserialize + Serialize + Send + Sync + 'static
-//     {
-//         self.protocol.serialize_notification_message(op, msg)
-//     }
-// }
 
 /// [`RpcServer`] - a server-side object that listens
 /// for incoming websocket connections and delegates interaction
@@ -391,6 +374,7 @@ impl RpcServer {
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
         interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
         counters: Option<Arc<WebSocketCounters>>,
+        enable_async_handling: bool,
     ) -> RpcServer
     where
         ServerContext: Clone + Send + Sync + 'static,
@@ -403,7 +387,7 @@ impl RpcServer {
             ConnectionContext,
             Protocol,
             Ops,
-        >::new(rpc_handler, interface));
+        >::new(rpc_handler, interface, enable_async_handling));
 
         let ws_server = WebSocketServer::new(ws_handler, counters);
         RpcServer { ws_server }
@@ -428,11 +412,19 @@ impl RpcServer {
     /// instantiate the corresponding protocol handler ([`BorshProtocol`] or
     /// [`JsonProtocol`] respectively).
     ///
+    /// `enable_async_handling` is a boolean flag that determines if the server
+    /// should spawn a new async task for each incoming message. If set to `false`,
+    /// the server will handle message intake synchronously where each message
+    /// is posted to the underlying handler one-at-a-time. (i.e. RPC awaits for the
+    /// message intake processing to be complete before the next message arrives). 
+    /// If `true`, each message is dispatched via a new async task.
+    /// 
     pub fn new_with_encoding<ServerContext, ConnectionContext, Ops, Id>(
         encoding: Encoding,
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
         interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
         counters: Option<Arc<WebSocketCounters>>,
+        enable_async_handling: bool
     ) -> RpcServer
     where
         ServerContext: Clone + Send + Sync + 'static,
@@ -446,13 +438,13 @@ impl RpcServer {
                 ConnectionContext,
                 BorshProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
-            >(rpc_handler, interface, counters),
+            >(rpc_handler, interface, counters, enable_async_handling),
             Encoding::SerdeJson => RpcServer::new::<
                 ServerContext,
                 ConnectionContext,
                 JsonProtocol<ServerContext, ConnectionContext, Ops, Id>,
                 Ops,
-            >(rpc_handler, interface, counters),
+            >(rpc_handler, interface, counters, enable_async_handling),
         }
     }
 
