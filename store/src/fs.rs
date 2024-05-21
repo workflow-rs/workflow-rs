@@ -35,7 +35,7 @@ extern "C" {
 }
 
 pub fn local_storage() -> web_sys::Storage {
-    web_sys::window().unwrap().local_storage().unwrap().unwrap()
+    web_sys::window().unwrap().local_storage().ok().flatten().expect("localStorage is not available")
 }
 
 #[derive(Default)]
