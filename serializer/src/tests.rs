@@ -1,3 +1,4 @@
+#[allow(clippy::module_inception)]
 #[cfg(test)]
 mod tests {
     // use super::*;
@@ -86,8 +87,8 @@ mod tests {
 
         // assert_eq!(version, 1);
         assert_eq!(deserialized_value.field1, 42);
-        assert_eq!(deserialized_value.field2, "Hello, world!");
-        assert_eq!(deserialized_value.field3, true);
+        assert!(deserialized_value.field2 == "Hello, world!");
+        assert!(deserialized_value.field3);
 
         Ok(())
     }
