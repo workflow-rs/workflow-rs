@@ -1,5 +1,4 @@
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
+use crate::imports::*;
 
 #[derive(Debug)]
 pub enum Model {
@@ -34,28 +33,59 @@ impl std::fmt::Display for Model {
     }
 }
 
-pub struct ChatGPT {
+struct Inner {
     api_key: String,
     model: Model,
     client: Client,
 }
 
+#[derive(Clone)]
+pub struct ChatGPT {
+    inner: Arc<Inner>,
+}
+
 impl ChatGPT {
     pub fn new(api_key: String, model: Model) -> Self {
         ChatGPT {
-            api_key,
-            model,
-            client: Client::new(),
+            inner: Arc::new(Inner {
+                api_key,
+                model,
+                client: Client::new(),
+            }),
         }
     }
 
-    pub async fn query(&self, text: String) -> Result<String, reqwest::Error> {
+    pub async fn query_with_retries(
+        &self,
+        text: String,
+        retries: usize,
+        delay: Duration,
+    ) -> Result<String> {
+        let mut attempt = 0;
+        loop {
+            match self.query(text.clone()).await {
+                Ok(response) => {
+                    return Ok(response);
+                }
+                Err(err) => {
+                    workflow_core::task::sleep(delay).await;
+                    attempt += 1;
+                    if attempt >= retries {
+                        return Err(Error::RetryFailure(retries, err.to_string()));
+                    }
+                }
+            }
+        }
+    }
+
+    pub async fn query(&self, text: String) -> Result<String> {
         let response = self
+            .inner
             .client
             .post("https://api.openai.com/v1/chat/completions")
-            .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Authorization", format!("Bearer {}", self.inner.api_key))
             .json(&Request {
-                model: self.model.to_string(),
+                model: self.inner.model.to_string(),
                 messages: vec![Message {
                     role: "user".to_string(),
                     content: text,
@@ -77,9 +107,7 @@ impl ChatGPT {
         &self,
         entries: Vec<String>,
         target_language: &str,
-    ) -> Result<Vec<(String, String)>, reqwest::Error> {
-        let client = Client::new();
-
+    ) -> Result<Vec<(String, String)>> {
         // Construct a single message with all texts to be translated
         let message_content = entries.clone().join("\n");
         let message_content = format!(
@@ -87,11 +115,13 @@ impl ChatGPT {
             target_language, message_content
         );
 
-        let response = client
+        let response = self
+            .inner
+            .client
             .post("https://api.openai.com/v1/chat/completions")
-            .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Authorization", format!("Bearer {}", self.inner.api_key))
             .json(&Request {
-                model: self.model.to_string(),
+                model: self.inner.model.to_string(),
                 messages: vec![Message {
                     role: "user".to_string(),
                     content: message_content,
