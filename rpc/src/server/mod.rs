@@ -18,12 +18,12 @@ pub use interface::{Interface, Method, Notification};
 pub use protocol::{BorshProtocol, JsonProtocol, ProtocolHandler};
 pub use std::net::SocketAddr;
 pub use tokio::sync::mpsc::UnboundedSender as TokioUnboundedSender;
+pub use workflow_core::task::spawn;
 pub use workflow_websocket::server::{
     Error as WebSocketError, Message, Result as WebSocketResult, WebSocketConfig,
     WebSocketCounters, WebSocketHandler, WebSocketReceiver, WebSocketSender, WebSocketServer,
     WebSocketServerTrait, WebSocketSink,
 };
-pub use workflow_core::task::spawn;
 pub mod handshake {
     //! WebSocket handshake helpers
     pub use workflow_websocket::server::handshake::*;
@@ -416,15 +416,15 @@ impl RpcServer {
     /// should spawn a new async task for each incoming message. If set to `false`,
     /// the server will handle message intake synchronously where each message
     /// is posted to the underlying handler one-at-a-time. (i.e. RPC awaits for the
-    /// message intake processing to be complete before the next message arrives). 
+    /// message intake processing to be complete before the next message arrives).
     /// If `true`, each message is dispatched via a new async task.
-    /// 
+    ///
     pub fn new_with_encoding<ServerContext, ConnectionContext, Ops, Id>(
         encoding: Encoding,
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
         interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
         counters: Option<Arc<WebSocketCounters>>,
-        enable_async_handling: bool
+        enable_async_handling: bool,
     ) -> RpcServer
     where
         ServerContext: Clone + Send + Sync + 'static,
@@ -433,18 +433,22 @@ impl RpcServer {
         Id: IdT,
     {
         match encoding {
-            Encoding::Borsh => RpcServer::new::<
-                ServerContext,
-                ConnectionContext,
-                BorshProtocol<ServerContext, ConnectionContext, Ops, Id>,
-                Ops,
-            >(rpc_handler, interface, counters, enable_async_handling),
-            Encoding::SerdeJson => RpcServer::new::<
-                ServerContext,
-                ConnectionContext,
-                JsonProtocol<ServerContext, ConnectionContext, Ops, Id>,
-                Ops,
-            >(rpc_handler, interface, counters, enable_async_handling),
+            Encoding::Borsh => {
+                RpcServer::new::<
+                    ServerContext,
+                    ConnectionContext,
+                    BorshProtocol<ServerContext, ConnectionContext, Ops, Id>,
+                    Ops,
+                >(rpc_handler, interface, counters, enable_async_handling)
+            }
+            Encoding::SerdeJson => {
+                RpcServer::new::<
+                    ServerContext,
+                    ConnectionContext,
+                    JsonProtocol<ServerContext, ConnectionContext, Ops, Id>,
+                    Ops,
+                >(rpc_handler, interface, counters, enable_async_handling)
+            }
         }
     }
 
