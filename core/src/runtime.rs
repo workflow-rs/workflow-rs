@@ -120,6 +120,17 @@ cfg_if! {
             detect().web
         }
 
+        //// Helper to test whether the application is running
+        //// in a cross-origin isolated browser environment (Flutter).
+        #[inline(always)]
+        pub fn is_cross_origin_isolated()->bool{
+            static CROSS_ORIGIN: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+            *CROSS_ORIGIN.get_or_init(|| {
+                js_sys::Reflect::get(&js_sys::global(), &"crossOriginIsolated".into())
+                .map(|v| !v.is_falsy())
+                .unwrap_or(false)
+            })
+        }
     }else{
 
         /// Helper to test whether the application is running under
@@ -160,6 +171,13 @@ cfg_if! {
         /// Helper to test whether the application is running under
         /// in a regular browser environment.
         pub fn is_web()->bool {
+            false
+        }
+
+        //// Helper to test whether the application is running
+        //// in a cross-origin isolated browser environment (Flutter).
+        #[inline(always)]
+        pub fn is_cross_origin_isolated()->bool{
             false
         }
     }
