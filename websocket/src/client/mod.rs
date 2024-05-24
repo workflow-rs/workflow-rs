@@ -1,12 +1,13 @@
 //!
 //! async WebSocket client functionality (requires a browser (WASM) or tokio (native) executors)
 //!
-
+//! 
 use cfg_if::cfg_if;
+mod wasm;
+pub use wasm::WebSocketInterface as _WSI;
 
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        mod wasm;
         use wasm::WebSocketInterface;
     } else {
         mod native;

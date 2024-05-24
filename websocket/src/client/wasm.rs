@@ -579,12 +579,7 @@ impl TrySendMessage for WebSocket {
                     // Create a non-shared ArrayBuffer for cross-origin isolated environments (Flutter).
                     let array_buffer: ArrayBuffer = ArrayBuffer::new(data.len() as u32);
                     let uint8_array = Uint8Array::new(&array_buffer);
-    
-                    let mut index = 0;
-                    for item in data{
-                        uint8_array.set_index(index, *item);
-                        index += 1;
-                    }
+                    uint8_array.copy_from(&data[..]);
                     self.send_with_array_buffer(&array_buffer).map_err(|e| e.into())
                 } else {
                     self.send_with_u8_array(data).map_err(|e| e.into())
