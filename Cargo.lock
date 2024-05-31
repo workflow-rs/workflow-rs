@@ -2225,13 +2225,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serializer"
-version = "0.12.1"
-dependencies = [
- "borsh",
-]
-
-[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3424,6 +3417,15 @@ dependencies = [
  "workflow-terminal",
  "workflow-wasm",
  "workflow-websocket",
+]
+
+[[package]]
+name = "workflow-serializer"
+version = "0.12.1"
+dependencies = [
+ "ahash 0.8.9",
+ "borsh",
+ "serde",
 ]
 
 [[package]]

@@ -1,11 +1,10 @@
 #[allow(clippy::module_inception)]
 #[cfg(test)]
 mod tests {
-    // use super::*;
 
     use borsh::{BorshDeserialize, BorshSerialize};
-    // use std::io::Cursor;
-    use crate::{load, store, IoResult, Serializable, Serializer};
+    use crate::prelude::{load, store, Serializable, Serializer};
+    use crate::result::IoResult;
 
     #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq)]
     struct MyStruct {
@@ -22,10 +21,10 @@ mod tests {
 
         // Serialize (store)
         let mut buffer = Vec::new();
-        store!(MyStruct, &value, &mut buffer);
+        store!(MyStruct, &value, &mut buffer)?;
 
         // Deserialize (load)
-        let deserialized_value: MyStruct = load!(MyStruct, &mut buffer.as_slice());
+        let deserialized_value: MyStruct = load!(MyStruct, &mut buffer.as_slice())?;
 
         // Assert the original and deserialized values are the same
         assert_eq!(value, deserialized_value);
@@ -42,22 +41,22 @@ mod tests {
     impl Serializer for MyVersionedStruct {
         fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
             // Serialize the version
-            store!(u32, &1, writer);
+            store!(u32, &1, writer)?;
             // Serialize the fields
-            store!(u32, &self.field1, writer);
-            store!(String, &self.field2, writer);
-            store!(bool, &self.field3, writer);
+            store!(u32, &self.field1, writer)?;
+            store!(String, &self.field2, writer)?;
+            store!(bool, &self.field3, writer)?;
 
             Ok(())
         }
 
         fn deserialize(buf: &mut &[u8]) -> IoResult<Self> {
             // Deserialize the version
-            let version: u32 = load!(u32, buf);
+            let version: u32 = load!(u32, buf)?;
             // Deserialize the fields
-            let field1: u32 = load!(u32, buf);
-            let field2: String = load!(String, buf);
-            let field3: bool = load!(bool, buf);
+            let field1: u32 = load!(u32, buf)?;
+            let field2: String = load!(String, buf)?;
+            let field3: bool = load!(bool, buf)?;
 
             assert_eq!(version, 1);
 

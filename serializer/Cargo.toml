@@ -1,5 +1,5 @@
 [package]
-name = "serializer"
+name = "workflow-serializer"
 version.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -9,3 +9,5 @@ repository.workspace = true
 
 [dependencies]
 borsh.workspace = true
+serde.workspace = true
+ahash.workspace = true
