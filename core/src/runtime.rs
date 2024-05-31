@@ -120,8 +120,8 @@ cfg_if! {
             detect().web
         }
 
-        //// Helper to test whether the application is running
-        //// in a cross-origin isolated browser environment (Flutter).
+        /// Helper to test whether the application is running
+        /// in a cross-origin isolated browser environment (Flutter).
         #[inline(always)]
         pub fn is_cross_origin_isolated()->bool{
             static CROSS_ORIGIN: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
@@ -174,8 +174,8 @@ cfg_if! {
             false
         }
 
-        //// Helper to test whether the application is running
-        //// in a cross-origin isolated browser environment (Flutter).
+        /// Helper to test whether the application is running
+        /// in a cross-origin isolated browser environment (Flutter).
         #[inline(always)]
         pub fn is_cross_origin_isolated()->bool{
             false
