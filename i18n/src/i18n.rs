@@ -466,17 +466,9 @@ impl Dictionary {
     }
 }
 
-/// i18n.json data file structure.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(bound(deserialize = "'de: 'data"))]
-pub struct Data<'data> {
-    enabled: Vec<&'data str>,
-    aliases: FxHashMap<&'data str, &'data str>,
-    languages: FxHashMap<&'data str, &'data str>,
-    translations: FxHashMap<&'data str, Arc<FxHashMap<&'data str, &'data str>>>,
-}
+pub struct Languages(FxHashMap<&'static str, &'static str>);
 
-impl<'data> Default for Data<'data> {
+impl Default for Languages {
     fn default() -> Self {
         let languages: FxHashMap<_, _> = [
             ("af", "Afrikaans"),
@@ -527,6 +519,42 @@ impl<'data> Default for Data<'data> {
         ]
         .into_iter()
         .collect();
+
+        Languages(languages)
+    }
+}
+
+impl Languages {
+    pub fn new() -> Self {
+        Languages(FxHashMap::default())
+    }
+
+    pub fn add(&mut self, code: &'static str, name: &'static str) {
+        self.0.insert(code, name);
+    }
+
+    pub fn into_inner(self) -> FxHashMap<&'static str, &'static str> {
+        self.0
+    }
+
+    pub fn codes(&self) -> Vec<&'static str> {
+        self.0.keys().copied().collect()
+    }
+}
+
+/// i18n.json data file structure.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(bound(deserialize = "'de: 'data"))]
+pub struct Data<'data> {
+    enabled: Vec<&'data str>,
+    aliases: FxHashMap<&'data str, &'data str>,
+    languages: FxHashMap<&'data str, &'data str>,
+    translations: FxHashMap<&'data str, Arc<FxHashMap<&'data str, &'data str>>>,
+}
+
+impl<'data> Default for Data<'data> {
+    fn default() -> Self {
+        let languages = Languages::default().into_inner();
 
         let aliases: FxHashMap<_, _> = [
             ("en-GB", "en"),
