@@ -3,6 +3,8 @@
 //!
 
 use cfg_if::cfg_if;
+mod wasm;
+pub use wasm::WebSocketInterface as _WSI;
 
 mod wasm;
 pub use wasm::WebSocketInterface as _WasmWebSocketInterface;
