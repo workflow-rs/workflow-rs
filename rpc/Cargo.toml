@@ -39,7 +39,6 @@ futures.workspace = true
 futures-util.workspace = true
 manual_future.workspace = true
 rand.workspace = true
-# regex.workspace = true
 serde_json.workspace = true
 serde.workspace = true
 thiserror.workspace = true
@@ -48,8 +47,8 @@ workflow-core.workspace = true
 workflow-log.workspace = true
 workflow-rpc-macros.workspace = true
 workflow-task.workspace = true
-workflow-websocket.workspace = true
 workflow-wasm.workspace = true
+workflow-websocket.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom.workspace = true

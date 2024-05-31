@@ -87,7 +87,7 @@ where
                     }
                 }
                 Err(err) => {
-                    log_trace!("RPC server error: {:?} req: {:#?}", err, req);
+                    // log_trace!("RPC server error: {:?} req: {:#?}", err, req);
                     if err == ServerError::Close {
                         return Err(WebSocketError::ServerClose);
                     } else if let Ok(err_vec) = err.try_to_vec() {
