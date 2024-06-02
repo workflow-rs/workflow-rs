@@ -2,9 +2,9 @@
 #[cfg(test)]
 mod tests {
 
-    use borsh::{BorshDeserialize, BorshSerialize};
     use crate::prelude::{load, store, Serializable, Serializer};
     use crate::result::IoResult;
+    use borsh::{BorshDeserialize, BorshSerialize};
 
     #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq)]
     struct MyStruct {

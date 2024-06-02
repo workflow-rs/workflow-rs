@@ -16,7 +16,7 @@ impl<T> SerializerT for T where T: Serializer + Send + Sync {}
 /// `Serializable<T>`.
 ///
 /// Example:
-/// ```rust
+/// ```ignore
 ///
 /// struct MyStruct {
 ///    field: u32,

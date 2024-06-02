@@ -3,11 +3,9 @@
 //!
 
 use cfg_if::cfg_if;
-mod wasm;
-pub use wasm::WebSocketInterface as _WSI;
 
 mod wasm;
-pub use wasm::WebSocketInterface as _WasmWebSocketInterface;
+pub use wasm::WebSocketInterface as _WSI;
 
 cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
