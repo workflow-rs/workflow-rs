@@ -573,7 +573,18 @@ trait TrySendMessage {
 impl TrySendMessage for WebSocket {
     fn try_send(&self, message: &Message) -> Result<()> {
         match message {
-            Message::Binary(data) => self.send_with_u8_array(data).map_err(|e| e.into()),
+            Message::Binary(data) => {
+                if is_cross_origin_isolated() {
+                    // Create a non-shared ArrayBuffer for cross-origin isolated environments (Flutter).
+                    let array_buffer: ArrayBuffer = ArrayBuffer::new(data.len() as u32);
+                    let uint8_array = Uint8Array::new(&array_buffer);
+                    uint8_array.copy_from(&data[..]);
+                    self.send_with_array_buffer(&array_buffer)
+                        .map_err(|e| e.into())
+                } else {
+                    self.send_with_u8_array(data).map_err(|e| e.into())
+                }
+            }
             Message::Text(text) => self.send_with_str(text).map_err(|e| e.into()),
             _ => {
                 panic!("WebSocket trying to convert unsupported message type: `{message:?}`");
