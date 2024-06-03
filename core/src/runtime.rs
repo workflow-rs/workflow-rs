@@ -5,6 +5,7 @@
 //! and subsequently restrict the functionality to the capabilities to this environment.
 
 use cfg_if::cfg_if;
+use std::sync::OnceLock;
 
 cfg_if! {
     if #[cfg(target_arch = "wasm32")]{
@@ -36,47 +37,45 @@ cfg_if! {
 
         #[inline]
         fn detect() -> &'static JavaScriptRuntime {
-            static mut JAVASCRIPT_RUNTIME: Option<JavaScriptRuntime> = None;
-            unsafe {
-                JAVASCRIPT_RUNTIME.get_or_insert_with(||{
-                    let global = js_sys::global();
+            static JAVASCRIPT_RUNTIME: OnceLock<JavaScriptRuntime> = OnceLock::new();
+            JAVASCRIPT_RUNTIME.get_or_init(|| {
+                let global = js_sys::global();
 
-                    let mut browser = exists("window") && exists("document") && exists("location") && exists("navigator");
+                let mut browser = exists("window") && exists("document") && exists("location") && exists("navigator");
 
-                    let process = Reflect::get(&global, &"process".into());
-                    let versions = process
-                        .clone()
-                        .and_then(|process|Reflect::get(&process, &"versions".into()));
+                let process = Reflect::get(&global, &"process".into());
+                let versions = process
+                    .clone()
+                    .and_then(|process|Reflect::get(&process, &"versions".into()));
 
-                    let nodejs = versions
-                        .clone()
-                        .map(|versions|exists_prop(&versions, "node")).unwrap_or(false);
+                let nodejs = versions
+                    .clone()
+                    .map(|versions|exists_prop(&versions, "node")).unwrap_or(false);
 
-                    let electron = versions
-                        .clone()
-                        .map(|versions|exists_prop(&versions, "electron")).unwrap_or(false);
+                let electron = versions
+                    .clone()
+                    .map(|versions|exists_prop(&versions, "electron")).unwrap_or(false);
 
 
-                    if electron {
-                        if let Ok(process_type) = process.and_then(|process|Reflect::get(&process, &"type".into())) {
-                            browser = process_type.as_string().map(|v|v.as_str() == "renderer").unwrap_or(false);
-                        }
+                if electron {
+                    if let Ok(process_type) = process.and_then(|process|Reflect::get(&process, &"type".into())) {
+                        browser = process_type.as_string().map(|v|v.as_str() == "renderer").unwrap_or(false);
                     }
+                }
 
-                    let nwjs = Reflect::get(&global, &"nw".into())
-                        .map(|nw|exists_prop(&nw, "Window")).unwrap_or(false);
+                let nwjs = Reflect::get(&global, &"nw".into())
+                    .map(|nw|exists_prop(&nw, "Window")).unwrap_or(false);
 
-                    let web = !nodejs && !nwjs && !electron;
+                let web = !nodejs && !nwjs && !electron;
 
-                    JavaScriptRuntime {
-                        nodejs,
-                        nwjs,
-                        electron,
-                        browser,
-                        web,
-                    }
-                })
-            }
+                JavaScriptRuntime {
+                    nodejs,
+                    nwjs,
+                    electron,
+                    browser,
+                    web,
+                }
+            })
         }
 
         /// Helper to test whether the application is running under
@@ -343,35 +342,32 @@ impl Platform {
     }
 }
 
-static mut PLATFORM: Option<Platform> = None;
+static PLATFORM: OnceLock<Platform> = OnceLock::new();
 
 pub fn platform() -> Platform {
-    if let Some(_platform) = unsafe { PLATFORM.as_ref() } {
-        _platform.clone()
-    } else {
-        cfg_if! {
-            if #[cfg(target_os = "windows")] {
-                let _platform = Platform::Windows;
-            } else if #[cfg(target_os = "macos")] {
-                let _platform = Platform::MacOS;
-            } else if #[cfg(target_os = "linux")] {
-                let _platform = Platform::Linux;
-            } else if #[cfg(target_os = "android")] {
-                let _platform = Platform::Android;
-            } else if #[cfg(target_os = "ios")] {
-                let _platform = Platform::IOS;
-            } else if #[cfg(target_arch = "wasm32")] {
-                let _platform = if is_node() {
-                    Platform::from_node()
-                } else {
-                    Platform::from_web()
-                };
+    PLATFORM
+        .get_or_init(|| {
+            cfg_if! {
+                if #[cfg(target_os = "windows")] {
+                    Platform::Windows
+                } else if #[cfg(target_os = "macos")] {
+                    Platform::MacOS
+                } else if #[cfg(target_os = "linux")] {
+                    Platform::Linux
+                } else if #[cfg(target_os = "android")] {
+                    Platform::Android
+                } else if #[cfg(target_os = "ios")] {
+                    Platform::IOS
+                } else if #[cfg(target_arch = "wasm32")] {
+                    if is_node() {
+                        Platform::from_node()
+                    } else {
+                        Platform::from_web()
+                    }
+                }
             }
-        }
-
-        unsafe { PLATFORM.replace(_platform.clone()) };
-        _platform
-    }
+        })
+        .clone()
 }
 
 pub fn is_windows() -> bool {
@@ -454,20 +450,18 @@ pub fn is_chrome_extension() -> bool {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
 
-            static mut IS_CHROME_EXTENSION : Option<bool> = None;
+            static IS_CHROME_EXTENSION : OnceLock<bool> = OnceLock::new();
 
-            unsafe {
-                *IS_CHROME_EXTENSION.get_or_insert_with(||{
-                    if is_web_capable(){
-                        let global = js_sys::global();
-                        let location = js_sys::Reflect::get(&global, &"location".into()).unwrap();
-                        let protocol = js_sys::Reflect::get(&location, &"protocol".into()).unwrap();
-                        protocol == "chrome-extension:"
-                    }else{
-                        false
-                    }
-                })
-            }
+            *IS_CHROME_EXTENSION.get_or_init(||{
+                if is_web() {
+                    js_sys::Reflect::get(&js_sys::global(), &"location".into())
+                    .and_then(|location| { js_sys::Reflect::get(&location, &"protocol".into()) })
+                    .map(|protocol|protocol == "chrome-extension:")
+                    .unwrap_or(false)
+                } else {
+                    false
+                }
+            })
 
         } else {
             false
