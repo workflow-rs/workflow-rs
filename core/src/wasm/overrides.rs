@@ -8,7 +8,7 @@ use js_sys::Reflect;
 use wasm_bindgen::prelude::*;
 use web_sys::{window, Blob, BlobPropertyBag, Url, Worker};
 
-use crate::runtime::{is_cross_origin_isolated, is_web};
+use crate::runtime::{is_chrome_extension, is_cross_origin_isolated, is_web};
 
 pub struct TimerManager {
     worker: Worker,         // Used to run the JavaScript code in a separate thread
@@ -240,7 +240,8 @@ pub fn init_timer_overrides() -> Result<(), String> {
     }
 
     // Persistent timers shall only be injected in a web context.
-    if !is_web() || is_cross_origin_isolated() {
+    if !is_web() || is_cross_origin_isolated() || is_chrome_extension() {
+        DISABLED.store(true, Ordering::Relaxed);
         return Ok(());
     }
 
