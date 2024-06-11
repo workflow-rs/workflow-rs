@@ -111,6 +111,15 @@ where
     }
 }
 
+/// `Serializer` is a trait that allows for data serialization and deserialization
+/// similar to Borsh, but via a separate trait. This allows for serialization
+/// of additional metadata while using underlying Borsh primitives. For example:
+/// a struct can implement both Borsh and Serializer traits where Serializer
+/// can store custom metadata (e.g. struct version) and then store the struct
+/// using Borsh.  Both [`Serializer`] and Borsh are almost identical, where
+/// [`Serializer`] is meant to signal intent for custom serialization.
+/// [`Serializer`] is a complimentary trait for [`Serializable`] struct
+/// and can be used to prevent direct Borsh serialization of a struct.
 pub trait Serializer: Sized {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()>;
 
@@ -206,6 +215,33 @@ where
                 "invalid Serializer Option tag",
             )),
         }
+    }
+}
+
+impl<V> Serializer for Vec<V>
+where
+    V: Serializer,
+{
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        store!(u32, &(self.len() as u32), writer)?;
+
+        for item in self.iter() {
+            item.serialize(writer)?;
+        }
+
+        Ok(())
+    }
+
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let len: u32 = load!(u32, reader)?;
+        let mut vec = Vec::with_capacity(len as usize);
+
+        for _ in 0..len {
+            let item = V::deserialize(reader)?;
+            vec.push(item);
+        }
+
+        Ok(vec)
     }
 }
 
