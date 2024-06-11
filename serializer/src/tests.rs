@@ -50,13 +50,13 @@ mod tests {
             Ok(())
         }
 
-        fn deserialize(buf: &mut &[u8]) -> IoResult<Self> {
+        fn deserialize<R: std::io::Read>(reader: &mut R) -> IoResult<Self> {
             // Deserialize the version
-            let version: u32 = load!(u32, buf)?;
+            let version: u32 = load!(u32, reader)?;
             // Deserialize the fields
-            let field1: u32 = load!(u32, buf)?;
-            let field2: String = load!(String, buf)?;
-            let field3: bool = load!(bool, buf)?;
+            let field1: u32 = load!(u32, reader)?;
+            let field2: String = load!(String, reader)?;
+            let field3: bool = load!(bool, reader)?;
 
             assert_eq!(version, 1);
 

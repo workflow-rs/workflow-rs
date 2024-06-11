@@ -90,8 +90,7 @@ async-std = { version = "1.12.0", features = ['attributes'] }
 async-trait = "0.1.74"
 atomic_float = "0.1.0"
 base64 = "0.21.5"
-# borsh = { version = "0.10.0", features = ["rc"] }
-borsh = { version = "0.9.1", features = ["rc"] }
+borsh = { version = "1.5.1", features = ["derive", "rc"] }
 bs58 = "0.5.0"
 cfg-if = "1.0.0"
 chrono = "0.4.31"

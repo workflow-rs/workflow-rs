@@ -7,8 +7,8 @@ macro_rules! store {
 
 #[macro_export]
 macro_rules! load {
-    ($type:ty, $buffer:expr) => {
-        <$type as borsh::BorshDeserialize>::deserialize($buffer)
+    ($type:ty, $reader:expr) => {
+        <$type as borsh::BorshDeserialize>::deserialize_reader($reader)
     };
 }
 
@@ -21,7 +21,7 @@ macro_rules! serialize {
 
 #[macro_export]
 macro_rules! deserialize {
-    ($type:ty, $buffer:expr) => {
-        <$type as $crate::serializer::Serializer>::deserialize($buffer)
+    ($type:ty, $reader:expr) => {
+        <$type as $crate::serializer::Serializer>::deserialize($reader)
     };
 }

@@ -9,7 +9,7 @@ where
     Id: IdT,
     Ops: BorshSerialize + BorshDeserialize,
 {
-    let header = header.try_to_vec().expect("to_msg header serialize error");
+    let header = borsh::to_vec(&header).expect("to_msg header serialize error");
     // log_info!("header: {:?}", header);
     // log_info!("payload: {:?}", payload);
     let header_len = header.len();
@@ -28,7 +28,8 @@ where
 }
 
 #[derive(Debug, Clone, Copy, BorshSerialize, BorshDeserialize)]
-#[repr(u32)]
+#[repr(u8)]
+#[borsh(use_discriminant = true)]
 pub enum MessageKind {
     Notification = 0,
     Request = 1,
@@ -61,7 +62,7 @@ where
     {
         BorshHeader {
             id,
-            op: op.try_to_vec().expect("request op serialize error"),
+            op: borsh::to_vec(&op).expect("request op serialize error"),
             kind: MessageKind::Request,
         }
     }
@@ -72,7 +73,7 @@ where
     {
         BorshHeader {
             id,
-            op: op.try_to_vec().expect("response op serialize error"),
+            op: borsh::to_vec(&op).expect("response op serialize error"),
             kind: MessageKind::Response,
         }
     }
@@ -83,7 +84,7 @@ where
     {
         BorshHeader {
             id: None,
-            op: op.try_to_vec().expect("notification op serialize error"),
+            op: borsh::to_vec(&op).expect("notification op serialize error"),
             kind: MessageKind::Notification,
         }
     }

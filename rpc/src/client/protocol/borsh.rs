@@ -73,7 +73,7 @@ where
         Req: MsgT,
         Resp: MsgT,
     {
-        let payload = req.try_to_vec().map_err(|_| Error::BorshSerialize)?;
+        let payload = borsh::to_vec(&req).map_err(|_| Error::BorshSerialize)?;
 
         let id = Id::generate();
         let (sender, receiver) = oneshot();
@@ -105,7 +105,7 @@ where
     where
         Msg: BorshSerialize + Send + Sync + 'static,
     {
-        let payload = payload.try_to_vec().map_err(|_| Error::BorshSerialize)?;
+        let payload = borsh::to_vec(&payload).map_err(|_| Error::BorshSerialize)?;
         self.ws
             .post(to_ws_msg(
                 BorshReqHeader::<Ops, Id>::new(None, op),

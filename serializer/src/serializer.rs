@@ -101,14 +101,20 @@ impl<T> BorshDeserialize for Serializable<T>
 where
     T: SerializerT,
 {
+    fn deserialize_reader<R: borsh::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let t = T::deserialize(reader)?;
+        Ok(Serializable(t))
+    }
+
     fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-        Ok(Serializable(T::deserialize(buf)?))
+        Ok(Serializable(T::deserialize(&mut *buf)?))
     }
 }
 
 pub trait Serializer: Sized {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()>;
-    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self>;
+
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self>;
 
     fn try_from_slice(slice: &[u8]) -> std::io::Result<Self> {
         let mut buf = slice;
@@ -122,14 +128,14 @@ pub trait Serializer: Sized {
     }
 }
 
-type ResultStatusTag = u32;
-const RESULT_OK: u32 = 0;
-const RESULT_ERR: u32 = 1;
+type ResultStatusTag = u8;
+const RESULT_OK: ResultStatusTag = 0;
+const RESULT_ERR: ResultStatusTag = 1;
 
 impl<T, E> Serializer for Result<T, E>
 where
-    T: Serializer + Send + Sync + 'static,
-    E: std::fmt::Display + BorshSerialize + BorshDeserialize + Send + Sync + 'static,
+    T: Serializer + 'static,
+    E: std::fmt::Display + BorshSerialize + BorshDeserialize + 'static,
 {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         match self {
@@ -146,15 +152,15 @@ where
         Ok(())
     }
 
-    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-        let tag = load!(ResultStatusTag, buf)?;
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let tag = load!(ResultStatusTag, reader)?;
         match tag {
             RESULT_OK => {
-                let t = T::deserialize(buf)?;
+                let t = T::deserialize(reader)?;
                 Ok(Ok(t))
             }
             RESULT_ERR => {
-                let e = E::deserialize(buf)?;
+                let e = E::deserialize_reader(reader)?;
                 Ok(Err(e))
             }
             _ => Err(std::io::Error::new(
@@ -165,13 +171,13 @@ where
     }
 }
 
-type OptionStatusTag = u32;
-const OPTION_SOME: u32 = 1;
-const OPTION_NONE: u32 = 0;
+type OptionStatusTag = u8;
+const OPTION_SOME: OptionStatusTag = 1;
+const OPTION_NONE: OptionStatusTag = 0;
 
 impl<T> Serializer for Option<T>
 where
-    T: Serializer + Send + Sync + 'static,
+    T: Serializer + 'static,
 {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         match self {
@@ -180,24 +186,24 @@ where
                 t.serialize(writer)?;
             }
             None => {
-                store!(ResultStatusTag, &OPTION_NONE, writer)?;
+                store!(OptionStatusTag, &OPTION_NONE, writer)?;
             }
         }
 
         Ok(())
     }
 
-    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-        let tag = load!(ResultStatusTag, buf)?;
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let tag = load!(OptionStatusTag, reader)?;
         match tag {
             OPTION_SOME => {
-                let t = T::deserialize(buf)?;
+                let t = T::deserialize(reader)?;
                 Ok(Some(t))
             }
             OPTION_NONE => Ok(None),
             _ => Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                "invalid Serializer Result tag",
+                "invalid Serializer Option tag",
             )),
         }
     }
@@ -205,8 +211,8 @@ where
 
 impl<K, V> Serializer for std::collections::HashMap<K, V>
 where
-    K: Serializer + Send + Sync + std::hash::Hash + Eq,
-    V: Serializer + Send + Sync,
+    K: Serializer + std::hash::Hash + Eq,
+    V: Serializer,
 {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         store!(u32, &(self.len() as u32), writer)?;
@@ -219,17 +225,44 @@ where
         Ok(())
     }
 
-    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-        let len: u32 = load!(u32, buf)?;
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let len: u32 = load!(u32, reader)?;
         let mut map = std::collections::HashMap::new();
 
         for _ in 0..len {
-            let k = K::deserialize(buf)?;
-            let v = V::deserialize(buf)?;
+            let k = K::deserialize(reader)?;
+            let v = V::deserialize(reader)?;
             map.insert(k, v);
         }
 
         Ok(map)
+    }
+}
+
+impl<T> Serializer for std::collections::HashSet<T>
+where
+    T: Serializer + Send + Sync + std::hash::Hash + Eq,
+{
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        store!(u32, &(self.len() as u32), writer)?;
+
+        for item in self.iter() {
+            item.serialize(writer)?;
+        }
+
+        Ok(())
+    }
+
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let len: u32 = load!(u32, reader)?;
+        let mut set = std::collections::HashSet::new();
+
+        for _ in 0..len {
+            let item = T::deserialize(reader)?;
+            set.insert(item);
+        }
+
+        Ok(set)
     }
 }
 
@@ -249,16 +282,100 @@ where
         Ok(())
     }
 
-    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-        let len: u32 = load!(u32, buf)?;
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let len: u32 = load!(u32, reader)?;
         let mut map = ahash::AHashMap::new();
 
         for _ in 0..len {
-            let k = K::deserialize(buf)?;
-            let v = V::deserialize(buf)?;
+            let k = K::deserialize(reader)?;
+            let v = V::deserialize(reader)?;
             map.insert(k, v);
         }
 
         Ok(map)
+    }
+}
+
+impl<T> Serializer for ahash::AHashSet<T>
+where
+    T: Serializer + std::hash::Hash + Eq,
+{
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        store!(u32, &(self.len() as u32), writer)?;
+
+        for item in self.iter() {
+            item.serialize(writer)?;
+        }
+
+        Ok(())
+    }
+
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let len: u32 = load!(u32, reader)?;
+        let mut set = ahash::AHashSet::new();
+
+        for _ in 0..len {
+            let item = T::deserialize(reader)?;
+            set.insert(item);
+        }
+
+        Ok(set)
+    }
+}
+
+impl<K, V> Serializer for std::collections::BTreeMap<K, V>
+where
+    K: Serializer + Ord,
+    V: Serializer,
+{
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        store!(u32, &(self.len() as u32), writer)?;
+
+        for (k, v) in self.iter() {
+            k.serialize(writer)?;
+            v.serialize(writer)?;
+        }
+
+        Ok(())
+    }
+
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let len: u32 = load!(u32, reader)?;
+        let mut map = std::collections::BTreeMap::new();
+
+        for _ in 0..len {
+            let k = K::deserialize(reader)?;
+            let v = V::deserialize(reader)?;
+            map.insert(k, v);
+        }
+
+        Ok(map)
+    }
+}
+
+impl<T> Serializer for std::collections::BTreeSet<T>
+where
+    T: Serializer + Ord,
+{
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        store!(u32, &(self.len() as u32), writer)?;
+
+        for item in self.iter() {
+            item.serialize(writer)?;
+        }
+
+        Ok(())
+    }
+
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let len: u32 = load!(u32, reader)?;
+        let mut set = std::collections::BTreeSet::new();
+
+        for _ in 0..len {
+            let item = T::deserialize(reader)?;
+            set.insert(item);
+        }
+
+        Ok(set)
     }
 }
