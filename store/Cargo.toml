@@ -47,5 +47,5 @@ features = [
     'Window',
 ]
 
-[lints.clippy]
-empty_docs = "allow"
+[lints]
+workspace = true

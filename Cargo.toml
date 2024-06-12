@@ -149,3 +149,5 @@ web-sys = "0.3.67"
 # chrome-sys = {path = "../chrome-sys"}
 chrome-sys = { version = "0.2.0" }
 
+[workspace.lints.clippy]
+empty_docs = "allow"
