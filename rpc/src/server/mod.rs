@@ -20,7 +20,7 @@ pub use std::net::SocketAddr;
 pub use tokio::sync::mpsc::UnboundedSender as TokioUnboundedSender;
 pub use workflow_core::task::spawn;
 pub use workflow_websocket::server::{
-    Error as WebSocketError, Message, Result as WebSocketResult, WebSocketConfig,
+    Error as WebSocketError, Message, Result as WebSocketResult, TcpListener, WebSocketConfig,
     WebSocketCounters, WebSocketHandler, WebSocketReceiver, WebSocketSender, WebSocketServer,
     WebSocketServerTrait, WebSocketSink,
 };
@@ -452,12 +452,19 @@ impl RpcServer {
         }
     }
 
-    // pub fn
-
-    /// Start listening for incoming RPC connections on the `addr`
-    pub async fn listen(&self, addr: &str, config: Option<WebSocketConfig>) -> WebSocketResult<()> {
+    /// Bind network interface address to the `TcpListener`
+    pub async fn bind(&self, addr: &str) -> WebSocketResult<TcpListener> {
         let addr = addr.replace("wrpc://", "");
-        self.ws_server.clone().listen(&addr, config).await
+        self.ws_server.clone().bind(&addr).await
+    }
+
+    /// Start listening for incoming RPC connections on the supplied `TcpListener`
+    pub async fn listen(
+        &self,
+        listener: TcpListener,
+        config: Option<WebSocketConfig>,
+    ) -> WebSocketResult<()> {
+        self.ws_server.clone().listen(listener, config).await
     }
 
     /// Signal the listening task to stop

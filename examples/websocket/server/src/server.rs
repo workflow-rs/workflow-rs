@@ -84,7 +84,8 @@ pub async fn server_example() -> Result<()> {
     // create websocket server and install our handler in it
     let ws = WebSocketServer::<MyWsHandler>::new(handler, None);
     // listen for incoming connections
-    ws.listen(addr, None).await?;
+    let listener = ws.bind(addr).await?;
+    ws.listen(listener, None).await?;
 
     Ok(())
 }
