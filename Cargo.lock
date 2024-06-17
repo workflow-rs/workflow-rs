@@ -3129,17 +3129,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "workflow-ai"
-version = "0.13.0"
-dependencies = [
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
- "workflow-core",
-]
-
-[[package]]
 name = "workflow-chrome"
 version = "0.13.0"
 dependencies = [
@@ -3227,6 +3216,17 @@ dependencies = [
  "workflow-core",
  "workflow-log",
  "workflow-wasm",
+]
+
+[[package]]
+name = "workflow-gpt"
+version = "0.13.0"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "workflow-core",
 ]
 
 [[package]]
