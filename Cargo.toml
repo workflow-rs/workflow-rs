@@ -1,13 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "ai",
     "chrome",
     "core",
     "core/macros",
     "d3",
     "dom",
     "features",
+    "gpt",
     "html",
     "html/macros",
     "http",
@@ -59,6 +59,7 @@ workflow-core = { version = "0.13.0", path = "core" }
 workflow-core-macros = { version = "0.13.0", path = "core/macros" }
 workflow-d3 = { version = "0.13.0", path = "d3" }
 workflow-dom = { version = "0.13.0", path = "dom" }
+workflow-gpt = { version = "0.13.0", path = "gpt" }
 workflow-html = { version = "0.13.0", path = "html" }
 workflow-html-macros = { version = "0.13.0", path = "html/macros" }
 workflow-http = { version = "0.13.0", path = "http" }
