@@ -44,7 +44,7 @@ members = [
 
 [workspace.package]
 version = "0.13.2"
-authors = ["Anton Yemelyanov <anton.yemelyanov@gmail.com>", "Surinder Singh Matoo Mattaur <surinder83singh@gmail.com>"]
+authors = ["WORKFLOW-RS developers"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
 include = ["src/**/*.rs", "Cargo.toml"]
