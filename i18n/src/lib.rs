@@ -15,6 +15,6 @@ pub mod result;
 
 pub use i18n::i18n;
 
-// #[macro_use]
-// extern crate serde_json;
-// pub use serde_json::json;
+pub mod prelude {
+    pub use crate::i18n;
+}

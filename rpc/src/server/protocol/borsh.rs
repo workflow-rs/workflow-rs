@@ -87,10 +87,10 @@ where
                     }
                 }
                 Err(err) => {
-                    log_trace!("RPC server error: {:?} req: {:#?}", err, req);
+                    // log_trace!("RPC server error: {:?} req: {:#?}", err, req);
                     if err == ServerError::Close {
                         return Err(WebSocketError::ServerClose);
-                    } else if let Ok(err_vec) = err.try_to_vec() {
+                    } else if let Ok(err_vec) = borsh::to_vec(&err) {
                         if let Ok(msg) = BorshServerMessage::new(
                             BorshServerMessageHeader::<Ops, Id>::new(
                                 req.header.id,
@@ -133,7 +133,7 @@ where
     Ops: OpsT,
     Msg: BorshSerialize + Send + Sync + 'static,
 {
-    let payload = msg.try_to_vec()?;
+    let payload = borsh::to_vec(&msg)?;
     let data = BorshServerMessage::new(
         BorshServerMessageHeader::<Ops, ()>::new(None, ServerMessageKind::Notification, Some(op)),
         &payload,

@@ -9,7 +9,7 @@ pub fn buffer_as_slice<'data, T: 'data>(
 ) -> &'data [T] {
     unsafe {
         std::slice::from_raw_parts::<T>(
-            std::mem::transmute::<_, *const T>(data.as_ptr().add(byte_offset)),
+            std::mem::transmute::<*const u8, *const T>(data.as_ptr().add(byte_offset)),
             elements,
         )
     }
@@ -25,7 +25,7 @@ pub fn buffer_as_slice_mut<'data, T: 'data>(
 ) -> &mut [T] {
     unsafe {
         std::slice::from_raw_parts_mut::<T>(
-            std::mem::transmute::<_, *mut T>(data.as_mut_ptr().add(byte_offset)),
+            std::mem::transmute::<*mut u8, *mut T>(data.as_mut_ptr().add(byte_offset)),
             elements,
         )
     }

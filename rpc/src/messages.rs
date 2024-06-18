@@ -101,9 +101,7 @@ pub mod borsh {
         Id: BorshSerialize + BorshDeserialize,
         Ops: BorshSerialize + BorshDeserialize,
     {
-        let header = header
-            .try_to_vec()
-            .expect("to_ws_msg header serialize error");
+        let header = borsh::to_vec(&header).expect("to_ws_msg header serialize error");
         let header_len = header.len();
         let len = payload.len() + header_len;
         let mut buffer = Vec::with_capacity(len);
@@ -153,6 +151,7 @@ pub mod borsh {
     }
 
     #[derive(Debug, Clone, Copy, BorshSerialize, BorshDeserialize)]
+    #[borsh(use_discriminant = true)]
     pub enum ServerMessageKind {
         Success = 0,
         Error = 1,
@@ -236,7 +235,7 @@ pub mod borsh {
         }
 
         pub fn try_to_vec(&self) -> Result<Vec<u8>, Error> {
-            let header = self.header.try_to_vec()?;
+            let header = borsh::to_vec(&self.header)?;
             let header_len = header.len();
 
             let len = header_len + self.payload.len();

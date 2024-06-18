@@ -34,18 +34,11 @@ impl<T> OpsT for T where
 }
 
 pub trait MsgT:
-    Debug + BorshSerialize + BorshDeserialize + Serialize + DeserializeOwned + Send + Sync + 'static
+    BorshSerialize + BorshDeserialize + Serialize + DeserializeOwned + Send + Sync + 'static
 {
 }
 
 impl<T> MsgT for T where
-    T: Debug
-        + BorshSerialize
-        + BorshDeserialize
-        + Serialize
-        + DeserializeOwned
-        + Send
-        + Sync
-        + 'static
+    T: BorshSerialize + BorshDeserialize + Serialize + DeserializeOwned + Send + Sync + 'static
 {
 }

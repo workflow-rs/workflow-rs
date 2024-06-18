@@ -14,7 +14,8 @@ use std::pin::Pin;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::net::{TcpListener, TcpStream};
+pub use tokio::net::TcpListener;
+use tokio::net::TcpStream;
 use tokio::sync::mpsc::{
     UnboundedReceiver as TokioUnboundedReceiver, UnboundedSender as TokioUnboundedSender,
 };
@@ -275,7 +276,7 @@ where
         Ok(())
     }
 
-    async fn bind(self: &Arc<Self>, addr: &str) -> Result<TcpListener> {
+    pub async fn bind(self: &Arc<Self>, addr: &str) -> Result<TcpListener> {
         let listener = TcpListener::bind(&addr).await.map_err(|err| {
             Error::Listen(format!(
                 "WebSocket server unable to listen on `{addr}`: {err}",
@@ -321,12 +322,10 @@ where
     }
 
     pub async fn listen(
-        self: Arc<Self>,
-        addr: &str,
+        self: &Arc<Self>,
+        listener: TcpListener,
         config: Option<WebSocketConfig>,
     ) -> Result<()> {
-        let listener = self.bind(addr).await?;
-
         loop {
             select! {
                 stream = listener.accept().fuse() => {
@@ -378,23 +377,26 @@ where
 /// ```rust
 /// use std::sync::Arc;
 /// use async_trait::async_trait;
-/// use workflow_websocket::server::{Result,WebSocketServerTrait,WebSocketConfig};
+/// use workflow_websocket::server::{Result,WebSocketServerTrait,WebSocketConfig,TcpListener};
 ///
 /// struct Server{}
 ///
 /// #[async_trait]
-/// impl WebSocketServerTrait for Server{
-///     async fn listen(self: Arc<Self>, addr: &str, config: Option<WebSocketConfig>) -> Result<()>{
-///         Ok(())
+/// impl WebSocketServerTrait for Server {
+///     async fn bind(self: Arc<Self>, addr: &str) -> Result<TcpListener>{
+///         unimplemented!()
+///     }
+///     async fn listen(self: Arc<Self>, listener : TcpListener, config: Option<WebSocketConfig>) -> Result<()>{
+///         unimplemented!()
 ///     }
 ///     fn stop(&self) -> Result<()>{
-///         Ok(())
+///         unimplemented!()
 ///     }
 ///     async fn join(&self) -> Result<()>{
-///         Ok(())
+///         unimplemented!()
 ///     }
 ///     async fn stop_and_join(&self) -> Result<()>{
-///         Ok(())
+///         unimplemented!()
 ///     }
 /// }
 /// let server_trait: Arc<dyn WebSocketServerTrait> = Arc::new(Server{});
@@ -409,7 +411,12 @@ where
 ///
 #[async_trait]
 pub trait WebSocketServerTrait: DowncastSync {
-    async fn listen(self: Arc<Self>, addr: &str, config: Option<WebSocketConfig>) -> Result<()>;
+    async fn bind(self: Arc<Self>, addr: &str) -> Result<TcpListener>;
+    async fn listen(
+        self: Arc<Self>,
+        listener: TcpListener,
+        config: Option<WebSocketConfig>,
+    ) -> Result<()>;
     fn stop(&self) -> Result<()>;
     async fn join(&self) -> Result<()>;
     async fn stop_and_join(&self) -> Result<()>;
@@ -421,8 +428,16 @@ impl<T> WebSocketServerTrait for WebSocketServer<T>
 where
     T: WebSocketHandler + Send + Sync + 'static + Sized,
 {
-    async fn listen(self: Arc<Self>, addr: &str, config: Option<WebSocketConfig>) -> Result<()> {
-        self.listen(addr, config).await
+    async fn bind(self: Arc<Self>, addr: &str) -> Result<TcpListener> {
+        self.bind(addr).await
+    }
+
+    async fn listen(
+        self: Arc<Self>,
+        listener: TcpListener,
+        config: Option<WebSocketConfig>,
+    ) -> Result<()> {
+        self.listen(listener, config).await
     }
 
     fn stop(&self) -> Result<()> {

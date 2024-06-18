@@ -37,5 +37,5 @@ workflow-panic-hook.workspace = true
 workflow-wasm-macros.workspace = true
 serde-wasm-bindgen.workspace = true
 
-[lints.clippy]
-empty_docs = "allow"
+[lints]
+workspace = true

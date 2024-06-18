@@ -189,7 +189,7 @@ where
                 let method = self.inner.methods.lock().unwrap().get(&op).cloned();
                 if let Some(method) = method {
                     let result = method.call_with_borsh(payload).await;
-                    let buffer = result.try_to_vec()?;
+                    let buffer = borsh::to_vec(&result)?;
                     source.call_ipc(
                         to_msg::<Ops, IpcId>(BorshHeader::response(id, op), &buffer)?.as_ref(),
                         None,
@@ -197,9 +197,9 @@ where
                 } else {
                     log_error!("ipc method handler not found: {:?}", op);
                     let resp: ResponseResult<()> = Err(ResponseError::NotFound);
+                    let buffer = borsh::to_vec(&resp)?;
                     source.call_ipc(
-                        to_msg::<Ops, IpcId>(BorshHeader::response(id, op), &resp.try_to_vec()?)?
-                            .as_ref(),
+                        to_msg::<Ops, IpcId>(BorshHeader::response(id, op), &buffer)?.as_ref(),
                         None,
                     )?;
                 }
@@ -319,7 +319,7 @@ pub trait IpcDispatch {
         Ops: OpsT,
         Msg: BorshSerialize + Send + Sync + 'static,
     {
-        let payload = payload.try_to_vec().map_err(|_| Error::BorshSerialize)?;
+        let payload = borsh::to_vec(&payload).map_err(|_| Error::BorshSerialize)?;
         self.as_target().call_ipc(
             to_msg::<Ops, IpcId>(BorshHeader::notification::<Ops>(op), &payload)?.as_ref(),
             None,
@@ -353,7 +353,7 @@ pub trait IpcDispatch {
         Req: MsgT,
         Resp: MsgT,
     {
-        let payload = req.try_to_vec().map_err(|_| Error::BorshSerialize)?;
+        let payload = borsh::to_vec(&req).map_err(|_| Error::BorshSerialize)?;
 
         let id = Id64::generate();
         let (sender, receiver) = oneshot();

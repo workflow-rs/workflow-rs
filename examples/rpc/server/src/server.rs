@@ -156,7 +156,8 @@ pub async fn server_main() -> RpcServerResult<()> {
 
     task.run(handler)?;
 
-    rpc.listen(addr, None).await?;
+    let listener = rpc.bind(addr).await?;
+    rpc.listen(listener, None).await?;
 
     task.stop_and_join().await?;
 

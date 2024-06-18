@@ -82,7 +82,7 @@ where
     ) -> ServerResult<Vec<u8>> {
         let req = Req::try_from_slice(data)?;
         let resp = (self.method)(server_ctx, connection_ctx, req).await;
-        let vec = <ServerResult<Resp> as BorshSerialize>::try_to_vec(&resp)?;
+        let vec = borsh::to_vec(&resp)?;
         Ok(vec)
     }
 

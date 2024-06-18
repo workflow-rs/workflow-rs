@@ -48,7 +48,6 @@ where
     async fn call_with_borsh(&self, data: &[u8]) -> ResponseResult<Vec<u8>> {
         let req = Req::try_from_slice(data)?;
         let resp = (self.method)(req).await;
-        let vec = <ResponseResult<Resp> as BorshSerialize>::try_to_vec(&resp)?;
-        Ok(vec)
+        Ok(borsh::to_vec(&resp)?)
     }
 }

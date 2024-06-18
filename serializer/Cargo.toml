@@ -1,0 +1,18 @@
+[package]
+name = "workflow-serializer"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = ["wasm","serialize","binary","borsh"]
+categories = []
+exclude = ["/.*", "/test"]
+description = """
+Serialization framework for wrapping Borsh-serialized payloads.
+"""
+
+[dependencies]
+borsh.workspace = true
+serde.workspace = true
+ahash.workspace = true

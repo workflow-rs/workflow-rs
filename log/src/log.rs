@@ -155,7 +155,7 @@ cfg_if! {
         use std::sync::Mutex;
 
         lazy_static::lazy_static! {
-            static ref LEVEL_FILTER : Mutex<LevelFilter> = Mutex::new(LevelFilter::Trace);
+            static ref LEVEL_FILTER : Mutex<LevelFilter> = Mutex::new(LevelFilter::Info);
         }
         #[inline(always)]
         /// Returns true if the current log level is below the

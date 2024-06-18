@@ -489,56 +489,56 @@ cfg_if! {
 
 #[derive(Clone, Debug)]
 pub struct Metadata {
-    created: u64,
-    modified: u64,
-    accessed: u64,
-    len: u64,
+    created: Option<u64>,
+    modified: Option<u64>,
+    accessed: Option<u64>,
+    len: Option<u64>,
 }
 
 impl Metadata {
-    pub fn created(&self) -> u64 {
+    pub fn created(&self) -> Option<u64> {
         self.created
     }
 
-    pub fn modified(&self) -> u64 {
+    pub fn modified(&self) -> Option<u64> {
         self.modified
     }
 
-    pub fn accessed(&self) -> u64 {
+    pub fn accessed(&self) -> Option<u64> {
         self.accessed
     }
 
-    pub fn len(&self) -> u64 {
+    pub fn len(&self) -> Option<u64> {
         self.len
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.len == 0
+    pub fn is_empty(&self) -> Option<bool> {
+        self.len.map(|len| len == 0)
     }
 }
 
 impl From<std::fs::Metadata> for Metadata {
     fn from(metadata: std::fs::Metadata) -> Self {
         Metadata {
-            created: metadata
-                .created()
-                .unwrap()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
-            modified: metadata
-                .modified()
-                .unwrap()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
-            accessed: metadata
-                .accessed()
-                .unwrap()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs(),
-            len: metadata.len(),
+            created: metadata.created().ok().map(|created| {
+                created
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs()
+            }),
+            modified: metadata.modified().ok().map(|modified| {
+                modified
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs()
+            }),
+            accessed: metadata.accessed().ok().map(|accessed| {
+                accessed
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs()
+            }),
+            len: Some(metadata.len()),
         }
     }
 }
@@ -549,31 +549,24 @@ impl TryFrom<JsValue> for Metadata {
         if metadata.is_undefined() {
             return Err(Error::Metadata);
         }
-        let created = (Reflect::get(&metadata, &"birthtimeMs".into())
-            .unwrap()
-            .as_f64()
-            .unwrap()
-            / 1000.0) as u64;
-        let modified = (Reflect::get(&metadata, &"mtimeMs".into())
-            .unwrap()
-            .as_f64()
-            .unwrap()
-            / 1000.0) as u64;
-        let accessed = (Reflect::get(&metadata, &"atimeMs".into())
-            .unwrap()
-            .as_f64()
-            .unwrap()
-            / 1000.0) as u64;
-        let size = Reflect::get(&metadata, &"size".into())
-            .unwrap()
-            .as_f64()
-            .unwrap() as u64;
+        let created = Reflect::get(&metadata, &"birthtimeMs".into())
+            .ok()
+            .map(|v| (v.as_f64().unwrap() / 1000.0) as u64);
+        let modified = Reflect::get(&metadata, &"mtimeMs".into())
+            .ok()
+            .map(|v| (v.as_f64().unwrap() / 1000.0) as u64);
+        let accessed = Reflect::get(&metadata, &"atimeMs".into())
+            .ok()
+            .map(|v| (v.as_f64().unwrap() / 1000.0) as u64);
+        let len = Reflect::get(&metadata, &"size".into())
+            .ok()
+            .map(|v| v.as_f64().unwrap() as u64);
 
         Ok(Metadata {
             created,
             modified,
             accessed,
-            len: size,
+            len,
         })
     }
 }
