@@ -429,7 +429,7 @@ where
     T: WebSocketHandler + Send + Sync + 'static + Sized,
 {
     async fn bind(self: Arc<Self>, addr: &str) -> Result<TcpListener> {
-        self.bind(addr).await
+        WebSocketServer::<T>::bind(&self, addr).await
     }
 
     async fn listen(
@@ -437,19 +437,19 @@ where
         listener: TcpListener,
         config: Option<WebSocketConfig>,
     ) -> Result<()> {
-        self.listen(listener, config).await
+        WebSocketServer::<T>::listen(&self, listener, config).await
     }
 
     fn stop(&self) -> Result<()> {
-        self.stop()
+        WebSocketServer::<T>::stop(self)
     }
 
     async fn join(&self) -> Result<()> {
-        self.join().await
+        WebSocketServer::<T>::join(self).await
     }
 
     async fn stop_and_join(&self) -> Result<()> {
-        self.stop_and_join().await
+        WebSocketServer::<T>::stop_and_join(self).await
     }
 }
 

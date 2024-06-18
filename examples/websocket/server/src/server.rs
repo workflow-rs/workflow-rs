@@ -67,7 +67,7 @@ struct Sink;
 impl workflow_log::Sink for Sink {
     fn write(&self, _target: Option<&str>, level: Level, args: &std::fmt::Arguments<'_>) -> bool {
         println!("[{level}] {args}");
-        false
+        true
     }
 }
 
