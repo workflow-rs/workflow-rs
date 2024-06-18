@@ -377,23 +377,26 @@ where
 /// ```rust
 /// use std::sync::Arc;
 /// use async_trait::async_trait;
-/// use workflow_websocket::server::{Result,WebSocketServerTrait,WebSocketConfig};
+/// use workflow_websocket::server::{Result,WebSocketServerTrait,WebSocketConfig,TcpListener};
 ///
 /// struct Server{}
 ///
 /// #[async_trait]
-/// impl WebSocketServerTrait for Server{
-///     async fn listen(self: Arc<Self>, addr: &str, config: Option<WebSocketConfig>) -> Result<()>{
-///         Ok(())
+/// impl WebSocketServerTrait for Server {
+///     async fn bind(self: Arc<Self>, addr: &str) -> Result<TcpListener>{
+///         unimplemented!()
+///     }
+///     async fn listen(self: Arc<Self>, listener : TcpListener, config: Option<WebSocketConfig>) -> Result<()>{
+///         unimplemented!()
 ///     }
 ///     fn stop(&self) -> Result<()>{
-///         Ok(())
+///         unimplemented!()
 ///     }
 ///     async fn join(&self) -> Result<()>{
-///         Ok(())
+///         unimplemented!()
 ///     }
 ///     async fn stop_and_join(&self) -> Result<()>{
-///         Ok(())
+///         unimplemented!()
 ///     }
 /// }
 /// let server_trait: Arc<dyn WebSocketServerTrait> = Arc::new(Server{});
