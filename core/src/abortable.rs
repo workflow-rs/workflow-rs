@@ -32,7 +32,7 @@ impl std::fmt::Display for Aborted {
 /// Abortable trigger wraps an `Arc<AtomicBool>`, which can be cloned
 /// to signal task terminating using an atomic bool.
 ///
-/// ```ignore
+/// ```
 /// let abortable = Abortable::default();
 /// let result = my_task(abortable).await?;
 /// // ... elsewhere
@@ -40,6 +40,7 @@ impl std::fmt::Display for Aborted {
 /// ```
 ///
 /// @category General
+/// 
 #[derive(Default, Clone)]
 #[wasm_bindgen]
 pub struct Abortable(Arc<AtomicBool>);
