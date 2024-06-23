@@ -40,7 +40,7 @@ impl std::fmt::Display for Aborted {
 /// ```
 ///
 /// @category General
-/// 
+///
 #[derive(Default, Clone)]
 #[wasm_bindgen]
 pub struct Abortable(Arc<AtomicBool>);
