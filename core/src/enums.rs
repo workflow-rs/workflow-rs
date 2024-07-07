@@ -2,22 +2,26 @@
 //! Rust enum conversion utilities
 //!
 
-// pub use workflow_core_macros::describe_enum;
 pub use workflow_core_macros::Describe;
+
 /// Enum trait used by the [`Describe`] derive macro
-pub trait EnumTrait<T> {
-    /// return all permutations of the enum
-    fn list() -> Vec<T>;
+pub trait Describe: Sized + 'static {
+    /// return all permutations of the enum as an iterator
+    fn iter() -> impl Iterator<Item = &'static Self>;
+    /// converts enum into an iterator
+    fn into_iter() -> impl Iterator<Item = Self>;
     /// return `rust doc` text describing the enum value
-    fn descr(&self) -> &'static str;
+    fn rustdoc(&self) -> &'static str;
+    /// return `#[describe=""]` text describing the enum value
+    fn describe(&self) -> &'static str;
     /// return enum value as a string without namespace (i.e. `Value`)
     fn as_str(&self) -> &'static str;
     /// return enum value as a string with namespace (i.e. `Enum::Value`)
     fn as_str_ns(&self) -> &'static str;
     /// get enum value from the value string without namespace (i.e. `Value`)
-    fn from_str(str: &str) -> Option<T>;
+    fn from_str(str: &str) -> Option<Self>;
     /// get enum value from the value string with namespace (i.e. `Enum::Value`)
-    fn from_str_ns(str: &str) -> Option<T>;
+    fn from_str_ns(str: &str) -> Option<Self>;
 }
 
 /// Error produced by the enum `try_from` macros

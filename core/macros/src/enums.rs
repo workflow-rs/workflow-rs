@@ -147,11 +147,14 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
     #[cfg(not(target_os = "solana"))]
     let enum_impl = quote! {
 
-        // pub fn test() -> bool { true }
         impl #enum_name {
 
-            pub fn list() -> Vec<#enum_name> {
-                vec![#( #enum_name::#entries ),*]
+            pub fn iter() -> impl Iterator<Item = &'static Self> {
+                [#( #enum_name::#entries ),*].iter()
+            }
+
+            pub fn into_iter() -> impl Iterator<Item = Self> {
+                [#( #enum_name::#entries ),*].iter().cloned()
             }
 
             pub fn as_str(&self)->&'static str{
@@ -186,50 +189,52 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
                 }
             }
 
-            pub fn descr(&self) -> &'static str {
-                match self {
-                    #( #enum_name::#entries => { #descr.into() }),*
-                }
-            }
-
-            pub fn doc(&self) -> &'static str {
+            pub fn rustdoc(&self) -> &'static str {
                 match self {
                     #( #enum_name::#entries => { #docs.into() }),*
                 }
             }
         }
 
-        impl workflow_core::enums::EnumTrait<#enum_name> for #enum_name {
-            fn list() -> Vec<#enum_name> {
-                #enum_name::list()
+        impl workflow_core::enums::Describe for #enum_name {
+
+            fn iter() -> impl Iterator<Item = &'static Self> {
+                #enum_name::iter()
             }
-            fn descr(&self) -> &'static str {
-                self.descr()
+
+            fn into_iter() -> impl Iterator<Item = Self> {
+                #enum_name::into_iter()
             }
+
+            fn describe(&self) -> &'static str {
+                self.describe()
+            }
+
+            fn rustdoc(&self) -> &'static str {
+                self.rustdoc()
+            }
+
             fn as_str(&self) -> &'static str {
                 self.as_str()
             }
+
             fn as_str_ns(&self)->&'static str{
                 match self {
                     #( #enum_name::#entries => { #strings_ns.into() }),*
                 }
             }
-            fn from_str(str:&str)->Option<#enum_name>{
+
+            fn from_str(str:&str)->Option<Self>{
                 #enum_name::from_str(str)
             }
-            fn from_str_ns(str:&str)->Option<#enum_name>{
+
+            fn from_str_ns(str:&str)->Option<Self>{
                 match str {
                     #( #strings_ns => { Some(#enum_name::#entries) }),*
                     _ => None
                 }
             }
         }
-
-        // impl std::fmt::Display for #enum_name{
-        //     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        //         write!(f, "{}", self.as_str())
-        //     }
-        // }
 
     };
 
