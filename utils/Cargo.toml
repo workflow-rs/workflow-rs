@@ -1,0 +1,23 @@
+[package]
+name = "workflow-utils"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = ["utils"]
+categories = []
+exclude = ["/.*", "/test"]
+description = """
+Miscellaneous utilities for the workflow-rs ecosystem.
+"""
+
+[dependencies]
+workflow-core.workspace = true
+
+ahash.workspace = true
+thiserror.workspace = true
+cliclack.workspace = true
+separator.workspace = true
+serde.workspace = true
+reqwest = { workspace = true, features = ["json","blocking"] }

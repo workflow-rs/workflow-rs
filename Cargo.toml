@@ -26,6 +26,7 @@ members = [
     "task/macros",
     "terminal",
     "terminal/macros",
+    "utils",
     "wasm",
     "wasm/macros",
     "websocket",
@@ -80,6 +81,7 @@ workflow-task = { version = "0.13.3", path = "task" }
 workflow-task-macros = { version = "0.13.3", path = "task/macros" }
 workflow-terminal = { version = "0.13.3", path = "terminal" }
 workflow-terminal-macros = { version = "0.13.3", path = "terminal/macros" }
+workflow-utils = { version = "0.13.3", path = "utils" }
 workflow-wasm = { version = "0.13.3", path = "wasm" }
 workflow-wasm-macros = { version = "0.13.3", path = "wasm/macros" }
 workflow-websocket = { version = "0.13.3", path = "websocket" }
@@ -99,6 +101,7 @@ bs58 = "0.5.0"
 cfg-if = "1.0.0"
 chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["derive","cargo"] }
+cliclack = "0.3.1"
 console = "0.15.7"
 convert_case = "0.6.0"
 crossterm = "0.27.0"
@@ -132,6 +135,7 @@ rand = { version = "0.8.5", features = ["getrandom"] }
 regex = "1.10.2"
 reqwest = { version = "0.12.4", features = ["json"] }
 ritehash = "0.2.0"
+separator = "0.4.1"
 serde = { version = "1.0.190" , features = ["derive","rc"] }
 serde_json = "1.0.108"
 serde-wasm-bindgen = "0.6.1"
@@ -141,7 +145,6 @@ syn = {version="1.0.107",features=["full","fold","extra-traits","parsing","proc-
 termcolor="1.3.0"
 termion = "4.0.2"
 textwrap = "0.16.0"
-# termion = "1.5.6"
 thiserror = "1.0.50"
 tokio = { version = "1.33.0", default-features = false, features = ['io-util','time','sync','macros','rt','rt-multi-thread'] }
 tokio-tungstenite = { version = "0.23.1", features = ["handshake"] }
