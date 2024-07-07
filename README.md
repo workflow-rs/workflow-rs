@@ -7,11 +7,11 @@
 
 WORKFLOW-RS project is designed to provide a unified environment for development of **async Rust applications** that are able to run in *native* platforms (desktops and servers), and `WASM32` environments such as *Web Browsers*, *Node.js* *NWJS (Node Webkit)* and *Electron*.
 
+WORKFLOW-RS is developed by ASPECTRON development team @ https://aspectron.org
 
 ## Features
 
 * Platform neutral crates that are able to function in, or provide abstractions for, running on bare metal (native) as well as inside of a browser, Node.js or NWJS WASM-powered environments.
-* BPF-friendly (Solana OS) environment that allows certain crates when building to the BPF targets.
 
 ## Crates
 
