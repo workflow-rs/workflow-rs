@@ -5,6 +5,10 @@ pub async fn get(url: impl Into<String>) -> Result<String> {
     Request::new(url).get().await
 }
 
+pub async fn get_bytes(url: impl Into<String>) -> Result<Vec<u8>> {
+    Request::new(url).get_bytes().await
+}
+
 pub async fn get_json<T: serde::de::DeserializeOwned + 'static>(
     url: impl Into<String>,
 ) -> Result<T> {
@@ -41,6 +45,21 @@ impl Request {
             Ok(text)
         } else {
             Err(Error::Custom(format!("{}: {}", status, text)))
+        }
+    }
+
+    pub async fn get_bytes(self) -> Result<Vec<u8>> {
+        let mut req = reqwest::Client::new().get(&self.url);
+        if let Some(user_agent) = self.user_agent {
+            req = req.header("User-Agent", user_agent);
+        }
+        let resp = req.send().await?;
+        let status = resp.status();
+        let bytes = resp.bytes().await?;
+        if status.is_success() {
+            Ok(bytes.to_vec())
+        } else {
+            Err(Error::Custom(format!("{}: {:?}", status, bytes)))
         }
     }
 

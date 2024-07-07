@@ -10,3 +10,7 @@ cfg_if::cfg_if! {
         pub use native::*;
     }
 }
+
+pub mod prelude {
+    pub use super::*;
+}
