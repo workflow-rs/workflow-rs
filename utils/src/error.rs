@@ -13,6 +13,9 @@ pub enum Error {
 
     #[error(transparent)]
     ParseInt(#[from] std::num::ParseIntError),
+
+    #[error(transparent)]
+    Http(#[from] workflow_http::error::Error),
 }
 
 impl From<String> for Error {
@@ -32,3 +35,9 @@ impl Error {
         Error::Custom(msg.to_string())
     }
 }
+
+// impl From<reqwest::Error> for Error {
+//     fn from(err: reqwest::Error) -> Self {
+//         Self::Reqwest(err)
+//     }
+// }

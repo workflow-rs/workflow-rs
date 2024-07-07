@@ -3718,6 +3718,7 @@ dependencies = [
  "serde",
  "thiserror",
  "workflow-core",
+ "workflow-http",
 ]
 
 [[package]]

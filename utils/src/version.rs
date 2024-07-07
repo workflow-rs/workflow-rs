@@ -31,15 +31,24 @@ impl FromStr for Version {
         let major = parts
             .next()
             .ok_or_else(|| Error::custom("Invalid version"))?
-            .chars().filter(|c| c.is_digit(10)).collect::<String>().parse()?;
+            .chars()
+            .filter(|c| c.is_ascii_digit())
+            .collect::<String>()
+            .parse()?;
         let minor = parts
             .next()
             .ok_or_else(|| Error::custom("Invalid version"))?
-            .chars().filter(|c| c.is_digit(10)).collect::<String>().parse()?;
+            .chars()
+            .filter(|c| c.is_ascii_digit())
+            .collect::<String>()
+            .parse()?;
         let patch = parts
             .next()
             .ok_or_else(|| Error::custom("Invalid version"))?
-            .chars().filter(|c| c.is_digit(10)).collect::<String>().parse()?;
+            .chars()
+            .filter(|c| c.is_ascii_digit())
+            .collect::<String>()
+            .parse()?;
         Ok(Version {
             major,
             minor,
@@ -76,8 +85,19 @@ impl Version {
     }
 }
 
-pub fn latest_crate_version<S: Display>(crate_name: S) -> Result<Version> {
+pub async fn latest_crate_version<S: Display>(crate_name: S) -> Result<Version> {
     let url = format!("https://crates.io/api/v1/crates/{crate_name}");
-    let response = reqwest::blocking::get(url)?.json::<CrateResponse>()?;
+    let response = http::get_json::<CrateResponse>(url).await?;
     response.crate_.max_version.parse()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod blocking {
+    use super::*;
+
+    pub fn latest_crate_version<S: Display>(crate_name: S) -> Result<Version> {
+        let url = format!("https://crates.io/api/v1/crates/{crate_name}");
+        let response = reqwest::blocking::get(url)?.json::<CrateResponse>()?;
+        response.crate_.max_version.parse()
+    }
 }

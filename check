@@ -2,8 +2,5 @@
 set -e
 
 cargo fmt --all
+cargo clippy --workspace --target wasm32-unknown-unknown
 cargo clippy --workspace --tests --benches
-if [ $? -eq 0 ]; then
-    cargo clippy --workspace --target wasm32-unknown-unknown
-    # cargo clippy --workspace --tests --benches --target wasm32-unknown-unknown
-fi
