@@ -1,0 +1,27 @@
+[package]
+name = "workflow-encryption"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = ["encryption"]
+categories = []
+exclude = ["/.*", "/test"]
+description = """
+A set of tools for rudimentary data encryption.
+"""
+
+[dependencies]
+workflow-core.workspace = true
+workflow-serializer.workspace = true
+
+borsh.workspace = true
+serde.workspace = true
+chacha20poly1305.workspace = true
+# borsh = "1.5.1"
+zeroize.workspace = true
+sha2.workspace = true
+argon2.workspace = true
+
+thiserror.workspace = true

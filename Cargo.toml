@@ -6,6 +6,7 @@ members = [
     "core/macros",
     "d3",
     "dom",
+    "encryption",
     "features",
     "gpt",
     "html",
@@ -59,6 +60,7 @@ workflow-core = { version = "0.13.3", path = "core" }
 workflow-core-macros = { version = "0.13.3", path = "core/macros" }
 workflow-d3 = { version = "0.13.3", path = "d3" }
 workflow-dom = { version = "0.13.3", path = "dom" }
+workflow-encryption = { version = "0.13.3", path = "encryption" }
 workflow-gpt = { version = "0.13.3", path = "gpt" }
 workflow-html = { version = "0.13.3", path = "html" }
 workflow-html-macros = { version = "0.13.3", path = "html/macros" }
@@ -86,6 +88,7 @@ workflow-websocket = { version = "0.13.3", path = "websocket" }
 
 ahash = "0.8.6"
 arc-swap = "1.6.0"
+argon2 = "0.5.2"
 async-channel = "2.0.0"
 async-std = { version = "1.12.0", features = ['attributes'] }
 async-trait = "0.1.74"
@@ -149,6 +152,8 @@ wasm-bindgen-futures = "0.4.40"
 web-sys = "0.3.67"
 # chrome-sys = {path = "../chrome-sys"}
 chrome-sys = { version = "0.2.0" }
+chacha20poly1305 = "0.10.1"
+zeroize = { version = "1.6.0", default-features = false, features = ["alloc"] }
 
 [workspace.lints.clippy]
 empty_docs = "allow"
