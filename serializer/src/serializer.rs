@@ -195,6 +195,19 @@ where
     }
 }
 
+impl Serializer for String {
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        store!(String, self, writer)?;
+        Ok(())
+    }
+}
+
+impl Deserializer for String {
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        Ok(load!(String, reader)?)
+    }
+}
+
 impl<V> Serializer for Vec<V>
 where
     V: Serializer,
