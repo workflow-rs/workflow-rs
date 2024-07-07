@@ -2,6 +2,40 @@
 //! Macros for loading and storing items using Borsh and Serializer.
 //!
 
+/// Create Payload struct - a `#repr[transparent]` struct
+/// wrapping `Cursor<Vec<u8>>`. This struct acts as a helper
+/// for storing and loading items into a `Vec<u8>` buffer.
+#[macro_export]
+macro_rules! payload {
+    () => {{
+        $crate::payload::Payload::default()
+    }};
+    ($value:expr) => {{
+        $crate::payload::Payload::with_capacity($value)
+    }};
+}
+
+#[macro_export]
+macro_rules! version {
+    ($major:expr, $minor:expr) => {{
+        $crate::payload::Version::new($major, $minor)
+    }};
+}
+
+#[macro_export]
+macro_rules! writer {
+    ($value:expr) => {{
+        ($value.as_mut() as &mut std::io::Cursor<Vec<u8>>)
+    }};
+}
+
+#[macro_export]
+macro_rules! reader {
+    ($value:expr) => {{
+        &mut std::io::Cursor::new($value.into_inner())
+    }};
+}
+
 /// Store item using Borsh serialization
 #[macro_export]
 macro_rules! store {
@@ -24,7 +58,7 @@ macro_rules! load {
 #[macro_export]
 macro_rules! serialize {
     ($type:ty, $value:expr, $writer:expr) => {
-        <$type as $crate::serializer::Serializer>::serialize($value, $writer)
+        $crate::payload::ser::Payload::<$type>($value).serialize($writer)
     };
 }
 
@@ -34,6 +68,6 @@ macro_rules! serialize {
 #[macro_export]
 macro_rules! deserialize {
     ($type:ty, $reader:expr) => {
-        <$type as $crate::serializer::Serializer>::deserialize($reader)
+        $crate::payload::de::Payload::<$type>::deserialize($reader).map(|x| x.into_inner())
     };
 }

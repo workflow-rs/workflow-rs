@@ -2,7 +2,7 @@
 #[cfg(test)]
 mod tests {
 
-    use crate::prelude::{load, store, Serializable, Serializer};
+    use crate::prelude::{load, store, Deserializer, Serializable, Serializer};
     use crate::result::IoResult;
     use borsh::{BorshDeserialize, BorshSerialize};
 
@@ -49,7 +49,9 @@ mod tests {
 
             Ok(())
         }
+    }
 
+    impl Deserializer for MyVersionedStruct {
         fn deserialize<R: std::io::Read>(reader: &mut R) -> IoResult<Self> {
             // Deserialize the version
             let version: u32 = load!(u32, reader)?;

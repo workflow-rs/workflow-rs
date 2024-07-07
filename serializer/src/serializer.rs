@@ -1,3 +1,4 @@
+use crate::payload::{de, ser};
 use crate::{load, store};
 use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
@@ -7,52 +8,18 @@ use std::ops::Deref;
 pub trait SerializerT: Serializer + Send + Sync {}
 impl<T> SerializerT for T where T: Serializer + Send + Sync {}
 
-/// `Serializable<T>` is a stop-gap between Borsh serialization
-/// and the actual type `T` that needs to be serialized.
-/// `T` must implement `Serializer` as opposed to Borsh traits,
-/// while `Serializable<T>` implements Borsh traits.
-/// This allows functions requiring Borsh serialization to accept
-/// T that does not implement Borsh traits by wrapping it in
-/// `Serializable<T>`.
-///
-/// Example:
-/// ```ignore
-///
-/// struct MyStruct {
-///    field: u32,
-/// }
-///
-/// impl Serializer for MyStruct {
-///     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-///         store!(u32, &1, writer)?;
-///         store!(u32, &self.field, writer)?;
-///         Ok(())
-///     }
-///
-///     fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-///         let _version = load!(u32, buf)?;
-///         let field = load!(u32, buf)?;
-///         Ok(Self { field })
-///     }
-/// }
-///
-/// fn send<T>(serializable: T) where T : BorshSerialize { ... }
-///
-/// fn sender() {
-///     let my_struct = MyStruct { field: 42 };
-///     send(Serializable(my_struct));
-/// }
-/// ```
-///
+pub trait DeserializerT: Deserializer + Send + Sync {}
+impl<T> DeserializerT for T where T: Deserializer + Send + Sync {}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct Serializable<T>(pub T)
 where
-    T: SerializerT;
+    T: SerializerT + DeserializerT;
 
 impl<T> Serializable<T>
 where
-    T: SerializerT,
+    T: SerializerT + DeserializerT,
 {
     pub fn into_inner(self) -> T {
         self.0
@@ -61,7 +28,7 @@ where
 
 impl<T> From<T> for Serializable<T>
 where
-    T: SerializerT,
+    T: SerializerT + DeserializerT,
 {
     fn from(t: T) -> Self {
         Serializable(t)
@@ -70,7 +37,7 @@ where
 
 impl<T> Deref for Serializable<T>
 where
-    T: SerializerT,
+    T: SerializerT + DeserializerT,
 {
     type Target = T;
 
@@ -81,7 +48,7 @@ where
 
 impl<T> AsRef<T> for Serializable<T>
 where
-    T: SerializerT,
+    T: SerializerT + DeserializerT,
 {
     fn as_ref(&self) -> &T {
         &self.0
@@ -90,24 +57,21 @@ where
 
 impl<T> BorshSerialize for Serializable<T>
 where
-    T: SerializerT,
+    T: SerializerT + DeserializerT,
 {
-    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        self.0.serialize(writer)
+    fn serialize<W: std::io::Write>(&self, target: &mut W) -> std::io::Result<()> {
+        ser::Payload(&self.0).serialize(target)?;
+        Ok(())
     }
 }
 
 impl<T> BorshDeserialize for Serializable<T>
 where
-    T: SerializerT,
+    T: SerializerT + DeserializerT,
 {
-    fn deserialize_reader<R: borsh::io::Read>(reader: &mut R) -> std::io::Result<Self> {
-        let t = T::deserialize(reader)?;
-        Ok(Serializable(t))
-    }
-
-    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
-        Ok(Serializable(T::deserialize(&mut *buf)?))
+    fn deserialize_reader<R: borsh::io::Read>(source: &mut R) -> std::io::Result<Self> {
+        let t = de::Payload::<T>::deserialize(source)?;
+        Ok(Serializable(t.into_inner()))
     }
 }
 
@@ -123,17 +87,19 @@ where
 pub trait Serializer: Sized {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()>;
 
+    fn try_to_vec(&self) -> std::io::Result<Vec<u8>> {
+        let mut buf = Vec::new();
+        self.serialize(&mut buf)?;
+        Ok(buf)
+    }
+}
+
+pub trait Deserializer: Sized {
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self>;
 
     fn try_from_slice(slice: &[u8]) -> std::io::Result<Self> {
         let mut buf = slice;
         Self::deserialize(&mut buf)
-    }
-
-    fn try_to_vec(&self) -> std::io::Result<Vec<u8>> {
-        let mut buf = Vec::new();
-        self.serialize(&mut buf)?;
-        Ok(buf)
     }
 }
 
@@ -144,13 +110,13 @@ const RESULT_ERR: ResultStatusTag = 1;
 impl<T, E> Serializer for Result<T, E>
 where
     T: Serializer + 'static,
-    E: std::fmt::Display + BorshSerialize + BorshDeserialize + 'static,
+    E: std::fmt::Display + BorshSerialize + 'static,
 {
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         match self {
             Ok(t) => {
                 store!(ResultStatusTag, &RESULT_OK, writer)?;
-                t.serialize(writer)?;
+                ser::Payload(t).serialize(writer)?;
             }
             Err(e) => {
                 store!(ResultStatusTag, &RESULT_ERR, writer)?;
@@ -160,13 +126,19 @@ where
 
         Ok(())
     }
+}
 
+impl<T, E> Deserializer for Result<T, E>
+where
+    T: Deserializer + 'static,
+    E: std::fmt::Display + BorshDeserialize + 'static,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let tag = load!(ResultStatusTag, reader)?;
         match tag {
             RESULT_OK => {
-                let t = T::deserialize(reader)?;
-                Ok(Ok(t))
+                let t = de::Payload::<T>::deserialize(reader)?;
+                Ok(Ok(t.into_inner()))
             }
             RESULT_ERR => {
                 let e = E::deserialize_reader(reader)?;
@@ -192,7 +164,7 @@ where
         match self {
             Some(t) => {
                 store!(OptionStatusTag, &OPTION_SOME, writer)?;
-                t.serialize(writer)?;
+                ser::Payload(t).serialize(writer)?;
             }
             None => {
                 store!(OptionStatusTag, &OPTION_NONE, writer)?;
@@ -201,13 +173,18 @@ where
 
         Ok(())
     }
+}
 
+impl<T> Deserializer for Option<T>
+where
+    T: Deserializer + 'static,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let tag = load!(OptionStatusTag, reader)?;
         match tag {
             OPTION_SOME => {
-                let t = T::deserialize(reader)?;
-                Ok(Some(t))
+                let t = de::Payload::<T>::deserialize(reader)?;
+                Ok(Some(t.into_inner()))
             }
             OPTION_NONE => Ok(None),
             _ => Err(std::io::Error::new(
@@ -226,19 +203,24 @@ where
         store!(u32, &(self.len() as u32), writer)?;
 
         for item in self.iter() {
-            item.serialize(writer)?;
+            ser::Payload(item).serialize(writer)?;
         }
 
         Ok(())
     }
+}
 
+impl<V> Deserializer for Vec<V>
+where
+    V: Deserializer,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let len: u32 = load!(u32, reader)?;
         let mut vec = Vec::with_capacity(len as usize);
 
         for _ in 0..len {
-            let item = V::deserialize(reader)?;
-            vec.push(item);
+            let item = de::Payload::<V>::deserialize(reader)?;
+            vec.push(item.into_inner());
         }
 
         Ok(vec)
@@ -255,20 +237,26 @@ where
 
         for (k, v) in self.iter() {
             k.serialize(writer)?;
-            v.serialize(writer)?;
+            ser::Payload(v).serialize(writer)?;
         }
 
         Ok(())
     }
+}
 
+impl<K, V> Deserializer for std::collections::HashMap<K, V>
+where
+    K: Deserializer + std::hash::Hash + Eq,
+    V: Deserializer,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let len: u32 = load!(u32, reader)?;
         let mut map = std::collections::HashMap::new();
 
         for _ in 0..len {
             let k = K::deserialize(reader)?;
-            let v = V::deserialize(reader)?;
-            map.insert(k, v);
+            let v = de::Payload::<V>::deserialize(reader)?;
+            map.insert(k, v.into_inner());
         }
 
         Ok(map)
@@ -283,19 +271,24 @@ where
         store!(u32, &(self.len() as u32), writer)?;
 
         for item in self.iter() {
-            item.serialize(writer)?;
+            ser::Payload(item).serialize(writer)?;
         }
 
         Ok(())
     }
+}
 
+impl<T> Deserializer for std::collections::HashSet<T>
+where
+    T: Deserializer + Send + Sync + std::hash::Hash + Eq,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let len: u32 = load!(u32, reader)?;
         let mut set = std::collections::HashSet::new();
 
         for _ in 0..len {
-            let item = T::deserialize(reader)?;
-            set.insert(item);
+            let item = de::Payload::<T>::deserialize(reader)?;
+            set.insert(item.into_inner());
         }
 
         Ok(set)
@@ -312,20 +305,26 @@ where
 
         for (k, v) in self.iter() {
             k.serialize(writer)?;
-            v.serialize(writer)?;
+            ser::Payload(v).serialize(writer)?;
         }
 
         Ok(())
     }
+}
 
+impl<K, V> Deserializer for ahash::AHashMap<K, V>
+where
+    K: Deserializer + Send + Sync + std::hash::Hash + Eq,
+    V: Deserializer + Send + Sync,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let len: u32 = load!(u32, reader)?;
         let mut map = ahash::AHashMap::new();
 
         for _ in 0..len {
             let k = K::deserialize(reader)?;
-            let v = V::deserialize(reader)?;
-            map.insert(k, v);
+            let v = de::Payload::<V>::deserialize(reader)?;
+            map.insert(k, v.into_inner());
         }
 
         Ok(map)
@@ -340,19 +339,24 @@ where
         store!(u32, &(self.len() as u32), writer)?;
 
         for item in self.iter() {
-            item.serialize(writer)?;
+            ser::Payload(item).serialize(writer)?;
         }
 
         Ok(())
     }
+}
 
+impl<T> Deserializer for ahash::AHashSet<T>
+where
+    T: Deserializer + std::hash::Hash + Eq,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let len: u32 = load!(u32, reader)?;
         let mut set = ahash::AHashSet::new();
 
         for _ in 0..len {
-            let item = T::deserialize(reader)?;
-            set.insert(item);
+            let item = de::Payload::<T>::deserialize(reader)?;
+            set.insert(item.into_inner());
         }
 
         Ok(set)
@@ -369,20 +373,26 @@ where
 
         for (k, v) in self.iter() {
             k.serialize(writer)?;
-            v.serialize(writer)?;
+            ser::Payload(v).serialize(writer)?;
         }
 
         Ok(())
     }
+}
 
+impl<K, V> Deserializer for std::collections::BTreeMap<K, V>
+where
+    K: Deserializer + Ord,
+    V: Deserializer,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let len: u32 = load!(u32, reader)?;
         let mut map = std::collections::BTreeMap::new();
 
         for _ in 0..len {
             let k = K::deserialize(reader)?;
-            let v = V::deserialize(reader)?;
-            map.insert(k, v);
+            let v = de::Payload::<V>::deserialize(reader)?;
+            map.insert(k, v.into_inner());
         }
 
         Ok(map)
@@ -397,19 +407,24 @@ where
         store!(u32, &(self.len() as u32), writer)?;
 
         for item in self.iter() {
-            item.serialize(writer)?;
+            ser::Payload(item).serialize(writer)?;
         }
 
         Ok(())
     }
+}
 
+impl<T> Deserializer for std::collections::BTreeSet<T>
+where
+    T: Deserializer + Ord,
+{
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
         let len: u32 = load!(u32, reader)?;
         let mut set = std::collections::BTreeSet::new();
 
         for _ in 0..len {
-            let item = T::deserialize(reader)?;
-            set.insert(item);
+            let item = de::Payload::<T>::deserialize(reader)?;
+            set.insert(item.into_inner());
         }
 
         Ok(set)
