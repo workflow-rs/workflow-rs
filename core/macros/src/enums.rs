@@ -1,9 +1,9 @@
 use proc_macro::TokenStream;
-use proc_macro2::{Literal, TokenTree};
+use proc_macro2::{Literal, Span, TokenTree};
 use quote::{quote, ToTokens};
 use std::convert::Into;
 use syn::{parse_macro_input, DeriveInput};
-use syn::{Error, Ident, Variant};
+use syn::{Error, Ident, Lit, LitStr, Meta, NestedMeta, Variant};
 use workflow_macro_tools::attributes::*;
 
 #[derive(Debug)]
@@ -21,7 +21,10 @@ impl ToTokens for Enum {
 
 pub fn macro_handler(item: TokenStream) -> TokenStream {
     let enum_decl_ast = item;
-    let ast = parse_macro_input!(enum_decl_ast as DeriveInput);
+    let mut ast = parse_macro_input!(enum_decl_ast as DeriveInput);
+
+    let caption =
+        get_attribute(&mut ast, "caption").unwrap_or_else(|| LitStr::new("", Span::call_site()));
 
     let _enum_attrs = &ast.attrs;
 
@@ -149,6 +152,10 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
 
         impl #enum_name {
 
+            pub fn caption() -> &'static str {
+                #caption
+            }
+
             pub fn iter() -> impl Iterator<Item = &'static Self> {
                 [#( #enum_name::#entries ),*].iter()
             }
@@ -198,6 +205,10 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
 
         impl workflow_core::enums::Describe for #enum_name {
 
+            fn caption() -> &'static str {
+                #caption
+            }
+
             fn iter() -> impl Iterator<Item = &'static Self> {
                 #enum_name::iter()
             }
@@ -242,4 +253,39 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
         #enum_impl
     }
     .into()
+}
+
+fn get_attribute(ast: &mut DeriveInput, name: &str) -> Option<LitStr> {
+    let attr = ast.attrs.iter().enumerate().find_map(|(i, attr)| {
+        attr.parse_meta().ok().and_then(|meta| {
+            if meta.path().is_ident(name) {
+                match meta {
+                    Meta::List(meta_list) => {
+                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) = meta_list.nested.first() {
+                            Some((i, lit_str.clone()))
+                        } else {
+                            None
+                        }
+                    }
+                    Meta::NameValue(name_value) => {
+                        if let Lit::Str(lit_str) = name_value.lit {
+                            Some((i, lit_str))
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }
+            } else {
+                None
+            }
+        })
+    });
+
+    if let Some((index, attr)) = attr {
+        ast.attrs.remove(index);
+        Some(attr)
+    } else {
+        None
+    }
 }
