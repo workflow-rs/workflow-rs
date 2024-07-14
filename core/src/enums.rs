@@ -6,6 +6,8 @@ pub use workflow_core_macros::Describe;
 
 /// Enum trait used by the [`Describe`] derive macro
 pub trait Describe: Sized + 'static {
+    /// return a caption for the enum declared by the `#[caption=""]` attribute
+    fn caption() -> &'static str;
     /// return all permutations of the enum as an iterator
     fn iter() -> impl Iterator<Item = &'static Self>;
     /// converts enum into an iterator

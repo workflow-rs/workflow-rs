@@ -28,7 +28,7 @@ mod send;
 /// ```
 ///
 ///
-#[proc_macro_derive(Describe, attributes(descr, describe))]
+#[proc_macro_derive(Describe, attributes(caption, describe))]
 pub fn describe_enum(item: TokenStream) -> TokenStream {
     enums::macro_handler(item)
 }
