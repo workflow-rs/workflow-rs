@@ -14,6 +14,7 @@ static mut JSON_DATA_GUARD: Option<Mutex<()>> = None;
 static DICTIONARY: ArcSwapOption<Dictionary> = ArcSwapOption::const_empty();
 
 pub type StoreFn = dyn Send + Sync + Fn(&str) -> Result<()> + 'static;
+pub type DictionaryArgs<'a> = Vec<(&'static str, &'a str)>;
 
 pub struct Builder {
     current_code: String,
@@ -270,6 +271,21 @@ pub fn i18n(text: &str) -> &str {
             text
         }
     }
+}
+
+/// Translate a string to the currently user-selected language
+/// and replace given placeholders with given values.
+/// Parameter 'replacements' is a vector consisting of key value pairs,
+/// where the key is the placeholder within 'text'.
+pub fn i18n_args(text: &str, replacements: DictionaryArgs) -> String {
+    let mut translated = String::from(i18n(text));
+
+    for (key, value) in replacements {
+        let placeholder = format!("{{{}}}", key);
+        translated = str::replace(&translated, &placeholder, value);
+    }
+
+    translated
 }
 
 /// Dictionary structure containing all translations and related data.
