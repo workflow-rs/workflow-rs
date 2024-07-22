@@ -1,3 +1,4 @@
+use crate::error::Error;
 use crate::imports::*;
 use chacha20poly1305::{
     aead::{AeadCore, AeadInPlace, KeyInit, OsRng},
@@ -31,11 +32,14 @@ where
     T: Deserializer,
 {
     let data = decrypt_slice(data, secret)?;
-    Ok(T::try_from_slice(data.as_bytes())?)
+    Ok(T::try_from_slice(data.as_slice())?)
 }
 
 /// Decrypts the given data using `XChaCha20Poly1305` algorithm.
 pub fn decrypt_slice(data: &[u8], secret: &Secret) -> Result<Secret> {
+    if data.len() < 24 {
+        return Err(Error::DecryptionDataLength);
+    }
     let private_key_bytes = argon2_sha256(secret.as_ref(), 32)?;
     let key = Key::from_slice(private_key_bytes.as_ref());
     let cipher = XChaCha20Poly1305::new(key);

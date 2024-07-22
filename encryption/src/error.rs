@@ -26,6 +26,9 @@ pub enum Error {
 
     #[error("(Argon2::password_hash) {0}")]
     Argon2ph(argon2::password_hash::Error),
+
+    #[error("Decryption failed (invalid data length)")]
+    DecryptionDataLength,
 }
 
 impl From<String> for Error {
