@@ -12,6 +12,12 @@ pub enum Error {
     Reqwest(#[from] reqwest::Error),
 
     #[error(transparent)]
+    InvalidHeaderName(#[from] reqwest::header::InvalidHeaderName),
+
+    #[error(transparent)]
+    InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
+
+    #[error(transparent)]
     ParseInt(#[from] std::num::ParseIntError),
 
     #[error(transparent)]

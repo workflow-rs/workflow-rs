@@ -1,16 +1,6 @@
 use crate::imports::*;
 
-#[derive(Deserialize)]
-struct CrateResponse {
-    #[serde(rename = "crate")]
-    crate_: Crate,
-}
-
-#[derive(Deserialize)]
-struct Crate {
-    max_version: String,
-}
-
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Version {
     pub major: u64,
     pub minor: u64,
@@ -85,19 +75,51 @@ impl Version {
     }
 }
 
-pub async fn latest_crate_version<S: Display>(crate_name: S) -> Result<Version> {
+#[derive(Debug, Deserialize)]
+struct CrateResponse {
+    #[serde(rename = "crate")]
+    crate_: Crate,
+}
+
+#[derive(Debug, Deserialize)]
+struct Crate {
+    max_version: String,
+}
+
+pub async fn latest_crate_version<S: Display, U: Display>(
+    crate_name: S,
+    user_agent: U,
+) -> Result<Version> {
     let url = format!("https://crates.io/api/v1/crates/{crate_name}");
-    let response = http::get_json::<CrateResponse>(url).await?;
+    let response = http::Request::new(url)
+        .with_user_agent(user_agent.to_string())
+        .get_json::<CrateResponse>()
+        .await?;
     response.crate_.max_version.parse()
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod blocking {
     use super::*;
+    use reqwest::blocking::Client;
+    use reqwest::header::*;
 
-    pub fn latest_crate_version<S: Display>(crate_name: S) -> Result<Version> {
+    pub fn latest_crate_version<S: Display, U: Display>(
+        crate_name: S,
+        user_agent: U,
+    ) -> Result<Version> {
         let url = format!("https://crates.io/api/v1/crates/{crate_name}");
-        let response = reqwest::blocking::get(url)?.json::<CrateResponse>()?;
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            USER_AGENT,
+            HeaderValue::from_str(user_agent.to_string().as_str())?,
+        );
+        let response = Client::builder()
+            .default_headers(headers)
+            .build()?
+            .get(url)
+            .send()?
+            .json::<CrateResponse>()?;
         response.crate_.max_version.parse()
     }
 }
