@@ -80,7 +80,7 @@ impl ShortcutBuilder {
     /// - Alt
     /// - Shift
     /// - Command: Command modifier maps to Apple key (⌘) on Mac,
-    /// and maps to the Windows key on Windows and Linux.
+    ///   and maps to the Windows key on Windows and Linux.
     ///
     /// ### List of supported keys:
     ///

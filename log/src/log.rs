@@ -2,7 +2,7 @@ use cfg_if::cfg_if;
 use std::fmt;
 
 cfg_if! {
-    if #[cfg(target_os = "solana")] {
+    if #[cfg(target_arch = "bpf")] {
         pub use workflow_log::levels::{ Level, LevelFilter };
     } else {
         use std::sync::Arc;
@@ -82,7 +82,7 @@ cfg_if! {
 }
 
 cfg_if! {
-    if #[cfg(target_os = "solana")] {
+    if #[cfg(target_arch = "bpf")] {
         #[inline(always)]
         pub fn log_level_enabled(_level: Level) -> bool {
             true
@@ -259,7 +259,7 @@ pub mod impls {
     #[allow(unused_variables)]
     pub fn error_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Error) {
-            #[cfg(all(not(target_os = "solana"), feature = "sink"))]
+            #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
             {
                 if to_sink(target, Level::Error, args) {
                     return;
@@ -268,7 +268,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm_log::error(&args.to_string());
-                } else if #[cfg(target_os = "solana")] {
+                } else if #[cfg(target_arch = "bpf")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{args}");
@@ -281,7 +281,7 @@ pub mod impls {
     #[allow(unused_variables)]
     pub fn warn_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Warn) {
-            #[cfg(all(not(target_os = "solana"), feature = "sink"))]
+            #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
             {
                 if to_sink(target, Level::Warn, args) {
                     return;
@@ -290,7 +290,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm_log::warn(&args.to_string());
-                } else if #[cfg(target_os = "solana")] {
+                } else if #[cfg(target_arch = "bpf")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{args}");
@@ -303,7 +303,7 @@ pub mod impls {
     #[allow(unused_variables)]
     pub fn info_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Info) {
-            #[cfg(all(not(target_os = "solana"), feature = "sink"))]
+            #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
             {
                 if to_sink(target, Level::Info, args) {
                     return;
@@ -312,7 +312,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm_log::log(&args.to_string());
-                } else if #[cfg(target_os = "solana")] {
+                } else if #[cfg(target_arch = "bpf")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{args}");
@@ -325,7 +325,7 @@ pub mod impls {
     #[allow(unused_variables)]
     pub fn debug_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Debug) {
-            #[cfg(all(not(target_os = "solana"), feature = "sink"))]
+            #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
             {
                 if to_sink(target, Level::Debug, args) {
                     return;
@@ -334,7 +334,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm_log::log(&args.to_string());
-                } else if #[cfg(target_os = "solana")] {
+                } else if #[cfg(target_arch = "bpf")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{args}");
@@ -347,7 +347,7 @@ pub mod impls {
     #[allow(unused_variables)]
     pub fn trace_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Trace) {
-            #[cfg(all(not(target_os = "solana"), feature = "sink"))]
+            #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
             {
                 if to_sink(target, Level::Trace, args) {
                     return;
@@ -356,7 +356,7 @@ pub mod impls {
             cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
                     workflow_log::wasm_log::log(&args.to_string());
-                } else if #[cfg(target_os = "solana")] {
+                } else if #[cfg(target_arch = "bpf")] {
                     solana_program::log::sol_log(&args.to_string());
                 } else {
                     println!("{args}");
@@ -434,7 +434,7 @@ pub use log_warn;
 
 /// Prints (using [`log_trace`]) a data slice
 /// formatted as a hex data dump.
-#[cfg(not(target_os = "solana"))]
+#[cfg(not(target_arch = "bpf"))]
 pub fn trace_hex(data: &[u8]) {
     let hex = format_hex(data);
     log_trace!("{}", hex);
@@ -442,7 +442,7 @@ pub fn trace_hex(data: &[u8]) {
 
 /// Returns a string formatted as a hex data dump
 /// of the supplied slice argument.
-#[cfg(not(target_os = "solana"))]
+#[cfg(not(target_arch = "bpf"))]
 pub fn format_hex(data: &[u8]) -> String {
     let view = hexplay::HexViewBuilder::new(data)
         .address_offset(0)
@@ -453,7 +453,7 @@ pub fn format_hex(data: &[u8]) -> String {
 }
 
 /// Formats a hex data dump to contain color ranges
-#[cfg(not(target_os = "solana"))]
+#[cfg(not(target_arch = "bpf"))]
 pub fn format_hex_with_colors<'a>(
     data: &'a [u8],
     colors: Vec<(&'a str, usize)>,
@@ -464,7 +464,7 @@ pub fn format_hex_with_colors<'a>(
 
     ColorHexView::new(view_builder, colors)
 }
-#[cfg(not(target_os = "solana"))]
+#[cfg(not(target_arch = "bpf"))]
 pub mod color_log {
     use super::*;
     type Index = usize;
@@ -497,5 +497,5 @@ pub mod color_log {
     }
 }
 
-#[cfg(not(target_os = "solana"))]
+#[cfg(not(target_arch = "bpf"))]
 pub use color_log::*;

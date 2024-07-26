@@ -56,7 +56,7 @@ tungstenite.workspace = true
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures.workspace = true
 
-[target.'cfg(not(target_os = "solana"))'.dependencies.web-sys]
+[target.'cfg(not(target_arch = "bpf"))'.dependencies.web-sys]
 workspace = true
 features = [
     "console",

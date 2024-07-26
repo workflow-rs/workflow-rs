@@ -361,15 +361,15 @@ impl RpcServer {
     /// [`RpcHandler`] trait and the [`Interface`] struct.
     /// This method takes 4 generics:
     /// - `ConnectionContext`: a struct used as [`RpcHandler::Context`] to
-    /// represent the connection. This struct is passed to each RPC method
-    /// and notification call.
+    ///   represent the connection. This struct is passed to each RPC method
+    ///   and notification call.
     /// - `ServerContext`: a struct supplied to the [`Interface`] at the
-    /// Interface creation time. This struct is passed to each RPC method
-    /// and notification call.
+    ///   Interface creation time. This struct is passed to each RPC method
+    ///   and notification call.
     /// - `Protocol`: A protocol type used for the RPC message serialization
-    /// and deserialization (this can be omitted by using [`RpcServer::new_with_encoding`])
+    ///   and deserialization (this can be omitted by using [`RpcServer::new_with_encoding`])
     /// - `Ops`: A data type (index or an `enum`) representing the RPC method
-    /// or notification.
+    ///   or notification.
     pub fn new<ServerContext, ConnectionContext, Protocol, Ops>(
         rpc_handler: Arc<dyn RpcHandler<Context = ConnectionContext>>,
         interface: Arc<Interface<ServerContext, ConnectionContext, Ops>>,
@@ -396,16 +396,16 @@ impl RpcServer {
     /// [`RpcHandler`] trait and the [`Interface`] struct.
     /// This method takes 4 generics:
     /// - `ConnectionContext`: a struct used as [`RpcHandler::Context`] to
-    /// represent the connection. This struct is passed to each RPC method
-    /// and notification call.
+    ///   represent the connection. This struct is passed to each RPC method
+    ///   and notification call.
     /// - `ServerContext`: a struct supplied to the [`Interface`] at the
-    /// Interface creation time. This struct is passed to each RPC method
-    /// and notification call.
+    ///   Interface creation time. This struct is passed to each RPC method
+    ///   and notification call.
     /// - `Ops`: A data type (index or an `enum`) representing the RPC method
-    /// or notification.
+    ///   or notification.
     /// - `Id`: A data type representing a message `Id` - this type must implement
-    /// the [`id::Generator`](crate::id::Generator) trait. Implementation for default
-    /// Ids such as [`Id32`] and [`Id64`] can be found in the [`id`](crate::id) module.
+    ///   the [`id::Generator`](crate::id::Generator) trait. Implementation for default
+    ///   Ids such as [`Id32`] and [`Id64`] can be found in the [`id`](crate::id) module.
     ///
     /// This function call receives an `encoding`: [`Encoding`] argument containing
     /// [`Encoding::Borsh`] or [`Encoding::SerdeJson`], based on which it will

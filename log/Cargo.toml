@@ -25,7 +25,7 @@ external-logger = []
 [dependencies]
 cfg-if.workspace = true
 
-[target.'cfg(not(target_os = "solana"))'.dependencies]
+[target.'cfg(not(target_arch = "bpf"))'.dependencies]
 console.workspace = true
 downcast.workspace = true
 hexplay.workspace = true

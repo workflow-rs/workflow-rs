@@ -16,7 +16,7 @@
 //!
 use cfg_if::cfg_if;
 cfg_if! {
-    if #[cfg(not(target_os = "solana"))] {
+    if #[cfg(not(target_arch = "bpf"))] {
         pub mod prelude;
         pub mod error;
         pub mod result;

@@ -135,7 +135,7 @@ where
     }
 }
 
-#[cfg(not(target_os = "solana"))]
+#[cfg(not(target_arch = "bpf"))]
 #[cfg(any(test, feature = "test"))]
 mod tests {
     use super::LookupHandler;
@@ -263,7 +263,7 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(not(any(target_arch = "wasm32", target_os = "solana")))]
+    #[cfg(not(any(target_arch = "wasm32", target_arch = "bpf")))]
     #[cfg(test)]
     mod native_tests {
         use super::*;

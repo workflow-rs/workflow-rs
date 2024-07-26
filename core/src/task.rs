@@ -20,7 +20,7 @@ use cfg_if::cfg_if;
 use futures::Future;
 
 cfg_if! {
-    if #[cfg(not(any(target_arch = "wasm32", target_os = "solana")))] {
+    if #[cfg(not(any(target_arch = "wasm32", target_arch = "bpf")))] {
 
         pub mod native {
             //! native implementation

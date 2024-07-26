@@ -186,7 +186,7 @@ cfg_if! {
 /// Solana OS.
 pub fn is_solana() -> bool {
     cfg_if! {
-        if #[cfg(target_os = "solana")]{
+        if #[cfg(target_arch = "bpf")]{
             true
         }else{
             false
@@ -210,7 +210,7 @@ pub fn is_wasm() -> bool {
 /// native runtime which is not a Solana OS and architecture is not WASM32
 pub fn is_native() -> bool {
     cfg_if! {
-        if #[cfg(any(target_os = "solana", target_arch = "wasm32"))] {
+        if #[cfg(any(target_arch = "bpf", target_arch = "wasm32"))] {
             false
         }else{
             true

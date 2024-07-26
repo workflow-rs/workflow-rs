@@ -20,7 +20,7 @@ doctest = false
 workflow-core.workspace = true
 workflow-task-macros.workspace = true
 
-[target.'cfg(not(target_os = "solana"))'.dependencies]
+[target.'cfg(not(target_arch = "bpf"))'.dependencies]
 futures.workspace = true
 thiserror.workspace = true
 

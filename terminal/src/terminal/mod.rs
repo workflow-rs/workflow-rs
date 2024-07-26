@@ -51,7 +51,7 @@ cfg_if! {
         // pub mod bindings;
         use crate::terminal::xterm::Xterm as Interface;
 
-    } else if #[cfg(termion)] {
+    } else if #[cfg(feature = "termion")] {
         pub mod termion;
         use crate::terminal::termion::Termion as Interface;
     } else {

@@ -73,5 +73,5 @@ pub mod result;
 pub mod types;
 
 pub mod encoding;
-#[cfg(not(any(target_arch = "wasm32", target_os = "solana")))]
+#[cfg(not(any(target_arch = "wasm32", target_arch = "bpf")))]
 pub mod server;

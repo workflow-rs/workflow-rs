@@ -144,10 +144,10 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
         // docs.push
     }
 
-    #[cfg(target_os = "solana")]
+    #[cfg(target_arch = "bpf")]
     let enum_impl = quote! {};
 
-    #[cfg(not(target_os = "solana"))]
+    #[cfg(not(target_arch = "bpf"))]
     let enum_impl = quote! {
 
         impl #enum_name {

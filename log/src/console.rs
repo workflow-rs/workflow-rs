@@ -1,7 +1,7 @@
-#[cfg(not(target_os = "solana"))]
+#[cfg(not(target_arch = "bpf"))]
 pub use console::style;
 
-#[cfg(target_os = "solana")]
+#[cfg(target_arch = "bpf")]
 mod console_style {
     use std::fmt::*;
 
@@ -68,19 +68,19 @@ mod console_style {
         }
     }
 
-    // #[cfg(target_os = "solana")]
+    // #[cfg(target_arch = "bpf")]
     // impl<'t> Into<&'t str> for ConsoleStyle<'t> {
     //     fn into(self) -> &'t str { self.text }
     // }
 }
 
-#[cfg(target_os = "solana")]
+#[cfg(target_arch = "bpf")]
 pub fn style<'t>(text: &'t str) -> console_style::ConsoleStyle<'t> {
     console_style::ConsoleStyle(text)
 }
 
 cfg_if::cfg_if! {
-    if #[cfg(target_os = "solana")] {
+    if #[cfg(target_arch = "bpf")] {
         pub fn set_colors_enabled(_:bool) { }
     } else {
         pub fn set_colors_enabled(enable: bool) {

@@ -13,6 +13,7 @@ Utilities and curated re-exports for async rust native and browser development
 """
 
 [features]
+test = []
 version = []
 default = ["version"]
 
@@ -27,7 +28,7 @@ wasm-bindgen.workspace = true
 workflow-core-macros.workspace = true
 workflow-log.workspace = true
 
-[target.'cfg(not(target_os = "solana"))'.dependencies]
+[target.'cfg(not(target_arch = "bpf"))'.dependencies]
 # getrandom = {version = "^0.2", features=["js"]}
 async-channel.workspace = true
 async-std.workspace = true
@@ -46,7 +47,7 @@ dirs.workspace = true
 faster-hex.workspace = true
 # workflow-log.workspace = true
 
-[target.'cfg(not(any(target_os = "solana", target_arch = "wasm32")))'.dependencies]
+[target.'cfg(not(any(target_arch = "bpf", target_arch = "wasm32")))'.dependencies]
 tokio.workspace = true
 chrono.workspace = true
 
