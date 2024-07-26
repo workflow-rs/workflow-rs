@@ -58,7 +58,6 @@ where
         sink: &WebSocketSink,
     ) -> WebSocketResult<()> {
         let text = &msg.into_text()?;
-        println!("incoming client message: {text}");
         let req: JsonClientMessage<Ops, Id> =
             serde_json::from_str(text).map_err(|_| WebSocketError::MalformedMessage)?;
 

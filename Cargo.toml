@@ -45,7 +45,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.14.1"
+version = "0.14.2"
 authors = ["WORKFLOW-RS developers"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -72,7 +72,7 @@ workflow-macro-tools = { version = "0.14.1", path = "macro-tools" }
 workflow-node = { version = "0.14.1", path = "node" }
 workflow-nw = { version = "0.14.1", path = "nw" }
 workflow-panic-hook = { version = "0.14.1", path = "panic-hook" }
-workflow-rpc = { version = "0.14.1", path = "rpc" }
+workflow-rpc = { version = "0.14.2", path = "rpc" }
 workflow-rpc-macros = { version = "0.14.1", path = "rpc/macros" }
 workflow-rs = { version = "0.14.1", path = "features" }
 workflow-store = { version = "0.14.1", path = "store" }
