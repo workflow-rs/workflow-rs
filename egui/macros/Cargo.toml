@@ -1,0 +1,27 @@
+[package]
+name = "workflow-egui-macros"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license = "MIT OR Apache-2.0"
+keywords = ["egui"]
+categories = []
+exclude = ["/.*", "/test"]
+description = """
+Macros for the Kaspa NG project
+"""
+
+[lib]
+proc-macro = true
+
+[dependencies]
+convert_case = "0.6.0"
+parse-variants = "1.0.1"
+proc-macro-error = { version = "1.0.4", default-features = false }
+proc-macro2 = { version = "1.0.50" }
+quote = "1.0.23"
+sha2 = "0.10.7"
+syn = {version="1.0.107",features=["full","fold","extra-traits","parsing","proc-macro"]}
+rand = "0.8"
+
+# workflow-macro-tools.workspace = true

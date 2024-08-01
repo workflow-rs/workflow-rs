@@ -108,7 +108,9 @@ async fn websocket_test() -> Result<()> {
     });
 
     let ws_client = WebSocket::new(Some("ws://localhost:19111"), None)?;
-    ws_client.connect(ConnectOptions::fallback()).await?;
+    ws_client
+        .connect(ConnectOptions::blocking_fallback())
+        .await?;
 
     let text_out = "Hello, world!";
     ws_client

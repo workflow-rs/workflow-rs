@@ -6,6 +6,8 @@ members = [
     "core/macros",
     "d3",
     "dom",
+    "egui",
+    "egui/macros",
     "encryption",
     "features",
     "gpt",
@@ -56,35 +58,101 @@ repository = "https://github.com/workflow-rs/workflow-rs"
 
 # internal dependencies
 
-workflow-chrome = { version = "0.15.0", path = "chrome" }
-workflow-core = { version = "0.15.0", path = "core" }
-workflow-core-macros = { version = "0.15.0", path = "core/macros" }
-workflow-d3 = { version = "0.15.0", path = "d3" }
-workflow-dom = { version = "0.15.0", path = "dom" }
-workflow-encryption = { version = "0.15.0", path = "encryption" }
-workflow-gpt = { version = "0.15.0", path = "gpt" }
-workflow-html = { version = "0.15.0", path = "html" }
-workflow-html-macros = { version = "0.15.0", path = "html/macros" }
-workflow-http = { version = "0.15.0", path = "http" }
-workflow-i18n = { version = "0.15.0", path = "i18n" }
-workflow-log = { version = "0.15.0", path = "log" }
-workflow-macro-tools = { version = "0.15.0", path = "macro-tools" }
-workflow-node = { version = "0.15.0", path = "node" }
-workflow-nw = { version = "0.15.0", path = "nw" }
-workflow-panic-hook = { version = "0.15.0", path = "panic-hook" }
-workflow-rpc = { version = "0.15.0", path = "rpc" }
-workflow-rpc-macros = { version = "0.15.0", path = "rpc/macros" }
-workflow-rs = { version = "0.15.0", path = "features" }
-workflow-store = { version = "0.15.0", path = "store" }
-workflow-serializer = { version = "0.15.0", path = "serializer" }
-workflow-task = { version = "0.15.0", path = "task" }
-workflow-task-macros = { version = "0.15.0", path = "task/macros" }
-workflow-terminal = { version = "0.15.0", path = "terminal" }
-workflow-terminal-macros = { version = "0.15.0", path = "terminal/macros" }
-workflow-utils = { version = "0.15.0", path = "utils" }
-workflow-wasm = { version = "0.15.0", path = "wasm" }
-workflow-wasm-macros = { version = "0.15.0", path = "wasm/macros" }
-workflow-websocket = { version = "0.15.0", path = "websocket" }
+workflow-chrome = { version = "0.15.0"}
+workflow-core = { version = "0.15.0"}
+workflow-core-macros = { version = "0.15.0"}
+workflow-d3 = { version = "0.15.0"}
+workflow-dom = { version = "0.15.0"}
+workflow-egui = { version = "0.15.0", path = "egui" }
+workflow-egui-macros = { version = "0.15.0", path = "egui/macros" }
+workflow-encryption = { version = "0.15.0"}
+workflow-gpt = { version = "0.15.0"}
+workflow-html = { version = "0.15.0"}
+workflow-html-macros = { version = "0.15.0"}
+workflow-http = { version = "0.15.0"}
+workflow-i18n = { version = "0.15.0"}
+workflow-log = { version = "0.15.0"}
+workflow-macro-tools = { version = "0.15.0"}
+workflow-node = { version = "0.15.0"}
+workflow-nw = { version = "0.15.0"}
+workflow-panic-hook = { version = "0.15.0"}
+workflow-rpc = { version = "0.15.0"}
+workflow-rpc-macros = { version = "0.15.0"}
+workflow-rs = { version = "0.15.0"}
+workflow-store = { version = "0.15.0"}
+workflow-serializer = { version = "0.15.0"}
+workflow-task = { version = "0.15.0"}
+workflow-task-macros = { version = "0.15.0"}
+workflow-terminal = { version = "0.15.0"}
+workflow-terminal-macros = { version = "0.15.0"}
+workflow-utils = { version = "0.15.0"}
+workflow-wasm = { version = "0.15.0"}
+workflow-wasm-macros = { version = "0.15.0"}
+workflow-websocket = { version = "0.15.0"}
+
+# workflow-chrome = { version = "0.15.0"}
+# workflow-core = { version = "0.15.0"}
+# workflow-core-macros = { version = "0.15.0"}
+# workflow-d3 = { version = "0.15.0"}
+# workflow-dom = { version = "0.15.0"}
+# workflow-egui = { version = "0.15.0"}
+# workflow-egui-macros = { version = "0.15.0"}
+# workflow-encryption = { version = "0.15.0"}
+# workflow-gpt = { version = "0.15.0"}
+# workflow-html = { version = "0.15.0"}
+# workflow-html-macros = { version = "0.15.0"}
+# workflow-http = { version = "0.15.0"}
+# workflow-i18n = { version = "0.15.0"}
+# workflow-log = { version = "0.15.0"}
+# workflow-macro-tools = { version = "0.15.0"}
+# workflow-node = { version = "0.15.0"}
+# workflow-nw = { version = "0.15.0"}
+# workflow-panic-hook = { version = "0.15.0"}
+# workflow-rpc = { version = "0.15.0"}
+# workflow-rpc-macros = { version = "0.15.0"}
+# workflow-rs = { version = "0.15.0"}
+# workflow-store = { version = "0.15.0"}
+# workflow-serializer = { version = "0.15.0"}
+# workflow-task = { version = "0.15.0"}
+# workflow-task-macros = { version = "0.15.0"}
+# workflow-terminal = { version = "0.15.0"}
+# workflow-terminal-macros = { version = "0.15.0"}
+# workflow-utils = { version = "0.15.0"}
+# workflow-wasm = { version = "0.15.0"}
+# workflow-wasm-macros = { version = "0.15.0"}
+# workflow-websocket = { version = "0.15.0"}
+
+# workflow-chrome = { version = "0.15.0", path = "chrome" }
+# workflow-core = { version = "0.15.0", path = "core" }
+# workflow-core-macros = { version = "0.15.0", path = "core/macros" }
+# workflow-d3 = { version = "0.15.0", path = "d3" }
+# workflow-dom = { version = "0.15.0", path = "dom" }
+# workflow-egui = { version = "0.15.0", path = "egui" }
+# workflow-egui-macros = { version = "0.15.0", path = "egui/macros" }
+# workflow-encryption = { version = "0.15.0", path = "encryption" }
+# workflow-gpt = { version = "0.15.0", path = "gpt" }
+# workflow-html = { version = "0.15.0", path = "html" }
+# workflow-html-macros = { version = "0.15.0", path = "html/macros" }
+# workflow-http = { version = "0.15.0", path = "http" }
+# workflow-i18n = { version = "0.15.0", path = "i18n" }
+# workflow-log = { version = "0.15.0", path = "log" }
+# workflow-macro-tools = { version = "0.15.0", path = "macro-tools" }
+# workflow-node = { version = "0.15.0", path = "node" }
+# workflow-nw = { version = "0.15.0", path = "nw" }
+# workflow-panic-hook = { version = "0.15.0", path = "panic-hook" }
+# workflow-rpc = { version = "0.15.0", path = "rpc" }
+# workflow-rpc-macros = { version = "0.15.0", path = "rpc/macros" }
+# workflow-rs = { version = "0.15.0", path = "features" }
+# workflow-store = { version = "0.15.0", path = "store" }
+# workflow-serializer = { version = "0.15.0", path = "serializer" }
+# workflow-task = { version = "0.15.0", path = "task" }
+# workflow-task-macros = { version = "0.15.0", path = "task/macros" }
+# workflow-terminal = { version = "0.15.0", path = "terminal" }
+# workflow-terminal-macros = { version = "0.15.0", path = "terminal/macros" }
+# workflow-utils = { version = "0.15.0", path = "utils" }
+# workflow-wasm = { version = "0.15.0", path = "wasm" }
+# workflow-wasm-macros = { version = "0.15.0", path = "wasm/macros" }
+# workflow-websocket = { version = "0.15.0", path = "websocket" }
 
 # external dependencies
 
@@ -105,6 +173,7 @@ cliclack = "0.3.1"
 console = "0.15.7"
 convert_case = "0.6.0"
 crossterm = "0.27.0"
+ctrlc = { version = "3.2", features = ["termination"] }
 dirs = "5.0.1"
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
@@ -135,6 +204,7 @@ rand = { version = "0.8.5", features = ["getrandom"] }
 regex = "1.10.2"
 reqwest = { version = "0.12.4", features = ["json"] }
 ritehash = "0.2.0"
+safer_owning_ref = "0.5.0"
 separator = "0.4.1"
 serde = { version = "1.0.190" , features = ["derive","rc"] }
 serde_json = "1.0.108"
@@ -157,6 +227,20 @@ web-sys = "0.3.67"
 chrome-sys = { version = "0.2.0" }
 chacha20poly1305 = "0.10.1"
 zeroize = { version = "1.6.0", default-features = false, features = ["alloc"] }
+
+
+
+egui = "0.28.1"
+# epaint = "=0.28.1"
+# egui_plot = "=0.28.1"
+# egui_extras = { version = "=0.28.1", features = ["svg","image"] }
+# eframe = "0.28.1"
+eframe = { version = "0.28.1", default-features = false, features = [
+#     # "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+#     # "default_fonts", # Embed the default egui fonts.
+    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+#     # "persistence",   # Enable restoring app state when restarting the app.
+] }
 
 [workspace.lints.clippy]
 empty_docs = "allow"

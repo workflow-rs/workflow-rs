@@ -1,6 +1,7 @@
 use super::error::Error;
 use super::result::Result;
 use cfg_if::cfg_if;
+use std::fmt::Display;
 use std::str::FromStr;
 use wasm_bindgen::convert::TryFromJsValue;
 use wasm_bindgen::prelude::*;
@@ -97,7 +98,7 @@ impl Default for ConnectOptions {
 }
 
 impl ConnectOptions {
-    pub fn fallback() -> Self {
+    pub fn blocking_fallback() -> Self {
         Self {
             block_async_connect: true,
             strategy: ConnectStrategy::Fallback,
@@ -106,7 +107,7 @@ impl ConnectOptions {
             retry_interval: None,
         }
     }
-    pub fn reconnect_defaults() -> Self {
+    pub fn blocking_retry() -> Self {
         Self {
             block_async_connect: true,
             strategy: ConnectStrategy::Retry,
@@ -116,13 +117,34 @@ impl ConnectOptions {
         }
     }
 
-    pub fn passive_retry_with_defaults() -> Self {
+    pub fn non_blocking_retry() -> Self {
         Self {
             block_async_connect: false,
             strategy: ConnectStrategy::Retry,
             url: None,
             connect_timeout: None,
             retry_interval: None,
+        }
+    }
+
+    pub fn with_url<S: Display>(self, url: S) -> Self {
+        Self {
+            url: Some(url.to_string()),
+            ..self
+        }
+    }
+
+    pub fn with_connect_timeout(self, timeout: Duration) -> Self {
+        Self {
+            connect_timeout: Some(timeout),
+            ..self
+        }
+    }
+
+    pub fn with_retry_interval(self, interval: Duration) -> Self {
+        Self {
+            retry_interval: Some(interval),
+            ..self
         }
     }
 
