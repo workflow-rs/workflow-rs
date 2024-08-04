@@ -26,8 +26,8 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn custom<T: Into<String>>(msg: T) -> Self {
-        Error::Custom(msg.into())
+    pub fn custom<S: std::fmt::Display>(msg: S) -> Self {
+        Error::Custom(msg.to_string())
     }
 }
 
