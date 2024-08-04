@@ -8,10 +8,10 @@ use futures::{
     FutureExt,
 };
 use futures_util::{SinkExt, StreamExt};
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc, Mutex,
-};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+#[allow(unused_imports)]
+use std::time::Instant;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_tungstenite::{
@@ -193,7 +193,7 @@ impl WebSocketInterface {
                                     connect_trigger.take().unwrap().try_send(Ok(())).ok();
                                 }
 
-                                if let Err(err) = this.dispatcher(&mut ws_stream).await {
+                                if let Err(err) = this.dispatcher(&mut ws_stream, &options).await {
                                     log_trace!("WebSocket dispatcher error: {}", err);
                                 }
 
@@ -305,11 +305,17 @@ impl WebSocketInterface {
     async fn dispatcher(
         self: &Arc<Self>,
         ws_stream: &mut WebSocketStream<MaybeTlsStream<TcpStream>>,
+        _options: &ConnectOptions,
     ) -> Result<()> {
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
 
         self.handshake_impl(&mut ws_sender, &mut ws_receiver)
             .await?;
+
+        #[cfg(feature = "delay-reconnect")]
+        let connection_start = Instant::now();
+        #[cfg(feature = "delay-reconnect")]
+        let mut closed_ungracefully = false;
 
         self.receiver_channel.send(Message::Open).await?;
 
@@ -347,11 +353,17 @@ impl WebSocketInterface {
                         Some(Err(e)) => {
                             self.receiver_channel.send(Message::Close).await?;
                             log_trace!("WebSocket error: {}", e);
+                            #[cfg(feature = "delay-reconnect")] {
+                                closed_ungracefully = true;
+                            }
                             break;
                         }
                         None => {
                             self.receiver_channel.send(Message::Close).await?;
                             log_trace!("WebSocket connection closed");
+                            #[cfg(feature = "delay-reconnect")] {
+                                closed_ungracefully = true;
+                            }
                             break;
                         }
                     }
@@ -362,6 +374,12 @@ impl WebSocketInterface {
                     break;
                 }
             }
+        }
+
+        // if connection has closed ungracefully within 1 second, wait for retry interval
+        #[cfg(feature = "delay-reconnect")]
+        if closed_ungracefully && connection_start.elapsed().as_millis() < 1_000 {
+            workflow_core::task::sleep(_options.retry_interval()).await;
         }
 
         Ok(())

@@ -20,6 +20,7 @@ crate-type = ["cdylib", "lib"]
 doctest = false
 
 [features]
+delay-reconnect = []
 # enable to make connection options available in the generated TypeScript bindings
 wasm32-sdk = []
 # enable to provide manual control over the WebSocket Ping messages
