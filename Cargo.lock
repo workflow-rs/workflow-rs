@@ -5253,6 +5253,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "workflow-service"
+version = "0.15.0"
+dependencies = [
+ "ahash",
+ "async-trait",
+ "cfg-if 1.0.0",
+ "ctrlc",
+ "futures-util",
+ "thiserror",
+ "workflow-core 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "workflow-log 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "workflow-store"
 version = "0.15.0"
 dependencies = [

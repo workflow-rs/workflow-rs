@@ -23,6 +23,7 @@ members = [
     "rpc",
     "rpc/macros",
     "serializer",
+    "service",
     "store",
     "task",
     "task/macros",
@@ -81,6 +82,7 @@ workflow-rpc-macros = { version = "0.15.0"}
 workflow-rs = { version = "0.15.0"}
 workflow-store = { version = "0.15.0"}
 workflow-serializer = { version = "0.15.0"}
+workflow-service = { version = "0.15.0", path = "service" }
 workflow-task = { version = "0.15.0"}
 workflow-task-macros = { version = "0.15.0"}
 workflow-terminal = { version = "0.15.0"}

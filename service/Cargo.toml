@@ -1,0 +1,25 @@
+[package]
+name = "workflow-service"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+keywords = []
+categories = []
+exclude = ["/.*", "/test"]
+description = """
+Services
+"""
+
+[dependencies]
+ahash.workspace = true
+thiserror.workspace = true
+workflow-core.workspace = true
+async-trait.workspace = true
+futures-util.workspace = true
+workflow-log.workspace = true
+cfg-if.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+ctrlc.workspace = true
