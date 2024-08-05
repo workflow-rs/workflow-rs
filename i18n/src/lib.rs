@@ -14,6 +14,7 @@ pub mod json;
 pub mod result;
 
 pub use i18n::i18n;
+pub use i18n::i18n_args;
 
 pub mod prelude {
     pub use crate::i18n;
