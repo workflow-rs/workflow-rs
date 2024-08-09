@@ -273,19 +273,61 @@ pub fn i18n(text: &str) -> &str {
     }
 }
 
+// a tiny accelerator to save a heap alloc instead of using a String
+#[inline(always)]
+fn make_arg<K>(buffer: &mut [u8], key: K) -> &str
+where
+    K: AsRef<str>,
+{
+    let key = key.as_ref();
+    let mut written = 0;
+
+    buffer[written] = b'{';
+    written += 1;
+
+    buffer[written..written + key.len()].copy_from_slice(key.as_bytes());
+    written += key.len();
+
+    buffer[written] = b'}';
+    written += 1;
+
+    std::str::from_utf8(&buffer[..written]).unwrap()
+}
+
 /// Translate a string to the currently user-selected language
 /// and replace given placeholders with given values.
 /// Parameter 'replacements' is a vector consisting of key value pairs,
 /// where the key is the placeholder within 'text'.
-pub fn i18n_args(text: &str, replacements: DictionaryArgs) -> String {
+pub fn i18n_args<'a, K, V>(text: &str, replacements: impl IntoIterator<Item = &'a (K, V)>) -> String
+where
+    K: AsRef<str> + 'a,
+    V: AsRef<str> + 'a,
+{
+    let mut buffer = [0u8; 64];
     let mut translated = String::from(i18n(text));
 
     for (key, value) in replacements {
-        let placeholder = format!("{{{}}}", key);
-        translated = str::replace(&translated, &placeholder, value);
+        let placeholder = make_arg(&mut buffer, key);
+        translated = str::replace(&translated, placeholder, value.as_ref());
     }
 
     translated
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_i18n_args() {
+        Builder::new("en", "en").try_init().unwrap();
+
+        let name = "John";
+        let text = "Hello, {name}!";
+        let translated = i18n_args(text, &[("name", name)]);
+        // println!("{translated}");
+        assert_eq!(translated, "Hello, John!");
+    }
 }
 
 /// Dictionary structure containing all translations and related data.
