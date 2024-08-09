@@ -2970,6 +2970,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80eb5f11ebcdd09266eb7897503d7451c2fceea3881538c63dd2651e2c5ebe0c"
 
 [[package]]
+name = "rlimit"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3560f70f30a0f16d11d01ed078a07740fe6b489667abc7c7b029155d9f21c3d8"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "rpc-example-client-browser"
 version = "0.15.0"
 dependencies = [
@@ -4656,6 +4665,7 @@ dependencies = [
  "instant",
  "js-sys",
  "rand",
+ "rlimit",
  "serde",
  "serde-wasm-bindgen",
  "thiserror",

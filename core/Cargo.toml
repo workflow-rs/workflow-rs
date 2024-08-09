@@ -50,6 +50,7 @@ faster-hex.workspace = true
 [target.'cfg(not(any(target_arch = "bpf", target_arch = "wasm32")))'.dependencies]
 tokio.workspace = true
 chrono.workspace = true
+rlimit.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 js-sys.workspace = true

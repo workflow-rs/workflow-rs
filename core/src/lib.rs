@@ -39,6 +39,9 @@ pub mod version;
 mod native;
 mod wasm;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub mod fd;
+
 /// Seal macro that prevents accidental modification of the enclosed source code
 /// by hashing the source code and comparing it to the supplied hash.  If the code
 /// is modified, the macro will fail to compile, and the developer will need to
