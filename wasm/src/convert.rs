@@ -76,65 +76,110 @@ pub fn validate_class_names() -> bool {
 /// [`Cast`] then provides [`Cast::as_ref()`] to obtain the internally held
 /// reference and [`Cast::into_owned()`] where the latter will consume the
 /// value or clone the reference.
-pub enum Cast<T>
+pub enum Cast<'a, T>
 where
-    T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
+    T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + 'a,
 {
-    Ref(<T as RefFromWasmAbi>::Anchor),
-    LongRef(<T as LongRefFromWasmAbi>::Anchor),
-    Value(T),
+    Ref {
+        anchor: <T as RefFromWasmAbi>::Anchor,
+    },
+    OwnedRef {
+        js_value: Option<JsValue>,
+        anchor: Option<<T as RefFromWasmAbi>::Anchor>,
+    },
+    LongRef {
+        anchor: <T as LongRefFromWasmAbi>::Anchor,
+    },
+    Value {
+        value: Option<T>,
+    },
+    _Unreachable(std::convert::Infallible, &'a std::marker::PhantomData<T>),
 }
 
-impl<T> Deref for Cast<T>
+impl<'a, T> Drop for Cast<'a, T>
+where
+    T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + 'a,
+{
+    fn drop(&mut self) {
+        match self {
+            Cast::OwnedRef { js_value, anchor } => {
+                // ensure anchor is dropped before js_value
+                // as anchor holds a borrow, while js_value Drop impl requires a borrow
+                drop(anchor.take());
+                drop(js_value.take());
+            }
+            _ => {}
+        }
+    }
+}
+
+impl<'a, T> Deref for Cast<'a, T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + Deref,
 {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         match self {
-            Cast::Ref(r) => r,
-            Cast::LongRef(r) => r.borrow(),
-            Cast::Value(v) => v,
+            Cast::Ref { anchor } => anchor,
+            Cast::OwnedRef { anchor, .. } => anchor.as_ref().unwrap(),
+            Cast::LongRef { anchor } => anchor.borrow(),
+            Cast::Value { value } => value.as_ref().unwrap(),
+            Cast::_Unreachable(_, _) => unreachable!(),
         }
     }
 }
 
-impl<T> AsRef<T> for Cast<T>
+impl<'a, T> AsRef<T> for Cast<'a, T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
 {
     /// Obtain a reference to the internally held value.
     fn as_ref(&self) -> &T {
         match self {
-            Cast::Ref(r) => r,
-            Cast::LongRef(r) => r.borrow(),
-            Cast::Value(v) => v,
+            Cast::Ref { anchor } => anchor,
+            Cast::OwnedRef { anchor, .. } => anchor.as_ref().unwrap(),
+            Cast::LongRef { anchor } => anchor.borrow(),
+            Cast::Value { value } => value.as_ref().unwrap(),
+            Cast::_Unreachable(_, _) => unreachable!(),
         }
     }
 }
 
-impl<T> Cast<T>
+impl<'a, T> Cast<'a, T>
 where
-    T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + Clone, // + ToOwned,
+    T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + Clone,
 {
     /// Consume the [`Cast`] and return the owned value. If the
     /// [`Cast`] holds a reference, it will be cloned.
-    pub fn into_owned(self) -> T {
-        match self {
-            Cast::Ref(r) => (*r).clone(),
-            Cast::LongRef(r) => r.borrow().clone(),
-            Cast::Value(v) => v,
+    pub fn into_owned(mut self) -> T {
+        match &mut self {
+            Cast::Ref { anchor } => (*anchor).clone(),
+            Cast::OwnedRef { js_value, anchor } => {
+                let value = (*anchor.as_ref().unwrap()).clone();
+                drop(anchor.take());
+                drop(js_value.take());
+                value
+            }
+            Cast::LongRef { anchor } => (*anchor).borrow().clone(),
+            Cast::Value { value } => value.take().unwrap(),
+            Cast::_Unreachable(_, _) => unreachable!(),
         }
     }
+
+    pub fn value(value: T) -> Self {
+        Cast::Value { value: Some(value) }
+    }
+
+    // pub fn captured_ref(js_value : impl AsRef<JsValue>)
 }
 
 /// Cast T value (struct) into `Cast<T>`
-impl<T> From<T> for Cast<T>
+impl<'a, T> From<T> for Cast<'a, T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
 {
-    fn from(value: T) -> Cast<T> {
-        Cast::Value(value)
+    fn from(value: T) -> Cast<'a, T> {
+        Cast::Value { value: Some(value) }
     }
 }
 
@@ -146,25 +191,35 @@ where
     Self: Sized + RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
 {
     /// Obtain safe reference from [`JsValue`]
-    fn try_ref_from_js_value(
-        js: impl AsRef<JsValue>,
-    ) -> std::result::Result<<Self as RefFromWasmAbi>::Anchor, Error>;
+    fn try_ref_from_js_value<'a, R>(
+        js_value: &'a R,
+    ) -> std::result::Result<<Self as RefFromWasmAbi>::Anchor, Error>
+    where
+        R: AsRef<JsValue> + 'a;
 
-    fn try_ref_from_js_value_as_cast(
-        js: impl AsRef<JsValue>,
-    ) -> std::result::Result<Cast<Self>, Error> {
-        Self::try_ref_from_js_value(js).map(Cast::Ref)
+    fn try_ref_from_js_value_as_cast<'a, R>(
+        js_value: &'a R,
+    ) -> std::result::Result<Cast<'a, Self>, Error>
+    where
+        R: AsRef<JsValue> + 'a,
+    {
+        Self::try_ref_from_js_value(js_value).map(|anchor| Cast::Ref { anchor })
     }
 
     /// Obtain safe long reference from [`JsValue`]
-    fn try_long_ref_from_js_value(
-        js: impl AsRef<JsValue>,
-    ) -> std::result::Result<<Self as LongRefFromWasmAbi>::Anchor, Error>;
+    fn try_long_ref_from_js_value<'a, R>(
+        js: &'a R,
+    ) -> std::result::Result<<Self as LongRefFromWasmAbi>::Anchor, Error>
+    where
+        R: AsRef<JsValue> + 'a;
 
-    fn try_long_ref_from_js_value_as_cast(
-        js: impl AsRef<JsValue>,
-    ) -> std::result::Result<Cast<Self>, Error> {
-        Self::try_long_ref_from_js_value(js).map(Cast::LongRef)
+    fn try_long_ref_from_js_value_as_cast<'a, R>(
+        js: &'a R,
+    ) -> std::result::Result<Cast<Self>, Error>
+    where
+        R: AsRef<JsValue> + 'a,
+    {
+        Self::try_long_ref_from_js_value(js).map(|anchor| Cast::LongRef { anchor })
     }
 }
 
@@ -183,25 +238,42 @@ where
     /// attempts to cast a JsValue into a Rust object
     /// or interpret a source data and create a
     /// temporary struct owned by by the [`Cast`].
-    fn try_cast_from(value: impl AsRef<JsValue>) -> std::result::Result<Cast<Self>, Self::Error>;
+    fn try_cast_from<'a, R>(value: &'a R) -> std::result::Result<Cast<'a, Self>, Self::Error>
+    where
+        R: AsRef<JsValue> + 'a;
 
     /// Perform a user cast and consume the [`Cast`] container.
     /// This function will return a temporary user-created
     /// object created during [`try_cast_from`] or a clone of the casted reference.
     fn try_owned_from(value: impl AsRef<JsValue>) -> std::result::Result<Self, Self::Error> {
-        Self::try_cast_from(value).map(|c| c.into_owned())
+        Self::try_cast_from(&value).map(|c| c.into_owned())
+    }
+
+    fn try_captured_cast_from(
+        js_value: impl AsRef<JsValue>,
+    ) -> std::result::Result<Cast<'static, Self>, Self::Error> {
+        let js_value = js_value.as_ref().clone();
+        Ok(
+            Self::try_ref_from_js_value(&js_value).map(|anchor| Cast::OwnedRef {
+                js_value: Some(js_value),
+                anchor: Some(anchor),
+            })?,
+        )
     }
 
     /// Try to cast a JsValue into a Rust object, in cast of failure
     /// invoke a user-supplied closure that can try to create an instance
     /// of the object based on the supplied JsValue.
-    fn resolve(
-        js: impl AsRef<JsValue>,
+    fn resolve<'a, R>(
+        js: &'a R,
         create: impl FnOnce() -> std::result::Result<Self, Self::Error>,
-    ) -> std::result::Result<Cast<Self>, Self::Error> {
+    ) -> std::result::Result<Cast<Self>, Self::Error>
+    where
+        R: AsRef<JsValue> + 'a,
+    {
         Self::try_ref_from_js_value(js)
-            .map(Cast::<Self>::Ref)
-            .or_else(|_| create().map(Cast::<Self>::Value))
+            .map(|anchor| Cast::Ref { anchor })
+            .or_else(|_| create().map(|value| Cast::Value { value: Some(value) }))
     }
 
     /// Try to cast a JsValue into a Rust object, in cast of failure
@@ -210,12 +282,15 @@ where
     /// function, this function expects `create` closure to return a [`Cast`].
     /// This is useful when routing the creation of the object to another
     /// function that is capable of creating a compatible Cast wrapper.
-    fn resolve_cast(
-        js: impl AsRef<JsValue>,
-        create: impl FnOnce() -> std::result::Result<Cast<Self>, Self::Error>,
-    ) -> std::result::Result<Cast<Self>, Self::Error> {
+    fn resolve_cast<'a, R>(
+        js: &'a R,
+        create: impl FnOnce() -> std::result::Result<Cast<'a, Self>, Self::Error>,
+    ) -> std::result::Result<Cast<'a, Self>, Self::Error>
+    where
+        R: AsRef<JsValue> + 'a,
+    {
         Self::try_ref_from_js_value(js)
-            .map(Cast::<Self>::Ref)
+            .map(|anchor| Cast::Ref { anchor })
             .or_else(|_| create())
     }
 }

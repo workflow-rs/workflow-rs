@@ -21,10 +21,14 @@ pub fn derive_cast_from_js(input: TokenStream) -> TokenStream {
         Data::Struct(_) => {
             quote! {
                 impl ::workflow_wasm::convert::CastFromJs for #name {
-                    fn try_ref_from_js_value(js: impl AsRef<::wasm_bindgen::JsValue>) -> std::result::Result<<Self as wasm_bindgen::convert::RefFromWasmAbi>::Anchor, ::workflow_wasm::error::Error> {
+                    fn try_ref_from_js_value<'a, R>(js: &'a R) -> std::result::Result<<Self as wasm_bindgen::convert::RefFromWasmAbi>::Anchor, ::workflow_wasm::error::Error>
+                    where R: AsRef<::wasm_bindgen::JsValue> + 'a
+                    {
                         ::workflow_wasm::convert::try_ref_from_abi_safe::<Self>(::core::stringify!(#name), js)
                     }
-                    fn try_long_ref_from_js_value(js: impl AsRef<::wasm_bindgen::JsValue>) -> std::result::Result<<Self as wasm_bindgen::convert::RefFromWasmAbi>::Anchor, ::workflow_wasm::error::Error> {
+                    fn try_long_ref_from_js_value<'a, R>(js: &'a R) -> std::result::Result<<Self as wasm_bindgen::convert::RefFromWasmAbi>::Anchor, ::workflow_wasm::error::Error>
+                    where R: AsRef<::wasm_bindgen::JsValue> + 'a
+                    {
                         ::workflow_wasm::convert::try_long_ref_from_abi_safe::<Self>(::core::stringify!(#name), js)
                     }
                 }
@@ -34,7 +38,7 @@ pub fn derive_cast_from_js(input: TokenStream) -> TokenStream {
             quote! {
                 impl #name {
                     // pub fn try_from_js_value(js: &::wasm_bindgen::JsValue) -> std::result::Result<Self, ::workflow_wasm::error::Error> {
-                    pub fn try_cast_from(js: &::wasm_bindgen::JsValue) -> std::result::Result<Self, ::workflow_wasm::error::Error> {
+                    pub fn try_enum_from(js: &::wasm_bindgen::JsValue) -> std::result::Result<Self, ::workflow_wasm::error::Error> {
                         <Self as wasm_bindgen::convert::TryFromJsValue>::try_from_js_value(js.clone())
                             .map_err(|err| ::workflow_wasm::error::Error::from(err))
                     }

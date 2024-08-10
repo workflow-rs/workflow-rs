@@ -25,14 +25,24 @@ pub trait ObjectExtension {
         <T as TryFrom<wasm_bindgen::JsValue>>::Error: std::fmt::Display;
 
     /// Obtain a [`Cast`] from a property of the [`Object`].
-    fn get_cast<T>(&self, prop: &str) -> Result<Cast<T>, Error>
+    fn cast_into<T>(&self, prop: &str) -> Result<T, Error>
+    where
+        T: TryCastFromJs,
+        <T as TryCastFromJs>::Error: std::fmt::Display;
+
+    fn cast_from<T>(&self, prop: &str) -> Result<Cast<'static, T>, Error>
     where
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display;
 
     /// Try to obtain a [`Cast`] from a property of the [`Object`].
     /// Returns `Ok(None)` if the property does not exist (`null` or `undefined`).
-    fn try_get_cast<T>(&self, prop: &str) -> Result<Option<Cast<T>>, Error>
+    fn try_cast_into<T>(&self, prop: &str) -> Result<Option<T>, Error>
+    where
+        T: TryCastFromJs,
+        <T as TryCastFromJs>::Error: std::fmt::Display;
+
+    fn try_cast_from<T>(&self, prop: &str) -> Result<Option<Cast<'static, T>>, Error>
     where
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display;
@@ -103,16 +113,25 @@ impl ObjectExtension for Object {
         }
     }
 
-    fn get_cast<T>(&self, prop: &str) -> Result<Cast<T>, Error>
+    fn cast_into<'a, T>(&'a self, prop: &str) -> Result<T, Error>
     where
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display,
     {
         let js_value = Reflect::get(self, &JsValue::from(prop))?;
-        T::try_cast_from(js_value).map_err(Error::custom)
+        T::try_owned_from(&js_value).map_err(Error::custom)
     }
 
-    fn try_get_cast<T>(&self, prop: &str) -> Result<Option<Cast<T>>, Error>
+    fn cast_from<'a, T>(&'a self, prop: &str) -> Result<Cast<'static, T>, Error>
+    where
+        T: TryCastFromJs,
+        <T as TryCastFromJs>::Error: std::fmt::Display,
+    {
+        let js_value = Reflect::get(self, &JsValue::from(prop))?;
+        T::try_captured_cast_from(&js_value).map_err(Error::custom)
+    }
+
+    fn try_cast_into<T>(&self, prop: &str) -> Result<Option<T>, Error>
     where
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display,
@@ -121,7 +140,22 @@ impl ObjectExtension for Object {
         if js_value.is_undefined() {
             Ok(None)
         } else {
-            Ok(Some(T::try_cast_from(js_value).map_err(Error::custom)?))
+            Ok(Some(T::try_owned_from(js_value).map_err(Error::custom)?))
+        }
+    }
+
+    fn try_cast_from<T>(&self, prop: &str) -> Result<Option<Cast<'static, T>>, Error>
+    where
+        T: TryCastFromJs,
+        <T as TryCastFromJs>::Error: std::fmt::Display,
+    {
+        let js_value = Reflect::get(self, &JsValue::from(prop))?;
+        if js_value.is_undefined() {
+            Ok(None)
+        } else {
+            Ok(Some(
+                T::try_captured_cast_from(js_value).map_err(Error::custom)?,
+            ))
         }
     }
 
