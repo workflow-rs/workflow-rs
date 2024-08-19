@@ -1,33 +1,4 @@
-// use std::any::type_name;
-
 use crate::imports::*;
-
-// workflow_egui_macros::register_modules!(
-//     register_generic_modules,
-//     [
-//         account_create,
-//         account_manager,
-//         donations,
-//         export,
-//         import,
-//         overview,
-//         private_key_create,
-//         request,
-//         scanner,
-//         settings,
-//         testing,
-//         wallet_create,
-//         wallet_open,
-//         wallet_secret,
-//         welcome,
-//     ]
-// );
-
-// #[cfg(not(target_arch = "wasm32"))]
-// kaspa_ng_macros::register_modules!(register_native_modules, [changelog, logs, node,]);
-
-// #[cfg(not(feature = "lean"))]
-// kaspa_ng_macros::register_modules!(register_advanced_modules, [block_dag, metrics,]);
 
 pub enum ModuleStyle {
     Mobile,
@@ -60,19 +31,12 @@ pub trait ModuleT: Downcast {
     }
 
     fn style(&self) -> ModuleStyle {
-        // ModuleStyle::Large
         ModuleStyle::Default
     }
 
-    // fn status_bar(&self, _core: &mut Core, _ui: &mut Ui) {}
     fn activate(&mut self, _core: &mut Self::Context) {}
+
     fn deactivate(&mut self, _core: &mut Self::Context) {}
-    // fn reset(&mut self, _core: &mut Core) {}
-    // fn connect(&mut self, _core: &mut Core, _network: Network) {}
-    // fn disconnect(&mut self, _core: &mut Core) {}
-    // fn network_change(&mut self, _core: &mut Core, _network: Network) {}
-    // fn hide(&mut self, _core: &mut Self::Core) {}
-    // fn show(&mut self, _core: &mut Self::Core) {}
 
     fn main(&mut self, _core: &mut Self::Context) {}
 

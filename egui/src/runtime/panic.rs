@@ -9,10 +9,10 @@ pub fn init_graceful_panic_handler() {
         let backtrace = Backtrace::capture();
         // println!("panic! \n{:#?}\n{:#?}", panic_info, backtrace);
         let _ = fs::write(
-            "kaspa-ng.log",
+            "application-panic.log",
             format!("{:#?}\n{:#?}", panic_info, backtrace),
         );
-        println!("An unexpected condition (panic) has occurred. Additional information has been written to `kaspa-ng.log`");
+        println!("An unexpected condition (panic) has occurred. Additional information has been written to `application-panic.log`");
         default_hook(panic_info);
         Runtime::abort();
     }));
@@ -23,11 +23,11 @@ pub fn init_ungraceful_panic_handler() {
     panic::set_hook(Box::new(move |panic_info| {
         let backtrace = Backtrace::capture();
         let _ = fs::write(
-            "kaspa-ng-service.log",
+            "service-panic.log",
             format!("{:#?}\n{:#?}", panic_info, backtrace),
         );
         default_hook(panic_info);
-        println!("An unexpected condition (panic) has occurred. Additional information has been written to `kaspa-ng-service.log`");
+        println!("An unexpected condition (panic) has occurred. Additional information has been written to `service-panic.log`");
         println!("Exiting...");
         std::process::exit(1);
     }));

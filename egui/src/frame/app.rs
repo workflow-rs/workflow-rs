@@ -33,7 +33,6 @@ pub trait App: Sized + 'static {
 
     fn init(&mut self, _runtime: &Runtime, _cc: &eframe::CreationContext<'_>) {}
 
-    // fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame);
     fn render(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame);
 
     fn save(&mut self, _storage: &mut dyn eframe::Storage) {}
