@@ -181,13 +181,13 @@ impl Content {
         let content = self.content(ctx)?;
         let args = Array::new_with_length(1);
         args.set(0, unsafe { Uint8Array::view(content.as_bytes()).into() });
-        let mut options = web_sys::BlobPropertyBag::new();
+        let options = web_sys::BlobPropertyBag::new();
         match self.content_type {
             ContentType::Module | ContentType::Script => {
-                options.type_("application/javascript");
+                options.set_type("application/javascript");
             }
             ContentType::Style => {
-                options.type_("text/css");
+                options.set_type("text/css");
             }
         }
 

@@ -207,10 +207,9 @@ pub fn get_user_media(
 
     let audio_constraints = audio_constraints.unwrap_or_else(|| JsValue::from(false));
 
-    let mut constraints = web_sys::MediaStreamConstraints::new();
-    constraints
-        .audio(&audio_constraints)
-        .video(&JsValue::from(&video_constraints));
+    let constraints = web_sys::MediaStreamConstraints::new();
+    constraints.set_audio(&audio_constraints);
+    constraints.set_video(&JsValue::from(&video_constraints));
 
     log_debug!("constraints: {:?}", constraints);
 

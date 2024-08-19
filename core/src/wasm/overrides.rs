@@ -61,9 +61,11 @@ impl TimerManager {
         blob_parts.push(&JsValue::from_str(code));
 
         // Create a blob with the code
+        let blob_properties = BlobPropertyBag::new();
+        blob_properties.set_type("application/javascript");
         let blob = Blob::new_with_str_sequence_and_options(
             &blob_parts.into(), // Convert the array to a sequence
-            BlobPropertyBag::new().type_("application/javascript"), // Set the type to JavaScript
+            &blob_properties,   // Set the type to JavaScript
         )
         .expect("failed to create blob");
 

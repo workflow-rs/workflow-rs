@@ -102,8 +102,8 @@ where
 
     let args = Array::new_with_length(1);
     args.set(0, unsafe { Uint8Array::view(content.as_bytes()).into() });
-    let mut options = web_sys::BlobPropertyBag::new();
-    options.type_("application/javascript");
+    let options = web_sys::BlobPropertyBag::new();
+    options.set_type("application/javascript");
     let blob = Blob::new_with_u8_array_sequence_and_options(&args, &options)?;
     let url = Url::create_object_url_with_blob(&blob)?;
 
