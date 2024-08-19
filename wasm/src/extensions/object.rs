@@ -113,7 +113,7 @@ impl ObjectExtension for Object {
         }
     }
 
-    fn cast_into<'a, T>(&'a self, prop: &str) -> Result<T, Error>
+    fn cast_into<T>(&self, prop: &str) -> Result<T, Error>
     where
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display,
@@ -122,7 +122,7 @@ impl ObjectExtension for Object {
         T::try_owned_from(&js_value).map_err(Error::custom)
     }
 
-    fn cast_from<'a, T>(&'a self, prop: &str) -> Result<Cast<'static, T>, Error>
+    fn cast_from<T>(&self, prop: &str) -> Result<Cast<'static, T>, Error>
     where
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display,

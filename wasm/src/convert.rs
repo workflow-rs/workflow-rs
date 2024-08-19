@@ -101,14 +101,11 @@ where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + 'a,
 {
     fn drop(&mut self) {
-        match self {
-            Cast::OwnedRef { js_value, anchor } => {
-                // ensure anchor is dropped before js_value
-                // as anchor holds a borrow, while js_value Drop impl requires a borrow
-                drop(anchor.take());
-                drop(js_value.take());
-            }
-            _ => {}
+        if let Cast::OwnedRef { js_value, anchor } = self {
+            // ensure anchor is dropped before js_value
+            // as anchor holds a borrow, while js_value Drop impl requires a borrow
+            drop(anchor.take());
+            drop(js_value.take());
         }
     }
 }
