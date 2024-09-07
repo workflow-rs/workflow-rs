@@ -27,3 +27,36 @@ reqwest.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio.workspace = true
+
+
+[features]
+default = ["reqwest/default"]
+
+http2 = ["reqwest/http2"]
+
+native-tls = ["reqwest/native-tls"]
+native-tls-alpn = ["reqwest/native-tls-alpn"]
+native-tls-vendored = ["reqwest/native-tls-vendored"]
+
+rustls-tls = ["reqwest/rustls-tls"]
+rustls-tls-no-provider = ["reqwest/rustls-tls-no-provider"]
+
+rustls-tls-manual-roots = ["reqwest/rustls-tls-manual-roots"]
+rustls-tls-webpki-roots = ["reqwest/rustls-tls-webpki-roots"]
+rustls-tls-native-roots = ["reqwest/rustls-tls-native-roots"]
+rustls-tls-manual-roots-no-provider = ["reqwest/rustls-tls-manual-roots-no-provider"]
+
+charset = ["reqwest/charset"]
+cookies = ["reqwest/cookies"]
+
+gzip = ["reqwest/gzip"]
+brotli = ["reqwest/brotli"]
+zstd = ["reqwest/zstd"]
+deflate = ["reqwest/deflate"]
+
+hickory-dns = ["reqwest/hickory-dns"]
+
+socks = ["reqwest/socks"]
+
+# Use the system's proxy configuration.
+macos-system-configuration = ["reqwest/macos-system-configuration"]
