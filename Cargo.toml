@@ -124,37 +124,37 @@ repository = "https://github.com/workflow-rs/workflow-rs"
 # workflow-wasm-macros = { version = "0.15.0"}
 # workflow-websocket = { version = "0.15.0"}
 
-workflow-chrome = { version = "0.17.0", path = "chrome" }
-workflow-core = { version = "0.17.0", path = "core" }
-workflow-core-macros = { version = "0.17.0", path = "core/macros" }
-workflow-d3 = { version = "0.17.0", path = "d3" }
-workflow-dom = { version = "0.17.0", path = "dom" }
-workflow-egui = { version = "0.17.0", path = "egui" }
-workflow-egui-macros = { version = "0.17.0", path = "egui/macros" }
-workflow-encryption = { version = "0.17.0", path = "encryption" }
-workflow-gpt = { version = "0.17.0", path = "gpt" }
-workflow-html = { version = "0.17.0", path = "html" }
-workflow-html-macros = { version = "0.17.0", path = "html/macros" }
-workflow-http = { version = "0.17.0", path = "http" }
-workflow-i18n = { version = "0.17.0", path = "i18n" }
-workflow-log = { version = "0.17.0", path = "log" }
-workflow-macro-tools = { version = "0.17.0", path = "macro-tools" }
-workflow-node = { version = "0.17.0", path = "node" }
-workflow-nw = { version = "0.17.0", path = "nw" }
-workflow-panic-hook = { version = "0.17.0", path = "panic-hook" }
-workflow-rpc = { version = "0.17.0", path = "rpc" }
-workflow-rpc-macros = { version = "0.17.0", path = "rpc/macros" }
-workflow-rs = { version = "0.17.0", path = "features" }
-workflow-store = { version = "0.17.0", path = "store" }
-workflow-serializer = { version = "0.17.0", path = "serializer" }
-workflow-task = { version = "0.17.0", path = "task" }
-workflow-task-macros = { version = "0.17.0", path = "task/macros" }
-workflow-terminal = { version = "0.17.0", path = "terminal" }
-workflow-terminal-macros = { version = "0.17.0", path = "terminal/macros" }
-workflow-utils = { version = "0.17.0", path = "utils" }
-workflow-wasm = { version = "0.17.0", path = "wasm" }
-workflow-wasm-macros = { version = "0.17.0", path = "wasm/macros" }
-workflow-websocket = { version = "0.17.0", path = "websocket" }
+workflow-chrome = { version = "0.17.0", path = "chrome" , default-features = false }
+workflow-core = { version = "0.17.0", path = "core" , default-features = false }
+workflow-core-macros = { version = "0.17.0", path = "core/macros" , default-features = false }
+workflow-d3 = { version = "0.17.0", path = "d3" , default-features = false }
+workflow-dom = { version = "0.17.0", path = "dom" , default-features = false }
+workflow-egui = { version = "0.17.0", path = "egui" , default-features = false }
+workflow-egui-macros = { version = "0.17.0", path = "egui/macros" , default-features = false }
+workflow-encryption = { version = "0.17.0", path = "encryption" , default-features = false }
+workflow-gpt = { version = "0.17.0", path = "gpt" , default-features = false }
+workflow-html = { version = "0.17.0", path = "html" , default-features = false }
+workflow-html-macros = { version = "0.17.0", path = "html/macros" , default-features = false }
+workflow-http = { version = "0.17.0", path = "http" , default-features = false }
+workflow-i18n = { version = "0.17.0", path = "i18n" , default-features = false }
+workflow-log = { version = "0.17.0", path = "log" , default-features = false }
+workflow-macro-tools = { version = "0.17.0", path = "macro-tools" , default-features = false }
+workflow-node = { version = "0.17.0", path = "node" , default-features = false }
+workflow-nw = { version = "0.17.0", path = "nw" , default-features = false }
+workflow-panic-hook = { version = "0.17.0", path = "panic-hook" , default-features = false }
+workflow-rpc = { version = "0.17.0", path = "rpc" , default-features = false }
+workflow-rpc-macros = { version = "0.17.0", path = "rpc/macros" , default-features = false }
+workflow-rs = { version = "0.17.0", path = "features" , default-features = false }
+workflow-store = { version = "0.17.0", path = "store" , default-features = false }
+workflow-serializer = { version = "0.17.0", path = "serializer" , default-features = false }
+workflow-task = { version = "0.17.0", path = "task" , default-features = false }
+workflow-task-macros = { version = "0.17.0", path = "task/macros" , default-features = false }
+workflow-terminal = { version = "0.17.0", path = "terminal" , default-features = false }
+workflow-terminal-macros = { version = "0.17.0", path = "terminal/macros" , default-features = false }
+workflow-utils = { version = "0.17.0", path = "utils" , default-features = false }
+workflow-wasm = { version = "0.17.0", path = "wasm" , default-features = false }
+workflow-wasm-macros = { version = "0.17.0", path = "wasm/macros" , default-features = false }
+workflow-websocket = { version = "0.17.0", path = "websocket" , default-features = false }
 
 # external dependencies
 
@@ -204,7 +204,7 @@ proc-macro2 = { version = "1.0.50" }
 quote = "1.0.23"
 rand = { version = "0.8.5", features = ["getrandom"] }
 regex = "1.10.2"
-reqwest = { version = "0.12.4", features = ["json"] }
+reqwest = { version = "0.12.4", default-features = false }
 ritehash = "0.2.0"
 rlimit = "0.10.1"
 safer_owning_ref = "0.5.0"
@@ -220,9 +220,9 @@ termion = "4.0.2"
 textwrap = "0.16.0"
 thiserror = "1.0.50"
 tokio = { version = "1.33.0", default-features = false, features = ['io-util','time','sync','macros','rt','rt-multi-thread'] }
-tokio-tungstenite = { version = "0.23.1", features = ["handshake"] }
+tokio-tungstenite = { version = "0.23.1", default-features = false, features = ["handshake", "connect"] }
+tungstenite = { version = "0.23.0", default-features = false }
 triggered = "0.1.2"
-tungstenite = { version = "0.23.0", features = ["handshake"] }
 wasm-bindgen = "0.2.93"
 wasm-bindgen-futures = "0.4.43"
 web-sys = "0.3.70"
