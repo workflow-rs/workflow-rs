@@ -34,6 +34,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
+name = "adler2"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "512761e0bb2578dd7380c6baaa0f4ce03e84f95e960231d1dec8bf4d7d6e2627"
+
+[[package]]
 name = "aead"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -435,7 +441,7 @@ dependencies = [
  "cc",
  "cfg-if 1.0.0",
  "libc",
- "miniz_oxide",
+ "miniz_oxide 0.7.4",
  "object",
  "rustc-demangle",
 ]
@@ -585,18 +591,18 @@ checksum = "79296716171880943b8470b5f8d03aa55eb2e645a4874bdbb28adb49162e012c"
 
 [[package]]
 name = "bytemuck"
-version = "1.16.3"
+version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "102087e286b4677862ea56cf8fc58bb2cdfa8725c40ffb80fe3a008eb7f2fc83"
+checksum = "94bbb0ad554ad961ddc5da507a12a29b14e4ae5bda06b19f575a3e6079d2e2ae"
 dependencies = [
  "bytemuck_derive",
 ]
 
 [[package]]
 name = "bytemuck_derive"
-version = "1.7.0"
+version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ee891b04274a59bd38b412188e24b849617b2e45a0fd8d057deb63e7403761b"
+checksum = "0cc8b54b395f2fcfbb3d90c47b01c7f444d94d05bdeb775811dec868ac3bbc26"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1407,12 +1413,12 @@ dependencies = [
 
 [[package]]
 name = "flate2"
-version = "1.0.31"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f211bbe8e69bbd0cfdea405084f128ae8b4aaa6b0b522fc8f2b009084797920"
+checksum = "324a1be68054ef05ad64b861cc9eaf1d623d2d8cb25b4bf2cb9cdd902b4bf253"
 dependencies = [
  "crc32fast",
- "miniz_oxide",
+ "miniz_oxide 0.8.0",
 ]
 
 [[package]]
@@ -2352,6 +2358,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "miniz_oxide"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2d80299ef12ff69b16a84bb182e3b9df68b5a91574d3d4fa6e41b65deec4df1"
+dependencies = [
+ "adler2",
+]
+
+[[package]]
 name = "mio"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2876,7 +2891,7 @@ dependencies = [
  "crc32fast",
  "fdeflate",
  "flate2",
- "miniz_oxide",
+ "miniz_oxide 0.7.4",
 ]
 
 [[package]]
@@ -3004,9 +3019,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quick-xml"
-version = "0.34.0"
+version = "0.36.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f24d770aeca0eacb81ac29dfbc55ebcc09312fdd1f8bbecdc7e4a84e000e3b4"
+checksum = "96a05e2e8efddfa51a84ca47cec303fac86c8541b686d37cac5efc0e094417bc"
 dependencies = [
  "memchr",
 ]
@@ -3272,16 +3287,16 @@ checksum = "80eb5f11ebcdd09266eb7897503d7451c2fceea3881538c63dd2651e2c5ebe0c"
 
 [[package]]
 name = "rlimit"
-version = "0.10.1"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3560f70f30a0f16d11d01ed078a07740fe6b489667abc7c7b029155d9f21c3d8"
+checksum = "7043b63bd0cd1aaa628e476b80e6d4023a3b50eb32789f2728908107bd0c793a"
 dependencies = [
  "libc",
 ]
 
 [[package]]
 name = "rpc-example-client-browser"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "rpc-example-client-common",
  "wasm-bindgen",
@@ -3295,7 +3310,7 @@ dependencies = [
 
 [[package]]
 name = "rpc-example-client-common"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-std",
  "rpc-example-messages",
@@ -3307,7 +3322,7 @@ dependencies = [
 
 [[package]]
 name = "rpc-example-client-native"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "clap",
  "rpc-example-client-common",
@@ -3317,7 +3332,7 @@ dependencies = [
 
 [[package]]
 name = "rpc-example-messages"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "borsh",
  "serde",
@@ -3327,7 +3342,7 @@ dependencies = [
 
 [[package]]
 name = "rpc-example-server"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-trait",
  "borsh",
@@ -3719,8 +3734,8 @@ dependencies = [
  "wayland-client",
  "wayland-csd-frame",
  "wayland-cursor",
- "wayland-protocols 0.32.3",
- "wayland-protocols-wlr 0.3.3",
+ "wayland-protocols 0.32.4",
+ "wayland-protocols-wlr 0.3.4",
  "wayland-scanner",
  "xkeysym",
 ]
@@ -3879,7 +3894,7 @@ dependencies = [
 
 [[package]]
 name = "terminal-example-cli"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-trait",
  "workflow-core",
@@ -3889,7 +3904,7 @@ dependencies = [
 
 [[package]]
 name = "terminal-example-native"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -3902,7 +3917,7 @@ dependencies = [
 
 [[package]]
 name = "terminal-example-wasm"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-trait",
  "console_error_panic_hook",
@@ -4187,9 +4202,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "ttf-parser"
-version = "0.24.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8686b91785aff82828ed725225925b33b4fde44c4bb15876e5f7c832724c420a"
+checksum = "5be21190ff5d38e8b4a2d3b6a3ae57f612cc39c96e83cedeaf7abc338a8bac4a"
 
 [[package]]
 name = "tungstenite"
@@ -4429,9 +4444,9 @@ checksum = "c62a0a307cb4a311d3a07867860911ca130c3494e8c2719593806c08bc5d0484"
 
 [[package]]
 name = "wayland-backend"
-version = "0.3.6"
+version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f90e11ce2ca99c97b940ee83edbae9da2d56a08f9ea8158550fd77fa31722993"
+checksum = "056535ced7a150d45159d3a8dc30f91a2e2d588ca0b23f70e56033622b8016f6"
 dependencies = [
  "cc",
  "downcast-rs",
@@ -4443,9 +4458,9 @@ dependencies = [
 
 [[package]]
 name = "wayland-client"
-version = "0.31.5"
+version = "0.31.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e321577a0a165911bdcfb39cf029302479d7527b517ee58ab0f6ad09edf0943"
+checksum = "e3f45d1222915ef1fd2057220c1d9d9624b7654443ea35c3877f7a52bd0a5a2d"
 dependencies = [
  "bitflags 2.5.0",
  "rustix 0.38.34",
@@ -4466,9 +4481,9 @@ dependencies = [
 
 [[package]]
 name = "wayland-cursor"
-version = "0.31.5"
+version = "0.31.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ef9489a8df197ebf3a8ce8a7a7f0a2320035c3743f3c1bd0bdbccf07ce64f95"
+checksum = "3a94697e66e76c85923b0d28a0c251e8f0666f58fc47d316c0f4da6da75d37cb"
 dependencies = [
  "rustix 0.38.34",
  "wayland-client",
@@ -4489,9 +4504,9 @@ dependencies = [
 
 [[package]]
 name = "wayland-protocols"
-version = "0.32.3"
+version = "0.32.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62989625a776e827cc0f15d41444a3cea5205b963c3a25be48ae1b52d6b4daaa"
+checksum = "2b5755d77ae9040bb872a25026555ce4cb0ae75fd923e90d25fba07d81057de0"
 dependencies = [
  "bitflags 2.5.0",
  "wayland-backend",
@@ -4527,22 +4542,22 @@ dependencies = [
 
 [[package]]
 name = "wayland-protocols-wlr"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd993de54a40a40fbe5601d9f1fbcaef0aebcc5fda447d7dc8f6dcbaae4f8953"
+checksum = "dad87b5fd1b1d3ca2f792df8f686a2a11e3fe1077b71096f7a175ab699f89109"
 dependencies = [
  "bitflags 2.5.0",
  "wayland-backend",
  "wayland-client",
- "wayland-protocols 0.32.3",
+ "wayland-protocols 0.32.4",
  "wayland-scanner",
 ]
 
 [[package]]
 name = "wayland-scanner"
-version = "0.31.4"
+version = "0.31.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7b56f89937f1cf2ee1f1259cf2936a17a1f45d8f0aa1019fae6d470d304cfa6"
+checksum = "597f2001b2e5fc1121e3d5b9791d3e78f05ba6bfa4641053846248e3a13661c3"
 dependencies = [
  "proc-macro2",
  "quick-xml",
@@ -4551,9 +4566,9 @@ dependencies = [
 
 [[package]]
 name = "wayland-sys"
-version = "0.31.4"
+version = "0.31.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43676fe2daf68754ecf1d72026e4e6c15483198b5d24e888b74d3f22f887a148"
+checksum = "efa8ac0d8e8ed3e3b5c9fc92c7881406a268e11555abe36493efabe649a29e09"
 dependencies = [
  "dlib",
  "log",
@@ -4610,7 +4625,7 @@ dependencies = [
 
 [[package]]
 name = "websocket-example-client-browser"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -4623,7 +4638,7 @@ dependencies = [
 
 [[package]]
 name = "websocket-example-client-common"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-std",
  "tokio",
@@ -4634,7 +4649,7 @@ dependencies = [
 
 [[package]]
 name = "websocket-example-client-native"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "tokio",
  "websocket-example-client-common",
@@ -4971,7 +4986,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-chrome"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "cfg-if 1.0.0",
  "chrome-sys",
@@ -4984,7 +4999,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-core"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-channel 2.3.1",
  "async-std",
@@ -5015,7 +5030,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-core-macros"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "convert_case",
  "parse-variants",
@@ -5030,7 +5045,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-d3"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "atomic_float",
  "js-sys",
@@ -5045,7 +5060,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-dom"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "futures",
  "js-sys",
@@ -5062,7 +5077,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-egui"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "ahash",
  "async-channel 2.3.1",
@@ -5100,7 +5115,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-egui-macros"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "convert_case",
  "parse-variants",
@@ -5114,7 +5129,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-encryption"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "argon2",
  "borsh",
@@ -5129,7 +5144,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-gpt"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "reqwest",
  "serde",
@@ -5140,7 +5155,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-html"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "lazy_static",
  "regex",
@@ -5151,7 +5166,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-html-macros"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "lazy_static",
  "proc-macro-error",
@@ -5163,7 +5178,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-http"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "cfg-if 1.0.0",
  "reqwest",
@@ -5177,7 +5192,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-i18n"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "arc-swap",
  "cfg-if 1.0.0",
@@ -5191,7 +5206,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-log"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "cfg-if 1.0.0",
  "console",
@@ -5205,7 +5220,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-macro-tools"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "convert_case",
  "parse-variants",
@@ -5216,7 +5231,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-node"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "borsh",
  "futures",
@@ -5235,7 +5250,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-nw"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "ahash",
  "async-trait",
@@ -5257,7 +5272,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-panic-hook"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "cfg-if 1.0.0",
  "wasm-bindgen",
@@ -5266,7 +5281,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-rpc"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "ahash",
  "async-std",
@@ -5294,7 +5309,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-rpc-macros"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "parse-variants",
  "proc-macro-error",
@@ -5305,7 +5320,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-rs"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "workflow-core",
  "workflow-dom",
@@ -5324,7 +5339,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-serializer"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "ahash",
  "borsh",
@@ -5333,7 +5348,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-service"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "ahash",
  "async-trait",
@@ -5347,7 +5362,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-store"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-std",
  "base64",
@@ -5373,7 +5388,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-task"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "futures",
  "thiserror",
@@ -5384,7 +5399,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-task-macros"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "convert_case",
  "parse-variants",
@@ -5398,7 +5413,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-terminal"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -5427,7 +5442,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-terminal-macros"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "convert_case",
  "parse-variants",
@@ -5441,7 +5456,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-utils"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "ahash",
  "cliclack",
@@ -5455,7 +5470,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-wasm"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "cfg-if 1.0.0",
  "faster-hex",
@@ -5474,7 +5489,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-wasm-macros"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "js-sys",
  "proc-macro-error",
@@ -5486,7 +5501,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-websocket"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "ahash",
  "async-channel 2.3.1",
@@ -5513,7 +5528,7 @@ dependencies = [
 
 [[package]]
 name = "workflow-websocket-example-server"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-trait",
  "tokio",
@@ -5555,9 +5570,9 @@ checksum = "ec107c4503ea0b4a98ef47356329af139c0a4f7750e621cf2973cd3385ebcb3d"
 
 [[package]]
 name = "xcursor"
-version = "0.3.6"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d491ee231a51ae64a5b762114c3ac2104b967aadba1de45c86ca42cf051513b7"
+checksum = "0ef33da6b1660b4ddbfb3aef0ade110c8b8a781a3b6382fa5f2b5b040fd55f61"
 
 [[package]]
 name = "xkbcommon-dl"
@@ -5580,9 +5595,9 @@ checksum = "b9cc00251562a284751c9973bace760d86c0276c471b4be569fe6b068ee97a56"
 
 [[package]]
 name = "xml-rs"
-version = "0.8.20"
+version = "0.8.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "791978798f0597cfc70478424c2b4fdc2b7a8024aaff78497ef00f24ef674193"
+checksum = "539a77ee7c0de333dcc6da69b177380a0b81e0dacfa4f7344c465a36871ee601"
 
 [[package]]
 name = "zerocopy"
