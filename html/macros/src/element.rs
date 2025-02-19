@@ -39,7 +39,7 @@ pub struct Element<'a> {
     pub children: Option<Nodes<'a>>,
 }
 
-impl<'a> Parse for Element<'a> {
+impl Parse for Element<'_> {
     fn parse(input: ParseStream) -> Result<Self> {
         //println!("================== start: Element parsing #######################");
         let span = input.span();
@@ -66,7 +66,7 @@ impl<'a> Parse for Element<'a> {
     }
 }
 
-impl<'a> Element<'a> {
+impl Element<'_> {
     fn is_custom_element(&self) -> bool {
         self.tag.name.is_custom_element()
     }
@@ -89,7 +89,7 @@ impl<'a> Element<'a> {
     }
 }
 
-impl<'a> ToTokens for Element<'a> {
+impl ToTokens for Element<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         //let mut properties:Vec<TokenStream> = vec![];
         let children = self.children_stream();
@@ -143,7 +143,7 @@ pub struct OpeningTag<'a> {
 fn get_fragment_tag_name() -> TagName {
     Punctuated::new() // Ident::new("x", Span::call_site())
 }
-impl<'a> Parse for OpeningTag<'a> {
+impl Parse for OpeningTag<'_> {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut self_closing = false;
         let name;
@@ -221,7 +221,7 @@ pub struct Nodes<'a> {
     list: Vec<Node<'a>>,
 }
 
-impl<'a> Nodes<'a> {
+impl Nodes<'_> {
     pub fn len(&self) -> usize {
         self.list.len()
     }
@@ -246,7 +246,7 @@ impl<'a> Nodes<'a> {
     }
 }
 
-impl<'a> Parse for Nodes<'a> {
+impl Parse for Nodes<'_> {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut list: Vec<Node> = vec![];
         //println!("================== start: Nodes parsing ==================");
@@ -260,7 +260,7 @@ impl<'a> Parse for Nodes<'a> {
         Ok(Nodes { list })
     }
 }
-impl<'a> ToTokens for Nodes<'a> {
+impl ToTokens for Nodes<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         self.get_tuples().to_tokens(tokens);
     }
@@ -273,7 +273,7 @@ pub enum Node<'a> {
     Literal(Literal),
 }
 
-impl<'a> Parse for Node<'a> {
+impl Parse for Node<'_> {
     fn parse(input: ParseStream) -> Result<Self> {
         let node = if input.peek(Token![<]) {
             Node::Element(input.parse::<Element>()?)
@@ -314,7 +314,8 @@ impl<'a> Parse for Node<'a> {
         Ok(node)
     }
 }
-impl<'a> ToTokens for Node<'a> {
+
+impl ToTokens for Node<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             Node::Element(el) => {

@@ -179,16 +179,16 @@ ctrlc = { version = "3.2", features = ["termination"] }
 dirs = "5.0.1"
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
-faster-hex = "0.9.0"
-filetime = "0.2.22"
-futures = "0.3.29"
+faster-hex = "0.10.0"
+filetime = "0.2.25"
+futures = "0.3.31"
 futures-util = { version = "0.3.29", default-features = false, features = ["sink", "std"] }
 getrandom = {version = "0.2.10", features=["js"]}
 hexplay = "0.3.0"
-home = "0.5.5"
+home = "0.5.11"
 instant = { version ="0.1.12", features = ['wasm-bindgen'] }
-itertools = "0.13.0"
-js-sys = "0.3.64"
+itertools = "0.14.0"
+js-sys = "0.3.77"
 lazy_static = "1.4.0"
 log = "0.4.20"
 manual_future = "0.1.1"
@@ -198,10 +198,10 @@ numtoa = "0.2.4"
 # nw-sys= { path = "../nw-sys" }
 nw-sys = { version = "0.1.6" }
 pad = "0.1.6"
-parse-variants = "1.0.1"
+parse-variants = "1.0.4"
 proc-macro-error = { version = "1.0.4", default-features = false }
 proc-macro2 = { version = "1.0.50" }
-quote = "1.0.23"
+quote = "1.0.38"
 rand = { version = "0.8.5", features = ["getrandom"] }
 regex = "1.10.2"
 reqwest = { version = "0.12.4", default-features = false }
@@ -216,16 +216,16 @@ sha2 = "0.10.8"
 # syn = {version="2.0",features=["full","fold","extra-traits","parsing","proc-macro"]}
 syn = {version="1.0.107",features=["full","fold","extra-traits","parsing","proc-macro"]}
 termcolor="1.3.0"
-termion = "4.0.2"
+termion = "4.0.3"
 textwrap = "0.16.0"
-thiserror = "1.0.50"
+thiserror = "2.0.11"
 tokio = { version = "1.33.0", default-features = false, features = ['io-util','time','sync','macros','rt','rt-multi-thread'] }
 tokio-tungstenite = { version = "0.23.1", default-features = false, features = ["handshake", "connect"] }
 tungstenite = { version = "0.23.0", default-features = false }
 triggered = "0.1.2"
-wasm-bindgen = "0.2.93"
-wasm-bindgen-futures = "0.4.43"
-web-sys = "0.3.70"
+wasm-bindgen = "0.2.100"
+wasm-bindgen-futures = "0.4.50"
+web-sys = "0.3.77"
 # chrome-sys = {path = "../chrome-sys"}
 chrome-sys = { version = "0.2.0" }
 chacha20poly1305 = "0.10.1"
@@ -233,13 +233,13 @@ zeroize = { version = "1.6.0", default-features = false, features = ["alloc"] }
 
 
 
-egui = "0.28.1"
+egui = "0.31.0"
 # epaint = "=0.28.1"
 # egui_plot = "=0.28.1"
 # egui_extras = { version = "=0.28.1", features = ["svg","image"] }
 # eframe = "0.28.1"
-eframe = { version = "0.28.1", default-features = false, features = [
-#     # "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+eframe = { version = "0.31.0", default-features = false, features = [
+#     # "accesskit",     # Make egui compatible with screen readers. NOTE: adds a lot of dependencies.
 #     # "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
 #     # "persistence",   # Enable restoring app state when restarting the app.

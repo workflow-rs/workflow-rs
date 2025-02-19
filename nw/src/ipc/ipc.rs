@@ -171,9 +171,9 @@ where
         Ok(())
     }
 
-    pub async fn handle_message<'data>(
+    pub async fn handle_message(
         &self,
-        message: BorshMessage<'data, IpcId>,
+        message: BorshMessage<'_, IpcId>,
         source: Option<IpcTarget>,
     ) -> Result<()> {
         let BorshMessage::<IpcId> { header, payload } = message;

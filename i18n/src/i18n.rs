@@ -610,7 +610,7 @@ pub struct Data<'data> {
     translations: FxHashMap<&'data str, Arc<FxHashMap<&'data str, &'data str>>>,
 }
 
-impl<'data> Default for Data<'data> {
+impl Default for Data<'_> {
     fn default() -> Self {
         let languages = Languages::default().into_inner();
 

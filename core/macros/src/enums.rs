@@ -106,6 +106,9 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
 
     let mut descr: Vec<String> = Vec::new();
     let mut docs: Vec<String> = Vec::new();
+    let wrappers = regex::Regex::new(r#"(^\"|\"$)"#).unwrap();
+    let collapse_spaces_regex = regex::Regex::new(r"\s+").unwrap();
+
     for e in enums.iter() {
         let have_key = e.args.has("default");
         if !have_key {
@@ -125,8 +128,6 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
                 .map(|doc| doc.to_token_stream().to_string())
                 .collect::<Vec<String>>()
                 .join(" ");
-            let collapse_spaces_regex = regex::Regex::new(r"\s+").unwrap();
-            let wrappers = regex::Regex::new(r#"(^\"|\"$)"#).unwrap();
             let doc = wrappers
                 .replace_all(&doc, "")
                 .replace("\\\"", "\"")

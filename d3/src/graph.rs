@@ -16,7 +16,7 @@ static mut DOM_INIT: bool = false;
 
 const ONE_DAY_MSEC: u64 = DAYS;
 const ONE_DAY_SEC: u64 = DAYS / 1000;
-const LOWREW_CELL_SIZE: u64 = ONE_DAY_SEC / 4096;
+const LOWREZ_CELL_SIZE: u64 = ONE_DAY_SEC / 4096;
 
 #[derive(Clone)]
 pub struct GraphDuration;
@@ -588,7 +588,7 @@ impl Graph {
         context.begin_path();
         context.move_to(0.0, height as f64);
         context.line_to(width as f64, height as f64);
-        context.set_stroke_style(&JsValue::from(&options.x_axis_color));
+        context.set_stroke_style_str(&options.x_axis_color);
         context.stroke();
 
         context.begin_path();
@@ -604,14 +604,14 @@ impl Graph {
             context.move_to(x, height as f64);
             context.line_to(x, height as f64 + tick_size);
         }
-        context.set_stroke_style(&JsValue::from(&options.x_axis_color));
+        context.set_stroke_style_str(&options.x_axis_color);
         context.stroke();
 
         // used for debugging
 
         context.set_text_align("center");
         context.set_text_baseline("top");
-        context.set_fill_style(&JsValue::from(&options.x_axis_color));
+        context.set_fill_style_str(&options.x_axis_color);
         context.set_font(&options.x_axis_font);
         // context.fill_text(
         //     &format!("{tick_width}/{width}/{count}/{count2}"),
@@ -663,7 +663,7 @@ impl Graph {
             context.move_to(0.0, y);
             context.line_to(-tick_size, y);
         }
-        context.set_stroke_style(&JsValue::from(&options.y_axis_color));
+        context.set_stroke_style_str(&options.y_axis_color);
         context.stroke();
         let height = self.height();
         context.begin_path();
@@ -671,12 +671,12 @@ impl Graph {
         context.line_to(0.0, 0.0);
         context.line_to(0.0, height as f64);
         context.line_to(-tick_size, height as f64);
-        context.set_stroke_style(&JsValue::from(&options.y_axis_color));
+        context.set_stroke_style_str(&options.y_axis_color);
         context.stroke();
 
         context.set_text_align("right");
         context.set_text_baseline("middle");
-        context.set_fill_style(&JsValue::from(&options.y_axis_color));
+        context.set_fill_style_str(&options.y_axis_color);
         context.set_font(&options.y_axis_font);
         for tick in ticks {
             let y = self
@@ -704,7 +704,7 @@ impl Graph {
         context.save();
         context.set_text_baseline("top");
         context.set_font(&title_font);
-        context.set_fill_style(&JsValue::from(&title_color));
+        context.set_fill_style_str(&title_color);
         let metrics = if let Some(title) = self.title.as_ref() {
             context.measure_text(&format!("{} {}", title, self.value()))?
         } else {
@@ -743,7 +743,7 @@ impl Graph {
         context.set_text_align("right");
         context.set_text_baseline("top");
         context.set_font(&y_caption_font);
-        context.set_fill_style(&JsValue::from(&y_caption_color));
+        context.set_fill_style_str(&y_caption_color);
         context.fill_text(&self.y_caption, -10.0, 10.0)?;
         context.restore();
 
@@ -760,7 +760,7 @@ impl Graph {
         context.set_text_align("left");
         context.set_text_baseline("top");
         context.set_font(&title_font);
-        context.set_fill_style(&JsValue::from(&title_color));
+        context.set_fill_style_str(&title_color);
 
         {
             let (y, height, width) = {
@@ -877,7 +877,7 @@ impl Graph {
         self.data_hirez.push(&item.into());
 
         let lowrez_cell = self.lowrez_cell.fetch_add(1, Ordering::SeqCst);
-        if lowrez_cell % LOWREW_CELL_SIZE == 0 {
+        if lowrez_cell % LOWREZ_CELL_SIZE == 0 {
             let lowrez_cell_value = self.lowrez_cell_value.load(Ordering::SeqCst);
             let lowrez_value = JsValue::from(lowrez_cell_value);
             let item = js_sys::Object::new();
@@ -931,7 +931,7 @@ impl Graph {
 
         let data = if secs > ONE_DAY_SEC as u32 {
             let len = self.data_lowrez.length();
-            let cells = secs / LOWREW_CELL_SIZE as u32;
+            let cells = secs / LOWREZ_CELL_SIZE as u32;
             if let Some(start) = len.checked_sub(cells) {
                 self.data_lowrez.slice(start, len)
             } else {
@@ -953,8 +953,8 @@ impl Graph {
         let context = &self.context;
         context.begin_path();
         self.area.call1(&JsValue::NULL, &data)?;
-        context.set_fill_style(&JsValue::from(&area_fill_color));
-        context.set_stroke_style(&JsValue::from(&area_stroke_color));
+        context.set_fill_style_str(&area_fill_color);
+        context.set_stroke_style_str(&area_stroke_color);
         context.fill();
         context.stroke();
 

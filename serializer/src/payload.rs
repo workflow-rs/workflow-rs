@@ -10,7 +10,7 @@ pub mod ser {
     where
         T: Serializer;
 
-    impl<'a, T> Serializer for Payload<'a, T>
+    impl<T> Serializer for Payload<'_, T>
     where
         T: Serializer,
     {

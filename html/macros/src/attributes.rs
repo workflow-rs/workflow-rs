@@ -31,7 +31,7 @@ pub struct Attributes<'a> {
     list: Vec<Attribute<'a>>,
 }
 
-impl<'a> Attributes<'a> {
+impl Attributes<'_> {
     /*
     pub fn get_names(&self)->Vec<String>{
         let mut list = vec![];
@@ -230,7 +230,7 @@ impl<'a> Attribute<'a> {
     }
 }
 
-impl<'a> Parse for Attribute<'a> {
+impl Parse for Attribute<'_> {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut attr_type = AttributeType::Str;
         if input.peek(Token![?]) {

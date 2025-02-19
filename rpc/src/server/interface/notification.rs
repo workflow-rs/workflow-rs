@@ -37,7 +37,6 @@ pub type NotificationFnReturn<T> =
     Pin<Box<(dyn Send + 'static + Future<Output = ServerResult<T>>)>>;
 
 /// RPC notification wrapper. Contains the notification closure function.
-
 pub struct Notification<ServerContext, ConnectionContext, Msg>
 where
     ServerContext: Send + Sync + 'static,

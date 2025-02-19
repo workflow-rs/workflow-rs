@@ -31,4 +31,4 @@ pub use egui::{Rect, Vec2};
 pub use owning_ref::{OwningRef, OwningRefMut};
 pub use std::collections::VecDeque;
 pub use std::marker::PhantomData;
-pub use web_sys::VisibilityState;
+pub use web_sys::{HtmlCanvasElement, VisibilityState};

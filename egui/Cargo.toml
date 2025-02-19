@@ -68,6 +68,7 @@ wasm-bindgen-futures.workspace = true
 workspace = true
 features = [
     'VisibilityState',
+    'HtmlCanvasElement',
 ]
 
 [lints.clippy]

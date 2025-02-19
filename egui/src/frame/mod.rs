@@ -110,6 +110,8 @@ cfg_if! {
         where T : App
         {
             use workflow_dom::utils::document;
+            use web_sys::HtmlCanvasElement;
+            use wasm_bindgen::JsCast;
 
             // Redirect `log` message to `console.log` and friends:
             eframe::WebLogger::init(log::LevelFilter::Debug).ok();
@@ -118,9 +120,14 @@ cfg_if! {
                 element.remove();
             }
 
+            let Some(canvas) = document().get_element_by_id(options.canvas_id.as_str()) else {
+                return Err(Error::custom("canvas_id is required (workflow-egui/frame.rs)"));
+            };
+
             eframe::WebRunner::new()
                 .start(
-                    options.canvas_id.as_str(),
+                    canvas.dyn_into::<HtmlCanvasElement>()
+                        .map_err(|_| Error::custom("Element is not a canvas"))?,
                     options.web_options,
                     Box::new(move |cc| {
                         let runtime = Runtime::new(&cc.egui_ctx, events);

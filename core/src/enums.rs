@@ -115,7 +115,6 @@ pub use u32_try_from;
 /// assert_eq!(v1, v2);
 /// ```
 ///
-
 #[macro_export]
 macro_rules! u16_try_from {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {
@@ -173,7 +172,6 @@ pub use u16_try_from;
 /// assert_eq!(v1, v2);
 /// ```
 ///
-
 #[macro_export]
 macro_rules! u8_try_from {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {

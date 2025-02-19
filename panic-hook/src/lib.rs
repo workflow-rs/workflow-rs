@@ -99,7 +99,7 @@ cfg_if! {
     } else {
         use std::io::{self, Write};
 
-        fn hook(info: &panic::PanicInfo) {
+        fn hook(info: &panic::PanicHookInfo) {
             let _ = writeln!(io::stderr(), "{info}");
         }
 

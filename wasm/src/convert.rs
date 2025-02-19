@@ -96,9 +96,9 @@ where
     _Unreachable(std::convert::Infallible, &'a std::marker::PhantomData<T>),
 }
 
-impl<'a, T> Drop for Cast<'a, T>
+impl<T> Drop for Cast<'_, T>
 where
-    T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + 'a,
+    T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
 {
     fn drop(&mut self) {
         if let Cast::OwnedRef { js_value, anchor } = self {
@@ -110,7 +110,7 @@ where
     }
 }
 
-impl<'a, T> Deref for Cast<'a, T>
+impl<T> Deref for Cast<'_, T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + Deref,
 {
@@ -126,7 +126,7 @@ where
     }
 }
 
-impl<'a, T> AsRef<T> for Cast<'a, T>
+impl<T> AsRef<T> for Cast<'_, T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32>,
 {
@@ -142,7 +142,7 @@ where
     }
 }
 
-impl<'a, T> Cast<'a, T>
+impl<T> Cast<'_, T>
 where
     T: RefFromWasmAbi<Abi = u32> + LongRefFromWasmAbi<Abi = u32> + Clone,
 {
@@ -212,7 +212,7 @@ where
 
     fn try_long_ref_from_js_value_as_cast<'a, R>(
         js: &'a R,
-    ) -> std::result::Result<Cast<Self>, Error>
+    ) -> std::result::Result<Cast<'a, Self>, Error>
     where
         R: AsRef<JsValue> + 'a,
     {
@@ -264,7 +264,7 @@ where
     fn resolve<'a, R>(
         js: &'a R,
         create: impl FnOnce() -> std::result::Result<Self, Self::Error>,
-    ) -> std::result::Result<Cast<Self>, Self::Error>
+    ) -> std::result::Result<Cast<'a, Self>, Self::Error>
     where
         R: AsRef<JsValue> + 'a,
     {
