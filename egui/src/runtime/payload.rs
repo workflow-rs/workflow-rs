@@ -94,7 +94,7 @@ where
     where
         T: Clone,
     {
-        self.inner.payload.lock().unwrap().clone().take()
+        self.inner.payload.lock().unwrap().clone()
     }
 }
 

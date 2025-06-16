@@ -76,7 +76,7 @@ pub enum Error {
 
     #[cfg(not(target_arch = "wasm32"))]
     #[error("WebSocket error: {0}")]
-    Tungstenite(#[from] tokio_tungstenite::tungstenite::Error),
+    Tungstenite(Box<tokio_tungstenite::tungstenite::Error>),
 
     #[error("Unable to send ctl to receiver")]
     ReceiverCtlSend(SendError<super::message::Message>),
@@ -97,6 +97,13 @@ pub enum Error {
 impl Error {
     pub fn custom<T: std::fmt::Display>(message: T) -> Self {
         Error::Custom(message.to_string())
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl From<tokio_tungstenite::tungstenite::Error> for Error {
+    fn from(error: tokio_tungstenite::tungstenite::Error) -> Self {
+        Error::Tungstenite(Box::new(error))
     }
 }
 

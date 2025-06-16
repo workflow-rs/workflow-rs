@@ -110,7 +110,7 @@ where
         *self.task_fn.lock().unwrap() = Some(task_fn);
     }
 
-    pub fn run<'l>(self: &'l Arc<Self>, args: A) -> TaskResult<&'l Arc<Self>> {
+    pub fn run(self: &Arc<Self>, args: A) -> TaskResult<&Arc<Self>> {
         if !self.completion.1.is_empty() {
             panic!("Task::run(): task completion channel is not empty");
         }

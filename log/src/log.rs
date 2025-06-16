@@ -72,6 +72,7 @@ cfg_if! {
             fn write(&self, target: Option<&str>, level : Level, args : &fmt::Arguments<'_>) -> bool;
         }
 
+        #[allow(unused)]
         struct SinkHandler {
             // #[allow(dead_code)]
             sink : Arc<dyn Sink>, // + Send + Sync + 'static>,

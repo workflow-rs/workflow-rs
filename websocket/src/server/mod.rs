@@ -307,10 +307,15 @@ where
         let self_ = self.clone();
         tokio::spawn(async move {
             if let Err(e) = self_.handle_connection(peer, stream, config).await {
-                match e {
-                    Error::WebSocketError(WebSocketError::ConnectionClosed)
-                    | Error::WebSocketError(WebSocketError::Protocol(_))
-                    | Error::WebSocketError(WebSocketError::Utf8) => (),
+                match &e {
+                    Error::WebSocketError(wse) => match **wse {
+                        WebSocketError::ConnectionClosed
+                        | WebSocketError::Protocol(_)
+                        | WebSocketError::Utf8 => {}
+                        _ => {
+                            log_error!("Error processing connection: {}", e);
+                        }
+                    },
                     err => log_error!("Error processing connection: {}", err),
                 }
             }

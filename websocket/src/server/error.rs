@@ -49,7 +49,7 @@ pub enum Error {
     /// WebSocket error produced by the underlying
     /// Tungstenite WebSocket crate
     #[error("WebSocket error: {0}")]
-    WebSocketError(#[from] tungstenite::Error),
+    WebSocketError(Box<tungstenite::Error>),
 
     /// Connection terminated abnormally
     #[error("Connection closed abnormally")]
@@ -75,5 +75,11 @@ pub enum Error {
 impl From<String> for Error {
     fn from(value: String) -> Self {
         Error::Other(value)
+    }
+}
+
+impl From<tungstenite::Error> for Error {
+    fn from(value: tungstenite::Error) -> Self {
+        Error::WebSocketError(Box::new(value))
     }
 }

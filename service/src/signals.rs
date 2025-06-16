@@ -22,7 +22,9 @@ impl Signals {
             match v {
                 0 => {
                     println!("^SIGTERM - shutting down...");
-                    signals.runtime.terminate();
+                    if let Err(e) = signals.runtime.terminate() {
+                        println!("Error terminating runtime: {}", e);
+                    }
                 }
                 _ => {
                     println!("^SIGTERM - halting");

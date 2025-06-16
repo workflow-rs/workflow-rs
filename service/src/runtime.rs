@@ -120,7 +120,8 @@ impl Runtime {
         Ok(())
     }
 
-    pub fn terminate(&self) {
-        self.inner.termination.try_send(()).unwrap();
+    pub fn terminate(&self) -> Result<()> {
+        self.inner.termination.try_send(())?;
+        Ok(())
     }
 }
