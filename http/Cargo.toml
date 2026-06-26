@@ -54,8 +54,6 @@ brotli = ["reqwest/brotli"]
 zstd = ["reqwest/zstd"]
 deflate = ["reqwest/deflate"]
 
-hickory-dns = ["reqwest/hickory-dns"]
-
 socks = ["reqwest/socks"]
 
 # Use the system's proxy configuration.
