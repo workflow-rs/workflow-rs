@@ -15,7 +15,7 @@ Macros for the Kaspa NG project
 proc-macro = true
 
 [dependencies]
-convert_case = "0.6.0"
+convert_case.workspace = true
 parse-variants = "1.0.1"
 proc-macro-error3 = { version = "3", default-features = false }
 proc-macro2 = { version = "1.0.50" }
