@@ -5,7 +5,6 @@
 #![allow(dead_code)]
 
 use futures::{Stream, task::AtomicWaker};
-use instant::Duration;
 use std::{
     pin::Pin,
     sync::{
@@ -15,6 +14,7 @@ use std::{
     task::{Context, Poll},
 };
 use wasm_bindgen::prelude::*;
+use web_time::Duration;
 
 use super::overrides::init_timer_overrides;
 

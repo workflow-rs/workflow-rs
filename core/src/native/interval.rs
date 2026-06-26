@@ -6,7 +6,6 @@
 
 use crate::channel::Channel;
 use futures::{Stream, task::AtomicWaker};
-use instant::Duration;
 use std::{
     pin::Pin,
     sync::{
@@ -15,6 +14,7 @@ use std::{
     },
     task::{Context, Poll},
 };
+use web_time::Duration;
 
 struct Inner {
     ready: AtomicBool,

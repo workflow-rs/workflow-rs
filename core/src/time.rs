@@ -7,7 +7,7 @@
 use cfg_if::cfg_if;
 
 /// re-export of [`instant`] crate supporting native and WASM implementations
-pub use instant::*;
+pub use web_time::*;
 
 pub const SECONDS: u64 = 1000;
 pub const MINUTES: u64 = SECONDS * 60;

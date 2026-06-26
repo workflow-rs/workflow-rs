@@ -187,7 +187,7 @@ futures-util = { version = "0.3.29", default-features = false, features = ["sink
 getrandom = {version = "0.2.10", features=["js"]}
 hexplay = "0.3.0"
 home = "0.5.11"
-instant = { version ="0.1.12", features = ['wasm-bindgen'] }
+web-time = "1.1.0"
 itertools = "0.14.0"
 js-sys = "0.3.77"
 lazy_static = "1.4.0"

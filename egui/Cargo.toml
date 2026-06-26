@@ -45,7 +45,6 @@ async-std.workspace = true
 async-trait.workspace = true
 futures.workspace = true
 getrandom.workspace = true
-instant.workspace = true
 rand.workspace = true
 serde.workspace = true
 thiserror.workspace = true
