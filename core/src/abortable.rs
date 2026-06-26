@@ -5,8 +5,8 @@
 use wasm_bindgen::prelude::*;
 
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc,
+    atomic::{AtomicBool, Ordering},
 };
 
 /// Error emitted by [`Abortable`].
@@ -51,18 +51,15 @@ impl Abortable {
         Self(Arc::new(AtomicBool::new(false)))
     }
 
-    #[inline]
     #[wasm_bindgen(js_name=isAborted)]
     pub fn is_aborted(&self) -> bool {
         self.0.load(Ordering::SeqCst)
     }
 
-    #[inline]
     pub fn abort(&self) {
         self.0.store(true, Ordering::SeqCst);
     }
 
-    #[inline]
     pub fn check(&self) -> Result<(), Aborted> {
         if self.is_aborted() {
             Err(Aborted)
@@ -71,7 +68,6 @@ impl Abortable {
         }
     }
 
-    #[inline]
     pub fn reset(&self) {
         self.0.store(false, Ordering::SeqCst);
     }
@@ -88,7 +84,7 @@ impl TryFrom<&JsValue> for Abortable {
             target_arch = "wasm32",
             not(any(target_os = "emscripten", target_os = "wasi"))
         ))]
-        extern "C" {
+        unsafe extern "C" {
             fn __wbg_abortable_unwrap(ptr: u32) -> u32;
         }
         #[cfg(not(all(

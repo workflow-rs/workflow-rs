@@ -5,11 +5,11 @@ use crate::parse_error;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::collections::HashMap;
-use syn::{
-    parse::{Parse, ParseStream},
-    Expr, Token,
-};
 use syn::{Attribute, Error, Lit, LitBool};
+use syn::{
+    Expr, Token,
+    parse::{Parse, ParseStream},
+};
 
 #[derive(Debug, Clone)]
 pub struct IdentWraper(proc_macro2::Ident);
@@ -162,10 +162,9 @@ impl Args {
 fn advance_one_step(input: &ParseStream<'_>) {
     let _ = input.step(|cursor| {
         let rest = *cursor;
-        if let Some((_tt, next)) = rest.token_tree() {
-            Ok(((), next))
-        } else {
-            Ok(((), rest))
+        match rest.token_tree() {
+            Some((_tt, next)) => Ok(((), next)),
+            _ => Ok(((), rest)),
         }
     });
 }

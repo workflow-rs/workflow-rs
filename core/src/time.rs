@@ -49,8 +49,9 @@ cfg_if! {
 
         fn default_locale() -> String {
             static mut LOCALE: Option<String> = None;
+            let locale_ptr = &raw mut LOCALE;
             unsafe {
-                LOCALE.get_or_insert_with(|| {
+                (*locale_ptr).get_or_insert_with(|| {
                     let date_time_format = Intl::DateTimeFormat::default();
                     let resolved_options = date_time_format.resolved_options();
                     let locale = Reflect::get(&resolved_options, &JsValue::from("locale")).expect("Intl::DateTimeFormat().resolvedOptions().locale is not defined");
@@ -86,8 +87,9 @@ cfg_if! {
 
         #[inline(always)]
         fn time_format() -> &'static str {
+            let time_format_ptr = &raw mut TIME_FORMAT;
             unsafe {
-                TIME_FORMAT.get_or_insert_with(|| {
+                (*time_format_ptr).get_or_insert_with(|| {
                     "%Y-%m-%d %H:%M:%S".to_string()
                 }).as_str()
             }

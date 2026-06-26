@@ -82,11 +82,12 @@ where
     }
 
     pub fn take(&self) -> Option<T> {
-        if let Some(result) = self.inner.payload.lock().unwrap().take() {
-            self.clear_pending();
-            Some(result)
-        } else {
-            None
+        match self.inner.payload.lock().unwrap().take() {
+            Some(result) => {
+                self.clear_pending();
+                Some(result)
+            }
+            _ => None,
         }
     }
 

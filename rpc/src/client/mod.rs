@@ -307,12 +307,14 @@ where
     Id: IdT,
 {
     fn from(protocol: Arc<dyn ProtocolHandler<Ops>>) -> Self {
-        if let Ok(protocol) = protocol.clone().downcast_arc::<BorshProtocol<Ops, Id>>() {
-            Protocol::Borsh(protocol)
-        } else if let Ok(protocol) = protocol.clone().downcast_arc::<JsonProtocol<Ops, Id>>() {
-            Protocol::Json(protocol)
-        } else {
-            panic!()
+        match protocol.clone().downcast_arc::<BorshProtocol<Ops, Id>>() {
+            Ok(protocol) => Protocol::Borsh(protocol),
+            _ => match protocol.clone().downcast_arc::<JsonProtocol<Ops, Id>>() {
+                Ok(protocol) => Protocol::Json(protocol),
+                _ => {
+                    panic!()
+                }
+            },
         }
     }
 }

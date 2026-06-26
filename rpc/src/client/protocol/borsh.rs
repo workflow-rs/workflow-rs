@@ -1,13 +1,13 @@
 use super::{Pending, PendingMap, ProtocolHandler};
+use crate::client::Interface;
 pub use crate::client::error::Error;
 pub use crate::client::result::Result;
-use crate::client::Interface;
 use crate::imports::*;
 use crate::messages::borsh::*;
 use core::marker::PhantomData;
 
 pub type BorshResponseFn =
-    Arc<Box<(dyn Fn(Result<&[u8]>, Option<&Duration>) -> Result<()> + Sync + Send)>>;
+    Arc<Box<dyn Fn(Result<&[u8]>, Option<&Duration>) -> Result<()> + Sync + Send>>;
 
 /// Borsh RPC message handler and dispatcher
 pub struct BorshProtocol<Ops, Id>
@@ -169,10 +169,9 @@ where
         if let WebSocketMessage::Binary(server_message) = message {
             let (id, op, result) = self.decode(server_message.as_slice())?;
             if let Some(id) = id {
-                if let Some(pending) = self.pending.lock().unwrap().remove(&id) {
-                    (pending.callback)(result, Some(&pending.timestamp.elapsed()))
-                } else {
-                    Err(Error::ResponseHandler(format!("{id:?}")))
+                match self.pending.lock().unwrap().remove(&id) {
+                    Some(pending) => (pending.callback)(result, Some(&pending.timestamp.elapsed())),
+                    _ => Err(Error::ResponseHandler(format!("{id:?}"))),
                 }
             } else if let Some(op) = op {
                 match result {

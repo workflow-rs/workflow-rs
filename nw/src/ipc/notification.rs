@@ -14,7 +14,7 @@ pub type NotificationFn<Msg> =
 
 /// Notification closure return type
 pub type NotificationFnReturn<T> =
-    Pin<Box<(dyn Send + 'static + Future<Output = ResponseResult<T>>)>>;
+    Pin<Box<dyn Send + 'static + Future<Output = ResponseResult<T>>>>;
 
 /// IPC notification wrapper. Contains the notification closure function.
 pub struct Notification<Msg>

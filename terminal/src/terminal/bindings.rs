@@ -4,8 +4,8 @@
 
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
+use wasm_bindgen::prelude::wasm_bindgen;
 use web_sys::Element;
 
 #[wasm_bindgen]

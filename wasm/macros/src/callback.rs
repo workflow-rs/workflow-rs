@@ -1,8 +1,8 @@
 use proc_macro2::{Span, TokenStream};
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::{
-    parse::{Parse, ParseStream},
     ExprClosure, Ident, Result,
+    parse::{Parse, ParseStream},
 };
 
 pub struct Callback {

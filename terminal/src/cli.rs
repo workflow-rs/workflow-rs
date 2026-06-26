@@ -7,12 +7,12 @@ use crate::parse;
 pub use crate::result::Result;
 use crate::terminal::Terminal;
 use async_trait::async_trait;
-use downcast::{downcast_sync, AnySync};
+use downcast::{AnySync, downcast_sync};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex, MutexGuard},
 };
-pub use workflow_terminal_macros::{declare_handler, register_handlers, Handler};
+pub use workflow_terminal_macros::{Handler, declare_handler, register_handlers};
 
 #[async_trait]
 pub trait Cli: Sync + Send {
@@ -99,7 +99,7 @@ impl HandlerCli {
         }
     }
 
-    fn inner(&self) -> MutexGuard<Inner> {
+    fn inner(&self) -> MutexGuard<'_, Inner> {
         self.inner.lock().unwrap()
     }
 

@@ -2,7 +2,7 @@
 //! WebSocket client configuration options
 //!
 
-use super::{error::Error, result::Result, Handshake, Resolver};
+use super::{Handshake, Resolver, error::Error, result::Result};
 use cfg_if::cfg_if;
 use js_sys::Object;
 use std::sync::Arc;

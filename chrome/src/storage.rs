@@ -160,7 +160,7 @@ impl StorageData {
 
 #[cfg(debug_assertions)]
 macro_rules! assert_test {
-    ($name:literal, $cond1:expr, $cond2:expr) => {{
+    ($name:literal, $cond1:expr_2021, $cond2:expr_2021) => {{
         if $cond1 != $cond2 {
             return Result::<(), JsValue>::Err(
                 format!(

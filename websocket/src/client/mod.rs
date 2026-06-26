@@ -33,18 +33,18 @@ pub use result::Result;
 use async_trait::async_trait;
 use std::pin::Pin;
 use std::sync::Arc;
-use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
+use workflow_core::channel::{Channel, Receiver, Sender, oneshot};
 pub type ConnectResult<E> = std::result::Result<Option<Receiver<Result<()>>>, E>;
 
 pub type HandshakeFn = Arc<
     Box<dyn Send + Sync + Fn(&Sender<Message>, &Receiver<Message>) -> HandshakeFnReturn + 'static>,
 >;
-pub type HandshakeFnReturn = Pin<Box<(dyn Send + Sync + 'static + Future<Output = Result<()>>)>>;
+pub type HandshakeFnReturn = Pin<Box<dyn Send + Sync + 'static + Future<Output = Result<()>>>>;
 
 #[async_trait]
 pub trait Handshake: Send + Sync + 'static {
     async fn handshake(&self, sender: &Sender<Message>, receiver: &Receiver<Message>)
-        -> Result<()>;
+    -> Result<()>;
 }
 
 #[async_trait]
@@ -85,10 +85,11 @@ pub struct WebSocket {
 impl WebSocket {
     /// Create a new WebSocket instance connecting to the given URL.
     pub fn new(url: Option<&str>, config: Option<WebSocketConfig>) -> Result<WebSocket> {
-        if let Some(url) = url {
-            if !url.starts_with("ws://") && !url.starts_with("wss://") {
-                return Err(Error::AddressSchema(url.to_string()));
-            }
+        if let Some(url) = url
+            && !url.starts_with("ws://")
+            && !url.starts_with("wss://")
+        {
+            return Err(Error::AddressSchema(url.to_string()));
         }
 
         let config = config.unwrap_or_default();

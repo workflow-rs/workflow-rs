@@ -1,8 +1,8 @@
 use crate::error::Error;
 use crate::imports::*;
 use chacha20poly1305::{
-    aead::{AeadCore, AeadInPlace, KeyInit, OsRng},
     Key, XChaCha20Poly1305,
+    aead::{AeadCore, AeadInPlace, KeyInit, OsRng},
 };
 
 /// Encrypts the given data using `XChaCha20Poly1305` algorithm.

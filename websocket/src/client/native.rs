@@ -1,11 +1,10 @@
 use super::{
-    error::Error, message::Message, result::Result, Ack, ConnectOptions, ConnectResult,
-    ConnectStrategy, Handshake, Resolver, WebSocketConfig,
+    Ack, ConnectOptions, ConnectResult, ConnectStrategy, Handshake, Resolver, WebSocketConfig,
+    error::Error, message::Message, result::Result,
 };
 use futures::{
-    select_biased,
+    FutureExt, select_biased,
     stream::{SplitSink, SplitStream},
-    FutureExt,
 };
 use futures_util::{SinkExt, StreamExt};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -15,8 +14,8 @@ use std::time::Instant;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_tungstenite::{
-    connect_async_with_config, tungstenite::protocol::Message as TsMessage, MaybeTlsStream,
-    WebSocketStream,
+    MaybeTlsStream, WebSocketStream, connect_async_with_config,
+    tungstenite::protocol::Message as TsMessage,
 };
 use tungstenite::protocol::WebSocketConfig as TsWebSocketConfig;
 pub use workflow_core as core;
@@ -149,10 +148,13 @@ impl WebSocketInterface {
     async fn resolve_url(self: &Arc<Self>, options: &ConnectOptions) -> Result<String> {
         let url = if let Some(url) = options.url.as_ref().or(self.default_url().as_ref()) {
             url.clone()
-        } else if let Some(resolver) = self.resolver() {
-            resolver.resolve_url().await?
         } else {
-            return Err(Error::MissingUrl);
+            match self.resolver() {
+                Some(resolver) => resolver.resolve_url().await?,
+                _ => {
+                    return Err(Error::MissingUrl);
+                }
+            }
         };
         self.set_current_url(&url);
         Ok(url)

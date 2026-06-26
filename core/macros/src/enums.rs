@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
 use proc_macro2::{Literal, Span, TokenTree};
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use std::convert::Into;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{DeriveInput, parse_macro_input};
 use syn::{Error, Ident, Lit, LitStr, Meta, NestedMeta, Variant};
 use workflow_macro_tools::attributes::*;
 
@@ -79,10 +79,10 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
             if segment.ident == "doc" {
                 let mut tokens = attr.tokens.clone().into_iter();
 
-                if let Some(TokenTree::Punct(_punct)) = tokens.next() {
-                    if let Some(TokenTree::Literal(lit)) = tokens.next() {
-                        docs.push(lit.clone());
-                    }
+                if let Some(TokenTree::Punct(_punct)) = tokens.next()
+                    && let Some(TokenTree::Literal(lit)) = tokens.next()
+                {
+                    docs.push(lit.clone());
                 }
             }
         }

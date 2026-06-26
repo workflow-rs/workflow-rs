@@ -1,9 +1,10 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
+    DeriveInput, Meta, NestedMeta,
     ext::IdentExt,
     parse::{Parse, ParseStream},
-    parse_macro_input, DeriveInput, Meta, NestedMeta,
+    parse_macro_input,
 };
 mod element;
 //mod state;

@@ -606,7 +606,8 @@ pub mod router {
     use super::*;
     pub static mut ROUTER: Option<(usize, Router)> = None;
     pub fn acquire(meta: JsValue) -> Result<Router> {
-        if let Some(r) = unsafe { ROUTER.as_mut() } {
+        let router_ptr = &raw mut ROUTER;
+        if let Some(r) = unsafe { (*router_ptr).as_mut() } {
             r.0 += 1;
             Ok(r.1.clone())
         } else {
@@ -616,7 +617,8 @@ pub mod router {
         }
     }
     pub fn release() {
-        if let Some(r) = unsafe { ROUTER.as_mut() } {
+        let router_ptr = &raw mut ROUTER;
+        if let Some(r) = unsafe { (*router_ptr).as_mut() } {
             r.0 -= 1;
             if r.0 == 0 {
                 unsafe { ROUTER = None };

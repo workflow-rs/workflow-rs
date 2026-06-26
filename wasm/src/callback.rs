@@ -10,9 +10,9 @@ use std::{
 };
 use thiserror::Error;
 use wasm_bindgen::{
+    JsCast, JsValue,
     closure::{Closure, IntoWasmClosure, WasmClosure},
     convert::{FromWasmAbi, ReturnWasmAbi},
-    JsCast, JsValue,
 };
 use workflow_core::id::Id;
 
@@ -297,7 +297,7 @@ impl CallbackMap {
     }
 
     /// Get access to the [`std::sync::MutexGuard`] owning the inner [`std::collections::HashMap`].
-    pub fn inner(&self) -> MutexGuard<HashMap<CallbackId, Arc<dyn AsCallback>>> {
+    pub fn inner(&self) -> MutexGuard<'_, HashMap<CallbackId, Arc<dyn AsCallback>>> {
         self.inner.lock().unwrap()
     }
 

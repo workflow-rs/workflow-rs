@@ -1,6 +1,6 @@
-use crate::render::{Render, Renderables};
-pub use crate::utils::{document, Element, ElementResult};
 use crate::WebElement;
+use crate::render::{Render, Renderables};
+pub use crate::utils::{Element, ElementResult, document};
 use std::collections::BTreeMap;
 pub type Hooks = BTreeMap<String, Element>;
 //use workflow_log::log_trace;

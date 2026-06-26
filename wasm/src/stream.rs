@@ -35,7 +35,7 @@ use crate::extensions::object::*;
 use futures::{Stream, StreamExt};
 use js_sys::Object;
 use std::pin::Pin;
-use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+use wasm_bindgen::{JsValue, prelude::wasm_bindgen};
 
 /// Converts a Rust stream into an async JavaScript generator.
 /// WARNING: This feature uses `eval` and can not be used in environments
@@ -95,8 +95,9 @@ impl AsyncStream {
 static mut ASYNC_ITER_PROXY_FN: Option<js_sys::Function> = None;
 
 fn async_iter_proxy_fn() -> &'static js_sys::Function {
+    let async_iter_proxy_fn_ptr = &raw mut ASYNC_ITER_PROXY_FN;
     unsafe {
-        ASYNC_ITER_PROXY_FN.get_or_insert_with(|| {
+        (*async_iter_proxy_fn_ptr).get_or_insert_with(|| {
             js_sys::Function::new_with_args(
                 "iter",
                 "return (async function* () {

@@ -80,7 +80,7 @@ pub mod levels;
 pub mod prelude {
     pub use super::console::*;
     pub use super::log::{
-        log_debug, log_error, log_info, log_trace, log_warn, set_log_level, Level, LevelFilter,
+        Level, LevelFilter, log_debug, log_error, log_info, log_trace, log_warn, set_log_level,
     };
 }
 

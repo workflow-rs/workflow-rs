@@ -1,4 +1,4 @@
-use separator::{separated_float, separated_int, separated_uint_with_output, Separatable};
+use separator::{Separatable, separated_float, separated_int, separated_uint_with_output};
 
 /// Display KB or KiB if `short` is false, otherwise if `short` is true
 /// and the value is greater than 1MB or 1MiB, display units using [`as_data_size()`].

@@ -67,7 +67,7 @@ pub enum TryFromError {
 #[macro_export]
 macro_rules! u32_try_from {
         ($(#[$meta:meta])* $vis:vis enum $name:ident {
-        $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
+        $($(#[$vmeta:meta])* $vname:ident $(= $val:expr_2021)?,)*
     }) => {
         $(#[$meta])*
         $vis enum $name {
@@ -118,7 +118,7 @@ pub use u32_try_from;
 #[macro_export]
 macro_rules! u16_try_from {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {
-    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
+    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr_2021)?,)*
     }) => {
         $(#[$meta])*
         $vis enum $name {
@@ -175,7 +175,7 @@ pub use u16_try_from;
 #[macro_export]
 macro_rules! u8_try_from {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {
-    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
+    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr_2021)?,)*
     }) => {
         $(#[$meta])*
         $vis enum $name {
@@ -226,7 +226,7 @@ pub use u8_try_from;
 #[macro_export]
 macro_rules! usize_try_from {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {
-    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
+    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr_2021)?,)*
     }) => {
         $(#[$meta])*
         $vis enum $name {

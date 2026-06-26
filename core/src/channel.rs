@@ -1,7 +1,7 @@
 //! [`async_std::channel`] re-exports and shims
 use crate::id::Id;
 pub use async_channel::{
-    bounded, unbounded, Receiver, RecvError, SendError, Sender, TryRecvError, TrySendError,
+    Receiver, RecvError, SendError, Sender, TryRecvError, TrySendError, bounded, unbounded,
 };
 use std::{
     collections::HashMap,

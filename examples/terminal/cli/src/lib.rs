@@ -5,9 +5,9 @@ use std::time::Duration;
 use workflow_terminal::Terminal;
 // use workflow_terminal::Options;
 use workflow_log::*;
-use workflow_terminal::parse;
 use workflow_terminal::Cli;
 use workflow_terminal::Result;
+use workflow_terminal::parse;
 
 struct ExampleCli {
     term: Arc<Mutex<Option<Arc<Terminal>>>>,
@@ -30,13 +30,16 @@ impl workflow_log::Sink for ExampleCli {
         // note, the terminal may not be initialized
         // if workflow_log::pipe() is bound before the
         // Terminal::init() is complete.
-        if let Some(term) = self.term() {
-            term.writeln(args.to_string());
-            // true to disable further processing (no further output is made)
-            true
-        } else {
-            // false for default log output handling (print to stdout or web console)
-            false
+        match self.term() {
+            Some(term) => {
+                term.writeln(args.to_string());
+                // true to disable further processing (no further output is made)
+                true
+            }
+            _ => {
+                // false for default log output handling (print to stdout or web console)
+                false
+            }
         }
     }
 }

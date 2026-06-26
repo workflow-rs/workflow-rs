@@ -42,7 +42,7 @@ cfg_if! {
             fn stack(error: &Error) -> String;
         }
 
-        fn process(info: &panic::PanicInfo) -> String{
+        fn process(info: &panic::PanicHookInfo) -> String{
             let mut msg = info.to_string();
 
             // Add the error stack to our message.
@@ -70,11 +70,11 @@ cfg_if! {
         }
 
 
-        fn console_hook(info: &panic::PanicInfo){
+        fn console_hook(info: &panic::PanicHookInfo){
             // Finally, log the panic with `console.error`!
             console_error(process(info));
         }
-        fn popup_hook(info: &panic::PanicInfo){
+        fn popup_hook(info: &panic::PanicHookInfo){
             // Finally, log the panic with `logger::error`!
             logger::error(process(info));
         }

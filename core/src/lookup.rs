@@ -14,9 +14,9 @@
 use crate::channel::*;
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Custom result type used by [`LookupHandler`]
 pub type LookupResult<V, E> = std::result::Result<V, E>;

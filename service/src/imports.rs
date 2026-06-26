@@ -3,7 +3,7 @@ pub use futures_util::future::join_all;
 pub use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 pub use std::sync::{Arc, Mutex};
 
-pub use workflow_core::channel::{oneshot, Channel};
+pub use workflow_core::channel::{Channel, oneshot};
 pub use workflow_core::task::spawn;
 pub use workflow_log::prelude::*;
 

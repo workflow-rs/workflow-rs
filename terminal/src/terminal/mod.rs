@@ -2,21 +2,21 @@
 //! Module implementing the terminal interface abstraction
 //!
 
+use crate::CrLf;
+use crate::UnicodeString;
 use crate::clear::*;
 use crate::cli::Cli;
 use crate::cursor::*;
 use crate::error::Error;
 use crate::keys::Key;
 use crate::result::Result;
-use crate::CrLf;
-use crate::UnicodeString;
 use cfg_if::cfg_if;
 use futures::*;
 pub use pad::PadStr;
 use regex::Regex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, LockResult, Mutex, MutexGuard};
-use workflow_core::channel::{unbounded, Channel, DuplexChannel, Receiver, Sender};
+use workflow_core::channel::{Channel, DuplexChannel, Receiver, Sender, unbounded};
 use workflow_core::task::spawn;
 use workflow_log::log_error;
 
@@ -28,14 +28,14 @@ pub struct Modifiers {
     pub ctrl: bool,
     pub meta: bool,
 }
-pub type LinkMatcherHandlerFn = Arc<Box<(dyn Fn(Modifiers, &str))>>;
+pub type LinkMatcherHandlerFn = Arc<Box<dyn Fn(Modifiers, &str)>>;
 
 #[derive(Debug, Clone)]
 pub enum Event {
     Copy,
     Paste,
 }
-pub type EventHandlerFn = Arc<Box<(dyn Fn(Event))>>;
+pub type EventHandlerFn = Arc<Box<dyn Fn(Event)>>;
 
 mod options;
 pub use options::Options;

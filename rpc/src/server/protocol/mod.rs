@@ -8,8 +8,8 @@ pub mod borsh;
 pub mod serde_json;
 
 use crate::imports::*;
-pub use crate::server::result::Result;
 use crate::server::Interface;
+pub use crate::server::result::Result;
 use workflow_websocket::server::{Message, Result as WebSocketResult, WebSocketSink};
 
 pub use self::borsh::BorshProtocol;

@@ -7,9 +7,9 @@
 use super::Encoding;
 use crate::imports::*;
 use crate::messages::borsh::*;
-pub use crate::server::result::Result;
 use crate::server::Interface;
 use crate::server::ProtocolHandler;
+pub use crate::server::result::Result;
 use workflow_websocket::server::{
     Error as WebSocketError, Message, Result as WebSocketResult, WebSocketSink,
 };
@@ -80,18 +80,17 @@ where
                         &data,
                     )
                     .try_to_vec()
+                        && let Err(e) = sink.send(msg.into())
                     {
-                        if let Err(e) = sink.send(msg.into()) {
-                            log_trace!("Sink error: {:?}", e);
-                        }
+                        log_trace!("Sink error: {:?}", e);
                     }
                 }
                 Err(err) => {
                     // log_trace!("RPC server error: {:?} req: {:#?}", err, req);
                     if err == ServerError::Close {
                         return Err(WebSocketError::ServerClose);
-                    } else if let Ok(err_vec) = borsh::to_vec(&err) {
-                        if let Ok(msg) = BorshServerMessage::new(
+                    } else if let Ok(err_vec) = borsh::to_vec(&err)
+                        && let Ok(msg) = BorshServerMessage::new(
                             BorshServerMessageHeader::<Ops, Id>::new(
                                 req.header.id,
                                 ServerMessageKind::Error,
@@ -100,11 +99,9 @@ where
                             &err_vec,
                         )
                         .try_to_vec()
-                        {
-                            if let Err(e) = sink.send(msg.into()) {
-                                log_trace!("Sink error: {:?}", e);
-                            }
-                        }
+                        && let Err(e) = sink.send(msg.into())
+                    {
+                        log_trace!("Sink error: {:?}", e);
                     }
                 }
             }

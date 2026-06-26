@@ -47,11 +47,11 @@ where
         }
     }
 
-    fn inner(&self) -> Ref<Inner<T>> {
+    fn inner(&self) -> Ref<'_, Inner<T>> {
         self.inner.borrow()
     }
 
-    fn inner_mut(&self) -> RefMut<Inner<T>> {
+    fn inner_mut(&self) -> RefMut<'_, Inner<T>> {
         self.inner.borrow_mut()
     }
 

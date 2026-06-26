@@ -1,16 +1,16 @@
 use super::{
+    ConnectOptions, ConnectResult, Handshake, Resolver, WebSocketConfig,
     bindings::WebSocket as W3CWebSocket,
     error::Error,
     message::{Ack, Message},
     result::Result,
-    ConnectOptions, ConnectResult, Handshake, Resolver, WebSocketConfig,
 };
-use futures::{select, select_biased, FutureExt};
+use futures::{FutureExt, select, select_biased};
 use js_sys::{ArrayBuffer, Uint8Array};
 use std::ops::Deref;
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc, Mutex,
+    atomic::{AtomicBool, Ordering},
 };
 use wasm_bindgen::JsCast;
 use web_sys::{
@@ -18,7 +18,7 @@ use web_sys::{
 };
 use workflow_core::runtime::*;
 use workflow_core::{
-    channel::{oneshot, unbounded, Channel, DuplexChannel, Sender},
+    channel::{Channel, DuplexChannel, Sender, oneshot, unbounded},
     task::spawn,
 };
 use workflow_log::*;
@@ -187,10 +187,13 @@ impl WebSocketInterface {
     async fn resolve_url(self: &Arc<Self>, options: &ConnectOptions) -> Result<String> {
         let url = if let Some(url) = options.url.as_ref().or(self.default_url().as_ref()) {
             url.clone()
-        } else if let Some(resolver) = self.resolver() {
-            resolver.resolve_url().await?
         } else {
-            return Err(Error::MissingUrl);
+            match self.resolver() {
+                Some(resolver) => resolver.resolve_url().await?,
+                _ => {
+                    return Err(Error::MissingUrl);
+                }
+            }
         };
         self.set_current_url(&url);
         Ok(url)
@@ -361,11 +364,12 @@ impl WebSocketInterface {
 
     #[allow(dead_code)]
     pub fn try_send(self: &Arc<Self>, message: &Message) -> Result<()> {
-        if let Some(ws) = self.ws() {
-            ws.try_send(message)?;
-            Ok(())
-        } else {
-            Err(Error::NotConnected)
+        match self.ws() {
+            Some(ws) => {
+                ws.try_send(message)?;
+                Ok(())
+            }
+            _ => Err(Error::NotConnected),
         }
     }
 
@@ -553,10 +557,10 @@ impl WebSocketInterface {
     }
 
     pub fn trigger_abort(self: &Arc<Self>) -> Result<()> {
-        if self.is_connected.load(Ordering::SeqCst) {
-            if let Some(ws) = self.ws() {
-                ws.close_if_open()?;
-            }
+        if self.is_connected.load(Ordering::SeqCst)
+            && let Some(ws) = self.ws()
+        {
+            ws.close_if_open()?;
         }
         Ok(())
     }

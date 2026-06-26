@@ -2,12 +2,12 @@
 //! Module encapsulating [`Process`] API for running child process daemons under Node.js and NWJS
 //!
 use crate::child_process::{
-    spawn_with_args_and_options, ChildProcess, KillSignal, SpawnArgs, SpawnOptions,
+    ChildProcess, KillSignal, SpawnArgs, SpawnOptions, spawn_with_args_and_options,
 };
 use crate::error::Error;
 use crate::result::Result;
 use borsh::{BorshDeserialize, BorshSerialize};
-use futures::{select, FutureExt};
+use futures::{FutureExt, select};
 use node_sys::*;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
@@ -16,7 +16,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use wasm_bindgen::prelude::*;
-use workflow_core::channel::{oneshot, Channel, Receiver, Sender};
+use workflow_core::channel::{Channel, Receiver, Sender, oneshot};
 use workflow_core::task::*;
 use workflow_core::time::Instant;
 use workflow_log::*;

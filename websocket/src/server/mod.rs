@@ -6,20 +6,20 @@ use cfg_if::cfg_if;
 use downcast_rs::*;
 use futures::{future::FutureExt, select};
 use futures_util::{
-    stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
+    stream::{SplitSink, SplitStream},
 };
 use std::net::SocketAddr;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 pub use tokio::net::TcpListener;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{
     UnboundedReceiver as TokioUnboundedReceiver, UnboundedSender as TokioUnboundedSender,
 };
-use tokio_tungstenite::{accept_async_with_config, WebSocketStream};
+use tokio_tungstenite::{WebSocketStream, accept_async_with_config};
 use tungstenite::Error as WebSocketError;
 use workflow_core::channel::DuplexChannel;
 use workflow_log::*;
@@ -28,8 +28,8 @@ pub mod result;
 
 pub use error::Error;
 pub use result::Result;
-pub use tungstenite::protocol::WebSocketConfig;
 pub use tungstenite::Message;
+pub use tungstenite::protocol::WebSocketConfig;
 /// WebSocket stream sender for dispatching [`tungstenite::Message`].
 /// This stream object must have a mutable reference and can not be cloned.
 pub type WebSocketSender = SplitSink<WebSocketStream<TcpStream>, Message>;
@@ -334,11 +334,10 @@ where
         loop {
             select! {
                 stream = listener.accept().fuse() => {
-                    if let Ok((stream,socket_addr)) = stream {
-                        if self.handler.accept(&socket_addr) {
+                    if let Ok((stream,socket_addr)) = stream
+                        && self.handler.accept(&socket_addr) {
                             self.accept(stream, config).await;
                         }
-                    }
                 },
                 _ = self.stop.request.receiver.recv().fuse() => break,
             }
@@ -481,11 +480,10 @@ pub mod handshake {
         let delay = tokio::time::sleep(timeout_duration);
         tokio::select! {
             msg = receiver.next() => {
-                if let Some(Ok(msg)) = msg {
-                    if msg.is_text() || msg.is_binary() {
+                if let Some(Ok(msg)) = msg
+                    && (msg.is_text() || msg.is_binary()) {
                         return handler(msg.to_text()?);
                     }
-                }
                 Err(Error::MalformedHandshake)
             }
             _ = delay => {

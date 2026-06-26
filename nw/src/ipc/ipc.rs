@@ -21,7 +21,7 @@ impl<F> Pending<F> {
 type PendingMap<Id, F> = Arc<Mutex<AHashMap<Id, Pending<F>>>>;
 
 pub type BorshResponseFn = Arc<
-    Box<(dyn Fn(Vec<u8>, ResponseResult<Vec<u8>>, Option<&Duration>) -> Result<()> + Sync + Send)>,
+    Box<dyn Fn(Vec<u8>, ResponseResult<Vec<u8>>, Option<&Duration>) -> Result<()> + Sync + Send>,
 >;
 
 struct Inner<Ops>
@@ -66,11 +66,13 @@ where
         let target = IpcTarget::new(global::global().as_ref());
         let ipc = Self::try_new_binding(&target, identifier)?;
 
+        let ipc_handler_source_ptr = &raw mut IPC_HANDLER_SOURCE;
+
         unsafe {
-            if IPC_HANDLER_SOURCE.is_some() {
+            if (*ipc_handler_source_ptr).is_some() {
                 panic!("global ipc handler already registered");
             }
-            IPC_HANDLER_SOURCE.replace(target);
+            (*ipc_handler_source_ptr).replace(target);
         }
 
         Ok(ipc)
@@ -87,11 +89,13 @@ where
         let target = IpcTarget::new(window.as_ref());
         let ipc = Self::try_new_binding(&target, identifier)?;
 
+        let ipc_handler_source_ptr = &raw mut IPC_HANDLER_SOURCE;
+
         unsafe {
-            if IPC_HANDLER_SOURCE.is_some() {
+            if (*ipc_handler_source_ptr).is_some() {
                 panic!("global ipc handler already registered");
             }
-            IPC_HANDLER_SOURCE.replace(target);
+            (*ipc_handler_source_ptr).replace(target);
         }
 
         Ok(ipc)
@@ -224,11 +228,14 @@ where
                 let id = id.expect("ipc missing success response id");
                 // let id = Id64::from(id);
                 let mut pending = pending().lock().unwrap();
-                if let Some(pending) = pending.remove(&id) {
-                    let resp = ResponseResult::<Vec<u8>>::try_from_slice(payload)?;
-                    (pending.callback)(op, resp, None)?;
-                } else {
-                    log_error!("ipc response id not found: {:?}", id);
+                match pending.remove(&id) {
+                    Some(pending) => {
+                        let resp = ResponseResult::<Vec<u8>>::try_from_slice(payload)?;
+                        (pending.callback)(op, resp, None)?;
+                    }
+                    _ => {
+                        log_error!("ipc response id not found: {:?}", id);
+                    }
                 }
             }
         }
@@ -300,11 +307,12 @@ impl IpcHandler for IpcTarget {
 
 static mut PENDING: Option<PendingMap<IpcId, BorshResponseFn>> = None; //PendingMap::default();
 fn pending() -> &'static mut PendingMap<IpcId, BorshResponseFn> {
+    let pending_ptr = &raw mut PENDING;
     unsafe {
-        if PENDING.is_none() {
+        if (*pending_ptr).is_none() {
             PENDING = Some(PendingMap::default());
         }
-        PENDING.as_mut().unwrap()
+        (*pending_ptr).as_mut().unwrap()
     }
 }
 
@@ -333,8 +341,9 @@ pub trait IpcDispatch {
         Req: MsgT,
         Resp: MsgT,
     {
+        let ipc_handler_source_ptr = &raw const IPC_HANDLER_SOURCE;
         let source = unsafe {
-            IPC_HANDLER_SOURCE
+            (*ipc_handler_source_ptr)
                 .as_ref()
                 .cloned()
                 .expect("missing ipc handler source (please register a local IPC object)")
@@ -412,10 +421,9 @@ where
 
     if let Some(ipc_ident) =
         Reflect::get(&global::global(), &JsValue::from("ipc_identifier"))?.as_string()
+        && ipc_ident == ident
     {
-        if ipc_ident == ident {
-            return Ok(Some(IpcTarget::new(global::global().as_ref())));
-        }
+        return Ok(Some(IpcTarget::new(global::global().as_ref())));
     }
 
     let windows = crate::window::get_all_async().await?;
@@ -423,10 +431,10 @@ where
     for window in windows.iter() {
         let prop =
             js_sys::Reflect::get(window.window().as_ref(), &JsValue::from("ipc_identifier"))?;
-        if let Some(ipc_ident) = prop.as_string() {
-            if ipc_ident == ident {
-                return Ok(Some(IpcTarget::new(window.window().as_ref())));
-            }
+        if let Some(ipc_ident) = prop.as_string()
+            && ipc_ident == ident
+        {
+            return Ok(Some(IpcTarget::new(window.window().as_ref())));
         }
     }
     Ok(None)

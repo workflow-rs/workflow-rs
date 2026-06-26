@@ -12,7 +12,7 @@ pub mod target;
 pub mod types;
 
 pub use error::ResponseError;
-pub use ipc::{get_ipc_target, Ipc, IpcDispatch};
+pub use ipc::{Ipc, IpcDispatch, get_ipc_target};
 pub use method::Method;
 pub use notification::Notification;
 pub use result::ResponseResult;

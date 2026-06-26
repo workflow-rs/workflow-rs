@@ -57,7 +57,8 @@ impl Builder {
         let json_data = if let Some(json_data) = self.string_json_data {
             unsafe {
                 JSON_DATA = Some(json_data);
-                JSON_DATA.as_deref()
+                let json_data_ptr = &raw const JSON_DATA;
+                (*json_data_ptr).as_deref()
             }
         } else {
             self.static_json_data
@@ -200,7 +201,8 @@ pub fn dictionary() -> Arc<Dictionary> {
 }
 
 pub fn guard() -> MutexGuard<'static, ()> {
-    unsafe { JSON_DATA_GUARD.as_ref().unwrap().lock().unwrap() }
+    let json_data_guard_ptr = &raw const JSON_DATA_GUARD;
+    unsafe { (*json_data_guard_ptr).as_ref().unwrap().lock().unwrap() }
 }
 
 pub fn load(json_data_file: impl AsRef<Path>) -> Result<()> {
@@ -222,10 +224,11 @@ pub fn from_string(json_data: impl Into<String>) -> Result<()> {
 
     unsafe {
         JSON_DATA = Some(json_data.into());
+        let json_data_ptr = &raw const JSON_DATA;
         DICTIONARY.swap(Some(Arc::new(Dictionary::try_new(
             current_code,
             default_code,
-            Some(JSON_DATA.as_ref().unwrap().as_str()),
+            Some((*json_data_ptr).as_ref().unwrap().as_str()),
             store_fn,
         )?)));
     }
@@ -253,17 +256,15 @@ pub fn i18n(text: &str) -> &str {
                 }
             };
 
-            if needs_store {
-                if let Some(store_fn) = dictionary.store_fn() {
-                    match dictionary.to_json() {
-                        Ok(json_data) => {
-                            if let Err(err) = store_fn(json_data.as_str()) {
-                                println!("i18n error: {}", err);
-                            }
-                        }
-                        Err(err) => {
+            if needs_store && let Some(store_fn) = dictionary.store_fn() {
+                match dictionary.to_json() {
+                    Ok(json_data) => {
+                        if let Err(err) = store_fn(json_data.as_str()) {
                             println!("i18n error: {}", err);
                         }
+                    }
+                    Err(err) => {
+                        println!("i18n error: {}", err);
                     }
                 }
             }

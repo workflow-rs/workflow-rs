@@ -1,7 +1,7 @@
+use crate::Result;
 use crate::keys::Key;
 use crate::terminal::Options;
 use crate::terminal::Terminal;
-use crate::Result;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
 pub use crossterm::terminal::disable_raw_mode;
@@ -9,7 +9,7 @@ use crossterm::{
     event::{self, Event, KeyCode},
     terminal,
 };
-use std::io::{stdout, Stdout, Write};
+use std::io::{Stdout, Write, stdout};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -65,37 +65,36 @@ impl Crossterm {
         loop {
             let event = event::read()?;
             // println!("{:?}",event);
-            if let Event::Key(key) = event {
-                if matches!(key.kind, KeyEventKind::Press | KeyEventKind::Repeat) {
-                    let key = match key.code {
-                        KeyCode::Char(c) => {
-                            if key.modifiers & KeyModifiers::ALT == KeyModifiers::ALT {
-                                Key::Alt(c)
-                            } else if key.modifiers & KeyModifiers::CONTROL == KeyModifiers::CONTROL
-                            {
-                                Key::Ctrl(c)
-                            } else {
-                                Key::Char(c)
-                            }
+            if let Event::Key(key) = event
+                && matches!(key.kind, KeyEventKind::Press | KeyEventKind::Repeat)
+            {
+                let key = match key.code {
+                    KeyCode::Char(c) => {
+                        if key.modifiers & KeyModifiers::ALT == KeyModifiers::ALT {
+                            Key::Alt(c)
+                        } else if key.modifiers & KeyModifiers::CONTROL == KeyModifiers::CONTROL {
+                            Key::Ctrl(c)
+                        } else {
+                            Key::Char(c)
                         }
-                        KeyCode::Enter => Key::Enter,
-                        KeyCode::Esc => Key::Esc,
-                        KeyCode::Left => Key::ArrowLeft,
-                        KeyCode::Right => Key::ArrowRight,
-                        KeyCode::Up => Key::ArrowUp,
-                        KeyCode::Down => Key::ArrowDown,
-                        KeyCode::Backspace => Key::Backspace,
-                        _ => {
-                            continue;
-                        }
-                    };
-
-                    self.terminal().ingest(key, "".to_string()).await?;
-                    self.flush();
-
-                    if terminate.load(Ordering::SeqCst) {
-                        break;
                     }
+                    KeyCode::Enter => Key::Enter,
+                    KeyCode::Esc => Key::Esc,
+                    KeyCode::Left => Key::ArrowLeft,
+                    KeyCode::Right => Key::ArrowRight,
+                    KeyCode::Up => Key::ArrowUp,
+                    KeyCode::Down => Key::ArrowDown,
+                    KeyCode::Backspace => Key::Backspace,
+                    _ => {
+                        continue;
+                    }
+                };
+
+                self.terminal().ingest(key, "".to_string()).await?;
+                self.flush();
+
+                if terminate.load(Ordering::SeqCst) {
+                    break;
                 }
             }
         }

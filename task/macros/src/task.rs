@@ -1,9 +1,9 @@
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::{
+    Expr, ExprClosure, Result,
     parse::{Parse, ParseStream},
     token::Comma,
-    Expr, ExprClosure, Result,
 };
 
 pub struct Task {
@@ -22,10 +22,7 @@ impl Parse for Task {
                     }
                 }
             }
-            Err(_) => {
-                let ts = input.cursor().token_stream();
-                ts
-            }
+            Err(_) => input.cursor().token_stream(),
         };
 
         //empty input

@@ -1,11 +1,11 @@
 use crate::error::Error;
 use crate::result::Result;
-use futures::future::{join_all, BoxFuture, FutureExt};
+use futures::future::{BoxFuture, FutureExt, join_all};
 use js_sys::{Array, Uint8Array};
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use web_sys::{Blob, Document, Url};
 use workflow_core::channel::oneshot;
 use workflow_core::lookup::*;
@@ -24,8 +24,9 @@ pub fn document() -> Document {
 }
 
 pub fn root() -> web_sys::Element {
+    let document_root_ptr = &raw const DOCUMENT_ROOT;
     unsafe {
-        match DOCUMENT_ROOT.as_ref() {
+        match (*document_root_ptr).as_ref() {
             Some(root) => root.clone(),
             None => {
                 let root = {
@@ -148,14 +149,15 @@ impl Content {
             if let Some(references) = &self.references {
                 let futures = references
                     .iter()
-                    .filter_map(|(_, _, id)| {
-                        if let Some(content) = ctx.get(id) {
+                    .filter_map(|(_, _, id)| match ctx.get(id) {
+                        Some(content) => {
                             if !content.is_loaded.load(Ordering::SeqCst) {
                                 Some(content.load(&ctx))
                             } else {
                                 None
                             }
-                        } else {
+                        }
+                        _ => {
                             log_error!("Unable to locate module {}", id);
                             None
                         }
@@ -338,12 +340,13 @@ impl Context {
         let futures = list
             .iter()
             .filter_map(|id| {
-                if let Some(module) = self.get(id) {
-                    Some(module.load(self))
-                } else {
-                    log_error!("Unable to locate module {}", id);
-                    // TODO: panic
-                    None
+                match self.get(id) {
+                    Some(module) => Some(module.load(self)),
+                    _ => {
+                        log_error!("Unable to locate module {}", id);
+                        // TODO: panic
+                        None
+                    }
                 }
             })
             .collect::<Vec<_>>();
@@ -372,8 +375,9 @@ impl Context {
 static mut CONTEXT: Option<Arc<Context>> = None;
 
 pub fn context() -> Arc<Context> {
+    let context_ptr = &raw const CONTEXT;
     unsafe {
-        if let Some(context) = CONTEXT.as_ref() {
+        if let Some(context) = (*context_ptr).as_ref() {
             context.clone()
         } else {
             let context = Arc::new(Context::default());

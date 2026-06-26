@@ -297,7 +297,7 @@ where
     T: TryCastFromJs,
 {
     type Error: From<Error>;
-    fn try_into_cast(&self) -> std::result::Result<Cast<T>, Self::Error>;
+    fn try_into_cast(&self) -> std::result::Result<Cast<'_, T>, Self::Error>;
     fn try_into_owned(&self) -> std::result::Result<T, Self::Error>;
 }
 
@@ -307,7 +307,7 @@ where
     <T as TryCastFromJs>::Error: From<Error>,
 {
     type Error = <T as TryCastFromJs>::Error;
-    fn try_into_cast(&self) -> std::result::Result<Cast<T>, Self::Error> {
+    fn try_into_cast(&self) -> std::result::Result<Cast<'_, T>, Self::Error> {
         T::try_cast_from(self)
     }
 

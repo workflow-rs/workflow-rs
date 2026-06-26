@@ -333,11 +333,11 @@ impl Graph {
         self
     }
 
-    pub fn options(&self) -> MutexGuard<GraphThemeOptions> {
+    pub fn options(&self) -> MutexGuard<'_, GraphThemeOptions> {
         self.options.lock().unwrap()
     }
 
-    fn inner(&self) -> MutexGuard<Inner> {
+    fn inner(&self) -> MutexGuard<'_, Inner> {
         self.inner.lock().unwrap()
     }
 
@@ -877,7 +877,7 @@ impl Graph {
         self.data_hirez.push(&item.into());
 
         let lowrez_cell = self.lowrez_cell.fetch_add(1, Ordering::SeqCst);
-        if lowrez_cell % LOWREZ_CELL_SIZE == 0 {
+        if lowrez_cell.is_multiple_of(LOWREZ_CELL_SIZE) {
             let lowrez_cell_value = self.lowrez_cell_value.load(Ordering::SeqCst);
             let lowrez_value = JsValue::from(lowrez_cell_value);
             let item = js_sys::Object::new();

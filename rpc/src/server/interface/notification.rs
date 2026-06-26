@@ -33,8 +33,7 @@ pub type NotificationFn<ServerContext, ConnectionContext, Msg> = Arc<
 >;
 
 /// Notification closure return type
-pub type NotificationFnReturn<T> =
-    Pin<Box<(dyn Send + 'static + Future<Output = ServerResult<T>>)>>;
+pub type NotificationFnReturn<T> = Pin<Box<dyn Send + 'static + Future<Output = ServerResult<T>>>>;
 
 /// RPC notification wrapper. Contains the notification closure function.
 pub struct Notification<ServerContext, ConnectionContext, Msg>

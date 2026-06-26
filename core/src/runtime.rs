@@ -57,11 +57,10 @@ cfg_if! {
                     .map(|versions|exists_prop(&versions, "electron")).unwrap_or(false);
 
 
-                if electron {
-                    if let Ok(process_type) = process.and_then(|process|Reflect::get(&process, &"type".into())) {
+                if electron
+                    && let Ok(process_type) = process.and_then(|process|Reflect::get(&process, &"type".into())) {
                         browser = process_type.as_string().map(|v|v.as_str() == "renderer").unwrap_or(false);
                     }
-                }
 
                 let nwjs = Reflect::get(&global, &"nw".into())
                     .map(|nw|exists_prop(&nw, "Window")).unwrap_or(false);
@@ -288,7 +287,7 @@ impl Platform {
         let platform = js_sys::Reflect::get(&process, &"platform".into())
             .expect("Unable to get nodejs process.platform");
 
-        let platform = match platform
+        match platform
             .as_string()
             .expect("nodejs process.platform is not a string")
             .as_str()
@@ -299,22 +298,22 @@ impl Platform {
             "openbsd" => Platform::OpenBSD,
             "freebsd" => Platform::FreeBSD,
             v => Platform::Other(v.to_string()),
-        };
-
-        platform
+        }
     }
 
     pub fn from_web() -> Self {
-        let window = if let Some(window) = web_sys::window() {
-            window
-        } else {
-            return Platform::Unknown;
+        let window = match web_sys::window() {
+            Some(window) => window,
+            _ => {
+                return Platform::Unknown;
+            }
         };
 
-        let user_agent = if let Ok(user_agent) = window.navigator().user_agent() {
-            user_agent.to_lowercase()
-        } else {
-            return Platform::Unknown;
+        let user_agent = match window.navigator().user_agent() {
+            Ok(user_agent) => user_agent.to_lowercase(),
+            _ => {
+                return Platform::Unknown;
+            }
         };
 
         if user_agent.contains("win") {

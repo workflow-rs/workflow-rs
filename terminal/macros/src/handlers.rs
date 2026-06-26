@@ -4,12 +4,12 @@ use proc_macro2::{Ident, Span};
 use quote::quote;
 use std::convert::Into;
 use syn::{
+    DeriveInput, Error, Expr, ExprLit, ExprPath, Lit, LitStr, Meta, NestedMeta, Path, PathSegment,
+    Result, Token,
     parse::{Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
     token::Colon2,
-    DeriveInput, Error, Expr, ExprLit, ExprPath, Lit, LitStr, Meta, NestedMeta, Path, PathSegment,
-    Result, Token,
 };
 
 #[derive(Debug)]

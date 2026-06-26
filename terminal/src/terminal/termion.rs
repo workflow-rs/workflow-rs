@@ -1,8 +1,8 @@
+use crate::Result;
 use crate::keys::Key;
 use crate::terminal::Options;
 use crate::terminal::Terminal;
-use crate::Result;
-use std::io::{stdin, stdout, Stdout, Write};
+use std::io::{Stdout, Write, stdin, stdout};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use termion::event::Key as K;

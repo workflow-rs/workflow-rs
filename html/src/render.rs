@@ -1,6 +1,6 @@
-use crate::interface::Hooks;
-use crate::utils::{document, Element, ElementResult};
 use crate::Html;
+use crate::interface::Hooks;
+use crate::utils::{Element, ElementResult, document};
 use std::collections::BTreeMap;
 pub use std::fmt::{Result, Write};
 pub use std::sync::Arc;

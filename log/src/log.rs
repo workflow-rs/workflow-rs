@@ -370,7 +370,7 @@ pub mod impls {
 /// Format and log message with [`Level::Error`]
 #[macro_export]
 macro_rules! log_error {
-    (target: $target:expr, $($arg:tt)+) => (
+    (target: $target:expr_2021, $($arg:tt)+) => (
         workflow_log::impls::error_impl(Some($target),&format_args!($($t)*))
     );
 
@@ -382,7 +382,7 @@ macro_rules! log_error {
 /// Format and log message with [`Level::Warn`]
 #[macro_export]
 macro_rules! log_warn {
-    (target: $target:expr, $($arg:tt)+) => (
+    (target: $target:expr_2021, $($arg:tt)+) => (
         workflow_log::impls::warn_impl(Some($target),&format_args!($($t)*))
     );
 
@@ -394,7 +394,7 @@ macro_rules! log_warn {
 /// Format and log message with [`Level::Info`]
 #[macro_export]
 macro_rules! log_info {
-    (target: $target:expr, $($arg:tt)+) => (
+    (target: $target:expr_2021, $($arg:tt)+) => (
         workflow_log::impls::info_impl(Some($target),&format_args!($($t)*))
     );
 
@@ -406,7 +406,7 @@ macro_rules! log_info {
 /// Format and log message with [`Level::Debug`]
 #[macro_export]
 macro_rules! log_debug {
-    (target: $target:expr, $($arg:tt)+) => (
+    (target: $target:expr_2021, $($arg:tt)+) => (
         workflow_log::impls::debug_impl(Some($target),&format_args!($($t)*))
     );
 
@@ -418,7 +418,7 @@ macro_rules! log_debug {
 /// Format and log message with [`Level::Trace`]
 #[macro_export]
 macro_rules! log_trace {
-    (target: $target:expr, $($arg:tt)+) => (
+    (target: $target:expr_2021, $($arg:tt)+) => (
         workflow_log::impls::trace_impl(Some($target),&format_args!($($t)*))
     );
 
@@ -474,7 +474,7 @@ pub mod color_log {
     type Result<T> = std::result::Result<T, String>;
     pub trait ColoLogTrace {
         fn log_data(&self) -> Vec<u8>;
-        fn log_index_length_color(&self) -> Option<Vec<(Index, Length, Color)>> {
+        fn log_index_length_color(&self) -> Option<Vec<(Index, Length, Color<'_>)>> {
             None
         }
 

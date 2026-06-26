@@ -33,9 +33,9 @@ pub use escape::{escape_attr, escape_html};
 pub use render::{Render, Renderables, Result, Write};
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
-pub use utils::{document, Element as WebElement, ElementResult};
-use wasm_bindgen::prelude::*;
+pub use utils::{Element as WebElement, ElementResult, document};
 use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 pub use workflow_html_macros::{html, html_str, renderable, tree};
 
 #[derive(Debug, Clone)]
@@ -193,7 +193,10 @@ mod test {
         };
         let result = tree.html();
         println!("html: {}", result);
-        assert_eq!(result, "<flow-select><flow-menu-item class=\"xyz\"></flow-menu-item><flow-menu-item class=\"abc\"></flow-menu-item></flow-select>");
+        assert_eq!(
+            result,
+            "<flow-select><flow-menu-item class=\"xyz\"></flow-menu-item><flow-menu-item class=\"abc\"></flow-menu-item></flow-select>"
+        );
     }
     #[test]
     pub fn without_root_element() {

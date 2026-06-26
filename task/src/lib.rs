@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use thiserror::Error;
 use workflow_core::channel::{
-    oneshot, Receiver, RecvError, SendError, Sender, TryRecvError, TrySendError,
+    Receiver, RecvError, SendError, Sender, TryRecvError, TrySendError, oneshot,
 };
 pub use workflow_task_macros::{set_task, task};
 
@@ -43,7 +43,7 @@ impl<T> From<TrySendError<T>> for TaskError {
 pub type TaskResult<T> = std::result::Result<T, TaskError>;
 
 pub type TaskFn<A, T> = Arc<Box<dyn Send + Sync + Fn(A, Receiver<()>) -> FnReturn<T> + 'static>>;
-pub type FnReturn<T> = Pin<Box<(dyn Send + Sync + 'static + Future<Output = T>)>>;
+pub type FnReturn<T> = Pin<Box<dyn Send + Sync + 'static + Future<Output = T>>>;
 
 struct TaskInner<A, T>
 where

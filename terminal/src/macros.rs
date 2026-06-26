@@ -46,55 +46,55 @@ where
 
 #[macro_export]
 macro_rules! twarnln {
-    ($target:expr) => {
+    ($target:expr_2021) => {
         compile_error!("twarnln! macro requires at least two arguments");
     };
 
-    ($dest:expr, $($arg:tt)*) => {
+    ($dest:expr_2021, $($arg:tt)*) => {
         $crate::twarnln_impl($dest.deref().clone(), &format_args!($($arg)*).to_string().as_str())
     };
 }
 
 #[macro_export]
 macro_rules! terrorln {
-    ($target:expr) => {
+    ($target:expr_2021) => {
         compile_error!("terrorln! macro requires at least two arguments");
     };
 
-    ($dest:expr, $($arg:tt)*) => {
+    ($dest:expr_2021, $($arg:tt)*) => {
         $crate::terrorln_impl($dest.deref().clone(), &format_args!($($arg)*).to_string().as_str())
     };
 }
 
 #[macro_export]
 macro_rules! tprintln {
-    ($dest:expr) => {
+    ($dest:expr_2021) => {
         $crate::tprintln_impl($dest.as_ref(), &"")
     };
 
-    ($dest:expr, $($arg:tt)*) => {
+    ($dest:expr_2021, $($arg:tt)*) => {
         $crate::tprintln_impl($dest.deref().clone(), &format_args!($($arg)*).to_string().as_str())
     };
 }
 
 #[macro_export]
 macro_rules! tprint {
-    ($dest:expr) => {
+    ($dest:expr_2021) => {
         $crate::tprint_impl($dest.as_ref(), &"")
     };
 
-    ($dest:expr, $($arg:tt)*) => {
+    ($dest:expr_2021, $($arg:tt)*) => {
         $crate::tprint_impl($dest.deref().clone(), &format_args!($($arg)*).to_string().as_str())
     };
 }
 
 #[macro_export]
 macro_rules! tpara {
-    ($target:expr) => {
+    ($target:expr_2021) => {
         compile_error!("tpara! macro requires at least two arguments");
     };
 
-    ($dest:expr, $($arg:tt)*) => {
+    ($dest:expr_2021, $($arg:tt)*) => {
         $crate::tpara_impl($dest.as_ref(), &format_args!($($arg)*).to_string().as_str())
     };
 }

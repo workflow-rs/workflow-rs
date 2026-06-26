@@ -1,12 +1,12 @@
 use super::bindings::*;
 use super::{LinkMatcherHandlerFn, Modifiers};
+use crate::Result;
 use crate::keys::Key;
 use crate::terminal::Event;
 use crate::terminal::EventHandlerFn;
 use crate::terminal::Options;
 use crate::terminal::TargetElement;
 use crate::terminal::Terminal;
-use crate::Result;
 use std::cell::{RefCell, RefMut};
 use std::fmt::Debug;
 use std::rc::Rc;
@@ -15,8 +15,8 @@ use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use wasm_bindgen::JsValue;
 use web_sys::Element;
-use workflow_core::channel::{unbounded, Receiver, Sender};
-use workflow_core::runtime::{self, platform, Platform};
+use workflow_core::channel::{Receiver, Sender, unbounded};
+use workflow_core::runtime::{self, Platform, platform};
 use workflow_dom::clipboard;
 use workflow_dom::inject::*;
 use workflow_dom::utils::body;
@@ -547,8 +547,10 @@ impl Xterm {
                     if runtime::is_nw() {
                         let clipboard = nw_sys::clipboard::get();
                         clipboard.set(&text);
-                    } else if let Err(err) = clipboard::write_text(&text).await {
-                        log_error!("{}", JsErrorData::from(err));
+                    } else {
+                        if let Err(err) = clipboard::write_text(&text).await {
+                            log_error!("{}", JsErrorData::from(err));
+                        }
                     }
 
                     if let Some(handler) = self.event_handler() {
