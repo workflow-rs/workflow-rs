@@ -8,7 +8,8 @@ cfg_if! {
         use std::sync::Arc;
         pub use log::{ Level, LevelFilter };
         use downcast::{ downcast_sync, AnySync };
-        pub use hexplay::{self, HexViewBuilder};
+        use crate::hex as hexplay;
+        pub use crate::hex::HexViewBuilder;
         pub use termcolor::Buffer;
         //use core::ops::Range;
 

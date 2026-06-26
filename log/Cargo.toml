@@ -28,7 +28,6 @@ cfg-if.workspace = true
 [target.'cfg(not(target_arch = "bpf"))'.dependencies]
 console.workspace = true
 downcast.workspace = true
-hexplay.workspace = true
 lazy_static.workspace = true
 log.workspace = true
 termcolor.workspace = true

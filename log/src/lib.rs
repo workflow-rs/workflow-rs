@@ -72,6 +72,9 @@ extern crate self as workflow_log;
 mod log;
 pub use self::log::*;
 
+#[cfg(not(target_arch = "bpf"))]
+mod hex;
+
 mod console;
 pub use self::console::*;
 
