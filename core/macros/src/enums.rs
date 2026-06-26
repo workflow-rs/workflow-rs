@@ -1,9 +1,9 @@
 use proc_macro::TokenStream;
-use proc_macro2::{Literal, Span, TokenTree};
+use proc_macro2::{Literal, Span};
 use quote::{ToTokens, quote};
 use std::convert::Into;
 use syn::{DeriveInput, parse_macro_input};
-use syn::{Error, Ident, Lit, LitStr, Meta, NestedMeta, Variant};
+use syn::{Error, Expr, ExprLit, Ident, Lit, LitStr, Meta, Variant};
 use workflow_macro_tools::attributes::*;
 
 #[derive(Debug)]
@@ -48,7 +48,7 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
         let attrs: Vec<_> = variant
             .attrs
             .iter()
-            .filter(|attr| attr.path.is_ident("descr") || attr.path.is_ident("describe"))
+            .filter(|attr| attr.path().is_ident("descr") || attr.path().is_ident("describe"))
             .collect();
         if attrs.len() > 1 {
             return Error::new_spanned(
@@ -71,19 +71,19 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
 
         let mut docs = Vec::new();
         for attr in variant.attrs.iter() {
-            let path_seg = attr.path.segments.last();
+            let path_seg = attr.path().segments.last();
             if path_seg.is_none() {
                 continue;
             }
             let segment = path_seg.unwrap();
-            if segment.ident == "doc" {
-                let mut tokens = attr.tokens.clone().into_iter();
-
-                if let Some(TokenTree::Punct(_punct)) = tokens.next()
-                    && let Some(TokenTree::Literal(lit)) = tokens.next()
-                {
-                    docs.push(lit.clone());
-                }
+            if segment.ident == "doc"
+                && let Meta::NameValue(name_value) = &attr.meta
+                && let Expr::Lit(ExprLit {
+                    lit: Lit::Str(lit_str),
+                    ..
+                }) = &name_value.value
+            {
+                docs.push(Literal::string(&lit_str.value()));
             }
         }
 
@@ -258,29 +258,29 @@ pub fn macro_handler(item: TokenStream) -> TokenStream {
 
 fn get_attribute(ast: &mut DeriveInput, name: &str) -> Option<LitStr> {
     let attr = ast.attrs.iter().enumerate().find_map(|(i, attr)| {
-        attr.parse_meta().ok().and_then(|meta| {
-            if meta.path().is_ident(name) {
-                match meta {
-                    Meta::List(meta_list) => {
-                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) = meta_list.nested.first() {
-                            Some((i, lit_str.clone()))
-                        } else {
-                            None
-                        }
+        let meta = &attr.meta;
+        if meta.path().is_ident(name) {
+            match meta {
+                Meta::List(meta_list) => meta_list
+                    .parse_args::<LitStr>()
+                    .ok()
+                    .map(|lit_str| (i, lit_str)),
+                Meta::NameValue(name_value) => {
+                    if let Expr::Lit(ExprLit {
+                        lit: Lit::Str(lit_str),
+                        ..
+                    }) = &name_value.value
+                    {
+                        Some((i, lit_str.clone()))
+                    } else {
+                        None
                     }
-                    Meta::NameValue(name_value) => {
-                        if let Lit::Str(lit_str) = name_value.lit {
-                            Some((i, lit_str))
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
                 }
-            } else {
-                None
+                _ => None,
             }
-        })
+        } else {
+            None
+        }
     });
 
     if let Some((index, attr)) = attr {

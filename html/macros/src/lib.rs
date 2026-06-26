@@ -1,10 +1,11 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    DeriveInput, Meta, NestedMeta,
+    DeriveInput, Meta, Token,
     ext::IdentExt,
     parse::{Parse, ParseStream},
     parse_macro_input,
+    punctuated::Punctuated,
 };
 mod element;
 //mod state;
@@ -117,18 +118,20 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
 
             if !attrs.is_empty() {
                 let attr = attrs.remove(0);
-                let meta = attr.parse_meta().unwrap();
-                if let Meta::List(list) = meta {
-                    //println!("meta-list: {:#?}", list);
-                    //println!("meta-list.path: {:#?}", list.path.get_ident().unwrap().to_string());
-                    //println!("nested: {:?}", list.nested);
-                    for item in list.nested.iter() {
-                        if let NestedMeta::Meta(Meta::NameValue(name_value)) = item {
+                if let Meta::List(list) = &attr.meta {
+                    let nested = list
+                        .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                        .unwrap();
+                    for item in nested.iter() {
+                        if let Meta::NameValue(name_value) = item {
                             let key = name_value.path.get_ident().unwrap().to_string();
-                            let value: String = match &name_value.lit {
-                                syn::Lit::Int(v) => v.to_string(),
-                                syn::Lit::Str(v) => v.value(),
-                                syn::Lit::Bool(v) => v.value().to_string(),
+                            let value: String = match &name_value.value {
+                                syn::Expr::Lit(syn::ExprLit { lit, .. }) => match lit {
+                                    syn::Lit::Int(v) => v.to_string(),
+                                    syn::Lit::Str(v) => v.value(),
+                                    syn::Lit::Bool(v) => v.value().to_string(),
+                                    _ => "".to_string(),
+                                },
                                 _ => "".to_string(),
                             };
                             //println!("key: {}, value: {}", key, value);

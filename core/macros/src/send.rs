@@ -1,11 +1,11 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Error, ExprAsync, ExprAwait, parse_macro_input};
+use syn::{Error, ExprAsync, ExprAwait};
 
 pub fn call_async_no_send(input: TokenStream) -> TokenStream {
-    let input = match parse_macro_input::parse::<ExprAsync>(input.clone()) {
+    let input = match syn::parse::<ExprAsync>(input.clone()) {
         Ok(block) => quote! {#block.await},
-        Err(_) => match parse_macro_input::parse::<ExprAwait>(input) {
+        Err(_) => match syn::parse::<ExprAwait>(input) {
             Ok(block) => quote! {#block},
             Err(err) => {
                 return TokenStream::from(

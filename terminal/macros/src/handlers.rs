@@ -4,12 +4,11 @@ use proc_macro2::{Ident, Span};
 use quote::quote;
 use std::convert::Into;
 use syn::{
-    DeriveInput, Error, Expr, ExprLit, ExprPath, Lit, LitStr, Meta, NestedMeta, Path, PathSegment,
-    Result, Token,
+    DeriveInput, Error, Expr, ExprLit, ExprPath, Lit, LitStr, Meta, Path, PathSegment, Result,
+    Token,
     parse::{Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
-    token::Colon2,
 };
 
 #[derive(Debug)]
@@ -162,7 +161,7 @@ fn render(handler: DeclareHandler) -> TokenStream {
 }
 
 fn ident_to_expr(ident: Ident) -> Expr {
-    let mut segments = Punctuated::<PathSegment, Colon2>::default();
+    let mut segments = Punctuated::<PathSegment, Token![::]>::default();
     segments.push_value(PathSegment::from(ident));
 
     let path = Path {
@@ -179,29 +178,29 @@ fn ident_to_expr(ident: Ident) -> Expr {
 
 fn get_attribute(ast: &mut DeriveInput, name: &str) -> Option<LitStr> {
     let attr = ast.attrs.iter().enumerate().find_map(|(i, attr)| {
-        attr.parse_meta().ok().and_then(|meta| {
-            if meta.path().is_ident(name) {
-                match meta {
-                    Meta::List(meta_list) => {
-                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) = meta_list.nested.first() {
-                            Some((i, lit_str.clone()))
-                        } else {
-                            None
-                        }
+        let meta = &attr.meta;
+        if meta.path().is_ident(name) {
+            match meta {
+                Meta::List(meta_list) => meta_list
+                    .parse_args::<LitStr>()
+                    .ok()
+                    .map(|lit_str| (i, lit_str)),
+                Meta::NameValue(name_value) => {
+                    if let Expr::Lit(ExprLit {
+                        lit: Lit::Str(lit_str),
+                        ..
+                    }) = &name_value.value
+                    {
+                        Some((i, lit_str.clone()))
+                    } else {
+                        None
                     }
-                    Meta::NameValue(name_value) => {
-                        if let Lit::Str(lit_str) = name_value.lit {
-                            Some((i, lit_str))
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
                 }
-            } else {
-                None
+                _ => None,
             }
-        })
+        } else {
+            None
+        }
     });
 
     if let Some((index, attr)) = attr {
