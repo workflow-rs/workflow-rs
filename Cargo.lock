@@ -776,6 +776,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "core-foundation"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2a6cd9ae233e7f62ba4e9353e81a88df7fc8a5987b8d445b4d90c879bd156f6"
+dependencies = [
+ "core-foundation-sys",
+ "libc",
+]
+
+[[package]]
 name = "core-foundation-sys"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -788,7 +798,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c07782be35f9e1140080c6b96f0d44b739e2278479f64e02fdab4e32dfd8b081"
 dependencies = [
  "bitflags 1.3.2",
- "core-foundation",
+ "core-foundation 0.9.4",
  "core-graphics-types",
  "foreign-types 0.5.0",
  "libc",
@@ -801,7 +811,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45390e6114f68f718cc7a830514a96f903cccd70d02a8f6d9f643ac4ba45afaf"
 dependencies = [
  "bitflags 1.3.2",
- "core-foundation",
+ "core-foundation 0.9.4",
  "libc",
 ]
 
@@ -1461,7 +1471,7 @@ dependencies = [
  "bitflags 2.8.0",
  "cfg_aliases 0.2.1",
  "cgl",
- "core-foundation",
+ "core-foundation 0.9.4",
  "dispatch",
  "glutin_egl_sys",
  "glutin_wgl_sys",
@@ -1647,7 +1657,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "rustls",
- "rustls-native-certs",
+ "rustls-native-certs 0.7.0",
  "rustls-pki-types",
  "tokio",
  "tokio-rustls",
@@ -2107,10 +2117,10 @@ dependencies = [
  "libc",
  "log",
  "openssl",
- "openssl-probe",
+ "openssl-probe 0.1.5",
  "openssl-sys",
  "schannel",
- "security-framework",
+ "security-framework 2.11.0",
  "security-framework-sys",
  "tempfile",
 ]
@@ -2494,6 +2504,12 @@ name = "openssl-probe"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
+
+[[package]]
+name = "openssl-probe"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
 
 [[package]]
 name = "openssl-src"
@@ -3021,7 +3037,7 @@ dependencies = [
  "pin-project-lite",
  "quinn",
  "rustls",
- "rustls-native-certs",
+ "rustls-native-certs 0.7.0",
  "rustls-pemfile",
  "rustls-pki-types",
  "serde",
@@ -3188,11 +3204,23 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f1fb85efa936c42c6d5fc28d2629bb51e4b2f4b8a5211e297d599cc5a093792"
 dependencies = [
- "openssl-probe",
+ "openssl-probe 0.1.5",
  "rustls-pemfile",
  "rustls-pki-types",
  "schannel",
- "security-framework",
+ "security-framework 2.11.0",
+]
+
+[[package]]
+name = "rustls-native-certs"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dab5152771c58876a2146916e53e35057e1a4dfa2b9df0f0305b07f611fdea4d"
+dependencies = [
+ "openssl-probe 0.2.1",
+ "rustls-pki-types",
+ "schannel",
+ "security-framework 3.6.0",
 ]
 
 [[package]]
@@ -3283,7 +3311,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c627723fd09706bacdb5cf41499e95098555af3c3c29d014dc3c458ef6be11c0"
 dependencies = [
  "bitflags 2.8.0",
- "core-foundation",
+ "core-foundation 0.9.4",
+ "core-foundation-sys",
+ "libc",
+ "security-framework-sys",
+]
+
+[[package]]
+name = "security-framework"
+version = "3.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d17b898a6d6948c3a8ee4372c17cb384f90d2e6e912ef00895b14fd7ab54ec38"
+dependencies = [
+ "bitflags 2.8.0",
+ "core-foundation 0.10.1",
  "core-foundation-sys",
  "libc",
  "security-framework-sys",
@@ -3291,9 +3332,9 @@ dependencies = [
 
 [[package]]
 name = "security-framework-sys"
-version = "2.11.0"
+version = "2.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "317936bbbd05227752583946b9e66d7ce3b489f84e11a94a510b4437fef407d7"
+checksum = "321c8673b092a9a42605034a9879d73cb79101ed5fd117bc9a597b89b4e9e61a"
 dependencies = [
  "core-foundation-sys",
  "libc",
@@ -3609,7 +3650,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba3a3adc5c275d719af8cb4272ea1c4a6d668a777f37e115f6d11ddbc1c8e0e7"
 dependencies = [
  "bitflags 1.3.2",
- "core-foundation",
+ "core-foundation 0.9.4",
  "system-configuration-sys",
 ]
 
@@ -3873,15 +3914,15 @@ dependencies = [
 
 [[package]]
 name = "tokio-tungstenite"
-version = "0.23.1"
+version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6989540ced10490aaf14e6bad2e3d33728a2813310a0c71d1574304c49631cd"
+checksum = "8f72a05e828585856dacd553fba484c242c46e391fb0e58917c942ee9202915c"
 dependencies = [
  "futures-util",
  "log",
  "native-tls",
  "rustls",
- "rustls-native-certs",
+ "rustls-native-certs 0.8.4",
  "rustls-pki-types",
  "tokio",
  "tokio-native-tls",
@@ -3986,23 +4027,21 @@ checksum = "5be21190ff5d38e8b4a2d3b6a3ae57f612cc39c96e83cedeaf7abc338a8bac4a"
 
 [[package]]
 name = "tungstenite"
-version = "0.23.0"
+version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e2e2ce1e47ed2994fd43b04c8f618008d4cabdd5ee34027cf14f9d918edd9c8"
+checksum = "6c01152af293afb9c7c2a57e4b559c5620b421f6d133261c60dd2d0cdb38e6b8"
 dependencies = [
- "byteorder",
  "bytes",
  "data-encoding",
  "http",
  "httparse",
  "log",
  "native-tls",
- "rand 0.8.5",
+ "rand 0.9.4",
  "rustls",
  "rustls-pki-types",
  "sha1",
- "thiserror 1.0.61",
- "utf-8",
+ "thiserror 2.0.11",
 ]
 
 [[package]]
@@ -4074,12 +4113,6 @@ dependencies = [
  "percent-encoding",
  "serde",
 ]
-
-[[package]]
-name = "utf-8"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
 
 [[package]]
 name = "utf8_iter"
@@ -4348,7 +4381,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "425ba64c1e13b1c6e8c5d2541c8fac10022ca584f33da781db01b5756aef1f4e"
 dependencies = [
  "block2",
- "core-foundation",
+ "core-foundation 0.9.4",
  "home",
  "jni",
  "log",
@@ -4688,7 +4721,7 @@ dependencies = [
  "calloop",
  "cfg_aliases 0.2.1",
  "concurrent-queue",
- "core-foundation",
+ "core-foundation 0.9.4",
  "core-graphics",
  "cursor-icon",
  "dpi",

@@ -37,8 +37,8 @@ impl From<Message> for tungstenite::Message {
 impl From<tungstenite::Message> for Message {
     fn from(message: tungstenite::Message) -> Self {
         match message {
-            TsMessage::Text(text) => Message::Text(text),
-            TsMessage::Binary(data) => Message::Binary(data),
+            TsMessage::Text(text) => Message::Text(text.to_string()),
+            TsMessage::Binary(data) => Message::Binary(data.to_vec()),
             TsMessage::Close(_) => Message::Close,
             _ => panic!(
                 "TryFrom<tungstenite::Message> for Message - invalid message type: {message:?}",
@@ -49,14 +49,12 @@ impl From<tungstenite::Message> for Message {
 
 impl From<WebSocketConfig> for TsWebSocketConfig {
     fn from(config: WebSocketConfig) -> Self {
-        TsWebSocketConfig {
-            write_buffer_size: config.write_buffer_size,
-            max_write_buffer_size: config.max_write_buffer_size,
-            max_message_size: config.max_message_size,
-            max_frame_size: config.max_frame_size,
-            accept_unmasked_frames: config.accept_unmasked_frames,
-            ..Default::default()
-        }
+        TsWebSocketConfig::default()
+            .write_buffer_size(config.write_buffer_size)
+            .max_write_buffer_size(config.max_write_buffer_size)
+            .max_message_size(config.max_message_size)
+            .max_frame_size(config.max_frame_size)
+            .accept_unmasked_frames(config.accept_unmasked_frames)
     }
 }
 

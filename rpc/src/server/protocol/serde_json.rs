@@ -127,5 +127,5 @@ where
         Some(payload),
         None,
     ))?;
-    Ok(Message::Text(json))
+    Ok(Message::Text(json.into()))
 }

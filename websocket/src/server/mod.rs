@@ -311,7 +311,7 @@ where
                     Error::WebSocketError(wse) => match **wse {
                         WebSocketError::ConnectionClosed
                         | WebSocketError::Protocol(_)
-                        | WebSocketError::Utf8 => {}
+                        | WebSocketError::Utf8(_) => {}
                         _ => {
                             log_error!("Error processing connection: {}", e);
                         }

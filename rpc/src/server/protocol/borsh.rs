@@ -58,8 +58,9 @@ where
         msg: Message,
         sink: &WebSocketSink,
     ) -> WebSocketResult<()> {
-        let data = &msg.into_data();
+        let data = msg.into_data();
         let req: BorshClientMessage<Ops, Id> = data
+            .as_ref()
             .try_into()
             .map_err(|_| WebSocketError::MalformedMessage)?;
 
@@ -136,5 +137,5 @@ where
         &payload,
     )
     .try_to_vec()?;
-    Ok(Message::Binary(data))
+    Ok(Message::Binary(data.into()))
 }
