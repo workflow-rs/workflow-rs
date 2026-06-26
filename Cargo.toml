@@ -233,12 +233,12 @@ zeroize = { version = "1.6.0", default-features = false, features = ["alloc"] }
 
 
 
-egui = "0.31.0"
+egui = "0.34.3"
 # epaint = "=0.28.1"
 # egui_plot = "=0.28.1"
 # egui_extras = { version = "=0.28.1", features = ["svg","image"] }
 # eframe = "0.28.1"
-eframe = { version = "0.31.0", default-features = false, features = [
+eframe = { version = "0.34.3", default-features = false, features = [
 #     # "accesskit",     # Make egui compatible with screen readers. NOTE: adds a lot of dependencies.
 #     # "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
