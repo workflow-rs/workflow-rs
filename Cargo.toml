@@ -166,7 +166,7 @@ async-channel = "2.0.0"
 async-trait = "0.1.74"
 atomic_float = "1.0.0"
 base64 = "0.22.1"
-borsh = { version = "1.5.1", features = ["derive", "rc"] }
+borsh = { version = "1.7", features = ["derive", "rc"] }
 bs58 = "0.5.0"
 cfg-if = "1.0.0"
 chrono = "0.4.31"
@@ -199,7 +199,7 @@ numtoa = "0.2.4"
 nw-sys = { version = "0.1.6" }
 pad = "0.1.6"
 parse-variants = "1.0.4"
-proc-macro-error = { version = "1.0.4", default-features = false }
+proc-macro-error3 = { version = "3", default-features = false }
 proc-macro2 = { version = "1.0.50" }
 quote = "1.0.38"
 rand = "0.10"

@@ -17,7 +17,7 @@ proc-macro = true
 [dependencies]
 convert_case = "0.6.0"
 parse-variants = "1.0.1"
-proc-macro-error = { version = "1.0.4", default-features = false }
+proc-macro-error3 = { version = "3", default-features = false }
 proc-macro2 = { version = "1.0.50" }
 quote = "1.0.23"
 sha2 = "0.10.7"

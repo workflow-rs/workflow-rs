@@ -360,26 +360,26 @@ dependencies = [
 
 [[package]]
 name = "borsh"
-version = "1.5.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6362ed55def622cddc70a4746a68554d7b687713770de539e59a739b249f8ed"
+checksum = "2f3f6da4992df95bbcd9af42a6c7dcb994498fc9048230405f3b36ff7cd3f145"
 dependencies = [
  "borsh-derive",
+ "bytes",
  "cfg_aliases 0.2.1",
 ]
 
 [[package]]
 name = "borsh-derive"
-version = "1.5.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3ef8005764f53cd4dca619f5bf64cafd4664dada50ece25e4d81de54c80cc0b"
+checksum = "3ae8fb4fb5740e4b2c4884ff95f5f32f5e8479db1e8fd8eb49ddbe09eb09bb7c"
 dependencies = [
  "once_cell",
  "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn 2.0.98",
- "syn_derive",
 ]
 
 [[package]]
@@ -2898,26 +2898,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macro-error"
-version = "1.0.4"
+name = "proc-macro-error-attr3"
+version = "3.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
+checksum = "34e4dd828515431dd6c4a030d26f7eaed7dd4778226e9d2bb968d65ca4ec3d4d"
 dependencies = [
- "proc-macro-error-attr",
  "proc-macro2",
  "quote",
- "version_check",
 ]
 
 [[package]]
-name = "proc-macro-error-attr"
-version = "1.0.4"
+name = "proc-macro-error3"
+version = "3.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
+checksum = "5ee475e440453418ff1335189eddf7101ba502cd818ab7ae04209bc83aa925aa"
 dependencies = [
+ "proc-macro-error-attr3",
  "proc-macro2",
  "quote",
- "version_check",
 ]
 
 [[package]]
@@ -2974,7 +2972,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls",
- "socket2 0.5.7",
+ "socket2 0.6.4",
  "thiserror 2.0.11",
  "tokio",
  "tracing",
@@ -3771,18 +3769,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "syn_derive"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1329189c02ff984e9736652b1631330da25eaa6bc639089ed4915d25446cbe7b"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn 2.0.98",
 ]
 
 [[package]]
@@ -5023,7 +5009,7 @@ version = "0.19.0"
 dependencies = [
  "convert_case",
  "parse-variants",
- "proc-macro-error",
+ "proc-macro-error3",
  "proc-macro2",
  "quote",
  "regex",
@@ -5105,7 +5091,7 @@ version = "0.19.0"
 dependencies = [
  "convert_case",
  "parse-variants",
- "proc-macro-error",
+ "proc-macro-error3",
  "proc-macro2",
  "quote",
  "sha2",
@@ -5154,7 +5140,7 @@ name = "workflow-html-macros"
 version = "0.19.0"
 dependencies = [
  "lazy_static",
- "proc-macro-error",
+ "proc-macro-error3",
  "proc-macro2",
  "quote",
  "rand 0.10.1",
@@ -5295,7 +5281,7 @@ name = "workflow-rpc-macros"
 version = "0.19.0"
 dependencies = [
  "parse-variants",
- "proc-macro-error",
+ "proc-macro-error3",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -5386,7 +5372,7 @@ version = "0.19.0"
 dependencies = [
  "convert_case",
  "parse-variants",
- "proc-macro-error",
+ "proc-macro-error3",
  "proc-macro2",
  "quote",
  "sha2",
@@ -5428,7 +5414,7 @@ version = "0.19.0"
 dependencies = [
  "convert_case",
  "parse-variants",
- "proc-macro-error",
+ "proc-macro-error3",
  "proc-macro2",
  "quote",
  "sha2",
@@ -5474,7 +5460,7 @@ name = "workflow-wasm-macros"
 version = "0.19.0"
 dependencies = [
  "js-sys",
- "proc-macro-error",
+ "proc-macro-error3",
  "proc-macro2",
  "quote",
  "syn 1.0.109",

@@ -1,7 +1,7 @@
 use proc_macro2::{Ident, Literal, TokenStream};
 //use proc_macro::TokenTree;
 use crate::attributes::{Attributes, parse_attributes};
-use proc_macro_error::abort;
+use proc_macro_error3::abort;
 use quote::{ToTokens, quote};
 use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};

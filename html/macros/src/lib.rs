@@ -12,7 +12,7 @@ mod attributes;
 use element::Nodes;
 //use state::set_attributes;
 use attributes::{AttributeName, AttributeNameString};
-use proc_macro_error::proc_macro_error;
+use proc_macro_error3::proc_macro_error;
 
 #[proc_macro]
 #[proc_macro_error]

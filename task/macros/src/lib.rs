@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use proc_macro_error::proc_macro_error;
+use proc_macro_error3::proc_macro_error;
 use quote::{ToTokens, quote};
 use syn::parse_macro_input;
 mod task;
