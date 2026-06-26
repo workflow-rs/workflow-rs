@@ -150,7 +150,7 @@ cfg_if! {
         pub fn parse(path : String) -> PathBuf {
 
             if let Some(stripped) = path.strip_prefix('~') {
-                let home_dir: PathBuf = home::home_dir().unwrap().into();
+                let home_dir: PathBuf = home::home_dir().unwrap();
                 home_dir.join(stripped)
             } else {
                 PathBuf::from(path)

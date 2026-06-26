@@ -31,7 +31,6 @@ workflow-log.workspace = true
 [target.'cfg(not(target_arch = "bpf"))'.dependencies]
 # getrandom = {version = "^0.2", features=["js"]}
 async-channel.workspace = true
-async-std.workspace = true
 bs58.workspace = true
 futures.workspace = true
 getrandom.workspace = true

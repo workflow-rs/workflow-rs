@@ -164,7 +164,6 @@ arc-swap = "1.6.0"
 argon2 = "0.5.2"
 async-channel = "2.0.0"
 async-fs = "2.1"
-async-std = { version = "1.13", features = ['attributes'] }
 async-trait = "0.1.74"
 atomic_float = "1.0.0"
 base64 = "0.22.1"
