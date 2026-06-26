@@ -32,19 +32,17 @@ tokio.workspace = true
 [features]
 default = ["reqwest/default"]
 
+blocking = ["reqwest/blocking"]
 http2 = ["reqwest/http2"]
+http3 = ["reqwest/http3"]
 
 native-tls = ["reqwest/native-tls"]
-native-tls-alpn = ["reqwest/native-tls-alpn"]
 native-tls-vendored = ["reqwest/native-tls-vendored"]
 
-rustls-tls = ["reqwest/rustls-tls"]
-rustls-tls-no-provider = ["reqwest/rustls-tls-no-provider"]
-
-rustls-tls-manual-roots = ["reqwest/rustls-tls-manual-roots"]
-rustls-tls-webpki-roots = ["reqwest/rustls-tls-webpki-roots"]
-rustls-tls-native-roots = ["reqwest/rustls-tls-native-roots"]
-rustls-tls-manual-roots-no-provider = ["reqwest/rustls-tls-manual-roots-no-provider"]
+# reqwest 0.13 unified its rustls features; cert verification uses the OS
+# platform verifier (rustls-platform-verifier) rather than a bundled root set.
+rustls = ["reqwest/rustls"]
+rustls-no-provider = ["reqwest/rustls-no-provider"]
 
 charset = ["reqwest/charset"]
 cookies = ["reqwest/cookies"]
@@ -56,5 +54,5 @@ deflate = ["reqwest/deflate"]
 
 socks = ["reqwest/socks"]
 
-# Use the system's proxy configuration.
-macos-system-configuration = ["reqwest/macos-system-configuration"]
+# Use the system's proxy configuration (cross-platform in reqwest 0.13).
+system-proxy = ["reqwest/system-proxy"]
