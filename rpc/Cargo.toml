@@ -31,7 +31,6 @@ default = ["native-tls"]
 
 [dependencies]
 ahash.workspace = true
-async-std.workspace = true
 async-trait.workspace = true
 borsh.workspace = true
 downcast-rs.workspace = true

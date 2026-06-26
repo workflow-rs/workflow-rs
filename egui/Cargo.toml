@@ -41,7 +41,6 @@ workflow-wasm.workspace = true
 workflow-dom.workspace = true
 
 async-channel.workspace = true
-async-std.workspace = true
 async-trait.workspace = true
 futures.workspace = true
 getrandom.workspace = true

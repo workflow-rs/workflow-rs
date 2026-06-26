@@ -1,6 +1,7 @@
 //!
 //! [`task`](self) module provides helper functions for use with async closures that *operate uniformly*
-//! in native ([`tokio`](https://crates.io/crates/tokio)-backed) and WASM ([`async_std`]-backed) environments
+//! in native ([`tokio`](https://crates.io/crates/tokio)-backed) and WASM
+//! (`wasm-bindgen-futures`/`futures-lite`-backed) environments
 //! (i.e. a web browser).
 //!
 //! Following functions are are available:
@@ -71,9 +72,8 @@ pub mod wasm {
                 // wasm32 spawn shim
                 // spawn and spawn_local are currently not available on wasm32 architectures
                 // ironically, block_on is but it spawns a task instead of blocking it
-                // unfortunately access to [`async_std::task::Builder::local()`] is
-                // private.
-                async_std::task::block_on(_future);
+                // on wasm we spawn the future onto the browser event loop.
+                wasm_bindgen_futures::spawn_local(async move { let _ = _future.await; });
             } else {
                 panic!("workflow_core::task::wasm::spawn() is not allowed on non-wasm target");
             }
@@ -93,9 +93,8 @@ pub mod wasm {
                 // wasm32 spawn shim
                 // spawn and spawn_local are currently not available on wasm32 architectures
                 // ironically, block_on is but it spawns a task instead of blocking it
-                // unfortunately access to [`async_std::task::Builder::local()`] is
-                // private.
-                async_std::task::block_on(_future);
+                // on wasm we spawn the future onto the browser event loop.
+                wasm_bindgen_futures::spawn_local(async move { let _ = _future.await; });
             } else {
                 panic!("workflow_core::task::wasm::spawn() is not allowed on non-wasm target");
             }
@@ -110,15 +109,15 @@ pub mod wasm {
                 yield_executor::{yield_executor,Yield},
                 sleep::{sleep,Sleep}
             };
-            pub use async_std::task::yield_now;
+            pub use futures_lite::future::yield_now;
             pub use workflow_core_macros::call_async_no_send;
         } else {
             pub use crate::native::{
                 overrides::disable_persistent_timer_overrides,
                 interval::{interval,Interval},
             };
-            pub use async_std::task::sleep;
-            pub use async_std::task::yield_now;
+            pub use tokio::time::sleep;
+            pub use futures_lite::future::yield_now;
             pub use workflow_core_macros::call_async_no_send;
         }
     }

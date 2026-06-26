@@ -27,7 +27,7 @@ extern "C" {
     fn cancel_animation_frame(request_id: JsValue);
 }
 
-pub use async_std::task::yield_now;
+pub use futures_lite::future::yield_now;
 
 pub async fn yield_executor() {
     if !is_chrome_extension() {

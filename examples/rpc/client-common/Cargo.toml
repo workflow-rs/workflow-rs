@@ -15,4 +15,3 @@ workflow-rpc.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { workspace = true, default-features = false, features = ['io-util','time','sync','macros','rt-multi-thread'] }
-async-std = { workspace = true, features = ['attributes'] }

@@ -1,4 +1,4 @@
-//! [`async_std::channel`] re-exports and shims
+//! [`async-channel`](async_channel) re-exports and shims
 use crate::id::Id;
 pub use async_channel::{
     Receiver, RecvError, SendError, Sender, TryRecvError, TrySendError, bounded, unbounded,
@@ -63,8 +63,8 @@ impl<T, R> DuplexChannel<T, R> {
     }
 }
 
-/// [`Channel`] struct that combines [`async_std::channel::Sender`] and
-/// [`async_std::channel::Receiver`] into a single struct with `sender`
+/// [`Channel`] struct that combines [[`async_channel::Sender`]] and
+/// [[`async_channel::Receiver`]] into a single struct with `sender`
 /// and `receiver` members representing a single channel.
 #[derive(Debug, Clone)]
 pub struct Channel<T = ()> {

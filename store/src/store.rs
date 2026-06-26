@@ -5,8 +5,8 @@ use std::hash::{Hash, Hasher};
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
-        use async_std::path::PathBuf;
-        use async_std::fs;
+        use std::path::PathBuf;
+        use async_fs as fs;
     } else {
         // use base64::{Engine as _, engine::general_purpose};
     }
@@ -129,7 +129,7 @@ impl Store {
         } else {
             pub async fn exists(&self) -> Result<bool> {
                 let filename = parse(self.filename());
-                Ok(filename.exists().await)
+                Ok(fs::metadata(&filename).await.is_ok())
             }
 
             pub async fn read_to_string(&self) -> Result<String> {
