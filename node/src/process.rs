@@ -5,10 +5,10 @@ use crate::child_process::{
     ChildProcess, KillSignal, SpawnArgs, SpawnOptions, spawn_with_args_and_options,
 };
 use crate::error::Error;
+use crate::node_sys::*;
 use crate::result::Result;
 use borsh::{BorshDeserialize, BorshSerialize};
 use futures::{FutureExt, select};
-use node_sys::*;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::path::PathBuf;

@@ -44,7 +44,8 @@ members = [
     "examples/websocket/server",
     "examples/terminal/cli",
     "examples/terminal/native",
-    "examples/terminal/wasm", 
+    "examples/terminal/wasm",
+    "tests/wasm32",
 ]
 
 [workspace.package]
@@ -194,7 +195,6 @@ lazy_static = "1.4.0"
 log = "0.4.20"
 manual_future = "0.1.1"
 node-child-process = "0.1.1"
-node-sys = "0.4.2"
 numtoa = "0.2.4"
 # nw-sys= { path = "../nw-sys" }
 nw-sys = { version = "0.1.6" }

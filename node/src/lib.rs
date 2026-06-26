@@ -12,6 +12,7 @@
 pub mod child_process;
 pub mod error;
 pub mod fs;
+pub mod node_sys;
 pub mod process;
 pub mod require;
 pub mod result;
