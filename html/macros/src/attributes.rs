@@ -1,6 +1,5 @@
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{ToTokens, quote};
-use rand::Rng;
 use syn::{
     Block, Result, Token,
     ext::IdentExt,
@@ -220,8 +219,7 @@ impl<'a> Attribute<'a> {
             },
             None => match self.attr_type {
                 AttributeType::Ref => {
-                    let mut rng = rand::thread_rng();
-                    let code = format!("ref_{}", rng.r#gen::<u32>());
+                    let code = format!("ref_{}", rand::random::<u32>());
                     quote!(#code)
                 }
                 _ => self.name.to_token_stream(),

@@ -1,0 +1,5 @@
+# getrandom 0.3+ requires an explicit backend on wasm32-unknown-unknown.
+# We use the `wasm_js` backend (browser crypto), paired with the
+# `getrandom = { features = ["wasm_js"] }` dependency.
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']

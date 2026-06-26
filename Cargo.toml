@@ -183,7 +183,8 @@ faster-hex = "0.10.0"
 filetime = "0.2.25"
 futures = "0.3.31"
 futures-util = { version = "0.3.29", default-features = false, features = ["sink", "std"] }
-getrandom = {version = "0.2.10", features=["js"]}
+getrandom = { version = "0.4", features = ["wasm_js"] }
+getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
 home = "0.5.11"
 web-time = "1.1.0"
 itertools = "0.14.0"
@@ -201,7 +202,7 @@ parse-variants = "1.0.4"
 proc-macro-error = { version = "1.0.4", default-features = false }
 proc-macro2 = { version = "1.0.50" }
 quote = "1.0.38"
-rand = { version = "0.8.5", features = ["getrandom"] }
+rand = "0.10"
 regex = "1.10.2"
 reqwest = { version = "0.12.4", default-features = false }
 ritehash = "0.2.0"
