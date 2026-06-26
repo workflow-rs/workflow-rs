@@ -35,7 +35,7 @@ workflow-node.workspace = true
 workflow-wasm.workspace = true
 
 [target.'cfg(not(any(target_arch = "wasm32", target_os="solana")))'.dependencies]
-async-fs.workspace = true
+tokio = { workspace = true, features = ["fs"] }
 home.workspace = true
 filetime.workspace = true
 

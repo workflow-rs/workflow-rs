@@ -6,7 +6,7 @@ use std::hash::{Hash, Hasher};
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
         use std::path::PathBuf;
-        use async_fs as fs;
+        use tokio::fs;
     } else {
         // use base64::{Engine as _, engine::general_purpose};
     }
