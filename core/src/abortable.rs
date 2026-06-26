@@ -99,8 +99,13 @@ impl TryFrom<&JsValue> for Abortable {
             wasm_bindgen::__rt::std::result::Result::Err(value.clone())
         } else {
             unsafe {
+                // wasm-bindgen 0.2.126 changed the exported-struct ABI from a
+                // bare u32 to `WasmPtr`; wrap the unwrapped pointer accordingly.
                 wasm_bindgen::__rt::std::result::Result::Ok(
-                    <Self as FromWasmAbi>::from_abi(ptr).clone(),
+                    <Self as FromWasmAbi>::from_abi(wasm_bindgen::__rt::WasmPtr::from_usize(
+                        ptr as usize,
+                    ))
+                    .clone(),
                 )
             }
         }

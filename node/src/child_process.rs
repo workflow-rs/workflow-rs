@@ -31,11 +31,11 @@ extern "C" {
     ) -> ChildProcess;
 
     #[wasm_bindgen(extends = Array, js_namespace = child_process)]
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq)]
     pub type SpawnArgs;
 
     #[wasm_bindgen(extends = Object, js_namespace = child_process)]
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq)]
     pub type SpawnOptions;
 
     #[wasm_bindgen(extends = EventEmitter, js_namespace = child_process)]

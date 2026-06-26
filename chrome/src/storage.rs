@@ -136,7 +136,7 @@ impl StorageData {
     }
 
     pub fn has(&self, key: &str) -> bool {
-        self.inner.has_own_property(&key.into())
+        js_sys::Object::has_own(&self.inner, &key.into())
     }
 
     pub fn get_value(&self, key: &str) -> Result<Option<JsValue>, JsValue> {
