@@ -13,8 +13,10 @@
 //! rustls::crypto::ring::default_provider().install_default().unwrap();
 //! ```
 //!
-//! In the browser/WASM environment the host `WebSocket` handles TLS, so no
-//! provider is required.
+//! If exactly one rustls provider is compiled into the binary, it is selected
+//! automatically and no explicit install is needed; an install is only required
+//! when none — or more than one — provider is present. In the browser/WASM
+//! environment the host `WebSocket` handles TLS, so no provider is required.
 //!
 
 pub mod error;

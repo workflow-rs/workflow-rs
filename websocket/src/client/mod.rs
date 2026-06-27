@@ -12,9 +12,13 @@
 //! rustls::crypto::ring::default_provider().install_default().unwrap();
 //! ```
 //!
-//! Without it, opening a `wss://` connection fails with *"Could not automatically
-//! determine the process-level CryptoProvider"*. In the browser/WASM environment
-//! TLS is handled by the host `WebSocket`, so no provider is required.
+//! If exactly one rustls provider is compiled into the binary, it is selected
+//! automatically and no explicit install is needed; an install is only required
+//! when none — or more than one — provider is present. With more than one and no
+//! installed default, opening a `wss://` connection fails with *"Could not
+//! automatically determine the process-level CryptoProvider"*. In the
+//! browser/WASM environment TLS is handled by the host `WebSocket`, so no
+//! provider is required.
 //!
 
 use cfg_if::cfg_if;
