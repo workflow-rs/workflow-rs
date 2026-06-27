@@ -4,6 +4,8 @@
 
 use std::fmt;
 
+/// Renders the ANSI escape sequence that erases the current terminal line
+/// and returns the cursor to the start of the line.
 pub struct ClearLine;
 
 impl fmt::Display for ClearLine {
@@ -24,6 +26,7 @@ impl AsRef<str> for ClearLine {
     }
 }
 
+/// Renders the ANSI escape sequence that clears the entire terminal screen.
 pub struct ClearScreen;
 
 impl fmt::Display for ClearScreen {

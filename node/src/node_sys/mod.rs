@@ -11,6 +11,7 @@
     clippy::all,
     dead_code,
     deprecated,
+    missing_docs,
     unused_imports,
     non_snake_case,
     non_camel_case_types,

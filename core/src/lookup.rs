@@ -20,8 +20,13 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Custom result type used by [`LookupHandler`]
 pub type LookupResult<V, E> = std::result::Result<V, E>;
+/// Outcome of queuing a lookup request, indicating whether the caller initiated
+/// a new lookup or joined an already-pending one. Both variants carry a receiver
+/// that resolves once the lookup completes.
 pub enum RequestType<V, E> {
+    /// No lookup for this key was pending; the caller is responsible for performing it.
     New(Receiver<LookupResult<V, E>>),
+    /// A lookup for this key is already in progress; the caller merely awaits its result.
     Pending(Receiver<LookupResult<V, E>>),
 }
 
@@ -62,6 +67,7 @@ pub type SenderList<V, E> = Vec<Sender<LookupResult<V, E>>>;
 /// };
 /// ```
 pub struct LookupHandler<K, V, E> {
+    /// Map of in-flight lookups, associating each key with the senders awaiting its result.
     pub map: Arc<Mutex<HashMap<K, SenderList<V, E>>>>,
     pending: AtomicUsize,
 }

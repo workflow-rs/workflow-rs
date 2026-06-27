@@ -62,6 +62,8 @@ cfg_if! {
             pub use tokio::time::sleep;
             pub use crate::native::interval::{interval,Interval};
 
+            /// Spawns a `Send` future onto the tokio runtime, detaching the
+            /// resulting task.
             pub fn spawn<F, T>(future: F)
             where
                 F: Future<Output = T> + Send + 'static,
@@ -70,6 +72,8 @@ cfg_if! {
                 tokio::task::spawn(future);
             }
 
+            /// Not supported on native targets; provided for API parity with
+            /// the WASM implementation and never reached.
             pub fn dispatch<F, T>(_future: F)
             where
                 F: Future<Output = T> + 'static,
@@ -89,6 +93,8 @@ pub mod wasm {
     //! WASM implementation
     pub use super::*;
 
+    /// Spawns a `Send` future onto the browser event loop on the `wasm32`
+    /// target; panics on non-WASM targets.
     pub fn spawn<F, T>(_future: F)
     where
         F: Future<Output = T> + Send + 'static,
@@ -110,6 +116,9 @@ pub mod wasm {
         }
     }
 
+    /// Spawns a future onto the browser event loop without requiring it to be
+    /// `Send`. Like [`spawn`] but accepts non-`Send` futures on the `wasm32`
+    /// target; panics on non-WASM targets.
     // `dispatch()` is similar to `spawn()` but does not
     // impose `Send` requirement on the supplied future
     // when building for the `wasm32` target.

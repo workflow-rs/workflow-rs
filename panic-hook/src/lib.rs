@@ -107,15 +107,22 @@ cfg_if! {
             panic::set_hook(Box::new(hook));
         }
 
+        /// Displays captured panic logs. On native (non-WASM) builds this is
+        /// unsupported and panics, as panic logs are only collected under WASM.
         pub fn show_logs(){
             panic!("Native (non-WASM) platform build doesn't support panic logs");
         }
     }
 }
 
+/// Selects how panic output is presented when the hook is installed.
 pub enum Type {
+    /// Log the panic message and stack trace via `console.error`.
     Console,
+    /// Render the panic message into a full-screen DIV overlay, useful on
+    /// devices without access to console output.
     Popup,
+    /// Use the platform's native panic handling (non-WASM targets).
     Native,
 }
 /// Set the `console.error` panic hook the first time this is called. Subsequent

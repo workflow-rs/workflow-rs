@@ -3,6 +3,7 @@ use crate::ipc::method::*;
 use crate::ipc::notification::*;
 use crate::ipc::target::*;
 
+/// Identifier type used to correlate IPC requests with their responses.
 pub type IpcId = Id64;
 
 struct Pending<F> {
@@ -20,6 +21,8 @@ impl<F> Pending<F> {
 
 type PendingMap<Id, F> = Arc<Mutex<AHashMap<Id, Pending<F>>>>;
 
+/// Callback type invoked to deliver a Borsh-encoded response (or error) back
+/// to the originator of a pending IPC request.
 pub type BorshResponseFn = Arc<
     Box<dyn Fn(Vec<u8>, ResponseResult<Vec<u8>>, Option<&Duration>) -> Result<()> + Sync + Send>,
 >;
@@ -35,6 +38,9 @@ where
     notifications: Mutex<AHashMap<Ops, Arc<dyn NotificationTrait>>>,
 }
 
+/// IPC endpoint that handles inbound messages for a target context and
+/// maintains the registered method and notification handlers, keyed by the
+/// operation type `Ops`.
 pub struct Ipc<Ops>
 where
     Ops: OpsT,
@@ -59,6 +65,9 @@ impl<Ops> Ipc<Ops>
 where
     Ops: OpsT,
 {
+    /// Creates an IPC binding bound to the global context, registering it as
+    /// the global IPC handler source. Panics if a handler source is already
+    /// registered.
     pub fn try_new_global_binding<Ident>(identifier: Ident) -> Result<Arc<Self>>
     where
         Ident: ToString,
@@ -78,6 +87,9 @@ where
         Ok(ipc)
     }
 
+    /// Creates an IPC binding bound to the given window's context, registering
+    /// it as the global IPC handler source. Panics if a handler source is
+    /// already registered.
     pub fn try_new_window_binding<Ident>(
         window: &Arc<Window>,
         identifier: Ident,
@@ -175,6 +187,9 @@ where
         Ok(())
     }
 
+    /// Processes an incoming Borsh-encoded IPC message, dispatching it to the
+    /// appropriate registered method or notification handler, or resolving a
+    /// pending outbound call when the message is a response.
     pub async fn handle_message(
         &self,
         message: BorshMessage<'_, IpcId>,
@@ -243,6 +258,8 @@ where
         Ok(())
     }
 
+    /// Registers a request/response method handler for the given operation.
+    /// Panics if a handler for the same operation has already been registered.
     pub fn method<Req, Resp>(&self, op: Ops, method: Method<Req, Resp>)
     where
         Ops: Debug + Clone,
@@ -262,6 +279,8 @@ where
         }
     }
 
+    /// Registers a notification handler for the given operation. Panics if a
+    /// handler for the same operation has already been registered.
     pub fn notification<Msg>(&self, op: Ops, method: Notification<Msg>)
     where
         Ops: Debug + Clone,
@@ -318,10 +337,17 @@ fn pending() -> &'static mut PendingMap<IpcId, BorshResponseFn> {
 
 static mut IPC_HANDLER_SOURCE: Option<IpcTarget> = None;
 
+/// Trait implemented by types that can act as an IPC peer, providing the
+/// ability to send notifications and issue request/response calls to a
+/// target context (a window or the global object).
 #[async_trait]
 pub trait IpcDispatch {
+    /// Returns the [`IpcTarget`] that messages dispatched through this peer
+    /// should be delivered to.
     fn as_target(&self) -> IpcTarget;
 
+    /// Sends a one-way notification carrying `op` and a Borsh-serialized
+    /// `payload` to the target context, without awaiting a response.
     async fn notify<Ops, Msg>(&self, op: Ops, payload: Msg) -> Result<()>
     where
         Ops: OpsT,
@@ -335,6 +361,9 @@ pub trait IpcDispatch {
         Ok(())
     }
 
+    /// Issues a request/response call carrying `op` and `req`, awaiting and
+    /// deserializing the response. Uses the registered local IPC object as the
+    /// reply source.
     async fn call<Ops, Req, Resp>(&self, op: Ops, req: Req) -> Result<Resp>
     where
         Ops: OpsT,
@@ -351,6 +380,8 @@ pub trait IpcDispatch {
         self.call_with_source(op, req, &source).await
     }
 
+    /// Like [`call`](Self::call), but routes the response to an explicit
+    /// `source` [`IpcTarget`] instead of the registered local IPC object.
     async fn call_with_source<Ops, Req, Resp>(
         &self,
         op: Ops,
@@ -413,6 +444,9 @@ impl IpcDispatch for nw_sys::Window {
     }
 }
 
+/// Locates an [`IpcTarget`] (the global context or one of the open windows)
+/// whose registered IPC handler matches the given identifier, returning
+/// `Ok(None)` if no such target exists.
 pub async fn get_ipc_target<Ident>(identifier: Ident) -> crate::result::Result<Option<IpcTarget>>
 where
     Ident: ToString,

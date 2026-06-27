@@ -17,10 +17,12 @@
 use cfg_if::cfg_if;
 cfg_if! {
     if #[cfg(not(target_arch = "bpf"))] {
+        /// Re-exports of the most commonly used types and functions of this crate.
         pub mod prelude;
         pub mod error;
         pub mod result;
         pub mod fs;
+        /// High-level key/value store abstraction built on top of the [`fs`] layer.
         pub mod store;
     }
 }

@@ -13,11 +13,17 @@ cfg_if! {
         pub use termcolor::Buffer;
         //use core::ops::Range;
 
+        /// Builder wrapper around a [`HexViewBuilder`] that accumulates colored
+        /// ranges of a hex data dump and renders them via [`ColorHexView::try_print`].
         pub struct ColorHexView<'a>{
+            /// The underlying hex view builder that ranges and colors are applied to.
             pub builder: HexViewBuilder<'a>,
+            /// Running byte offset marking where the next sequentially-added color range begins.
             pub color_start: usize
         }
         impl<'a> ColorHexView<'a>{
+            /// Creates a new view from a [`HexViewBuilder`] and a list of
+            /// `(color, length)` pairs applied sequentially from offset zero.
             pub fn new(builder:HexViewBuilder<'a>, colors:Vec<(&'a str, usize)>)->Self{
                 Self{
                     builder,
@@ -25,6 +31,8 @@ cfg_if! {
                 }.add_colors(colors)
             }
 
+            /// Appends `(color, length)` pairs, coloring consecutive byte ranges
+            /// starting at the current offset and advancing it by each length.
             pub fn add_colors(mut self, colors:Vec<(&'a str, usize)>)->Self{
                 let mut builder = self.builder;
                 for (color, len) in colors{
@@ -37,6 +45,8 @@ cfg_if! {
                 self
             }
 
+            /// Applies `(color, range)` pairs, coloring each explicitly specified
+            /// byte range of the hex dump.
             pub fn add_colors_with_range(mut self, colors:Vec<(&'a str, std::ops::Range<usize>)>)->Self{
                 let mut builder = self.builder;
                 for (color, range) in colors{
@@ -46,6 +56,8 @@ cfg_if! {
                 self
             }
 
+            /// Renders the colored hex view and emits it via [`log_trace`],
+            /// returning an error string if formatting or UTF-8 conversion fails.
             pub fn try_print(self)->std::result::Result<(), String>{
                 let mut buf = Buffer::ansi();
                 match self.builder.finish().fmt(&mut buf){
@@ -70,6 +82,8 @@ cfg_if! {
         /// A log sink trait that can be installed into the log subsystem using the [`pipe`]
         /// function and will receive all log messages.
         pub trait Sink : AnySync {
+            /// Receives a single log message; returns `true` to allow the message
+            /// to continue to the default console output, or `false` to consume it.
             fn write(&self, target: Option<&str>, level : Level, args : &fmt::Arguments<'_>) -> bool;
         }
 
@@ -254,11 +268,14 @@ pub mod wasm_log {
     }
 }
 
+/// Backing implementation functions invoked by the `log_*!` macros to route
+/// messages to the sink, browser console, Solana log, or standard output.
 pub mod impls {
     use super::*;
 
     #[inline(always)]
     #[allow(unused_variables)]
+    /// Emits a message at [`Level::Error`], honoring the current level filter and sink.
     pub fn error_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Error) {
             #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
@@ -281,6 +298,7 @@ pub mod impls {
 
     #[inline(always)]
     #[allow(unused_variables)]
+    /// Emits a message at [`Level::Warn`], honoring the current level filter and sink.
     pub fn warn_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Warn) {
             #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
@@ -303,6 +321,7 @@ pub mod impls {
 
     #[inline(always)]
     #[allow(unused_variables)]
+    /// Emits a message at [`Level::Info`], honoring the current level filter and sink.
     pub fn info_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Info) {
             #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
@@ -325,6 +344,7 @@ pub mod impls {
 
     #[inline(always)]
     #[allow(unused_variables)]
+    /// Emits a message at [`Level::Debug`], honoring the current level filter and sink.
     pub fn debug_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Debug) {
             #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
@@ -347,6 +367,7 @@ pub mod impls {
 
     #[inline(always)]
     #[allow(unused_variables)]
+    /// Emits a message at [`Level::Trace`], honoring the current level filter and sink.
     pub fn trace_impl(target: Option<&str>, args: &fmt::Arguments<'_>) {
         if log_level_enabled(Level::Trace) {
             #[cfg(all(not(target_arch = "bpf"), feature = "sink"))]
@@ -467,18 +488,26 @@ pub fn format_hex_with_colors<'a>(
     ColorHexView::new(view_builder, colors)
 }
 #[cfg(not(target_arch = "bpf"))]
+/// Trait helpers for emitting a type's binary data as a colorized hex dump.
 pub mod color_log {
     use super::*;
     type Index = usize;
     type Length = usize;
     type Color<'a> = &'a str;
     type Result<T> = std::result::Result<T, String>;
+    /// Implemented by types that can render themselves as a colorized hex dump
+    /// via [`log_trace`].
     pub trait ColoLogTrace {
+        /// Returns the raw bytes to be rendered as a hex dump.
         fn log_data(&self) -> Vec<u8>;
+        /// Returns optional `(index, length, color)` tuples describing colored
+        /// byte ranges; defaults to `None` for an uncolored dump.
         fn log_index_length_color(&self) -> Option<Vec<(Index, Length, Color<'_>)>> {
             None
         }
 
+        /// Renders the data (with any specified colors) as a hex dump and emits
+        /// it via [`log_trace`], falling back to an uncolored dump on failure.
         fn log_trace(&self) -> Result<bool> {
             let data_vec = self.log_data();
             let mut view = format_hex_with_colors(&data_vec, vec![]);

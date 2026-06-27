@@ -22,19 +22,31 @@ use workflow_log::log_error;
 
 const DEFAULT_PARA_WIDTH: usize = 80;
 
+/// State of keyboard modifier keys that were held during an event
+/// (such as a link click).
 pub struct Modifiers {
+    /// Whether the Alt key was held.
     pub alt: bool,
+    /// Whether the Shift key was held.
     pub shift: bool,
+    /// Whether the Ctrl key was held.
     pub ctrl: bool,
+    /// Whether the Meta (Command/Windows) key was held.
     pub meta: bool,
 }
+/// Callback invoked when a registered link matcher matches, receiving the
+/// active keyboard [`Modifiers`] and the matched text.
 pub type LinkMatcherHandlerFn = Arc<Box<dyn Fn(Modifiers, &str)>>;
 
+/// Terminal events emitted to registered event handlers.
 #[derive(Debug, Clone)]
 pub enum Event {
+    /// The user requested a copy (e.g. via keyboard shortcut).
     Copy,
+    /// The user requested a paste (e.g. via keyboard shortcut).
     Paste,
 }
+/// Callback invoked when a terminal [`Event`] occurs.
 pub type EventHandlerFn = Arc<Box<dyn Fn(Event)>>;
 
 mod options;
@@ -42,6 +54,7 @@ pub use options::Options;
 pub use options::TargetElement;
 
 pub mod bindings;
+/// xterm.js-based terminal interface bindings for WASM/browser targets.
 pub mod xterm;
 pub use xterm::{Theme, ThemeOption};
 
@@ -55,16 +68,21 @@ cfg_if! {
         pub mod termion;
         use crate::terminal::termion::Termion as Interface;
     } else {
+        /// Crossterm-based terminal interface for native targets.
         pub mod crossterm;
         use crate::terminal::crossterm::Crossterm as Interface;
         pub use crate::terminal::crossterm::{disable_raw_mode,init_panic_hook};
     }
 }
 
+/// Mutable interior state of a [`Terminal`]: the current line buffer,
+/// command history, and cursor position.
 #[derive(Debug)]
 pub struct Inner {
+    /// The text currently entered on the active input line.
     pub buffer: UnicodeString,
     history: Vec<UnicodeString>,
+    /// Cursor position as a character offset within `buffer`.
     pub cursor: usize,
     history_index: usize,
 }
@@ -76,6 +94,7 @@ impl Default for Inner {
 }
 
 impl Inner {
+    /// Create empty interior state with an empty buffer and history.
     pub fn new() -> Self {
         Inner {
             buffer: UnicodeString::default(),
@@ -85,6 +104,7 @@ impl Inner {
         }
     }
 
+    /// Clear the current input line buffer and reset the cursor to the start.
     pub fn reset_line_buffer(&mut self) {
         self.buffer.clear();
         self.cursor = 0;
@@ -248,15 +268,24 @@ impl UserInput {
 #[derive(Clone)]
 pub struct Terminal {
     inner: Arc<Mutex<Inner>>,
+    /// Set while a submitted command is being processed by the [`Cli`] handler.
     pub running: Arc<AtomicBool>,
+    /// The default prompt string rendered before each input line.
     pub prompt: Arc<Mutex<String>>,
+    /// The underlying platform-specific terminal interface.
     pub term: Arc<Interface>,
+    /// The command-line processor that handles submitted commands.
     pub handler: Arc<dyn Cli>,
+    /// When set, the terminal exits its run loop after the current command.
     pub terminate: Arc<AtomicBool>,
     user_input: UserInput,
+    /// Pipe for writing raw text (without newline conversion) to the terminal.
     pub pipe_raw: Channel<String>,
+    /// Pipe for writing lines (terminated with CRLF) to the terminal.
     pub pipe_crlf: Channel<String>,
+    /// Duplex control channel used to start and stop the pipe processing task.
     pub pipe_ctl: DuplexChannel<()>,
+    /// Fallback paragraph wrap width (in columns) when the terminal width is unknown.
     pub para_width: Arc<AtomicUsize>,
 }
 
@@ -328,6 +357,7 @@ impl Terminal {
         data.history.clone()
     }
 
+    /// Clear the current input line buffer and reset the cursor to the start.
     pub fn reset_line_buffer(&self) {
         self.inner().unwrap().reset_line_buffer();
     }
@@ -407,6 +437,8 @@ impl Terminal {
         }
     }
 
+    /// Write `text` to the terminal as a paragraph, word-wrapped to the
+    /// current terminal width (falling back to [`Terminal::para_width`]).
     pub fn para<S>(&self, text: S)
     where
         S: Into<String>,
@@ -422,6 +454,8 @@ impl Terminal {
             .for_each(|line| self.writeln(line));
     }
 
+    /// Write `text` to the terminal as a paragraph, word-wrapped using the
+    /// supplied width or [`textwrap::Options`].
     pub fn para_with_options<'a, S, Opt>(&self, width_or_options: Opt, text: S)
     where
         S: Into<String>,
@@ -434,6 +468,10 @@ impl Terminal {
             .for_each(|line| self.writeln(line));
     }
 
+    /// Render a formatted, alphabetically-sorted help listing of
+    /// `(command, description)` pairs, wrapping descriptions to fit the
+    /// terminal width. `separator` (default a single space) is placed between
+    /// each command and its description.
     pub fn help<S: ToString, H: ToString>(
         &self,
         list: &[(S, H)],
@@ -554,6 +592,8 @@ impl Terminal {
             .await
     }
 
+    /// Wait for a single keystroke, optionally displaying `prompt` first, and
+    /// return the captured key without echoing it.
     pub async fn kbhit(self: &Arc<Terminal>, prompt: Option<&str>) -> Result<String> {
         self.reset_line_buffer();
         if let Some(prompt) = prompt {
@@ -571,6 +611,7 @@ impl Terminal {
         Ok(())
     }
 
+    /// Insert `text` into the current input line at the cursor position.
     pub fn inject<S: ToString>(&self, text: S) -> Result<()> {
         let mut data = self.inner()?;
         self.inject_impl(&mut data, text.to_string().into())
@@ -588,6 +629,8 @@ impl Terminal {
         }
     }
 
+    /// Insert a single character into the current input line at the cursor
+    /// position.
     pub fn inject_char(&self, ch: char) -> Result<()> {
         let mut data = self.inner()?;
         self.inject_char_impl(&mut data, ch)?;
@@ -771,6 +814,9 @@ impl Terminal {
         self.running.load(Ordering::SeqCst)
     }
 
+    /// Submit `cmd` to the [`Cli`] handler for processing, printing any error
+    /// it returns and then either exiting (if termination was requested) or
+    /// re-rendering the prompt.
     pub async fn exec<S: ToString>(self: &Arc<Terminal>, cmd: S) -> Result<()> {
         if let Err(err) = self
             .handler
@@ -788,50 +834,65 @@ impl Terminal {
         Ok(())
     }
 
+    /// Apply the supplied color [`Theme`] (effective on the WASM/xterm.js target).
     pub fn set_theme(&self, _theme: Theme) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
         self.term.set_theme(_theme)?;
         Ok(())
     }
 
+    /// Re-apply the current theme to the terminal (effective on the WASM/xterm.js target).
     pub fn update_theme(&self) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
         self.term.update_theme()?;
         Ok(())
     }
 
+    /// Copy the current terminal selection to the system clipboard
+    /// (effective on the WASM/xterm.js target).
     pub fn clipboard_copy(&self) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
         self.term.clipboard_copy()?;
         Ok(())
     }
 
+    /// Paste the system clipboard contents into the terminal
+    /// (effective on the WASM/xterm.js target).
     pub fn clipboard_paste(&self) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
         self.term.clipboard_paste()?;
         Ok(())
     }
 
+    /// Increase the terminal font size, returning the new size if applicable.
     pub fn increase_font_size(&self) -> Result<Option<f64>> {
         self.term.increase_font_size()
     }
 
+    /// Decrease the terminal font size, returning the new size if applicable.
     pub fn decrease_font_size(&self) -> Result<Option<f64>> {
         self.term.decrease_font_size()
     }
 
+    /// Set the terminal font size to `font_size`.
     pub fn set_font_size(&self, font_size: f64) -> Result<()> {
         self.term.set_font_size(font_size)
     }
 
+    /// Return the current terminal font size, if known.
     pub fn get_font_size(&self) -> Result<Option<f64>> {
         self.term.get_font_size()
     }
 
+    /// Return the terminal width in columns, if known.
     pub fn cols(&self) -> Option<usize> {
         self.term.cols()
     }
 
+    /// Prompt the user to choose one item from `list` by its index. Returns
+    /// `None` for an empty list, the sole item for a single-element list, and
+    /// otherwise repeatedly displays the choices until a valid index is entered;
+    /// pressing enter on an empty line aborts with [`Error::UserAbort`].
     pub async fn select<T>(self: &Arc<Terminal>, prompt: &str, list: &[T]) -> Result<Option<T>>
     where
         T: std::fmt::Display + Clone, // + IdT + Clone + Send + Sync + 'static,
@@ -870,12 +931,16 @@ impl Terminal {
         }
     }
 
+    /// Register a handler invoked on terminal [`Event`]s such as copy and paste
+    /// (effective on the WASM/xterm.js target).
     pub fn register_event_handler(self: &Arc<Self>, _handler: EventHandlerFn) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
         self.term.register_event_handler(_handler)?;
         Ok(())
     }
 
+    /// Register a handler invoked when terminal text matching `_regexp` is
+    /// clicked (effective on the WASM/xterm.js target).
     pub fn register_link_matcher(
         &self,
         _regexp: &js_sys::RegExp,

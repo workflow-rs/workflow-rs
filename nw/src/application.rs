@@ -145,6 +145,9 @@ impl Application {
     //     Ok(receiver.recv().await?)
     // }
 
+    /// Opens a new window for the given `url` with the supplied
+    /// [Options](nw_sys::window::Options) and resolves once the window
+    /// has been created, returning its [`Window`](nw_sys::window::Window) handle.
     pub async fn create_window_async(
         url: &str,
         option: &nw_sys::window::Options,

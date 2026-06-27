@@ -21,6 +21,8 @@ where
     }
 }
 
+/// Tracks the set of application modules and the currently active module,
+/// providing navigation between them with a back-stack history.
 pub struct ModuleManager<T> {
     inner: Rc<RefCell<Inner<T>>>,
 }
@@ -37,6 +39,8 @@ impl<T> ModuleManager<T>
 where
     T: App,
 {
+    /// Creates a new manager from the given registry of modules, with the
+    /// module identified by `default_module` as the initially active module.
     pub fn new(default_module: TypeId, modules: AHashMap<TypeId, Module<T>>) -> Self {
         let default_module = modules
             .get(&default_module)
@@ -55,10 +59,12 @@ where
         self.inner.borrow_mut()
     }
 
+    /// Returns a clone of the currently active module.
     pub fn module(&self) -> Module<T> {
         self.inner().module.clone()
     }
 
+    /// Activates the registered module of type `M`, making it the active module.
     pub fn select<M>(&mut self, core: &mut T)
     where
         M: 'static,
@@ -66,6 +72,8 @@ where
         self.select_with_type_id(TypeId::of::<M>(), core);
     }
 
+    /// Activates the module identified by `type_id`, pushing the current module
+    /// onto the back-stack and scheduling it for deactivation.
     pub fn select_with_type_id(&self, type_id: TypeId, core: &mut T) {
         let (current, next) = {
             let inner = self.inner();
@@ -86,10 +94,13 @@ where
         }
     }
 
+    /// Returns `true` if there are modules on the navigation back-stack.
     pub fn has_stack(&self) -> bool {
         !self.inner().stack.is_empty()
     }
 
+    /// Renders the currently active module and deactivates the previously
+    /// active module if a switch occurred on the prior frame.
     pub fn render(
         &self,
         app: &mut T,
@@ -103,6 +114,8 @@ where
         }
     }
 
+    /// Navigates back to the most recent non-secure module on the stack,
+    /// making it the active module.
     pub fn back(&mut self) {
         let mut inner = self.inner_mut();
         while let Some(module) = inner.stack.pop_back() {
@@ -113,10 +126,12 @@ where
         }
     }
 
+    /// Removes all secure modules from the navigation back-stack.
     pub fn purge_secure_stack(&mut self) {
         self.inner_mut().stack.retain(|module| !module.secure());
     }
 
+    /// Returns a typed reference to the registered module of type `M`.
     pub fn get<M>(&self) -> ModuleReference<T, M>
     where
         M: ModuleT<Context = T> + 'static,
@@ -127,6 +142,8 @@ where
     }
 }
 
+/// A typed handle to a registered module of concrete type `M`, allowing it to
+/// be borrowed (immutably or mutably) downcast back to its original type.
 pub struct ModuleReference<T, M>
 where
     T: App,
@@ -146,6 +163,7 @@ where
         }
     }
 
+    /// Immutably borrows the referenced module, downcast to its concrete type `M`.
     pub fn as_ref(&self) -> Ref<'_, M>
     where
         M: ModuleT<Context = T> + 'static,
@@ -157,6 +175,7 @@ where
         })
     }
 
+    /// Mutably borrows the referenced module, downcast to its concrete type `M`.
     pub fn as_mut(&self) -> RefMut<'_, M>
     where
         M: ModuleT<Context = T> + 'static,

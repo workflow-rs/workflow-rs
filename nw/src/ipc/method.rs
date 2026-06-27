@@ -29,6 +29,8 @@ where
     Req: MsgT,
     Resp: MsgT,
 {
+    /// Wraps the given async closure into a [`Method`] that deserializes a
+    /// request, invokes the closure, and serializes its response.
     pub fn new<FN>(method_fn: FN) -> Method<Req, Resp>
     where
         FN: Send + Sync + Fn(Req) -> MethodFnReturn<Resp> + 'static,

@@ -220,10 +220,15 @@ pub fn is_native() -> bool {
 /// application runtime info
 #[derive(Debug)]
 pub enum Runtime {
+    /// Native (non-WASM) execution environment.
     Native,
+    /// Solana BPF on-chain runtime.
     Solana,
+    /// NW.js desktop application runtime.
     NW,
+    /// Node.js runtime (WASM).
     Node,
+    /// Browser / web runtime (WASM).
     Web,
 }
 
@@ -266,21 +271,34 @@ impl Runtime {
     }
 }
 
+/// Operating system / platform on which the application is running.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Platform {
+    /// Microsoft Windows.
     Windows,
+    /// Apple macOS.
     MacOS,
+    /// Linux.
     Linux,
+    /// FreeBSD.
     FreeBSD,
+    /// OpenBSD.
     OpenBSD,
+    /// NetBSD.
     NetBSD,
+    /// Google Android.
     Android,
+    /// Apple iOS.
     IOS,
+    /// Platform could not be determined.
     Unknown,
+    /// Some other platform, identified by the contained name string.
     Other(String),
 }
 
 impl Platform {
+    /// Determines the platform under Node.js by reading the `process.platform`
+    /// global.
     pub fn from_node() -> Self {
         let process = js_sys::Reflect::get(&js_sys::global(), &"process".into())
             .expect("Unable to get nodejs process global");
@@ -301,6 +319,8 @@ impl Platform {
         }
     }
 
+    /// Determines the platform under a browser environment by inspecting the
+    /// `navigator.userAgent` string.
     pub fn from_web() -> Self {
         let window = match web_sys::window() {
             Some(window) => window,
@@ -343,6 +363,8 @@ impl Platform {
 
 static PLATFORM: OnceLock<Platform> = OnceLock::new();
 
+/// Detects and returns the [`Platform`] the application is running on, caching
+/// the result on first call.
 pub fn platform() -> Platform {
     PLATFORM
         .get_or_init(|| {
@@ -369,6 +391,7 @@ pub fn platform() -> Platform {
         .clone()
 }
 
+/// Returns `true` if the current platform is Windows.
 pub fn is_windows() -> bool {
     cfg_if! {
         if #[cfg(target_os = "windows")] {
@@ -379,6 +402,7 @@ pub fn is_windows() -> bool {
     }
 }
 
+/// Returns `true` if the current platform is macOS.
 pub fn is_macos() -> bool {
     cfg_if! {
         if #[cfg(target_os = "macos")] {
@@ -389,6 +413,7 @@ pub fn is_macos() -> bool {
     }
 }
 
+/// Returns `true` if the current platform is Linux.
 pub fn is_linux() -> bool {
     cfg_if! {
         if #[cfg(target_os = "linux")] {
@@ -399,6 +424,7 @@ pub fn is_linux() -> bool {
     }
 }
 
+/// Returns `true` if the current platform is FreeBSD.
 pub fn is_freebsd() -> bool {
     cfg_if! {
         if #[cfg(target_os = "freebsd")] {
@@ -409,6 +435,7 @@ pub fn is_freebsd() -> bool {
     }
 }
 
+/// Returns `true` if the current platform is OpenBSD.
 pub fn is_openbsd() -> bool {
     cfg_if! {
         if #[cfg(target_os = "openbsd")] {
@@ -419,6 +446,7 @@ pub fn is_openbsd() -> bool {
     }
 }
 
+/// Returns `true` if the current platform is NetBSD.
 pub fn is_netbsd() -> bool {
     cfg_if! {
         if #[cfg(target_os = "netbsd")] {
@@ -429,22 +457,27 @@ pub fn is_netbsd() -> bool {
     }
 }
 
+/// Returns `true` if the current platform is iOS.
 pub fn is_ios() -> bool {
     platform() == Platform::IOS
 }
 
+/// Returns `true` if the current platform is Android.
 pub fn is_android() -> bool {
     platform() == Platform::Android
 }
 
+/// Returns `true` if the current platform is a Unix-like OS (macOS, Linux, or a BSD).
 pub fn is_unix() -> bool {
     is_macos() || is_linux() || is_freebsd() || is_openbsd() || is_netbsd()
 }
 
+/// Returns `true` if the current platform is a mobile OS (iOS or Android).
 pub fn is_mobile() -> bool {
     is_ios() || is_android()
 }
 
+/// Returns `true` if the application is running as a Chrome browser extension.
 pub fn is_chrome_extension() -> bool {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {

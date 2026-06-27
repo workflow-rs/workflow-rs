@@ -9,31 +9,45 @@ use wasm_bindgen::JsValue;
 use workflow_core::channel::{ChannelError, RecvError, SendError, TrySendError};
 
 #[derive(Debug, Error)]
+/// Errors produced by the terminal subsystem.
 pub enum Error {
+    /// A general-purpose error carrying a custom message.
     #[error("{0}")]
     Custom(String),
+    /// An error originating from JavaScript, captured as a string.
     #[error("{0}")]
     JsValue(String),
+    /// A lock was poisoned because another thread panicked while holding it.
     #[error("Poison Error: {0}")]
     PoisonError(String),
+    /// Receiving from a channel failed because it was closed.
     #[error("Channel Receive Error")]
     RecvError,
+    /// Sending on a channel failed.
     #[error("Channel Send Error: {0}")]
     SendError(String),
+    /// A non-blocking channel send failed (channel full or closed).
     #[error("Channel TrySend Error: {0}")]
     TrySendError(String),
+    /// An error originating from the DOM layer.
     #[error(transparent)]
     DomError(#[from] workflow_dom::error::Error),
+    /// A generic channel error.
     #[error("Channel error: {0}")]
     ChannelError(String),
+    /// An underlying I/O error.
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    /// A downcast to a concrete type failed.
     #[error("{0}")]
     DowncastError(String),
+    /// The requested command verb was not registered.
     #[error("command not found: {0}")]
     CommandNotFound(String),
+    /// The user aborted the current operation (e.g. via Ctrl+C).
     #[error("aborting...")]
     UserAbort,
+    /// An error originating from a WASM callback.
     #[error(transparent)]
     CallbackError(#[from] workflow_wasm::callback::CallbackError),
 }

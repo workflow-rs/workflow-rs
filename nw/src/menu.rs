@@ -83,14 +83,21 @@ pub fn menu_separator() -> nw_sys::MenuItem {
 ///
 /// For usage example please refer to [Examples](self)
 pub struct MenubarBuilder {
+    /// Mac-specific options applied when creating the built-in menubar.
     pub mac_options: nw_sys::menu::MacOptions,
+    /// Application name used for the Mac built-in application menu.
     pub app_name: String,
+    /// The underlying NW.js menubar being assembled.
     pub menubar: nw_sys::Menu,
+    /// Top-level menu items appended to the menubar.
     pub menu_items: Vec<nw_sys::MenuItem>,
+    /// Whether the host platform is macOS, enabling Mac-specific behavior.
     pub is_macos: bool,
 }
 
 impl MenubarBuilder {
+    /// Creates a new menubar builder for the given application name, where
+    /// `is_macos` enables Mac-specific built-in menu handling.
     pub fn new(app_name: &str, is_macos: bool) -> Self {
         Self {
             mac_options: nw_sys::menu::MacOptions::new(),
@@ -149,7 +156,9 @@ impl MenubarBuilder {
 ///
 /// For usage example please refer to [Examples](self)
 pub struct MenuItemBuilder {
+    /// Accumulated NW.js menu item options being configured.
     pub options: nw_sys::menu_item::Options,
+    /// Optional callback invoked when the menu item is clicked.
     pub callback: Option<Callback<CallbackClosure<JsValue>>>,
 }
 
@@ -160,6 +169,7 @@ impl Default for MenuItemBuilder {
 }
 
 impl MenuItemBuilder {
+    /// Creates a new, empty menu item builder.
     pub fn new() -> Self {
         Self {
             options: nw_sys::menu_item::Options::new(),
@@ -261,6 +271,8 @@ impl MenuItemBuilder {
         self.set("modifiers", JsValue::from(modifiers))
     }
 
+    /// Builds the configured [`MenuItem`](nw_sys::MenuItem), retaining any
+    /// click callback in the application so it remains valid.
     pub fn build(self) -> Result<nw_sys::MenuItem> {
         if let Some(callback) = self.callback {
             let app = match app() {
@@ -274,6 +286,9 @@ impl MenuItemBuilder {
         Ok(menu_item)
     }
 
+    /// Builds the [`MenuItem`](nw_sys::MenuItem) and returns it together with
+    /// its click callback (if any), leaving the caller responsible for
+    /// retaining the callback.
     pub fn finalize(
         self,
     ) -> Result<(nw_sys::MenuItem, Option<Callback<CallbackClosure<JsValue>>>)> {

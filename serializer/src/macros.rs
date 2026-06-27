@@ -11,16 +11,19 @@ macro_rules! payload {
     ($value:expr_2021) => {{ $crate::payload::Payload::with_capacity($value) }};
 }
 
+/// Construct a `crate::payload::Version` from major and minor version numbers.
 #[macro_export]
 macro_rules! version {
     ($major:expr_2021, $minor:expr_2021) => {{ $crate::payload::Version::new($major, $minor) }};
 }
 
+/// Borrow a `crate::payload::Payload` as a mutable `Cursor<Vec<u8>>` writer.
 #[macro_export]
 macro_rules! writer {
     ($value:expr_2021) => {{ ($value.as_mut() as &mut std::io::Cursor<Vec<u8>>) }};
 }
 
+/// Consume a `crate::payload::Payload` and produce a `Cursor<Vec<u8>>` reader over its bytes.
 #[macro_export]
 macro_rules! reader {
     ($value:expr_2021) => {{ &mut std::io::Cursor::new($value.into_inner()) }};

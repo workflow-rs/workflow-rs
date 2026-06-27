@@ -1,7 +1,10 @@
 use crate::imports::*;
 
+/// A long-running unit of work hosted by the [`Runtime`], with hooks for
+/// startup, termination, and joining.
 #[async_trait]
 pub trait Service: Sync + Send {
+    /// Returns the service's display name, defaulting to its fully-qualified type name.
     fn name(&self) -> &'static str {
         std::any::type_name::<Self>()
     }

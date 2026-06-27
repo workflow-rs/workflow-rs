@@ -18,6 +18,7 @@ pub enum Error {
     // JsValue(Sendable<JsValue>),
     #[error("{0}")]
     JsValue(JsErrorData),
+    /// Error received while awaiting a value on a channel
     #[error("{0}")]
     RecvError(RecvError), //#[from] workflow_core::channel::RecvError),
 }

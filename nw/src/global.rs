@@ -13,10 +13,12 @@ extern "C" {
 
 }
 
+/// Returns the JavaScript `global` object.
 pub fn global() -> Object {
     Global::get_global()
 }
 
+/// Returns the JavaScript `globalThis` object.
 pub fn global_this() -> Object {
     Global::get_global()
 }

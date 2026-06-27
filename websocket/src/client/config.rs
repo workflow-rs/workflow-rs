@@ -21,7 +21,7 @@ pub struct WebSocketConfig {
     /// If set to `0` each message will be eagerly written to the underlying stream.
     /// It is often more optimal to allow them to buffer a little, hence the default value.
     ///
-    /// Note: [`flush`](WebSocket::flush) will always fully write the buffer regardless.
+    /// Note: `flush` will always fully write the buffer regardless.
     pub write_buffer_size: usize,
     /// The max size of the write buffer in bytes. Setting this can provide backpressure
     /// in the case the write buffer is filling up due to write errors.

@@ -103,6 +103,9 @@ struct Inner {
 unsafe impl Send for Inner {}
 unsafe impl Sync for Inner {}
 
+/// Platform-specific (WASM/browser) WebSocket interface backing the
+/// [`WebSocket`](super::WebSocket) client; owns the underlying socket,
+/// connection settings, channels and reconnection state.
 pub struct WebSocketInterface {
     inner: Arc<Mutex<Option<Inner>>>,
     settings: Arc<Mutex<Settings>>,
@@ -116,6 +119,8 @@ pub struct WebSocketInterface {
 }
 
 impl WebSocketInterface {
+    /// Create a new interface for the optional default URL and configuration,
+    /// wired to the given sender and receiver channels.
     pub fn new(
         url: Option<&str>,
         config: Option<WebSocketConfig>,
@@ -144,14 +149,17 @@ impl WebSocketInterface {
         Ok(iface)
     }
 
+    /// Return the configured default URL used when no per-connect URL is given.
     pub fn default_url(self: &Arc<Self>) -> Option<String> {
         self.settings.lock().unwrap().default_url.clone()
     }
 
+    /// Return the URL of the current (or most recent) connection.
     pub fn current_url(self: &Arc<Self>) -> Option<String> {
         self.settings.lock().unwrap().current_url.clone()
     }
 
+    /// Set the default URL used for subsequent connection attempts.
     pub fn set_default_url(self: &Arc<Self>, url: &str) {
         self.settings
             .lock()
@@ -160,6 +168,7 @@ impl WebSocketInterface {
             .replace(url.to_string());
     }
 
+    /// Record the URL of the connection currently being established.
     pub fn set_current_url(self: &Arc<Self>, url: &str) {
         self.settings
             .lock()
@@ -168,6 +177,7 @@ impl WebSocketInterface {
             .replace(url.to_string());
     }
 
+    /// Return `true` if the socket is currently connected.
     pub fn is_connected(self: &Arc<Self>) -> bool {
         self.is_connected.load(Ordering::SeqCst)
     }
@@ -180,6 +190,7 @@ impl WebSocketInterface {
         self.config.lock().unwrap().handshake.clone()
     }
 
+    /// Replace the configuration applied to the next connection attempt.
     pub fn configure(&self, config: WebSocketConfig) {
         *self.config.lock().unwrap() = config;
     }
@@ -199,6 +210,9 @@ impl WebSocketInterface {
         Ok(url)
     }
 
+    /// Initiate the connection and start the background connect/reconnect task.
+    /// Depending on `options.block_async_connect`, either blocks until connected
+    /// or returns a receiver that fires once the connection is established.
     pub async fn connect(self: &Arc<Self>, options: ConnectOptions) -> ConnectResult<Error> {
         let (connect_trigger, connect_listener) = oneshot::<Result<()>>();
 
@@ -362,6 +376,8 @@ impl WebSocketInterface {
             .map(|inner| inner.ws.clone())
     }
 
+    /// Attempt to send a message directly over the underlying socket without
+    /// blocking, returning an error if the socket is not currently available.
     #[allow(dead_code)]
     pub fn try_send(self: &Arc<Self>, message: &Message) -> Result<()> {
         match self.ws() {
@@ -523,6 +539,8 @@ impl WebSocketInterface {
         Ok(())
     }
 
+    /// Close the current connection, releasing its resources and emitting a
+    /// `Close` event if it was connected; reconnection (if enabled) may follow.
     pub async fn close(self: &Arc<Self>) -> Result<()> {
         if let Some(inner) = self.inner.lock().unwrap().take() {
             inner.ws.cleanup();
@@ -550,12 +568,15 @@ impl WebSocketInterface {
         Ok(())
     }
 
+    /// Disable reconnection and close the connection, fully disconnecting.
     pub async fn disconnect(self: &Arc<Self>) -> Result<()> {
         self.reconnect.store(false, Ordering::SeqCst);
         self.close().await.ok();
         Ok(())
     }
 
+    /// Force-close the underlying socket while connected to simulate a dropped
+    /// connection; intended for testing reconnection logic.
     pub fn trigger_abort(self: &Arc<Self>) -> Result<()> {
         if self.is_connected.load(Ordering::SeqCst)
             && let Some(ws) = self.ws()

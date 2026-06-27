@@ -1,11 +1,13 @@
 use crate::imports::*;
 
+/// Result type returned by [`Service`] lifecycle methods.
 pub type ServiceResult = Result<()>;
 
 /// Service is a core component of the Kaspa NG application responsible for
 /// running application services and communication between these services.
 #[async_trait]
 pub trait Service: Sync + Send {
+    /// Returns the human-readable name identifying this service.
     fn name(&self) -> &'static str;
 
     /// Start the service

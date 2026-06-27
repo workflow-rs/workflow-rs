@@ -23,9 +23,13 @@
 //!
 //!
 
+/// HTML and attribute string escaping helpers.
 pub mod escape;
+/// The [`Html`](interface::Html) container holding rendered roots, hooks and retained renderables.
 pub mod interface;
+/// The [`Render`](render::Render) trait and its implementations for rendering values to DOM/HTML.
 pub mod render;
+/// Browser DOM helpers for accessing the `window`, `document` and elements.
 pub mod utils;
 pub use interface::{Hooks, Html};
 
@@ -38,25 +42,40 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 pub use workflow_html_macros::{html, html_str, renderable, tree};
 
+/// The value of an HTML element attribute.
 #[derive(Debug, Clone)]
 pub enum AttributeValue {
+    /// A boolean attribute that is rendered only when `true`.
     Bool(bool),
+    /// A string-valued attribute.
     Str(String),
 }
 
+/// A retained WASM closure handling a DOM `click` mouse event.
 pub type OnClickClosure = Closure<dyn FnMut(web_sys::MouseEvent)>;
 
+/// A single HTML element node carrying its tag, attributes, optional children
+/// and an optional click handler, used to build and render the DOM tree.
 #[derive(Debug, Default, Clone)]
 pub struct Element<T: Render> {
+    /// When `true`, the element renders only its children without wrapping tags.
     pub is_fragment: bool,
+    /// The element's tag name (e.g. `div`, `flow-select`).
     pub tag: String,
+    /// The element's attributes keyed by name.
     pub attributes: BTreeMap<String, AttributeValue>,
+    /// The element's child content, if any.
     pub children: Option<T>,
+    /// Optional `@name` binding as a `(name, value)` pair recorded in the hooks map.
     pub reff: Option<(String, String)>,
+    /// Retained click-event closure shared across clones of this element.
     pub onclick: Arc<Mutex<Option<OnClickClosure>>>,
 }
 
 impl<T: Render + Clone + 'static> Element<T> {
+    /// Registers an event callback on this element. Currently only the
+    /// `"click"` event is wired up, attaching `cb` as a retained closure that
+    /// receives the mouse event and the target [`WebElement`].
     pub fn on(self, name: &str, cb: Box<dyn Fn(web_sys::MouseEvent, WebElement)>) -> Self {
         if name.eq("click") {
             let mut onclick = self.onclick.lock().unwrap();
@@ -72,13 +91,19 @@ impl<T: Render + Clone + 'static> Element<T> {
     //self_.home_item.element.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())?;
 }
 
+/// Provides default access to the rendered attribute and child markup of an
+/// element, used by generated renderable implementations.
 pub trait ElementDefaults {
+    /// Returns the serialized attribute string for this element.
     fn _get_attributes(&self) -> String;
+    /// Returns the serialized inner HTML of this element's children.
     fn _get_children(&self) -> String;
 
+    /// Returns the element's attributes as an HTML attribute string.
     fn get_attributes(&self) -> String {
         self._get_attributes()
     }
+    /// Returns the element's children rendered as an HTML string.
     fn get_children(&self) -> String {
         self._get_children()
     }

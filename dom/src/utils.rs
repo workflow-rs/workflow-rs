@@ -21,6 +21,8 @@ pub fn body() -> std::result::Result<Element, String> {
     Ok(b)
 }
 
+/// Return the global [`web_sys::Location`] object, resolving it from the
+/// JavaScript global scope (works in both window and worker contexts).
 pub fn location() -> Result<web_sys::Location, wasm_bindgen::JsValue> {
     let location = js_sys::Reflect::get(&js_sys::global(), &"location".into())?;
     location.dyn_into()

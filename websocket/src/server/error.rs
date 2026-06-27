@@ -7,9 +7,11 @@ use tokio::sync::mpsc::error::SendError;
 /// Errors produced by the [`WebSocketServer`](super::WebSocketServer).
 #[derive(Debug, Error)]
 pub enum Error {
+    /// A generic, miscellaneous error carrying a descriptive message.
     #[error("{0}")]
     Other(String),
 
+    /// The server failed to bind and listen on the requested address.
     #[error("{0}")]
     Listen(String),
 
@@ -59,15 +61,19 @@ pub enum Error {
     #[error("Server closed connection")]
     ServerClose,
 
+    /// Failure while signaling the listener to stop.
     #[error("Error signaling listener shutdown: {0}")]
     Stop(String),
 
+    /// Failure while signaling that the listener has finished shutting down.
     #[error("Error signaling listener shutdown: {0}")]
     Done(String),
 
+    /// Failure while waiting for the listener to shut down.
     #[error("Error waiting for listener shutdown: {0}")]
     Join(String),
 
+    /// An underlying I/O error.
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 }

@@ -26,13 +26,18 @@ use workflow_wasm::jserror::*;
 
 /// Version struct for standard version extraction from executables via `--version` output
 pub struct Version {
+    /// Major version component.
     pub major: u64,
+    /// Minor version component.
     pub minor: u64,
+    /// Patch version component.
     pub patch: u64,
+    /// `true` if no version could be extracted (i.e. the version is unavailable).
     pub none: bool,
 }
 
 impl Version {
+    /// Creates a new [`Version`] from its `major`, `minor`, and `patch` components.
     pub fn new(major: u64, minor: u64, patch: u64) -> Version {
         Version {
             major,
@@ -42,6 +47,7 @@ impl Version {
         }
     }
 
+    /// Creates a [`Version`] representing an unavailable/unknown version.
     pub fn none() -> Version {
         Version {
             major: 0,
@@ -64,28 +70,41 @@ impl std::fmt::Display for Version {
 
 /// Child process execution result
 pub struct ExecutionResult {
+    /// How the process ended (graceful exit or error).
     pub termination: Termination,
+    /// Captured standard output of the process.
     pub stdout: String,
+    /// Captured standard error of the process.
     pub stderr: String,
 }
 
 impl ExecutionResult {
+    /// Returns `true` if the process terminated due to an error.
     pub fn is_error(&self) -> bool {
         matches!(self.termination, Termination::Error(_))
     }
 }
 
+/// Describes how a child process execution ended.
 pub enum Termination {
+    /// The process exited gracefully with the given exit code.
     Exit(u32),
+    /// The process terminated with an error described by the message.
     Error(String),
 }
 
+/// Event emitted by a running [`Process`] and relayed over its event channel.
 #[derive(Debug, Clone, BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 pub enum Event {
+    /// The child process has started.
     Start,
+    /// The child process exited gracefully with the given exit code.
     Exit(u32),
+    /// The child process terminated with an error described by the message.
     Error(String),
+    /// A line of standard output emitted by the child process.
     Stdout(String),
+    /// A line of standard error emitted by the child process.
     Stderr(String),
 }
 
@@ -116,6 +135,9 @@ pub struct Options {
 
 #[allow(clippy::too_many_arguments)]
 impl Options {
+    /// Creates a new set of [`Process`] daemon [`Options`] from the given
+    /// argument vector, working directory, restart and force-termination
+    /// settings, event channel, and mute configuration.
     pub fn new(
         argv: &[&str],
         cwd: Option<PathBuf>,
@@ -467,6 +489,8 @@ impl Process {
         }
     }
 
+    /// Creates a [`Process`] that runs the executable at `path` a single time
+    /// (no automatic restart) with default options.
     pub fn new_once(path: &str) -> Process {
         let options = Options::new(
             &[path],
@@ -485,22 +509,27 @@ impl Process {
         Self::new(options)
     }
 
+    /// Runs the executable at `path` with `--version` and parses the resulting [`Version`].
     pub async fn version(path: &str) -> Result<Version> {
         version(path).await
     }
 
+    /// Returns `true` if the child process is currently running.
     pub fn is_running(&self) -> bool {
         self.inner.running.load(Ordering::SeqCst)
     }
 
+    /// Enables or disables muting of the process stdout/stderr output relay.
     pub fn mute(&self, mute: bool) -> Result<()> {
         self.inner.mute(mute)
     }
 
+    /// Toggles muting of the process output buffer, returning the new mute state.
     pub fn toggle_mute(&self) -> Result<bool> {
         self.inner.toggle_mute()
     }
 
+    /// Returns how long the process has been running, or `None` if it is not running.
     pub fn uptime(&self) -> Option<Duration> {
         self.inner.uptime()
     }
@@ -511,6 +540,7 @@ impl Process {
         self.inner.events.receiver.clone()
     }
 
+    /// Replace the process arguments used for the next process (re)start.
     pub fn replace_argv(&self, argv: Vec<String>) {
         *self.inner.argv.lock().unwrap() = argv;
     }
@@ -671,6 +701,7 @@ pub async fn version(proc: &str) -> Result<Version> {
     Ok(Version::new(v[0], v[1], v[2]))
 }
 
+/// Strips a single trailing newline (`\n` or `\r\n`) from the given string.
 pub fn trim(mut s: String) -> String {
     // let mut s = String::from(self);
     if s.ends_with('\n') {
@@ -683,6 +714,7 @@ pub fn trim(mut s: String) -> String {
 }
 
 // #[wasm_bindgen]
+/// Manual test harness that spawns and runs a sample child process daemon.
 pub async fn test_child_process() {
     log_info!("running rust test() fn");
     workflow_wasm::panic::init_console_panic_hook();

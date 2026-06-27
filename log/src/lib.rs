@@ -78,8 +78,13 @@ mod hex;
 mod console;
 pub use self::console::*;
 
+/// Self-contained [`Level`](levels::Level) and [`LevelFilter`](levels::LevelFilter)
+/// definitions, mirroring the `log` crate for use on targets where that crate is
+/// not embedded (e.g. BPF).
 pub mod levels;
 
+/// Convenient re-exports of the most commonly used logging macros, level types
+/// and console helpers for glob importing.
 pub mod prelude {
     pub use super::console::*;
     pub use super::log::{

@@ -62,9 +62,13 @@ use workflow_wasm::prelude::*;
 ///
 /// For usage example please refer to [Examples](self)
 pub struct TrayMenuBuilder {
+    /// Accumulated NW.js tray options being configured.
     pub options: Options,
+    /// Optional menu shown when the tray icon is clicked.
     pub menu: Option<Menu>,
+    /// Optional tooltip shown when hovering the tray icon.
     pub tooltip: Option<String>,
+    /// Optional callback invoked when the tray icon is clicked.
     pub callback: Option<Callback<CallbackClosure<MouseEvent>>>,
 }
 
@@ -75,6 +79,7 @@ impl Default for TrayMenuBuilder {
 }
 
 impl TrayMenuBuilder {
+    /// Creates a new, empty tray menu builder.
     pub fn new() -> Self {
         Self {
             options: Options::new(),
@@ -84,6 +89,7 @@ impl TrayMenuBuilder {
         }
     }
 
+    /// Sets a raw option `key` to `value` on the underlying tray options object.
     pub fn set(mut self, key: &str, value: JsValue) -> Self {
         self.options = self.options.set(key, value);
         self
@@ -183,6 +189,8 @@ impl TrayMenuBuilder {
         self.menu(submenu)
     }
 
+    /// Constructs the [`Tray`] from the accumulated options, attaching the
+    /// menu, tooltip and click handler, and returns it with its callback (if any).
     pub fn build_impl(self) -> Result<(Tray, Option<Callback<CallbackClosure<MouseEvent>>>)> {
         let tray = Tray::new(&self.options);
 
@@ -201,6 +209,8 @@ impl TrayMenuBuilder {
         }
     }
 
+    /// Builds the configured [`Tray`], retaining any click callback in the
+    /// application so it remains valid.
     pub fn build(self) -> Result<Tray> {
         let (tray, callback) = self.build_impl()?;
 
@@ -215,6 +225,8 @@ impl TrayMenuBuilder {
         Ok(tray)
     }
 
+    /// Builds the [`Tray`] and returns it together with its click callback (if
+    /// any), leaving the caller responsible for retaining the callback.
     pub fn finalize(self) -> Result<(Tray, Option<Callback<CallbackClosure<MouseEvent>>>)> {
         let (tray, callback) = self.build_impl()?;
 

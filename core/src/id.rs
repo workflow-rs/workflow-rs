@@ -8,12 +8,16 @@ use std::{fmt, str::FromStr};
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 
+/// Errors produced when constructing or decoding an [`Id`].
 #[derive(Error, Debug)]
 pub enum Error {
+    /// The base58 string could not be decoded.
     #[error("Base58 decode error: {0}")]
     Base58Decode(#[from] bs58::decode::Error),
+    /// The decoded buffer is not the expected 8-byte size.
     #[error("Invalid buffer size")]
     InvalidBufferSize,
+    /// The supplied `JsValue` was not a string and could not be decoded.
     #[error("Unable to decode id: JsValue must be a string")]
     JsValueNotString,
 }
@@ -28,14 +32,17 @@ pub enum Error {
 pub struct Id(pub(crate) [u8; 8]);
 
 impl Id {
+    /// Creates a new random 64-bit [`Id`].
     pub fn new() -> Id {
         Id::new_from_slice(&rand::random::<[u8; 8]>())
     }
 
+    /// Creates an [`Id`] from an 8-byte slice; panics if the slice is not 8 bytes long.
     pub fn new_from_slice(vec: &[u8]) -> Self {
         Self(<[u8; 8]>::try_from(<&[u8]>::clone(&vec)).expect("Error: invalid slice size for id"))
     }
 
+    /// Returns the raw 8-byte representation of the id.
     pub fn to_bytes(self) -> [u8; 8] {
         self.0
     }

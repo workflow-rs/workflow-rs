@@ -4,6 +4,8 @@ use wasm_bindgen::prelude::*;
 use workflow_core::channel::oneshot;
 use workflow_wasm::callback::Callback;
 
+/// Asynchronously retrieves all currently open NW.js windows belonging to the
+/// application.
 pub async fn get_all_async() -> Result<Vec<Window>> {
     let (sender, receiver) = oneshot();
     let callback = Callback::new(move |windows: JsValue| {

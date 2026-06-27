@@ -1,6 +1,8 @@
 use crate::frame::app::App;
 use crate::imports::*;
 
+/// The eframe application wrapper that drives an [`App`], bridging eframe's
+/// update loop with runtime event dispatch, keyboard handling, and rendering.
 pub struct Core<T>
 where
     T: App,
@@ -156,6 +158,8 @@ where
     //     }
     // }
 
+    /// Processes a single runtime event, marking shutdown as pending on
+    /// [`RuntimeEvent::Exit`] and forwarding the event to the application.
     pub fn handle_events(
         &mut self,
         event: RuntimeEvent,

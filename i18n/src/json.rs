@@ -2,6 +2,8 @@
 
 use itertools;
 
+/// Serialize a JSON value into a pretty-printed string with object keys
+/// emitted in sorted order, producing stable, diff-friendly output.
 pub fn to_json(v: &serde_json::Value) -> String {
     let s = String::new();
     to_json_(v, s, "")

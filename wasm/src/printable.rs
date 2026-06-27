@@ -4,6 +4,9 @@
 
 use wasm_bindgen::prelude::*;
 
+/// Wrapper around a [`JsValue`] that provides a human-friendly `Display`
+/// implementation, printing the string contents when the value is a string
+/// and falling back to its debug representation otherwise.
 #[derive(Clone, Debug)]
 pub struct Printable(JsValue);
 
@@ -11,6 +14,7 @@ unsafe impl Send for Printable {}
 unsafe impl Sync for Printable {}
 
 impl Printable {
+    /// Wraps the given [`JsValue`] for printable display.
     pub fn new(value: JsValue) -> Self {
         Self(value)
     }

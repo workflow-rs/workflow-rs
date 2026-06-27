@@ -4,6 +4,9 @@
 
 use crate::imports::*;
 
+/// Marker trait bundling the bounds required of an RPC operation (method) id
+/// type: it must be hashable and comparable for dispatch, serializable via both
+/// Borsh and Serde, and shareable across threads.
 pub trait OpsT:
     Debug
     + Clone
@@ -33,6 +36,9 @@ impl<T> OpsT for T where
 {
 }
 
+/// Marker trait bundling the bounds required of an RPC message payload type
+/// (request, response or notification): it must be serializable via both Borsh
+/// and Serde and shareable across threads.
 pub trait MsgT:
     BorshSerialize + BorshDeserialize + Serialize + DeserializeOwned + Send + Sync + 'static
 {

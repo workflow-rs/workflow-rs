@@ -64,6 +64,9 @@ where
         }
     }
 
+    /// Send a JSON-encoded request for `op` and await the deserialized
+    /// response, returning an error on transport or (de)serialization failure
+    /// or if the server responds with an error.
     pub async fn request<Req, Resp>(&self, op: Ops, req: Req) -> Result<Resp>
     where
         Req: MsgT,
@@ -96,6 +99,7 @@ where
         Ok(resp)
     }
 
+    /// Send a JSON-encoded notification for `op` without awaiting a response.
     pub async fn notify<Msg>(&self, op: Ops, data: Msg) -> Result<()>
     where
         Msg: Serialize + Send + Sync + 'static,

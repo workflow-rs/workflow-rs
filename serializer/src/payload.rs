@@ -2,9 +2,11 @@ use crate::serializer::{Deserializer, Serializer};
 use crate::{load, store};
 use std::io::Cursor;
 
+/// Serialization-side payload wrappers.
 pub mod ser {
     use super::*;
 
+    /// Borrows a [`Serializer`] value and serializes it as a length-prefixed byte buffer.
     #[repr(transparent)]
     pub struct Payload<'a, T>(pub &'a T)
     where
@@ -24,9 +26,11 @@ pub mod ser {
     }
 }
 
+/// Deserialization-side payload wrappers.
 pub mod de {
     use super::*;
 
+    /// Wraps a [`Deserializer`] value decoded from a length-prefixed byte buffer.
     #[repr(transparent)]
     pub struct Payload<T>(pub T)
     where
@@ -48,6 +52,7 @@ pub mod de {
     where
         T: Deserializer,
     {
+        /// Consumes the payload, returning the wrapped deserialized value.
         pub fn into_inner(self) -> T {
             self.0
         }

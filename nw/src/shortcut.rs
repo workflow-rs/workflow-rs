@@ -34,8 +34,11 @@ use workflow_wasm::prelude::*;
 
 /// Shortcut Info Object returned by [`ShortcutBuilder.finalize`](ShortcutBuilder#method.finalize) method
 pub struct ShortcutInfo {
+    /// The constructed NW.js shortcut.
     pub shortcut: nw_sys::Shortcut,
+    /// Callback invoked when the shortcut is activated.
     pub active_callback: Option<Callback<CallbackClosure<JsValue>>>,
+    /// Callback invoked when shortcut registration fails.
     pub failed_callback: Option<Callback<CallbackClosure<JsValue>>>,
 }
 
@@ -44,8 +47,11 @@ pub struct ShortcutInfo {
 ///
 /// For usage example please refer to [Examples](self)
 pub struct ShortcutBuilder {
+    /// Accumulated NW.js shortcut options being configured.
     pub options: nw_sys::shortcut::Options,
+    /// Callback to invoke when the shortcut is activated.
     pub active_callback: Option<Callback<CallbackClosure<JsValue>>>,
+    /// Callback to invoke when shortcut registration fails.
     pub failed_callback: Option<Callback<CallbackClosure<JsValue>>>,
 }
 
@@ -56,6 +62,7 @@ impl Default for ShortcutBuilder {
 }
 
 impl ShortcutBuilder {
+    /// Creates a new, empty shortcut builder.
     pub fn new() -> Self {
         Self {
             options: nw_sys::shortcut::Options::new(),

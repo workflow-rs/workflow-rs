@@ -251,6 +251,10 @@ impl WebSocket {
     #[doc = "*This API requires the following crate features to be activated: `WebSocket`*"]
     pub const CLOSED: u16 = 3u64 as u16;
 
+    /// Create a new `WebSocket` for the given URL, applying the supplied
+    /// configuration. Under Node.js the extended Node.js configuration
+    /// (protocols, origin, headers, request and client options) is used;
+    /// in the browser a plain URL connection is opened.
     pub fn new_with_config(
         url: &str,
         config: &WebSocketConfig,
@@ -277,6 +281,8 @@ impl WebSocket {
         }
     }
 
+    /// Close the socket if it is currently open or connecting; a no-op if it
+    /// is already closing or closed.
     pub fn close_if_open(&self) -> super::result::Result<()> {
         let ready_state = self.ready_state();
         if ready_state != Self::CLOSED && ready_state != Self::CLOSING {

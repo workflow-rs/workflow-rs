@@ -20,10 +20,12 @@ unsafe impl<T> Send for Sendable<T> {}
 unsafe impl<T> Sync for Sendable<T> {}
 
 impl<T> Sendable<T> {
+    /// Wraps `value` in a [`Sendable`], adding `Send`/`Sync` markers.
     pub fn new(value: T) -> Self {
         Self(value)
     }
 
+    /// Consumes the wrapper and returns the inner value.
     pub fn unwrap(self) -> T {
         self.0
     }
@@ -72,6 +74,9 @@ where
     }
 }
 
+/// Sendable wrapper for a future, adding `Send`/`Sync` markers so a non-`Send`
+/// future (e.g. one driving JS primitives) can be used across thread boundaries
+/// within a single-threaded WASM async environment.
 #[derive(Debug)]
 pub struct SendableFuture<T>(pub T);
 unsafe impl<T> Send for SendableFuture<T> {}

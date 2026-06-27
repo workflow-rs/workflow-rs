@@ -52,6 +52,8 @@ where
     Req: MsgT,
     Resp: MsgT,
 {
+    /// Wrap a method handler closure into a [`Method`], taking the server and
+    /// connection contexts plus a typed request and returning a typed response.
     pub fn new<FN>(method_fn: FN) -> Method<ServerContext, ConnectionContext, Req, Resp>
     where
         FN: Send

@@ -7,11 +7,14 @@ pub use triggered::*;
 /// Wrapper containing a single Trigger instance
 #[derive(Debug, Clone)]
 pub struct SingleTrigger {
+    /// Handle used to fire the trigger.
     pub trigger: Trigger,
+    /// Handle awaited by consumers waiting for the trigger to fire.
     pub listener: Listener,
 }
 
 impl SingleTrigger {
+    /// Creates a new trigger/listener pair wrapped in a [`SingleTrigger`].
     pub fn new() -> SingleTrigger {
         let (trigger, listener) = triggered::trigger();
         SingleTrigger { trigger, listener }
@@ -28,11 +31,14 @@ impl Default for SingleTrigger {
 /// request/response fashion
 #[derive(Debug, Clone)]
 pub struct ReqRespTrigger {
+    /// Trigger fired to signal a request.
     pub request: SingleTrigger,
+    /// Trigger fired to signal the corresponding response.
     pub response: SingleTrigger,
 }
 
 impl ReqRespTrigger {
+    /// Creates a new bi-directional request/response trigger pair.
     pub fn new() -> ReqRespTrigger {
         ReqRespTrigger {
             request: SingleTrigger::new(),

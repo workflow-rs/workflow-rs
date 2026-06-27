@@ -16,11 +16,16 @@ cfg_if! {
     }
 }
 
+/// Low-level bindings to the underlying browser/Node.js WebSocket interface.
 pub mod bindings;
 pub mod config;
+/// WebSocket client error type and its conversions.
 pub mod error;
+/// WebSocket client message types exchanged with the server.
 pub mod message;
+/// Connection options controlling connect and reconnect behavior.
 pub mod options;
+/// Result type alias used throughout the WebSocket client.
 pub mod result;
 
 pub use config::WebSocketConfig;
@@ -34,24 +39,40 @@ use async_trait::async_trait;
 use std::pin::Pin;
 use std::sync::Arc;
 use workflow_core::channel::{Channel, Receiver, Sender, oneshot};
+/// Result of a connect attempt. On success yields `Some(receiver)` when the
+/// caller did not block on the connection (the receiver fires once connected),
+/// or `None` when the connect call blocked until the connection was established.
 pub type ConnectResult<E> = std::result::Result<Option<Receiver<Result<()>>>, E>;
 
+/// Shared closure invoked to perform a custom handshake negotiation using the
+/// supplied send/receive channels before the connection is considered ready.
 pub type HandshakeFn = Arc<
     Box<dyn Send + Sync + Fn(&Sender<Message>, &Receiver<Message>) -> HandshakeFnReturn + 'static>,
 >;
+/// The boxed future returned by a [`HandshakeFn`], resolving once the
+/// handshake completes (or fails).
 pub type HandshakeFnReturn = Pin<Box<dyn Send + Sync + 'static + Future<Output = Result<()>>>>;
 
+/// Trait implemented by custom handshake handlers that negotiate with the
+/// server immediately after the socket opens and before it is marked connected.
 #[async_trait]
 pub trait Handshake: Send + Sync + 'static {
+    /// Perform the handshake using the given send and receive channels,
+    /// returning once negotiation has succeeded or failed.
     async fn handshake(&self, sender: &Sender<Message>, receiver: &Receiver<Message>)
     -> Result<()>;
 }
 
+/// Trait implemented by URL resolvers that supply the destination URL
+/// dynamically when no explicit URL has been configured.
 #[async_trait]
 pub trait Resolver: Send + Sync + 'static {
+    /// Resolve and return the WebSocket URL to connect to.
     async fn resolve_url(&self) -> ResolverResult;
 }
+/// Result of a [`Resolver::resolve_url`] call, yielding the destination URL.
 pub type ResolverResult = Result<String>;
+/// Alias for the WebSocket client [`Error`] type.
 pub type WebSocketError = Error;
 
 struct Inner {

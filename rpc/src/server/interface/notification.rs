@@ -49,6 +49,8 @@ where
     ServerContext: Send + Sync + 'static,
     Msg: BorshDeserialize + DeserializeOwned + Send + Sync + 'static,
 {
+    /// Wrap a notification handler closure into a [`Notification`], taking the
+    /// server and connection contexts plus a typed notification message.
     pub fn new<FN>(method_fn: FN) -> Notification<ServerContext, ConnectionContext, Msg>
     where
         FN: Send

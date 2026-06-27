@@ -6,6 +6,9 @@
 use cfg_if::cfg_if;
 use std::env::VarError;
 
+/// Returns the value of the environment variable `_key`, reading from the
+/// process environment natively or from `process.env` under Node.js.
+/// Returns [`VarError::NotPresent`] if the variable is unset.
 pub fn var(_key: &str) -> Result<String, VarError> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {

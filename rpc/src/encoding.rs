@@ -17,7 +17,9 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 #[serde(rename_all = "kebab-case")]
 pub enum Encoding {
+    /// Compact binary encoding using Borsh.
     Borsh = 0,
+    /// Human-readable text encoding using Serde JSON.
     #[serde(rename = "json")]
     SerdeJson = 1,
 }
@@ -84,6 +86,7 @@ impl TryFrom<JsValue> for Encoding {
 const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::SerdeJson];
 
 impl Encoding {
+    /// Iterate over all supported encodings (`Borsh` and `SerdeJson`).
     pub fn iter() -> impl Iterator<Item = &'static Encoding> {
         ENCODING.iter()
     }

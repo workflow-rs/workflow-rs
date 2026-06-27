@@ -3,7 +3,10 @@ use {
     std::sync::Arc,
 };
 
+/// Extension trait for registering statically embedded font data with egui.
 pub trait RegisterStaticFont {
+    /// Register `bytes` as a font under `name` and append it to the given
+    /// [`FontFamily`]'s fallback list.
     fn add_static(&mut self, family: FontFamily, name: &str, bytes: &'static [u8]);
 }
 

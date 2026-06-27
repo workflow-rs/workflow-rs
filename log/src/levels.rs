@@ -14,13 +14,20 @@
 ///
 use std::cmp;
 
+/// An enumeration of the available verbosity levels of a log message,
+/// ordered from the most severe (`Error`) to the least severe (`Trace`).
 #[repr(usize)]
 #[derive(Copy, Eq, Debug)]
 pub enum Level {
+    /// The "error" level, designating very serious failures.
     Error = 1,
+    /// The "warn" level, designating hazardous situations.
     Warn,
+    /// The "info" level, designating useful informational messages.
     Info,
+    /// The "debug" level, designating lower-priority diagnostic information.
     Debug,
+    /// The "trace" level, designating very low-priority, verbose information.
     Trace,
 }
 
@@ -106,6 +113,9 @@ impl Ord for Level {
     }
 }
 
+/// An enumeration of the available log level filters, used to enable or
+/// suppress log messages at or below a given [`Level`]. Includes an `Off`
+/// variant that disables all logging.
 #[repr(usize)]
 #[derive(Copy, Eq, Debug)]
 pub enum LevelFilter {

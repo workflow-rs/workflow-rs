@@ -6,16 +6,21 @@ use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
+/// Hasher builder for the fast, non-cryptographic FxHash used by i18n maps.
 pub type FxBuildHasher = BuildHasherDefault<FxHasher64>;
+/// A [`HashMap`] using the fast [`FxBuildHasher`] for low-overhead lookups.
 pub type FxHashMap<K, V> = HashMap<K, V, FxBuildHasher>;
 
 static mut JSON_DATA: Option<String> = None;
 static mut JSON_DATA_GUARD: Option<Mutex<()>> = None;
 static DICTIONARY: ArcSwapOption<Dictionary> = ArcSwapOption::const_empty();
 
+/// Callback type used to persist serialized i18n JSON data to storage.
 pub type StoreFn = dyn Send + Sync + Fn(&str) -> Result<()> + 'static;
+/// A list of `(placeholder, value)` substitution pairs for parameterized translations.
 pub type DictionaryArgs<'a> = Vec<(&'static str, &'a str)>;
 
+/// Configures and initializes the global i18n [`Dictionary`].
 pub struct Builder {
     current_code: String,
     default_code: String,
@@ -25,6 +30,8 @@ pub struct Builder {
 }
 
 impl Builder {
+    /// Create a builder for the given currently-active and default (source)
+    /// language codes.
     pub fn new(current_code: &str, default_code: &str) -> Self {
         Builder {
             current_code: current_code.to_string(),
@@ -35,16 +42,21 @@ impl Builder {
         }
     }
 
+    /// Provide static JSON i18n data, typically embedded via `include_str!()`.
     pub fn with_static_json_data(mut self, json_data: &'static str) -> Self {
         self.static_json_data = Some(json_data);
         self
     }
 
+    /// Provide owned JSON i18n data as an optional `String`, taking precedence
+    /// over any static data when set.
     pub fn with_string_json_data(mut self, json_data: Option<String>) -> Self {
         self.string_json_data = json_data;
         self
     }
 
+    /// Set the storage callback invoked to persist i18n data (e.g. when new
+    /// missing translations are discovered).
     pub fn with_store(
         mut self,
         store_fn: impl Fn(&str) -> Result<()> + Send + Sync + 'static,
@@ -53,6 +65,8 @@ impl Builder {
         self
     }
 
+    /// Build the dictionary from the configured data and install it as the
+    /// global active dictionary.
     pub fn try_init(self) -> Result<()> {
         let json_data = if let Some(json_data) = self.string_json_data {
             unsafe {
@@ -171,6 +185,8 @@ pub fn import_translation_files<P: AsRef<Path>>(source_folder_path: P, reload: b
     Ok(())
 }
 
+/// Export the default-language translations, merged with any runtime-discovered
+/// missing entries, by passing the resulting JSON to the supplied callback.
 pub fn export_default_language(
     store_fn: impl Fn(&str) -> Result<()> + Send + Sync + 'static,
 ) -> Result<()> {
@@ -196,20 +212,26 @@ pub fn export_default_language(
 }
 
 #[inline(always)]
+/// Return the currently active [`Dictionary`]. Panics if i18n has not yet been
+/// initialized via [`Builder::try_init`].
 pub fn dictionary() -> Arc<Dictionary> {
     DICTIONARY.load().as_ref().unwrap().clone()
 }
 
+/// Acquire the global lock guarding access to the shared JSON data buffer.
 pub fn guard() -> MutexGuard<'static, ()> {
     let json_data_guard_ptr = &raw const JSON_DATA_GUARD;
     unsafe { (*json_data_guard_ptr).as_ref().unwrap().lock().unwrap() }
 }
 
+/// Load i18n data from a JSON file and install it as the active dictionary.
 pub fn load(json_data_file: impl AsRef<Path>) -> Result<()> {
     from_string(std::fs::read_to_string(json_data_file)?)?;
     Ok(())
 }
 
+/// Replace the active dictionary by parsing the supplied JSON data, preserving
+/// the current and default language codes and storage callback.
 pub fn from_string(json_data: impl Into<String>) -> Result<()> {
     let _guard = guard();
 
@@ -441,41 +463,51 @@ impl Dictionary {
         }
     }
 
+    /// Return the optional storage callback used to persist i18n data.
     pub fn store_fn(&self) -> &Option<Arc<StoreFn>> {
         &self.store_fn
     }
 
     #[inline(always)]
+    /// Return the currently active language code.
     pub fn current_code(&self) -> Arc<String> {
         self.current_code.load().clone()
     }
 
     #[inline(always)]
+    /// Return the human-readable title of the currently active language.
     pub fn current_title(&self) -> Arc<String> {
         self.current_title.load().clone()
     }
 
     #[inline(always)]
+    /// Return the default (source) language code.
     pub fn default_code(&self) -> &str {
         &self.default_code
     }
 
     #[inline(always)]
+    /// Return the translation table for the currently active language.
     pub fn current_translations(&self) -> Arc<FxHashMap<&'static str, &'static str>> {
         self.current_translations.load().clone()
     }
 
     #[inline(always)]
+    /// Look up `text` in the current language's translation table, returning the
+    /// translated string if present.
     pub fn translate(&self, text: &str) -> Option<&'static str> {
         let current_translations = self.current_translations.load().clone();
         current_translations.get(text).copied()
     }
 
     #[inline(always)]
+    /// Return the translation table for the default (source) language.
     pub fn default_translations(&self) -> &Arc<FxHashMap<&'static str, &'static str>> {
         &self.default_translations
     }
 
+    /// Return the human-readable title for a language code, or an error if the
+    /// code is unknown.
     pub fn language_title(&self, language_code: impl Into<String>) -> Result<&str> {
         let language_code: String = language_code.into();
         if let Some(lang) = self.languages.get(language_code.as_str()) {
@@ -485,6 +517,8 @@ impl Dictionary {
         }
     }
 
+    /// Switch the active language to the given code (or alias), updating the
+    /// current code, title, and translation table. Errors if the code is unknown.
     pub fn activate_language_code(&self, language_code: impl Into<String>) -> Result<()> {
         let language_code: String = language_code.into();
         let current_code = self.resolve_aliases(language_code.as_str())?;
@@ -516,6 +550,8 @@ impl Dictionary {
             .collect()
     }
 
+    /// Serialize the dictionary (including discovered missing entries) into a
+    /// stable, sorted-key JSON string suitable for persistence.
     pub fn to_json(&self) -> Result<String> {
         let data = Storable::from(self);
         let json = serde_json::to_value(data)?;
@@ -525,6 +561,7 @@ impl Dictionary {
     }
 }
 
+/// A collection of language `code` to display `name` mappings.
 pub struct Languages(FxHashMap<&'static str, &'static str>);
 
 impl Default for Languages {
@@ -584,18 +621,22 @@ impl Default for Languages {
 }
 
 impl Languages {
+    /// Create an empty set of languages.
     pub fn new() -> Self {
         Languages(FxHashMap::default())
     }
 
+    /// Add a language given its code and human-readable name.
     pub fn add(&mut self, code: &'static str, name: &'static str) {
         self.0.insert(code, name);
     }
 
+    /// Consume the set and return the underlying code-to-name map.
     pub fn into_inner(self) -> FxHashMap<&'static str, &'static str> {
         self.0
     }
 
+    /// Return the list of language codes contained in this set.
     pub fn codes(&self) -> Vec<&'static str> {
         self.0.keys().copied().collect()
     }
@@ -638,6 +679,8 @@ impl Default for Data<'_> {
     }
 }
 
+/// Serializable snapshot of a [`Dictionary`] (including any newly discovered
+/// missing entries) used to persist i18n data back to a JSON file.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Storable {
     enabled: Vec<&'static str>,

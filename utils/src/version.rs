@@ -1,9 +1,13 @@
 use crate::imports::*;
 
+/// A semantic version composed of major, minor and patch components.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Version {
+    /// The major version component.
     pub major: u64,
+    /// The minor version component.
     pub minor: u64,
+    /// The patch version component.
     pub patch: u64,
 }
 
@@ -54,6 +58,8 @@ impl Display for Version {
 }
 
 impl Version {
+    /// Returns `true` if this version is strictly greater than `other`,
+    /// comparing major, then minor, then patch components.
     pub fn is_greater_than<V>(&self, other: V) -> bool
     where
         V: AsRef<Version>,
@@ -86,6 +92,8 @@ struct Crate {
     max_version: String,
 }
 
+/// Asynchronously fetches the latest published version of `crate_name` from
+/// crates.io, identifying the request with the given `user_agent`.
 pub async fn latest_crate_version<S: Display, U: Display>(
     crate_name: S,
     user_agent: U,
@@ -98,12 +106,15 @@ pub async fn latest_crate_version<S: Display, U: Display>(
     response.crate_.max_version.parse()
 }
 
+/// Blocking (non-`wasm32`) variants of the crates.io version helpers.
 #[cfg(not(target_arch = "wasm32"))]
 pub mod blocking {
     use super::*;
     use reqwest::blocking::Client;
     use reqwest::header::*;
 
+    /// Synchronously fetches the latest published version of `crate_name` from
+    /// crates.io, identifying the request with the given `user_agent`.
     pub fn latest_crate_version<S: Display, U: Display>(
         crate_name: S,
         user_agent: U,

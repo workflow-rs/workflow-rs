@@ -62,8 +62,11 @@ use workflow_wasm::prelude::*;
 
 /// MediaStream track kind
 pub enum MediaStreamTrackKind {
+    /// Video tracks only.
     Video,
+    /// Audio tracks only.
     Audio,
+    /// Both audio and video tracks.
     All,
 }
 

@@ -6,7 +6,7 @@
 //! <img src="https://img.shields.io/badge/platform- native -informational?style=for-the-badge&color=50a0f0" height="20">
 //! <img src="https://img.shields.io/badge/platform- wasm32/browser -informational?style=for-the-badge&color=50a0f0" height="20">
 //!
-//! [`workflow-terminal`] is a terminal shell that functions uniformly in native
+//! `workflow-terminal` is a terminal shell that functions uniformly in native
 //! Rust application command-line environment and in WASM-based browser environment.
 //!
 //! This is achieved by combining [`termion`](https://crates.io/crates/termion) and
@@ -97,14 +97,18 @@ extern crate self as workflow_terminal;
 
 pub mod clear;
 pub mod cli;
+/// Conversion of `\n` line endings into terminal-friendly `\r\n`.
 pub mod crlf;
 pub mod cursor;
 pub mod error;
 pub mod keys;
+/// Convenience macros for terminal logging and output.
 pub mod macros;
+/// Re-exports of the most commonly used types and traits.
 pub mod prelude;
 pub mod result;
 pub mod terminal;
+/// Helpers for working with strings as sequences of Unicode characters.
 pub mod unicode;
 
 pub use cli::{Cli, Context, Handler, HandlerCli};

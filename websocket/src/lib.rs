@@ -19,7 +19,7 @@
 //! and web-applications alike.
 //!
 //! - [`client::WebSocket`] operates in browser-WASM or native/tokio-backed environment
-//! - [`server::WebSocketServer`] operates only in native/tokio-backed environment
+//! - `server::WebSocketServer` operates only in native/tokio-backed environment
 //!
 
 pub mod client;

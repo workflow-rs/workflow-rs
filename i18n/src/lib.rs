@@ -8,14 +8,19 @@
 //!
 //! i18n is a performance-oriented library for internationalization and translation embedding into Rust applications.
 //!
+/// Error type and result helpers for i18n operations.
 pub mod error;
+/// Core internationalization dictionary, builder, and translation functions.
 pub mod i18n;
+/// Deterministic, sorted-key JSON pretty-printer used for stable i18n data files.
 pub mod json;
+/// Crate-wide `Result` type alias.
 pub mod result;
 
 pub use i18n::i18n;
 pub use i18n::i18n_args;
 
+/// Convenience re-exports of the most commonly used items.
 pub mod prelude {
     pub use crate::i18n;
 }

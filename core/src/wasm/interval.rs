@@ -106,7 +106,7 @@ impl Interval {
     }
 
     /// Change period function will result in immediate cancellation of the underlying
-    /// timer and a restart of the timer starting from the moment of [`change_period()`] invocation.
+    /// timer and a restart of the timer starting from the moment of `change_period()` invocation.
     #[inline]
     pub fn change_period(&self, period: Duration) {
         if let Some(ctx) = self.inner.ctx.lock().unwrap().as_mut() {

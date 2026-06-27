@@ -1,3 +1,7 @@
+//! Abstraction for spawning and managing a re-startable async [`Task`] that runs
+//! a user-supplied async closure, exposing termination and completion channels
+//! for cooperative cancellation and result delivery.
+
 // use workflow_core::task::*;
 use futures::Future;
 use std::marker::PhantomData;
@@ -13,16 +17,22 @@ pub use workflow_task_macros::{set_task, task};
 /// Errors produced by the [`Task`] implementation
 #[derive(Debug, Error)]
 pub enum TaskError {
+    /// The task is not currently running.
     #[error("The task is not running")]
     NotRunning,
+    /// The task is already running and cannot be started again.
     #[error("The task is already running")]
     AlreadyRunning,
+    /// Failed to send on one of the task's channels.
     #[error("Task channel send error {0}")]
     SendError(String),
+    /// Failed to receive on one of the task's channels.
     #[error("Task channel receive error: {0:?}")]
     RecvError(#[from] RecvError),
+    /// Non-blocking send on a task channel failed.
     #[error("Task channel try send error: {0}")]
     TrySendError(String),
+    /// Non-blocking receive on a task channel failed.
     #[error("Task channel try receive {0:?}")]
     TryRecvError(#[from] TryRecvError),
 }
@@ -42,7 +52,10 @@ impl<T> From<TrySendError<T>> for TaskError {
 /// Result type used by the [`Task`] implementation
 pub type TaskResult<T> = std::result::Result<T, TaskError>;
 
+/// Boxed async closure executed by a [`Task`], receiving the task argument and a
+/// termination [`Receiver`] and returning the task's future via [`FnReturn`].
 pub type TaskFn<A, T> = Arc<Box<dyn Send + Sync + Fn(A, Receiver<()>) -> FnReturn<T> + 'static>>;
+/// Pinned, boxed future returned by a [`TaskFn`], resolving to the task's output value.
 pub type FnReturn<T> = Pin<Box<dyn Send + Sync + 'static + Future<Output = T>>>;
 
 struct TaskInner<A, T>

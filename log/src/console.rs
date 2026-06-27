@@ -83,6 +83,7 @@ cfg_if::cfg_if! {
     if #[cfg(target_arch = "bpf")] {
         pub fn set_colors_enabled(_:bool) { }
     } else {
+        /// Enables or disables ANSI color output produced by [`style`].
         pub fn set_colors_enabled(enable: bool) {
             console::set_colors_enabled(enable)
         }

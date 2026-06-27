@@ -3,10 +3,13 @@
 use serde::{Deserialize, Deserializer, Serializer};
 use std::str;
 
+/// Trait for types that can render themselves as a hexadecimal string.
 pub trait ToHex {
+    /// Returns the hexadecimal string representation of `self`.
     fn to_hex(&self) -> String;
 }
 
+/// `serde` serialize helper that encodes a [`ToHex`] value as a hex string.
 pub fn serialize<S, T>(this: T, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -16,11 +19,15 @@ where
     serializer.serialize_str(&hex)
 }
 
+/// Trait for types that can be parsed from a hexadecimal string.
 pub trait FromHex: Sized {
+    /// Error type returned when hex decoding fails.
     type Error: std::fmt::Display;
+    /// Parses `hex_str` into `Self`, returning an error on invalid hex input.
     fn from_hex(hex_str: &str) -> Result<Self, Self::Error>;
 }
 
+/// `serde` deserialize helper that decodes a hex string into a [`FromHex`] value.
 pub fn deserialize<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,

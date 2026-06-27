@@ -48,6 +48,7 @@ export interface IWASM32BindingsConfig {
 
 #[wasm_bindgen]
 extern "C" {
+    /// JavaScript configuration object for the workflow-rs WASM32 bindings runtime.
     #[wasm_bindgen(extends = Object, typescript_type = "IWASM32BindingsConfig")]
     pub type IWASM32BindingsConfig;
 }
@@ -65,6 +66,7 @@ pub fn init_wasm32_bindings(config: IWASM32BindingsConfig) -> std::result::Resul
     }
     Ok(())
 }
+/// Returns whether runtime validation of WASM class names is currently enabled.
 #[inline(always)]
 pub fn validate_class_names() -> bool {
     unsafe { VALIDATE_CLASS_NAMES }
@@ -83,19 +85,29 @@ where
         + LongRefFromWasmAbi<Abi = WasmPtr<WasmRefCell<T>>>
         + 'a,
 {
+    /// A borrowed reference to a Rust object obtained from the WASM ABI.
     Ref {
+        /// Anchor keeping the borrowed reference alive.
         anchor: <T as RefFromWasmAbi>::Anchor,
     },
+    /// A reference that also owns (captures) the source `JsValue` keeping it alive.
     OwnedRef {
+        /// The captured source `JsValue` backing the reference.
         js_value: Option<JsValue>,
+        /// Anchor keeping the borrowed reference alive.
         anchor: Option<<T as RefFromWasmAbi>::Anchor>,
     },
+    /// A long-lived reference to a Rust object obtained from the WASM ABI.
     LongRef {
+        /// Anchor keeping the long-lived reference alive.
         anchor: <T as LongRefFromWasmAbi>::Anchor,
     },
+    /// An owned value, typically created by interpreting user-supplied data.
     Value {
+        /// The owned value.
         value: Option<T>,
     },
+    /// Uninhabited variant carrying the lifetime parameter; never constructed.
     _Unreachable(std::convert::Infallible, &'a std::marker::PhantomData<T>),
 }
 
@@ -172,6 +184,7 @@ where
         }
     }
 
+    /// Construct a [`Cast::Value`] holding an owned value.
     pub fn value(value: T) -> Self {
         Cast::Value { value: Some(value) }
     }
@@ -206,6 +219,7 @@ where
     where
         R: AsRef<JsValue> + 'a;
 
+    /// Obtain a safe reference from a [`JsValue`], wrapped in a [`Cast::Ref`].
     fn try_ref_from_js_value_as_cast<'a, R>(
         js_value: &'a R,
     ) -> std::result::Result<Cast<'a, Self>, Error>
@@ -222,6 +236,7 @@ where
     where
         R: AsRef<JsValue> + 'a;
 
+    /// Obtain a safe long-lived reference from a [`JsValue`], wrapped in a [`Cast::LongRef`].
     fn try_long_ref_from_js_value_as_cast<'a, R>(
         js: &'a R,
     ) -> std::result::Result<Cast<'a, Self>, Error>
@@ -243,6 +258,7 @@ where
         + LongRefFromWasmAbi<Abi = WasmPtr<WasmRefCell<Self>>>
         + Clone,
 {
+    /// Error type returned by the cast, displayable and convertible from [`Error`].
     type Error: std::fmt::Display + From<Error>;
 
     /// Try to cast a JsValue into a Rust object.
@@ -256,11 +272,13 @@ where
 
     /// Perform a user cast and consume the [`Cast`] container.
     /// This function will return a temporary user-created
-    /// object created during [`try_cast_from`] or a clone of the casted reference.
+    /// object created during `try_cast_from` or a clone of the casted reference.
     fn try_owned_from(value: impl AsRef<JsValue>) -> std::result::Result<Self, Self::Error> {
         Self::try_cast_from(&value).map(|c| c.into_owned())
     }
 
+    /// Cast a `JsValue` into a Rust object while capturing (owning) the source
+    /// `JsValue`, yielding a `'static` [`Cast`] that keeps the reference alive.
     fn try_captured_cast_from(
         js_value: impl AsRef<JsValue>,
     ) -> std::result::Result<Cast<'static, Self>, Self::Error> {
@@ -290,7 +308,7 @@ where
 
     /// Try to cast a JsValue into a Rust object, in cast of failure
     /// invoke a user-supplied closure that can try to create an instance
-    /// of the object based on the supplied JsValue. Unlike the [`resolve`]
+    /// of the object based on the supplied JsValue. Unlike the `resolve`
     /// function, this function expects `create` closure to return a [`Cast`].
     /// This is useful when routing the creation of the object to another
     /// function that is capable of creating a compatible Cast wrapper.
@@ -307,12 +325,17 @@ where
     }
 }
 
+/// Inverse of [`TryCastFromJs`], allowing a source value (such as a [`JsValue`])
+/// to be cast into a target Rust type `T` that implements [`TryCastFromJs`].
 pub trait TryCastJsInto<T>
 where
     T: TryCastFromJs,
 {
+    /// Error type returned by the conversion, convertible from [`Error`].
     type Error: From<Error>;
+    /// Attempt to cast `self` into a [`Cast`] wrapping the target type `T`.
     fn try_into_cast(&self) -> std::result::Result<Cast<'_, T>, Self::Error>;
+    /// Attempt to cast `self` into an owned value of the target type `T`.
     fn try_into_owned(&self) -> std::result::Result<T, Self::Error>;
 }
 
@@ -391,6 +414,7 @@ where
 }
 
 #[inline]
+/// Create a long-lived reference to a Rust object from a WASM ABI obtained from a `JsValue`.
 pub fn try_long_ref_from_abi_safe<T>(
     class: &str,
     js: impl AsRef<JsValue>,
@@ -404,6 +428,7 @@ where
 }
 
 #[inline]
+/// Create a mutable reference to a Rust object from a WASM ABI obtained from a `JsValue`.
 pub fn try_ref_mut_from_abi_safe<T>(
     class: &str,
     js: impl AsRef<JsValue>,
@@ -417,6 +442,7 @@ where
 }
 
 #[inline]
+/// Clone a Rust object out of a WASM ABI reference obtained from a `JsValue`.
 pub fn try_clone_from_abi_safe<T>(
     class: &str,
     js: impl AsRef<JsValue>,
@@ -428,6 +454,7 @@ where
 }
 
 #[inline]
+/// Copy a Rust object out of a WASM ABI reference obtained from a `JsValue`.
 pub fn try_copy_from_abi_safe<T>(
     class: &str,
     js: impl AsRef<JsValue>,
@@ -454,6 +481,8 @@ where
 }
 
 #[inline]
+/// Create a mutable reference to a Rust object from a WASM ABI obtained from a `JsValue`,
+/// returning `None` if the value is `null` or `undefined`.
 pub fn try_ref_mut_from_abi_safe_as_option<T>(
     class: &str,
     js: impl AsRef<JsValue>,
@@ -466,6 +495,8 @@ where
 }
 
 #[inline]
+/// Clone a Rust object out of a WASM ABI reference obtained from a `JsValue`,
+/// returning `None` if the value is `null` or `undefined`.
 pub fn try_clone_from_abi_safe_as_option<T>(
     class: &str,
     js: impl AsRef<JsValue>,
@@ -478,6 +509,8 @@ where
 }
 
 #[inline]
+/// Copy a Rust object out of a WASM ABI reference obtained from a `JsValue`,
+/// returning `None` if the value is `null` or `undefined`.
 pub fn try_copy_from_abi_safe_as_option<T>(
     class: &str,
     js: impl AsRef<JsValue>,

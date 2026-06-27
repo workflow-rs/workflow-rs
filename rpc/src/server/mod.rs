@@ -106,12 +106,15 @@ pub use workflow_rpc_macros::server_notification as notification;
 /// connected peers.
 #[derive(Debug, Clone)]
 pub struct RpcContext {
+    /// Network address of the connected peer.
     pub peer: SocketAddr,
 }
 
 /// [`RpcHandler`] - a server-side event handler for RPC connections.
 #[async_trait]
 pub trait RpcHandler: Send + Sync + 'static {
+    /// Per-connection context produced during the handshake and supplied to
+    /// all subsequent RPC calls from that connection.
     type Context: Send + Sync;
 
     /// Called to determine if the connection should be accepted.
@@ -169,6 +172,8 @@ pub struct Messenger {
 }
 
 impl Messenger {
+    /// Create a new messenger for a connection, bound to the given encoding
+    /// and WebSocket sink used to dispatch outgoing messages.
     pub fn new(encoding: Encoding, sink: &WebSocketSink) -> Self {
         Self {
             encoding,

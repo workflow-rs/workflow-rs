@@ -115,6 +115,8 @@ where
     }
 }
 
+/// Build a JSON-encoded notification WebSocket message for the given operation
+/// and message payload.
 pub fn create_serialized_notification_message<Ops, Msg>(op: Ops, msg: Msg) -> Result<Message>
 where
     Ops: OpsT,

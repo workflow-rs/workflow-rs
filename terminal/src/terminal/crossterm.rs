@@ -25,9 +25,11 @@ pub struct Crossterm {
 }
 
 impl Crossterm {
+    /// Creates a new crossterm backend with default [`Options`].
     pub fn try_new() -> Result<Self> {
         Self::try_new_with_options(&Options::default())
     }
+    /// Creates a new crossterm backend configured from the given [`Options`].
     pub fn try_new_with_options(_options: &Options) -> Result<Self> {
         let crossterm = Crossterm {
             terminal: Arc::new(Mutex::new(None)),
@@ -38,19 +40,23 @@ impl Crossterm {
         Ok(crossterm)
     }
 
+    /// Binds this crossterm backend to the given [`Terminal`].
     pub async fn init(self: &Arc<Self>, terminal: &Arc<Terminal>) -> Result<()> {
         *self.terminal.lock().unwrap() = Some(terminal.clone());
         Ok(())
     }
 
+    /// Signals the input loop to terminate at the next opportunity.
     pub fn exit(&self) {
         self.terminate.store(true, Ordering::SeqCst);
     }
 
+    /// Returns the associated [`Terminal`]; panics if [`init`](Self::init) has not been called.
     pub fn terminal(&self) -> Arc<Terminal> {
         self.terminal.lock().unwrap().as_ref().unwrap().clone()
     }
 
+    /// Enables raw mode, processes key input until termination, then restores normal mode.
     pub async fn run(&self) -> Result<()> {
         terminal::enable_raw_mode()?;
         self.flush();
@@ -61,6 +67,8 @@ impl Crossterm {
         Ok(())
     }
 
+    /// Runs the blocking key-event loop, translating crossterm key events into
+    /// [`Key`]s and feeding them to the terminal until `terminate` is set.
     pub async fn intake(&self, terminate: &Arc<AtomicBool>) -> Result<()> {
         loop {
             let event = event::read()?;
@@ -102,6 +110,7 @@ impl Crossterm {
         Ok(())
     }
 
+    /// Prints the given value to stdout and flushes immediately.
     pub fn write<S>(&self, s: S)
     where
         S: ToString,
@@ -110,6 +119,7 @@ impl Crossterm {
         self.flush();
     }
 
+    /// Flushes any buffered output to stdout.
     pub fn flush(&self) {
         // stdout
         if let Some(stdout) = self.stdout.lock().unwrap().as_mut() {
@@ -139,26 +149,32 @@ where
 
 // compatibility functions
 impl Crossterm {
+    /// Compatibility stub; font sizing is not supported under crossterm, always returns `None`.
     pub fn get_font_size(&self) -> Result<Option<f64>> {
         Ok(None)
     }
 
+    /// Compatibility no-op; font sizing is not supported under crossterm.
     pub fn set_font_size(&self, _font_size: f64) -> Result<()> {
         Ok(())
     }
 
+    /// Compatibility stub; the terminal column count is not tracked under crossterm, always returns `None`.
     pub fn cols(&self) -> Option<usize> {
         None
     }
 
+    /// Compatibility stub; the terminal row count is not tracked under crossterm, always returns `None`.
     pub fn rows(&self) -> Option<usize> {
         None
     }
 
+    /// Compatibility no-op; font sizing is not supported under crossterm, always returns `None`.
     pub fn increase_font_size(&self) -> Result<Option<f64>> {
         Ok(None)
     }
 
+    /// Compatibility no-op; font sizing is not supported under crossterm, always returns `None`.
     pub fn decrease_font_size(&self) -> Result<Option<f64>> {
         Ok(None)
     }

@@ -25,15 +25,20 @@ use workflow_core::runtime;
 
 #[wasm_bindgen]
 extern "C" {
+    /// Binding to the Node.js `Buffer` type, used when exchanging binary
+    /// data with the JavaScript runtime.
     #[wasm_bindgen(extends = Uint8Array)]
     #[derive(Clone, Debug)]
     pub type Buffer;
 
+    /// Creates a `Buffer` that wraps the contents of the given `Uint8Array`.
     #[wasm_bindgen(static_method_of = Buffer, js_name = from)]
     pub fn from_uint8_array(array: &Uint8Array) -> Buffer;
 
 }
 
+/// Returns the browser's domain-associated `localStorage` object, panicking
+/// if it is not available in the current environment.
 pub fn local_storage() -> web_sys::Storage {
     web_sys::window()
         .unwrap()
@@ -43,18 +48,24 @@ pub fn local_storage() -> web_sys::Storage {
         .expect("localStorage is not available")
 }
 
+/// Per-operation options for the file system abstraction, primarily used to
+/// override the key under which data is stored in browser local storage.
 #[derive(Default)]
 pub struct Options {
+    /// Explicit local storage key to use instead of deriving one from the file name.
     pub local_storage_key: Option<String>,
 }
 
 impl Options {
+    /// Creates [`Options`] that store data under the given explicit local storage key.
     pub fn with_local_storage_key(key: &str) -> Self {
         Options {
             local_storage_key: Some(key.to_string()),
         }
     }
 
+    /// Resolves the local storage key for the given file, using the explicit
+    /// key if set, otherwise falling back to the file's name.
     pub fn local_storage_key(&self, filename: &Path) -> String {
         self.local_storage_key
             .clone()
@@ -396,76 +407,94 @@ cfg_if! {
 
         // -----------------------------------------
 
+        /// Returns whether the file at `filename` exists.
         pub async fn exists_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<bool> {
             Ok(filename.as_ref().exists())
         }
 
+        /// Synchronously returns whether the file at `filename` exists.
         pub fn exists_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<bool> {
             Ok(filename.as_ref().exists())
         }
 
+        /// Reads the entire contents of `filename` into a UTF-8 string.
         pub async fn read_to_string_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<String> {
             Ok(std::fs::read_to_string(filename)?)
         }
 
+        /// Synchronously reads the entire contents of `filename` into a UTF-8 string.
         pub fn read_to_string_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<String> {
             Ok(std::fs::read_to_string(filename)?)
         }
 
+        /// Reads the entire contents of `filename` into a byte vector.
         pub async fn read_binary_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<Vec<u8>> {
             Ok(std::fs::read(filename)?)
         }
 
+        /// Synchronously reads the entire contents of `filename` into a byte vector.
         pub fn read_binary_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<Vec<u8>> {
             Ok(std::fs::read(filename)?)
         }
 
+        /// Writes `text` to `filename`, replacing any existing contents.
         pub async fn write_string_with_options<P : AsRef<Path>>(filename: P, _options: Options, text : &str) -> Result<()> {
             Ok(std::fs::write(filename, text)?)
         }
 
+        /// Synchronously writes `text` to `filename`, replacing any existing contents.
         pub fn write_string_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options, text : &str) -> Result<()> {
             Ok(std::fs::write(filename, text)?)
         }
 
+        /// Writes the bytes in `data` to `filename`, replacing any existing contents.
         pub async fn write_binary_with_options<P : AsRef<Path>>(filename: P, _options: Options, data : &[u8]) -> Result<()> {
             Ok(std::fs::write(filename, data)?)
         }
 
+        /// Synchronously writes the bytes in `data` to `filename`, replacing any existing contents.
         pub fn write_binary_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options, data : &[u8]) -> Result<()> {
             Ok(std::fs::write(filename, data)?)
         }
 
+        /// Removes the file at `filename`.
         pub async fn remove_with_options<P : AsRef<Path>>(filename: P, _options: Options) -> Result<()> {
             std::fs::remove_file(filename)?;
             Ok(())
         }
 
+        /// Synchronously removes the file at `filename`.
         pub fn remove_with_options_sync<P : AsRef<Path>>(filename: P, _options: Options) -> Result<()> {
             std::fs::remove_file(filename)?;
             Ok(())
         }
 
+        /// Renames or moves the file from `from` to `to`.
         pub async fn rename<P : AsRef<Path>>(from: P, to: P) -> Result<()> {
             std::fs::rename(from,to)?;
             Ok(())
         }
 
+        /// Synchronously renames or moves the file from `from` to `to`.
         pub fn rename_sync<P : AsRef<Path>>(from: P, to: P) -> Result<()> {
             std::fs::rename(from,to)?;
             Ok(())
         }
 
+        /// Recursively creates the directory `dir` and any missing parent directories.
         pub async fn create_dir_all<P : AsRef<Path>>(dir: P) -> Result<()> {
             std::fs::create_dir_all(dir)?;
             Ok(())
         }
 
+        /// Synchronously recursively creates the directory `dir` and any missing parent directories.
         pub fn create_dir_all_sync<P : AsRef<Path>>(dir: P) -> Result<()> {
             std::fs::create_dir_all(dir)?;
             Ok(())
         }
 
+        /// Lists the entries in directory `path`, optionally including file
+        /// [`Metadata`] for each entry when `metadata` is `true`.
         pub async fn readdir<P : AsRef<Path>>(path: P, metadata : bool) -> Result<Vec<DirEntry>> {
             let entries = std::fs::read_dir(path.as_ref())?;
 
@@ -487,6 +516,8 @@ cfg_if! {
 
 }
 
+/// File metadata such as timestamps and size, abstracted across the native
+/// and Node.js file system backends.
 #[derive(Clone, Debug)]
 pub struct Metadata {
     created: Option<u64>,
@@ -496,22 +527,27 @@ pub struct Metadata {
 }
 
 impl Metadata {
+    /// Creation time as seconds since the Unix epoch, if available.
     pub fn created(&self) -> Option<u64> {
         self.created
     }
 
+    /// Last modification time as seconds since the Unix epoch, if available.
     pub fn modified(&self) -> Option<u64> {
         self.modified
     }
 
+    /// Last access time as seconds since the Unix epoch, if available.
     pub fn accessed(&self) -> Option<u64> {
         self.accessed
     }
 
+    /// Size of the file in bytes, if available.
     pub fn len(&self) -> Option<u64> {
         self.len
     }
 
+    /// Returns `Some(true)` when the file is known to be empty, mirroring [`Metadata::len`].
     pub fn is_empty(&self) -> Option<bool> {
         self.len.map(|len| len == 0)
     }
@@ -571,6 +607,7 @@ impl TryFrom<JsValue> for Metadata {
     }
 }
 
+/// A single entry returned when listing the contents of a directory.
 #[derive(Clone, Debug)]
 pub struct DirEntry {
     file_name: String,
@@ -578,10 +615,12 @@ pub struct DirEntry {
 }
 
 impl DirEntry {
+    /// Returns the entry's file name (without the directory path).
     pub fn file_name(&self) -> &str {
         &self.file_name
     }
 
+    /// Returns the entry's [`Metadata`] when it was requested during the listing.
     pub fn metadata(&self) -> Option<&Metadata> {
         self.metadata.as_ref()
     }
@@ -801,6 +840,8 @@ pub fn resolve_path(path: &str) -> Result<PathBuf> {
 /// (detects platform natively or via NodeJS if operating in WASM32
 /// environment)
 pub trait NormalizePath {
+    /// Returns the normalized form of this path, resolving `.` and `..`
+    /// references and converting separators to the current platform.
     fn normalize(&self) -> Result<PathBuf>;
 }
 
@@ -823,8 +864,11 @@ impl NormalizePath for PathBuf {
 /// needs to be converted back and forth for various path-related
 /// functions to work.
 pub trait ToPlatform {
+    /// Returns this path with separators converted to those of the current platform.
     fn to_platform(&self) -> PathBuf;
+    /// Returns this path as a string with current-platform separators.
     fn to_platform_string(&self) -> String;
+    /// Returns this path with separators converted to unix forward slashes.
     fn to_unix(&self) -> PathBuf;
 }
 

@@ -6,6 +6,8 @@
 use cfg_if::cfg_if;
 use std::path::PathBuf;
 
+/// Returns the current user's home directory, resolved natively or via Node.js
+/// (`os.homedir()`), or `None` if it cannot be determined.
 pub fn home_dir() -> Option<PathBuf> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
@@ -20,6 +22,8 @@ pub fn home_dir() -> Option<PathBuf> {
     }
 }
 
+/// Returns the platform-appropriate user data directory (e.g. `LOCALAPPDATA`
+/// on Windows), resolved natively or via Node.js, or `None` if undetermined.
 pub fn data_dir() -> Option<PathBuf> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {

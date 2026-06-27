@@ -6,7 +6,9 @@ use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use workflow_core::sendable::Sendable;
 
+/// Extension trait that exposes the `message` property of a [`JsError`].
 pub trait JsErrorExtension {
+    /// Returns the `message` property of the error as a string.
     fn message(&self) -> String;
 }
 
@@ -20,7 +22,10 @@ impl JsErrorExtension for JsError {
     }
 }
 
+/// Extension trait for reading the `message` property from a [`JsValue`]
+/// that represents a JavaScript error.
 pub trait JsValueErrorTrait {
+    /// Returns the `message` property of the error value as a string.
     fn message(&self) -> String;
 }
 
@@ -43,6 +48,10 @@ struct Inner {
     origin: Sendable<JsValue>,
 }
 
+/// Owned, cloneable snapshot of a JavaScript error, capturing its `name`,
+/// `message`, `cause`, `stack` and `code` fields along with the original
+/// `JsValue`. Implements [`std::error::Error`] so it can be used in Rust
+/// error handling.
 #[derive(Clone)]
 pub struct JsErrorData {
     inner: Arc<Inner>,
@@ -51,22 +60,27 @@ pub struct JsErrorData {
 impl std::error::Error for JsErrorData {}
 
 impl JsErrorData {
+    /// The error name (e.g. `"TypeError"`), if present on the JavaScript error.
     pub fn name(&self) -> &Option<String> {
         &self.inner.name
     }
 
+    /// The human-readable error message, if present on the JavaScript error.
     pub fn message(&self) -> &Option<String> {
         &self.inner.message
     }
 
+    /// The underlying cause of the error, if present on the JavaScript error.
     pub fn cause(&self) -> &Option<String> {
         &self.inner.cause
     }
 
+    /// The captured stack trace, if present on the JavaScript error.
     pub fn stack(&self) -> &Option<String> {
         &self.inner.stack
     }
 
+    /// The error code, if present on the JavaScript error.
     pub fn code(&self) -> &Option<String> {
         &self.inner.code
     }

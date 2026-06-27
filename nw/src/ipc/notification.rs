@@ -28,6 +28,8 @@ impl<Msg> Notification<Msg>
 where
     Msg: BorshDeserialize + DeserializeOwned + Send + Sync + 'static,
 {
+    /// Wraps the given async closure into a [`Notification`] that deserializes
+    /// an incoming message and invokes the closure with it.
     pub fn new<FN>(method_fn: FN) -> Notification<Msg>
     where
         FN: Send + Sync + Fn(Msg) -> NotificationFnReturn<()> + 'static,

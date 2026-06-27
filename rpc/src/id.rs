@@ -43,6 +43,7 @@ impl<T> IdT for T where
 /// generator for a custom message `Id`, but you can also define it to use
 /// a sequential generation.
 pub trait Generator {
+    /// Generate a new `Id` value.
     fn generate() -> Self;
 }
 

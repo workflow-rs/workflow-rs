@@ -6,6 +6,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 /// Trait that declares `is_not_empty()` method.
 pub trait IsNotEmptyExtension {
+    /// Returns `true` if the collection contains at least one element (the inverse of `is_empty()`).
     fn is_not_empty(&self) -> bool;
 }
 

@@ -16,6 +16,8 @@ use web_sys::{Blob, Url};
 use workflow_core::channel::oneshot;
 use workflow_wasm::callback::*;
 
+/// Callback type invoked on element load events, receiving the
+/// associated [`web_sys::CustomEvent`].
 pub type CustomEventCallback = Callback<CallbackClosureWithoutResult<web_sys::CustomEvent>>;
 
 /// The Content enum specifies the type of the content being injected
@@ -122,6 +124,9 @@ where
     Ok(())
 }
 
+/// Inject a CSS stylesheet contained in a data buffer as a [`Blob`](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
+/// into DOM via a `<link rel="stylesheet">` element appended to `root`.
+/// Executes an optional `load` callback when loading is complete.
 pub fn inject_stylesheet<C>(
     root: Element,
     id: Option<&str>,
