@@ -97,7 +97,7 @@ mod tests {
         let instance: JsValue = CastTarget::new(11).into();
         assert_eq!(CastTarget::try_owned_from(&instance).unwrap().value(), 11);
         assert_eq!(
-            CastTarget::try_owned_from(&JsValue::from_f64(5.0))
+            CastTarget::try_owned_from(JsValue::from_f64(5.0))
                 .unwrap()
                 .value(),
             5
