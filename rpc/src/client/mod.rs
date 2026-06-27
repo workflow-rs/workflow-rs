@@ -1,6 +1,21 @@
 //!
 //! RPC client (operates uniformly in native and WASM-browser environments).
 //!
+//! # TLS crypto provider (native)
+//!
+//! Secure (`wss://`) RPC connections on native targets go through
+//! `workflow-websocket` → `tungstenite` → [`rustls`](https://docs.rs/rustls),
+//! which (since 0.23) requires a process-level crypto provider to be installed
+//! before the first connection — typically by the application or a higher-level
+//! SDK at startup:
+//!
+//! ```ignore
+//! rustls::crypto::ring::default_provider().install_default().unwrap();
+//! ```
+//!
+//! In the browser/WASM environment the host `WebSocket` handles TLS, so no
+//! provider is required.
+//!
 
 pub mod error;
 mod interface;

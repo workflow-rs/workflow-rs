@@ -1,6 +1,21 @@
 //!
 //! async WebSocket client functionality (requires a browser (WASM) or tokio (native) executors)
 //!
+//! # TLS crypto provider (native)
+//!
+//! Native secure (`wss://`) connections use `tungstenite` with
+//! [`rustls`](https://docs.rs/rustls). Since rustls 0.23, a process-level crypto
+//! provider must be installed before the first secure connection — typically by
+//! the application or a higher-level SDK at startup:
+//!
+//! ```ignore
+//! rustls::crypto::ring::default_provider().install_default().unwrap();
+//! ```
+//!
+//! Without it, opening a `wss://` connection fails with *"Could not automatically
+//! determine the process-level CryptoProvider"*. In the browser/WASM environment
+//! TLS is handled by the host `WebSocket`, so no provider is required.
+//!
 
 use cfg_if::cfg_if;
 
