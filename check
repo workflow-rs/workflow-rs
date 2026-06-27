@@ -19,3 +19,9 @@ cargo clippy --workspace --tests --benches
 WP_OUT="$(mktemp -d)"
 trap 'rm -rf "$WP_OUT"' EXIT
 wasm-pack build tests/wasm32 --dev --target web --out-dir "$WP_OUT"
+
+# wasm-bindgen runtime test for the workflow-wasm `Cast` family. Runs actual
+# `#[wasm_bindgen_test]`s under Node.js (requires `node` on PATH), verifying that
+# a `#[wasm_bindgen]` + `CastFromJs`/`TryCastFromJs` struct round-trips JS->Rust
+# via the `WasmPtr<WasmRefCell<T>>` reference ABI and fails safely on bad input.
+wasm-pack test --node tests/wasm32-cast

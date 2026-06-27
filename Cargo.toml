@@ -46,6 +46,7 @@ members = [
     "examples/terminal/native",
     "examples/terminal/wasm",
     "tests/wasm32",
+    "tests/wasm32-cast",
 ]
 
 [workspace.package]

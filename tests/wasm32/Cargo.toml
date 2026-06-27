@@ -38,10 +38,3 @@ workflow-task = { workspace = true }
 workflow-terminal = { workspace = true }
 workflow-wasm = { workspace = true }
 workflow-websocket = { workspace = true }
-
-# For the wasm-bindgen Cast tests in tests/cast.rs (run with
-# `wasm-pack test --node tests/wasm32`).
-[dev-dependencies]
-workflow-wasm = { workspace = true }
-wasm-bindgen = { workspace = true }
-wasm-bindgen-test = "0.3"
