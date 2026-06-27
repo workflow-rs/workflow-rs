@@ -42,7 +42,7 @@ cfg_if! {
             fn stack(error: &Error) -> String;
         }
 
-        fn process(info: &panic::PanicInfo) -> String{
+        fn process(info: &panic::PanicHookInfo) -> String{
             let mut msg = info.to_string();
 
             // Add the error stack to our message.
@@ -70,11 +70,11 @@ cfg_if! {
         }
 
 
-        fn console_hook(info: &panic::PanicInfo){
+        fn console_hook(info: &panic::PanicHookInfo){
             // Finally, log the panic with `console.error`!
             console_error(process(info));
         }
-        fn popup_hook(info: &panic::PanicInfo){
+        fn popup_hook(info: &panic::PanicHookInfo){
             // Finally, log the panic with `logger::error`!
             logger::error(process(info));
         }
@@ -107,15 +107,22 @@ cfg_if! {
             panic::set_hook(Box::new(hook));
         }
 
+        /// Displays captured panic logs. On native (non-WASM) builds this is
+        /// unsupported and panics, as panic logs are only collected under WASM.
         pub fn show_logs(){
             panic!("Native (non-WASM) platform build doesn't support panic logs");
         }
     }
 }
 
+/// Selects how panic output is presented when the hook is installed.
 pub enum Type {
+    /// Log the panic message and stack trace via `console.error`.
     Console,
+    /// Render the panic message into a full-screen DIV overlay, useful on
+    /// devices without access to console output.
     Popup,
+    /// Use the platform's native panic handling (non-WASM targets).
     Native,
 }
 /// Set the `console.error` panic hook the first time this is called. Subsequent

@@ -12,6 +12,8 @@ impl Shutdown for Inner {
     }
 }
 
+/// A cloneable handle to the service runtime that hosts a collection of
+/// services, drives their startup, and coordinates their graceful shutdown.
 #[derive(Clone)]
 pub struct Runtime {
     inner: Arc<Inner>,
@@ -30,6 +32,7 @@ impl Default for Runtime {
 }
 
 impl Runtime {
+    /// Registers a service with the runtime so it is started when [`run`](Self::run) is called.
     pub fn bind(&self, service: Arc<dyn Service>) {
         self.inner.services.lock().unwrap().push(service);
     }
@@ -106,6 +109,8 @@ impl Runtime {
         }
     }
 
+    /// Starts all bound services and blocks until a termination request is
+    /// received, after which all services are stopped and joined.
     pub async fn run(&self) -> Result<()> {
         self.start().await?;
         let (finish_sender, finish_receiver) = oneshot();
@@ -120,6 +125,7 @@ impl Runtime {
         Ok(())
     }
 
+    /// Signals the runtime to shut down, causing an in-progress [`run`](Self::run) to return.
     pub fn terminate(&self) -> Result<()> {
         self.inner.termination.try_send(())?;
         Ok(())

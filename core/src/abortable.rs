@@ -5,8 +5,8 @@
 use wasm_bindgen::prelude::*;
 
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc,
+    atomic::{AtomicBool, Ordering},
 };
 
 /// Error emitted by [`Abortable`].
@@ -46,23 +46,24 @@ pub struct Abortable(Arc<AtomicBool>);
 
 #[wasm_bindgen]
 impl Abortable {
+    /// Creates a new [`Abortable`] in the non-aborted state.
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self(Arc::new(AtomicBool::new(false)))
     }
 
-    #[inline]
+    /// Returns `true` if [`abort`](Self::abort) has been signalled.
     #[wasm_bindgen(js_name=isAborted)]
     pub fn is_aborted(&self) -> bool {
         self.0.load(Ordering::SeqCst)
     }
 
-    #[inline]
+    /// Signals abort, causing subsequent [`check`](Self::check) calls to fail.
     pub fn abort(&self) {
         self.0.store(true, Ordering::SeqCst);
     }
 
-    #[inline]
+    /// Returns `Err(`[`Aborted`]`)` if abort has been signalled, otherwise `Ok(())`.
     pub fn check(&self) -> Result<(), Aborted> {
         if self.is_aborted() {
             Err(Aborted)
@@ -71,7 +72,7 @@ impl Abortable {
         }
     }
 
-    #[inline]
+    /// Clears the abort signal, returning the trigger to its non-aborted state.
     pub fn reset(&self) {
         self.0.store(false, Ordering::SeqCst);
     }
@@ -88,7 +89,7 @@ impl TryFrom<&JsValue> for Abortable {
             target_arch = "wasm32",
             not(any(target_os = "emscripten", target_os = "wasi"))
         ))]
-        extern "C" {
+        unsafe extern "C" {
             fn __wbg_abortable_unwrap(ptr: u32) -> u32;
         }
         #[cfg(not(all(
@@ -103,8 +104,13 @@ impl TryFrom<&JsValue> for Abortable {
             wasm_bindgen::__rt::std::result::Result::Err(value.clone())
         } else {
             unsafe {
+                // wasm-bindgen 0.2.126 changed the exported-struct ABI from a
+                // bare u32 to `WasmPtr`; wrap the unwrapped pointer accordingly.
                 wasm_bindgen::__rt::std::result::Result::Ok(
-                    <Self as FromWasmAbi>::from_abi(ptr).clone(),
+                    <Self as FromWasmAbi>::from_abi(wasm_bindgen::__rt::WasmPtr::from_usize(
+                        ptr as usize,
+                    ))
+                    .clone(),
                 )
             }
         }

@@ -2,7 +2,7 @@
 #[cfg(test)]
 mod tests {
 
-    use crate::prelude::{load, store, Deserializer, Serializable, Serializer};
+    use crate::prelude::{Deserializer, Serializable, Serializer, load, store};
     use crate::result::IoResult;
     use borsh::{BorshDeserialize, BorshSerialize};
 

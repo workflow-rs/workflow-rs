@@ -23,12 +23,15 @@ impl<Ops> Interface<Ops>
 where
     Ops: OpsT,
 {
+    /// Create a new, empty notification interface.
     pub fn new() -> Interface<Ops> {
         Interface {
             notifications: AHashMap::new(),
         }
     }
 
+    /// Register a notification handler for the given operation. Panics if a
+    /// handler for the same `op` has already been registered.
     pub fn notification<Msg>(&mut self, op: Ops, method: Notification<Msg>)
     where
         Ops: OpsT,
@@ -40,6 +43,8 @@ where
         }
     }
 
+    /// Dispatch a Borsh-encoded notification payload to the handler registered
+    /// for `op`, returning [`ServerError::NotFound`] if none exists.
     pub async fn call_notification_with_borsh(&self, op: &Ops, payload: &[u8]) -> ServerResult<()> {
         if let Some(notification) = self.notifications.get(op) {
             notification.call_with_borsh(payload).await
@@ -48,6 +53,8 @@ where
         }
     }
 
+    /// Dispatch a JSON notification payload to the handler registered for `op`,
+    /// returning [`ServerError::NotFound`] if none exists.
     pub async fn call_notification_with_serde_json(
         &self,
         op: &Ops,

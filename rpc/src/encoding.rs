@@ -17,7 +17,9 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 #[serde(rename_all = "kebab-case")]
 pub enum Encoding {
+    /// Compact binary encoding using Borsh.
     Borsh = 0,
+    /// Human-readable text encoding using Serde JSON.
     #[serde(rename = "json")]
     SerdeJson = 1,
 }
@@ -64,16 +66,19 @@ impl TryFrom<u8> for Encoding {
 impl TryFrom<JsValue> for Encoding {
     type Error = Error;
     fn try_from(value: JsValue) -> Result<Self, Self::Error> {
-        if let Ok(encoding) = Encoding::try_from_js_value(value.clone()) {
-            Ok(encoding)
-        } else if let Some(v) = value.as_f64() {
-            Ok(Encoding::try_from(v as u8)?)
-        } else if let Some(string) = value.as_string() {
-            Encoding::from_str(&string)
-        } else {
-            Err(Error::Encoding(
-                "invalid encoding value: {value:?}".to_string(),
-            ))
+        match Encoding::try_from_js_value(value.clone()) {
+            Ok(encoding) => Ok(encoding),
+            _ => {
+                if let Some(v) = value.as_f64() {
+                    Ok(Encoding::try_from(v as u8)?)
+                } else if let Some(string) = value.as_string() {
+                    Encoding::from_str(&string)
+                } else {
+                    Err(Error::Encoding(
+                        "invalid encoding value: {value:?}".to_string(),
+                    ))
+                }
+            }
         }
     }
 }
@@ -81,6 +86,7 @@ impl TryFrom<JsValue> for Encoding {
 const ENCODING: [Encoding; 2] = [Encoding::Borsh, Encoding::SerdeJson];
 
 impl Encoding {
+    /// Iterate over all supported encodings (`Borsh` and `SerdeJson`).
     pub fn iter() -> impl Iterator<Item = &'static Encoding> {
         ENCODING.iter()
     }

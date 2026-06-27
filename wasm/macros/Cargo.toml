@@ -12,9 +12,9 @@ proc-macro = true
 doctest = false
 
 [dependencies]
-syn = {version = "1.0.99", features = ["full", "parsing", "extra-traits"]}
+syn.workspace = true
 quote = "1.0.21"
 proc-macro2="1.0.43"
-proc-macro-error = { version = "1", default-features = false }
+proc-macro-error3 = { version = "3", default-features = false }
 js-sys.workspace = true
 wasm-bindgen.workspace = true

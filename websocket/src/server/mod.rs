@@ -6,20 +6,20 @@ use cfg_if::cfg_if;
 use downcast_rs::*;
 use futures::{future::FutureExt, select};
 use futures_util::{
-    stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
+    stream::{SplitSink, SplitStream},
 };
 use std::net::SocketAddr;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 pub use tokio::net::TcpListener;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{
     UnboundedReceiver as TokioUnboundedReceiver, UnboundedSender as TokioUnboundedSender,
 };
-use tokio_tungstenite::{accept_async_with_config, WebSocketStream};
+use tokio_tungstenite::{WebSocketStream, accept_async_with_config};
 use tungstenite::Error as WebSocketError;
 use workflow_core::channel::DuplexChannel;
 use workflow_log::*;
@@ -28,8 +28,8 @@ pub mod result;
 
 pub use error::Error;
 pub use result::Result;
-pub use tungstenite::protocol::WebSocketConfig;
 pub use tungstenite::Message;
+pub use tungstenite::protocol::WebSocketConfig;
 /// WebSocket stream sender for dispatching [`tungstenite::Message`].
 /// This stream object must have a mutable reference and can not be cloned.
 pub type WebSocketSender = SplitSink<WebSocketStream<TcpStream>, Message>;
@@ -48,10 +48,15 @@ pub type WebSocketSink = TokioUnboundedSender<Message>;
 /// These counters can be created and supplied externally or
 /// supplied as `None`.
 pub struct WebSocketCounters {
+    /// Cumulative number of connections accepted since startup.
     pub total_connections: Arc<AtomicUsize>,
+    /// Number of currently active (open) connections.
     pub active_connections: Arc<AtomicUsize>,
+    /// Cumulative number of connections that failed during handshake.
     pub handshake_failures: Arc<AtomicUsize>,
+    /// Total bytes received across all connections (excluding framing overhead).
     pub rx_bytes: Arc<AtomicUsize>,
+    /// Total bytes sent across all connections (excluding framing overhead).
     pub tx_bytes: Arc<AtomicUsize>,
 }
 
@@ -117,6 +122,9 @@ where
         sink: &WebSocketSink,
     ) -> Result<()>;
 
+    /// Called to handle control messages (such as `Ping`/`Pong`) when the
+    /// `ping-pong` feature is enabled. The default implementation replies to
+    /// a `Ping` with a matching `Pong`.
     async fn ctl(self: &Arc<Self>, msg: Message, sender: &mut WebSocketSender) -> Result<()> {
         if let Message::Ping(data) = msg {
             sender.send(Message::Pong(data)).await?;
@@ -133,8 +141,11 @@ where
     T: WebSocketHandler + Send + Sync + 'static + Sized,
 {
     // pub connections: AtomicU64,
+    /// Connection and bandwidth counters tracked by this server.
     pub counters: Arc<WebSocketCounters>,
+    /// The user-supplied handler driving connection and message processing.
     pub handler: Arc<T>,
+    /// Duplex channel used to signal and await server shutdown.
     pub stop: DuplexChannel,
 }
 
@@ -142,6 +153,8 @@ impl<T> WebSocketServer<T>
 where
     T: WebSocketHandler + Send + Sync + 'static,
 {
+    /// Creates a new server with the given handler, optionally sharing externally
+    /// supplied [`WebSocketCounters`] (new default counters are created if `None`).
     pub fn new(handler: Arc<T>, counters: Option<Arc<WebSocketCounters>>) -> Arc<Self> {
         Arc::new(WebSocketServer {
             counters: counters.unwrap_or_default(),
@@ -276,6 +289,8 @@ where
         Ok(())
     }
 
+    /// Binds a TCP listener to the given address, returning an [`Error::Listen`]
+    /// if binding fails.
     pub async fn bind(self: &Arc<Self>, addr: &str) -> Result<TcpListener> {
         let listener = TcpListener::bind(&addr).await.map_err(|err| {
             Error::Listen(format!(
@@ -311,7 +326,7 @@ where
                     Error::WebSocketError(wse) => match **wse {
                         WebSocketError::ConnectionClosed
                         | WebSocketError::Protocol(_)
-                        | WebSocketError::Utf8 => {}
+                        | WebSocketError::Utf8(_) => {}
                         _ => {
                             log_error!("Error processing connection: {}", e);
                         }
@@ -326,6 +341,8 @@ where
         });
     }
 
+    /// Runs the accept loop on the given listener, dispatching each accepted
+    /// connection to the handler until [`stop()`](Self::stop) is signaled.
     pub async fn listen(
         self: &Arc<Self>,
         listener: TcpListener,
@@ -334,11 +351,10 @@ where
         loop {
             select! {
                 stream = listener.accept().fuse() => {
-                    if let Ok((stream,socket_addr)) = stream {
-                        if self.handler.accept(&socket_addr) {
+                    if let Ok((stream,socket_addr)) = stream
+                        && self.handler.accept(&socket_addr) {
                             self.accept(stream, config).await;
                         }
-                    }
                 },
                 _ = self.stop.request.receiver.recv().fuse() => break,
             }
@@ -352,6 +368,7 @@ where
             .map_err(|err| Error::Done(err.to_string()))
     }
 
+    /// Signals the running [`listen()`](Self::listen) loop to shut down.
     pub fn stop(&self) -> Result<()> {
         self.stop
             .request
@@ -360,6 +377,7 @@ where
             .map_err(|err| Error::Stop(err.to_string()))
     }
 
+    /// Awaits completion of the [`listen()`](Self::listen) loop after a stop signal.
     pub async fn join(&self) -> Result<()> {
         self.stop
             .response
@@ -369,6 +387,7 @@ where
             .map_err(|err| Error::Join(err.to_string()))
     }
 
+    /// Signals shutdown and waits for the listen loop to finish.
     pub async fn stop_and_join(&self) -> Result<()> {
         self.stop()?;
         self.join().await
@@ -416,14 +435,19 @@ where
 ///
 #[async_trait]
 pub trait WebSocketServerTrait: DowncastSync {
+    /// Binds a TCP listener to the given address.
     async fn bind(self: Arc<Self>, addr: &str) -> Result<TcpListener>;
+    /// Runs the accept loop on the given listener until stopped.
     async fn listen(
         self: Arc<Self>,
         listener: TcpListener,
         config: Option<WebSocketConfig>,
     ) -> Result<()>;
+    /// Signals the running listen loop to shut down.
     fn stop(&self) -> Result<()>;
+    /// Awaits completion of the listen loop after a stop signal.
     async fn join(&self) -> Result<()>;
+    /// Signals shutdown and waits for the listen loop to finish.
     async fn stop_and_join(&self) -> Result<()>;
 }
 impl_downcast!(sync WebSocketServerTrait);
@@ -481,11 +505,10 @@ pub mod handshake {
         let delay = tokio::time::sleep(timeout_duration);
         tokio::select! {
             msg = receiver.next() => {
-                if let Some(Ok(msg)) = msg {
-                    if msg.is_text() || msg.is_binary() {
+                if let Some(Ok(msg)) = msg
+                    && (msg.is_text() || msg.is_binary()) {
                         return handler(msg.to_text()?);
                     }
-                }
                 Err(Error::MalformedHandshake)
             }
             _ = delay => {

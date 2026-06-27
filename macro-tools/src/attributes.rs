@@ -5,12 +5,14 @@ use crate::parse_error;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::collections::HashMap;
-use syn::{
-    parse::{Parse, ParseStream},
-    Expr, Token,
-};
 use syn::{Attribute, Error, Lit, LitBool};
+use syn::{
+    Expr, Token,
+    parse::{Parse, ParseStream},
+};
 
+/// A newtype wrapper around an identifier that implements [`Parse`] to consume
+/// an identifier from the input stream regardless of keyword status.
 #[derive(Debug, Clone)]
 pub struct IdentWraper(proc_macro2::Ident);
 
@@ -26,36 +28,55 @@ impl Parse for IdentWraper {
     }
 }
 
+/// A single lexical item encountered while parsing attribute arguments.
 #[derive(Debug, Clone, parse_variants::Parse)]
 pub enum Item {
+    /// A plain identifier, typically an argument name.
     Identifier(syn::Ident),
+    /// An identifier captured through [`IdentWraper`].
     IdentifierWraper(IdentWraper),
+    /// A bare integer literal.
     Literal(syn::LitInt),
+    /// A bare string literal, treated as the `default` argument.
     String(syn::LitStr),
 }
 
+/// A value appearing in evaluation position, e.g. inside a delimited group.
 #[derive(Debug, Clone, parse_variants::Parse)]
 pub enum EvaluationValue {
+    /// A delimited token group value.
     Group(proc_macro2::Group),
+    /// An integer literal value.
     Integer(syn::LitInt),
+    /// A string literal value.
     String(syn::LitStr),
 }
 
+/// A value appearing on the right-hand side of an `=` assignment.
 #[derive(Debug, Clone, parse_variants::Parse)]
 pub enum AssignmentValue {
+    /// A string literal value.
     String(syn::LitStr),
+    /// An integer literal value.
     Integer(syn::LitInt),
+    /// A boolean literal value, also used for bare flag arguments.
     Boolean(syn::LitBool),
+    /// A delimited token group value.
     Group(proc_macro2::Group),
 }
 
+/// The value associated with an argument, distinguishing values parsed in
+/// evaluation position from those parsed on the right-hand side of an `=`.
 #[derive(Debug, Clone)]
 pub enum Value {
+    /// A value supplied in evaluation position, e.g. `name(group)`.
     EvaluationValue(EvaluationValue),
+    /// A value supplied via assignment, e.g. `name = value`.
     AssignmentValue(AssignmentValue),
 }
 
 impl Value {
+    /// Renders the underlying literal or group back into its token stream.
     pub fn to_token_stream(&self) -> TokenStream {
         match self {
             Value::EvaluationValue(ev) => match ev {
@@ -73,8 +94,11 @@ impl Value {
     }
 }
 
+/// A parsed set of macro attribute arguments, keyed by argument name.
 #[derive(Debug)]
 pub struct Args {
+    /// Maps each argument identifier to its optional value (`None` when the
+    /// argument was supplied as a bare flag without a value).
     pub map: HashMap<Ident, Option<Value>>,
 }
 
@@ -85,22 +109,29 @@ impl Default for Args {
 }
 
 impl Args {
+    /// Creates an empty set of arguments.
     pub fn new() -> Args {
         Args {
             map: HashMap::new(),
         }
     }
 
+    /// Returns `true` if an argument with the given name is present.
     pub fn has(&self, ident: &str) -> bool {
         let ident = Ident::new(ident, Span::call_site());
         self.map.contains_key(&ident)
     }
 
+    /// Looks up an argument by name, returning its optional value, or `None`
+    /// if the argument is not present.
     pub fn get(&self, ident: &str) -> Option<&Option<Value>> {
         let ident = Ident::new(ident, Span::call_site());
         self.map.get(&ident)
     }
 
+    /// Returns the value of `ident`: `Ok(None)` if the argument is absent,
+    /// `Ok(Some(_))` if it has a value, or an error spanned over `field` with
+    /// `msg` if the argument is present but carries no value.
     pub fn get_value_or<T: ToTokens>(
         &self,
         ident: &str,
@@ -117,6 +148,8 @@ impl Args {
         }
     }
 
+    /// Returns the arguments as a list of name/value string pairs, with
+    /// string literals unquoted and valueless arguments mapped to an empty string.
     pub fn to_string_kv(&self) -> Vec<(String, String)> {
         let mut list: Vec<(String, String)> = Vec::new();
         for (k, v) in self.map.iter() {
@@ -140,6 +173,8 @@ impl Args {
         list
     }
 
+    /// Validates that every argument name present is contained in `list`,
+    /// returning an error spanned over the first unsupported argument.
     pub fn allow(&self, list: &[&str]) -> syn::Result<()> {
         for (ident, _) in self.map.iter() {
             let name = ident.to_string();
@@ -162,10 +197,9 @@ impl Args {
 fn advance_one_step(input: &ParseStream<'_>) {
     let _ = input.step(|cursor| {
         let rest = *cursor;
-        if let Some((_tt, next)) = rest.token_tree() {
-            Ok(((), next))
-        } else {
-            Ok(((), rest))
+        match rest.token_tree() {
+            Some((_tt, next)) => Ok(((), next)),
+            _ => Ok(((), rest)),
         }
     });
 }
@@ -234,6 +268,8 @@ impl Parse for Args {
     }
 }
 
+/// Parses the contents of the given attribute into [`Args`],
+/// returning `None` if the attribute arguments fail to parse.
 pub fn get_attributes(attr: &Attribute) -> Option<Args> {
     let attributes: Option<Args> = attr.parse_args().ok();
     attributes

@@ -3,6 +3,8 @@ use crate::utils::*;
 use js_sys::{Array, Uint8Array};
 use web_sys::{Blob, MouseEvent, Url};
 
+/// Trigger a browser download of the given byte buffer, presenting it to the
+/// user as a file named `filename` with the supplied `mime` content type.
 pub fn data(filename: &str, content: &[u8], mime: &str) -> Result<()> {
     let document = document();
     let body = body()?;
@@ -30,6 +32,8 @@ pub fn data(filename: &str, content: &[u8], mime: &str) -> Result<()> {
     Ok(())
 }
 
+/// Trigger a browser download of the given string as a `text/plain` file
+/// named `filename`.
 pub fn text(filename: &str, content: &str) -> Result<()> {
     data(filename, content.as_bytes(), "text/plain")
 }

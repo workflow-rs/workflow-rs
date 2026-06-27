@@ -4,6 +4,8 @@ use workflow_dom::inject::*;
 
 static mut DOM_INIT: bool = false;
 
+/// A DOM `<div>` element appended to the document body that serves as the
+/// host container for a D3 visualization.
 pub struct Container {
     element: Element,
 }
@@ -12,6 +14,8 @@ unsafe impl Sync for Container {}
 unsafe impl Send for Container {}
 
 impl Container {
+    /// Injects the container's layout CSS into the document, performing the
+    /// injection only once across all containers.
     pub async fn try_init() -> Result<()> {
         if !unsafe { DOM_INIT } {
             let layout_css = include_str!("container.css");
@@ -24,6 +28,8 @@ impl Container {
         Ok(())
     }
 
+    /// Creates a new container by appending a `div.layout` element to the
+    /// document body of the given window.
     pub async fn try_new(window: &web_sys::Window) -> Result<Container> {
         let document = window.document().unwrap();
         let element = document.create_element("div").unwrap();
@@ -41,6 +47,7 @@ impl Container {
         Ok(layout)
     }
 
+    /// Returns the underlying DOM element backing this container.
     pub fn element(&self) -> &Element {
         &self.element
     }

@@ -1,16 +1,24 @@
 use crate::imports::*;
 
+/// Configuration options for launching an application window or web canvas.
 pub mod options;
 pub use options::*;
+/// Application trait and related types implemented by hosted applications.
 pub mod app;
+/// Core eframe app wrapper that drives the runtime and rendering.
 pub mod core;
 
+/// Boxed closure that builds the application instance from an eframe
+/// [`CreationContext`](eframe::CreationContext) and the workflow [`Runtime`].
 pub type AppCreator<T> =
     Box<dyn FnOnce(&eframe::CreationContext<'_>, Runtime) -> std::result::Result<Box<T>, DynError>>;
 
 cfg_if! {
     if #[cfg(not(target_arch = "wasm32"))] {
 
+        /// Application entry point: builds a multi-threaded Tokio runtime and
+        /// runs the eframe application to completion, wiring up the optional
+        /// application event channel and the `app_creator` factory.
         pub fn main<T,C>(options: Options<T>, events : Option<ApplicationEventsChannel>, app_creator : C)
         where T : App,
         C : FnOnce(&eframe::CreationContext<'_>, Runtime) -> std::result::Result<Box<T>, DynError> + 'static
@@ -45,6 +53,9 @@ cfg_if! {
 
     } else {
 
+        /// Application entry point: spawns the eframe web application on the
+        /// browser event loop, wiring up the optional application event channel
+        /// and the `app_creator` factory.
         pub fn main<T,C>(options: Options<T>, events : Option<ApplicationEventsChannel>, app_creator : C)
         where T : App,
         C : FnOnce(&eframe::CreationContext<'_>, Runtime) -> std::result::Result<Box<T>, DynError> + 'static

@@ -1,0 +1,21 @@
+pub(crate) mod brotli_compress;
+pub(crate) mod brotli_decompress;
+pub(crate) mod deflate;
+pub(crate) mod deflate_raw;
+pub(crate) mod gunzip;
+pub(crate) mod gzip;
+pub(crate) mod inflate;
+pub(crate) mod inflate_raw;
+pub(crate) mod unzip;
+pub(crate) mod zlib_base;
+
+pub use brotli_compress::*;
+pub use brotli_decompress::*;
+pub use deflate::*;
+pub use deflate_raw::*;
+pub use gunzip::*;
+pub use gzip::*;
+pub use inflate::*;
+pub use inflate_raw::*;
+pub use unzip::*;
+pub use zlib_base::*;

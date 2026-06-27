@@ -1,6 +1,23 @@
 //!
 //! RPC client (operates uniformly in native and WASM-browser environments).
 //!
+//! # TLS crypto provider (native)
+//!
+//! Secure (`wss://`) RPC connections on native targets go through
+//! `workflow-websocket` → `tungstenite` → [`rustls`](https://docs.rs/rustls),
+//! which (since 0.23) requires a process-level crypto provider to be installed
+//! before the first connection — typically by the application or a higher-level
+//! SDK at startup:
+//!
+//! ```ignore
+//! rustls::crypto::ring::default_provider().install_default().unwrap();
+//! ```
+//!
+//! If exactly one rustls provider is compiled into the binary, it is selected
+//! automatically and no explicit install is needed; an install is only required
+//! when none — or more than one — provider is present. In the browser/WASM
+//! environment the host `WebSocket` handles TLS, so no provider is required.
+//!
 
 pub mod error;
 mod interface;
@@ -60,9 +77,12 @@ pub use workflow_websocket::client::options::IConnectOptions;
 ///
 pub use workflow_rpc_macros::client_notification as notification;
 
+/// Client connection lifecycle event broadcast through the control multiplexer.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Ctl {
+    /// The client has established a connection to the server.
     Connect,
+    /// The client has lost or closed its connection to the server.
     Disconnect,
 }
 
@@ -87,27 +107,35 @@ impl FromStr for Ctl {
     }
 }
 
+/// Handler invoked with the raw payload of an inbound server notification.
 #[async_trait]
 pub trait NotificationHandler: Send + Sync + 'static {
+    /// Process a notification carrying the given raw `data` payload.
     async fn handle_notification(&self, data: &[u8]) -> Result<()>;
 }
 
+/// Configuration options used when constructing an [`RpcClient`].
 #[derive(Default)]
 pub struct Options<'url> {
+    /// Optional multiplexer that receives [`Ctl`] connect/disconnect events.
     pub ctl_multiplexer: Option<Multiplexer<Ctl>>,
+    /// Optional WebSocket endpoint URL the client should connect to.
     pub url: Option<&'url str>,
 }
 
 impl<'url> Options<'url> {
+    /// Create a new set of default client options.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Set the WebSocket endpoint URL, returning the updated options.
     pub fn with_url(mut self, url: &'url str) -> Self {
         self.url = Some(url);
         self
     }
 
+    /// Set the [`Ctl`] event multiplexer, returning the updated options.
     pub fn with_ctl_multiplexer(mut self, ctl_multiplexer: Multiplexer<Ctl>) -> Self {
         self.ctl_multiplexer = Some(ctl_multiplexer);
         self
@@ -307,16 +335,22 @@ where
     Id: IdT,
 {
     fn from(protocol: Arc<dyn ProtocolHandler<Ops>>) -> Self {
-        if let Ok(protocol) = protocol.clone().downcast_arc::<BorshProtocol<Ops, Id>>() {
-            Protocol::Borsh(protocol)
-        } else if let Ok(protocol) = protocol.clone().downcast_arc::<JsonProtocol<Ops, Id>>() {
-            Protocol::Json(protocol)
-        } else {
-            panic!()
+        match protocol.clone().downcast_arc::<BorshProtocol<Ops, Id>>() {
+            Ok(protocol) => Protocol::Borsh(protocol),
+            _ => match protocol.clone().downcast_arc::<JsonProtocol<Ops, Id>>() {
+                Ok(protocol) => Protocol::Json(protocol),
+                _ => {
+                    panic!()
+                }
+            },
         }
     }
 }
 
+/// wRPC client capable of issuing requests and notifications and dispatching
+/// server-side notifications over a WebSocket connection using either the
+/// Borsh or JSON protocol. `Ops` is the application operation enum and `Id`
+/// is the message identifier type.
 #[derive(Clone)]
 pub struct RpcClient<Ops, Id = Id64>
 where
@@ -406,6 +440,8 @@ where
         Ok(())
     }
 
+    /// Access the optional connect/disconnect [`Ctl`] event multiplexer
+    /// configured for this client, if any.
     pub fn ctl_multiplexer(&self) -> &Option<Multiplexer<Ctl>> {
         &self.inner.ctl_multiplexer
     }

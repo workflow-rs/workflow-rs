@@ -7,17 +7,17 @@
 
 use futures::future::FusedFuture;
 use futures::task::AtomicWaker;
-use instant::Duration;
 use std::future::Future;
 use std::{
     pin::Pin,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
     },
     task::{Context, Poll},
 };
 use wasm_bindgen::prelude::*;
+use web_time::Duration;
 
 use super::overrides::init_timer_overrides;
 

@@ -6,7 +6,7 @@
 //!
 
 use wasm_bindgen::prelude::*;
-use workflow_panic_hook::{set_once, show_logs as show_wasm_logs, Type};
+use workflow_panic_hook::{Type, set_once, show_logs as show_wasm_logs};
 
 /// Initialize Rust panic handler in console mode.
 ///

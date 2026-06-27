@@ -2,6 +2,8 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::borrow::Cow;
 
+/// Escapes characters unsafe within an HTML attribute value (`<`, `>`, `&`, `"`),
+/// returning the input unchanged (borrowed) when no escaping is needed.
 pub fn escape_attr<'a, S: Into<Cow<'a, str>>>(input: S) -> Cow<'a, str> {
     lazy_static! {
         static ref REGEX: Regex = Regex::new("[<>&\"]").unwrap();
@@ -28,6 +30,8 @@ pub fn escape_attr<'a, S: Into<Cow<'a, str>>>(input: S) -> Cow<'a, str> {
         input
     }
 }
+/// Escapes characters unsafe within HTML text content (`<`, `>`, `&`),
+/// returning the input unchanged (borrowed) when no escaping is needed.
 pub fn escape_html<'a, S: Into<Cow<'a, str>>>(input: S) -> Cow<'a, str> {
     lazy_static! {
         static ref REGEX: Regex = Regex::new("[<>&]").unwrap();

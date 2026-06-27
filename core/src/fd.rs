@@ -12,6 +12,8 @@ pub fn try_set_fd_limit(limit: u64) -> std::io::Result<u64> {
     }
 }
 
+/// Returns the current open file descriptor limit for the process, or an error
+/// on platforms where the limit cannot be queried.
 pub fn limit() -> std::io::Result<i32> {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "windows")] {

@@ -6,6 +6,8 @@ pub use payload::Payload;
 use repaint::RepaintService;
 pub use service::{Service, ServiceResult};
 
+/// Shared inner state of the [`Runtime`], held behind an `Arc` so that
+/// runtime handles can be cloned cheaply.
 pub struct Inner {
     egui_ctx: egui::Context,
     events: ApplicationEventsChannel,
@@ -17,12 +19,17 @@ pub struct Inner {
     callbacks: CallbackMap,
 }
 
+/// Cheaply cloneable handle to the application runtime, providing access to
+/// services, the egui context, and the application events channel.
 #[derive(Clone)]
 pub struct Runtime {
     inner: Arc<Inner>,
 }
 
 impl Runtime {
+    /// Create a new runtime bound to the given egui context, registering it
+    /// as the global runtime. An optional application events channel may be
+    /// supplied, otherwise an unbounded channel is created.
     pub fn new(egui_ctx: &egui::Context, events: Option<ApplicationEventsChannel>) -> Self {
         let events = events.unwrap_or_else(channel::Channel::unbounded);
 
@@ -49,6 +56,8 @@ impl Runtime {
         runtime
     }
 
+    /// Register a service with the runtime under its name and immediately
+    /// spawn its async task.
     pub fn bind(&self, service: Arc<dyn Service>) {
         self.inner
             .services
@@ -59,10 +68,12 @@ impl Runtime {
         spawn(async move { service.spawn(runtime).await });
     }
 
+    /// Returns the elapsed time since the runtime was created.
     pub fn uptime(&self) -> Duration {
         self.inner.start_time.elapsed()
     }
 
+    /// Spawn the async task for each bound service.
     pub fn start_services(&self) {
         let services = self.services();
         for service in services {
@@ -72,6 +83,7 @@ impl Runtime {
         }
     }
 
+    /// Returns a snapshot of all currently bound services.
     pub fn services(&self) -> Vec<Arc<dyn Service>> {
         self.inner
             .services
@@ -82,12 +94,14 @@ impl Runtime {
             .collect()
     }
 
+    /// Request termination of all bound services.
     pub fn stop_services(&self) {
         self.services()
             .into_iter()
             .for_each(|service| service.terminate());
     }
 
+    /// Await the completion of all services' join futures.
     pub async fn join_services(&self) {
         // for service in self.services() {
         //  let name = service.name();
@@ -104,11 +118,13 @@ impl Runtime {
         join_all(futures).await;
     }
 
+    /// Unregister this runtime from the global slot.
     pub fn drop(&self) {
         register_global(None);
     }
 
     // / Start the runtime runtime.
+    /// Mark the runtime as running and start all bound services.
     pub fn start(&self) {
         self.inner.is_running.store(true, Ordering::SeqCst);
         self.start_services();
@@ -124,6 +140,7 @@ impl Runtime {
         }
     }
 
+    /// Returns the reference to the repaint service driving egui redraws.
     pub fn repaint_service(&self) -> &Arc<RepaintService> {
         &self.inner.repaint_service
     }
@@ -142,6 +159,7 @@ impl Runtime {
         Ok(())
     }
 
+    /// Send a [`RuntimeEvent`] to the UI asynchronously.
     pub async fn send_runtime_event(&self, msg: RuntimeEvent) -> Result<()> {
         self.inner.events.send(msg).await?;
         Ok(())
@@ -156,11 +174,14 @@ impl Runtime {
         Ok(())
     }
 
+    /// Send a [`RuntimeEvent`] to the UI synchronously without blocking.
     pub fn try_send_runtime_event(&self, msg: RuntimeEvent) -> Result<()> {
         self.inner.events.sender.try_send(msg)?;
         Ok(())
     }
 
+    /// Spawn an async task on the runtime; if the task returns an error,
+    /// it is forwarded to the UI as a [`RuntimeEvent::Error`].
     pub fn spawn_task<F>(&self, task: F)
     where
         F: Future<Output = Result<()>> + Send + 'static,
@@ -176,6 +197,9 @@ impl Runtime {
         });
     }
 
+    /// Spawn an async task whose result is stored into the supplied
+    /// [`Payload`]. The payload is marked pending while the task runs and
+    /// then populated with the `Ok` or `Err` outcome on completion.
     pub fn spawn_task_with_result<R, F>(
         &self,
         payload: &Payload<std::result::Result<R, Error>>,
@@ -197,10 +221,12 @@ impl Runtime {
         });
     }
 
+    /// Returns the reference to the egui context bound to this runtime.
     pub fn egui_ctx(&self) -> &egui::Context {
         &self.inner.egui_ctx
     }
 
+    /// Request an egui repaint via the repaint service.
     pub fn request_repaint(&self) {
         self.repaint_service().trigger();
     }
@@ -226,6 +252,9 @@ impl Runtime {
 
 static RUNTIME: Mutex<Option<Runtime>> = Mutex::new(None);
 
+/// Returns a clone of the globally registered [`Runtime`].
+///
+/// Panics if the runtime has not been initialized.
 pub fn runtime() -> Runtime {
     if let Some(runtime) = RUNTIME.lock().unwrap().as_ref() {
         runtime.clone()
@@ -234,6 +263,8 @@ pub fn runtime() -> Runtime {
     }
 }
 
+/// Returns a clone of the global [`Runtime`] if it has been initialized,
+/// or `None` otherwise.
 pub fn try_runtime() -> Option<Runtime> {
     RUNTIME.lock().unwrap().clone()
 }
@@ -279,6 +310,8 @@ where
 /// is an inevitable eventuality.
 #[cfg(not(target_arch = "wasm32"))]
 impl Runtime {
+    /// Trigger a graceful shutdown of the runtime, sending an exit event
+    /// and blocking until all services have completed their shutdown.
     pub fn halt() {
         if let Some(runtime) = try_runtime() {
             runtime.try_send(RuntimeEvent::Exit).ok();

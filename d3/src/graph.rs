@@ -18,10 +18,14 @@ const ONE_DAY_MSEC: u64 = DAYS;
 const ONE_DAY_SEC: u64 = DAYS / 1000;
 const LOWREZ_CELL_SIZE: u64 = ONE_DAY_SEC / 4096;
 
+/// Helper for parsing human-readable timeline durations into a [`Duration`].
 #[derive(Clone)]
 pub struct GraphDuration;
 
 impl GraphDuration {
+    /// Parses a duration string with a single unit suffix (`s`, `m`, `h`, or `d`,
+    /// e.g. `"30s"`, `"5m"`, `"24h"`, `"7d"`) into a [`Duration`]. Returns an
+    /// error if no recognized suffix is present or the numeric part is invalid.
     pub fn parse<T: Into<String>>(value: T) -> std::result::Result<Duration, Error> {
         let value: String = value.into();
         let millis = if value.contains('s') {
@@ -44,23 +48,36 @@ impl GraphDuration {
     }
 }
 
+/// The concrete set of colors and fonts used to render a [`Graph`].
 #[derive(Clone)]
 pub struct GraphThemeOptions {
+    /// Fill color of the plotted area.
     pub area_fill_color: String,
+    /// Stroke (outline) color of the plotted area.
     pub area_stroke_color: String,
+    /// Color of the x-axis line and ticks.
     pub x_axis_color: String,
+    /// Color of the y-axis line and ticks.
     pub y_axis_color: String,
+    /// Color of the graph title text.
     pub title_color: String,
+    /// CSS font for x-axis labels.
     pub x_axis_font: String,
+    /// CSS font for y-axis labels.
     pub y_axis_font: String,
+    /// CSS font for the graph title.
     pub title_font: String,
+    /// CSS font for the y-axis caption.
     pub y_caption_font: String,
+    /// Color of the y-axis caption text.
     pub y_caption_color: String,
     // pub value_color: String,
     // pub value_font: String,
 }
 
 impl GraphThemeOptions {
+    /// Builds theme options from a single font family and a set of colors,
+    /// deriving the title, axis, and caption fonts at preset sizes.
     pub fn new(
         font_name: &str,
         title_color: &str,
@@ -83,14 +100,19 @@ impl GraphThemeOptions {
     }
 }
 
+/// Selects the visual styling applied to a [`Graph`].
 #[derive(Clone)]
 pub enum GraphTheme {
+    /// Built-in light theme with dark text on light fills.
     Light,
+    /// Built-in dark theme with light text on dark fills.
     Dark,
+    /// A user-supplied set of theme options.
     Custom(Box<GraphThemeOptions>),
 }
 
 impl GraphTheme {
+    /// Resolves this theme into its concrete [`GraphThemeOptions`].
     pub fn get_options(self) -> GraphThemeOptions {
         match self {
             Self::Light => Self::light_theme_options(),
@@ -98,6 +120,7 @@ impl GraphTheme {
             Self::Custom(theme) => *theme,
         }
     }
+    /// Returns the [`GraphThemeOptions`] for the built-in light theme.
     pub fn light_theme_options() -> GraphThemeOptions {
         let font = "'Consolas', 'Lucida Grande', 'Roboto Mono', 'Source Code Pro', 'Trebuchet'";
         GraphThemeOptions {
@@ -116,6 +139,7 @@ impl GraphTheme {
             y_caption_font: String::from("15px {font}"),
         }
     }
+    /// Returns the [`GraphThemeOptions`] for the built-in dark theme.
     pub fn dark_theme_options() -> GraphThemeOptions {
         let font = "'Consolas', 'Lucida Grande', 'Roboto Mono', 'Source Code Pro', 'Trebuchet'";
         GraphThemeOptions {
@@ -136,14 +160,20 @@ impl GraphTheme {
     }
 }
 
+/// Plot margins, in pixels, separating the chart area from the canvas edges.
 pub struct Margin {
+    /// Left margin in pixels.
     pub left: f32,
+    /// Right margin in pixels.
     pub right: f32,
+    /// Top margin in pixels.
     pub top: f32,
+    /// Bottom margin in pixels.
     pub bottom: f32,
 }
 
 impl Margin {
+    /// Creates a new [`Margin`] from the given left, right, top, and bottom pixel values.
     pub fn new(left: f32, right: f32, top: f32, bottom: f32) -> Self {
         Self {
             left,
@@ -172,6 +202,9 @@ struct Inner {
     retention: Duration,
 }
 
+/// A real-time, canvas-based area chart rendered via D3. Ingests timestamped
+/// data points, maintains high- and low-resolution series within a retention
+/// window, and draws axes, title, and the plotted area according to a theme.
 #[derive(Clone)]
 pub struct Graph {
     #[allow(dead_code)]
@@ -209,6 +242,8 @@ unsafe impl Send for Graph {}
 const DEFAULT_STYLE: &str = include_str!("graph.css");
 
 impl Graph {
+    /// Injects the default graph CSS into the document once, identified by the
+    /// optional `id`. Subsequent calls are no-ops.
     pub async fn try_init(id: Option<&str>) -> Result<()> {
         if !unsafe { DOM_INIT } {
             inject_css(id, DEFAULT_STYLE)?;
@@ -220,16 +255,22 @@ impl Graph {
         Ok(())
     }
 
+    /// Returns the crate's default graph stylesheet as a string.
     pub async fn default_style() -> Result<String> {
         Ok(DEFAULT_STYLE.to_string())
     }
 
+    /// Replaces the injected graph stylesheet identified by `id` with `css` and
+    /// dispatches a window resize event to force the graph to re-layout.
     pub async fn replace_graph_style(id: &str, css: &str) -> Result<()> {
         inject_css(Some(id), css)?;
         window().dispatch_event(&web_sys::Event::new("resize")?)?;
         Ok(())
     }
 
+    /// Creates a new graph, appending a canvas to `container`, applying the given
+    /// theme, margins, x-axis `duration` and data `retention` window, and performing
+    /// initial layout. Returns the constructed [`Graph`].
     #[allow(clippy::too_many_arguments)]
     pub async fn try_new<T: Into<String>>(
         window: &web_sys::Window,
@@ -303,94 +344,113 @@ impl Graph {
         Ok(graph)
     }
 
+    /// Sets the graph title, consuming and returning `self` for chaining.
     pub fn set_title<T: Into<String>>(mut self, title: T) -> Self {
         self.title = Some(title.into());
         self
     }
 
+    /// Sets the length, in pixels, of x-axis tick marks, returning `self` for chaining.
     pub fn set_x_tick_size(mut self, tick_size: f64) -> Self {
         self.x_tick_size = tick_size;
         self
     }
 
+    /// Sets the length, in pixels, of y-axis tick marks, returning `self` for chaining.
     pub fn set_y_tick_size(mut self, tick_size: f64) -> Self {
         self.y_tick_size = tick_size;
         self
     }
 
+    /// Sets the target number of x-axis ticks, returning `self` for chaining.
     pub fn set_x_tick_count(mut self, tick_count: u32) -> Self {
         self.x_tick_count = tick_count;
         self
     }
 
+    /// Sets the target number of y-axis ticks, returning `self` for chaining.
     pub fn set_y_tick_count(mut self, tick_count: u32) -> Self {
         self.y_tick_count = tick_count;
         self
     }
 
+    /// Sets the padding, in pixels, between y-axis ticks and their labels,
+    /// returning `self` for chaining.
     pub fn set_y_tick_padding(mut self, tick_padding: f64) -> Self {
         self.y_tick_padding = tick_padding;
         self
     }
 
-    pub fn options(&self) -> MutexGuard<GraphThemeOptions> {
+    /// Returns a locked guard over the graph's active theme options.
+    pub fn options(&self) -> MutexGuard<'_, GraphThemeOptions> {
         self.options.lock().unwrap()
     }
 
-    fn inner(&self) -> MutexGuard<Inner> {
+    fn inner(&self) -> MutexGuard<'_, Inner> {
         self.inner.lock().unwrap()
     }
 
+    /// Sets the CSS font used to render the graph title.
     pub fn set_title_font<T: Into<String>>(&self, font: T) -> &Self {
         self.options().title_font = font.into();
         self
     }
 
+    /// Sets the CSS font used to render the x-axis labels.
     pub fn set_x_axis_font<T: Into<String>>(&self, font: T) -> &Self {
         self.options().x_axis_font = font.into();
         self
     }
 
+    /// Sets the CSS font used to render the y-axis labels.
     pub fn set_y_axis_font<T: Into<String>>(&self, font: T) -> &Self {
         self.options().y_axis_font = font.into();
         self
     }
 
+    /// Sets the fill color used for the plotted area.
     pub fn set_area_fill_color<T: Into<String>>(&self, color: T) -> &Self {
         self.options().area_fill_color = color.into();
         self
     }
 
+    /// Sets the stroke (outline) color used for the plotted area.
     pub fn set_area_stroke_color<T: Into<String>>(&self, color: T) -> &Self {
         self.options().area_stroke_color = color.into();
         self
     }
 
+    /// Sets the color used to render the x-axis.
     pub fn set_x_axis_color<T: Into<String>>(&self, color: T) -> &Self {
         self.options().x_axis_color = color.into();
         self
     }
 
+    /// Sets the color used to render the y-axis.
     pub fn set_y_axis_color<T: Into<String>>(&self, color: T) -> &Self {
         self.options().y_axis_color = color.into();
         self
     }
 
+    /// Sets the color used to render the graph title.
     pub fn set_title_color<T: Into<String>>(&self, color: T) -> &Self {
         self.options().title_color = color.into();
         self
     }
 
+    /// Sets the color used to render the y-axis caption.
     pub fn set_y_caption_color<T: Into<String>>(&self, color: T) -> &Self {
         self.options().y_caption_color = color.into();
         self
     }
 
+    /// Sets the CSS font used to render the y-axis caption.
     pub fn set_y_caption_font<T: Into<String>>(&self, font: T) -> &Self {
         self.options().y_caption_font = font.into();
         self
     }
 
+    /// Replaces the active theme options, recalculates the title box, and redraws.
     pub fn set_theme(&self, theme: GraphTheme) -> Result<()> {
         {
             *self.options() = theme.get_options();
@@ -400,12 +460,14 @@ impl Graph {
         Ok(())
     }
 
+    /// Sets the time span shown along the x-axis and redraws the graph.
     pub fn set_duration(&self, duration: Duration) -> Result<()> {
         self.inner().duration = duration;
         self.draw()?;
         Ok(())
     }
 
+    /// Returns the time span currently shown along the x-axis.
     pub fn duration(&self) -> Duration {
         self.inner().duration
     }
@@ -416,10 +478,12 @@ impl Graph {
     //     Ok(())
     // }
 
+    /// Flags the graph as needing a redraw on the next render cycle.
     pub fn redraw(&self) {
         self.redraw.store(true, Ordering::Relaxed);
     }
 
+    /// Returns whether a redraw is pending, clearing the flag in the process.
     pub fn needs_redraw(&self) -> bool {
         let flag = self.redraw.load(Ordering::Relaxed);
         if flag {
@@ -428,6 +492,8 @@ impl Graph {
         flag
     }
 
+    /// Performs the initial layout, scale setup, and area/axis configuration,
+    /// and registers the window resize handler. Called once during construction.
     pub async fn init(&mut self) -> Result<()> {
         self.calculate_title_box()?;
         self.update_size()?;
@@ -504,9 +570,11 @@ impl Graph {
         Ok(())
     }
 
+    /// Returns the height, in pixels, of the plot area (excluding margins and title).
     pub fn height(&self) -> f32 {
         self.inner().height
     }
+    /// Returns the width, in pixels, of the plot area (excluding margins).
     pub fn width(&self) -> f32 {
         self.inner().width
     }
@@ -514,18 +582,22 @@ impl Graph {
     //     self.inner().min_date.clone()
     // }
 
+    /// Sets the current value text displayed on the graph.
     pub fn set_value<T: Into<String>>(&self, value: T) {
         self.inner().value = value.into();
     }
 
+    /// Returns the current value text displayed on the graph.
     pub fn value(&self) -> String {
         self.inner().value.clone()
     }
 
+    /// Returns the height, in pixels, reserved for the title box above the plot.
     pub fn title_box_height(&self) -> f64 {
         self.inner().title_box_height
     }
 
+    /// Returns the width, in pixels, allotted to each x-axis tick.
     pub fn x_tick_width(&self) -> f64 {
         self.inner().x_tick_width
     }
@@ -538,12 +610,15 @@ impl Graph {
     //     self.options().value_font.clone()
     // }
 
+    /// Returns the fill color used for the plotted area from the current theme.
     pub fn area_fill_color(&self) -> String {
         self.options().area_fill_color.clone()
     }
+    /// Returns the stroke (outline) color used for the plotted area from the current theme.
     pub fn area_stroke_color(&self) -> String {
         self.options().area_stroke_color.clone()
     }
+    /// Returns the plotted area's `(fill_color, stroke_color)` pair from the current theme.
     pub fn area_color(&self) -> (String, String) {
         let options = self.options();
         (
@@ -551,21 +626,27 @@ impl Graph {
             options.area_stroke_color.clone(),
         )
     }
+    /// Returns the CSS font used to render the graph title.
     pub fn title_font(&self) -> String {
         self.options().title_font.clone()
     }
+    /// Returns the color used to render the graph title.
     pub fn title_color(&self) -> String {
         self.options().title_color.clone()
     }
+    /// Returns the CSS font used to render the x-axis labels.
     pub fn x_axis_font(&self) -> String {
         self.options().x_axis_font.clone()
     }
+    /// Returns the color used to render the x-axis.
     pub fn x_axis_color(&self) -> String {
         self.options().x_axis_color.clone()
     }
+    /// Returns the CSS font used to render the y-axis caption.
     pub fn y_caption_font(&self) -> String {
         self.options().y_caption_font.clone()
     }
+    /// Returns the color used to render the y-axis caption.
     pub fn y_caption_color(&self) -> String {
         self.options().y_caption_color.clone()
     }
@@ -789,10 +870,12 @@ impl Graph {
         Ok(())
     }
 
+    /// Returns the underlying DOM element that hosts the graph canvas.
     pub fn _element(&self) -> &Element {
         &self.element
     }
 
+    /// Clears the entire canvas drawing area, including the margins and title box.
     pub fn clear(&self) -> Result<()> {
         let inner = self.inner();
         let context = &self.context;
@@ -877,7 +960,7 @@ impl Graph {
         self.data_hirez.push(&item.into());
 
         let lowrez_cell = self.lowrez_cell.fetch_add(1, Ordering::SeqCst);
-        if lowrez_cell % LOWREZ_CELL_SIZE == 0 {
+        if lowrez_cell.is_multiple_of(LOWREZ_CELL_SIZE) {
             let lowrez_cell_value = self.lowrez_cell_value.load(Ordering::SeqCst);
             let lowrez_value = JsValue::from(lowrez_cell_value);
             let item = js_sys::Object::new();
@@ -892,6 +975,9 @@ impl Graph {
         Ok(())
     }
 
+    /// Records a new data point at the given `time` (epoch milliseconds) and
+    /// `value_f64`, sets `text` as the displayed value, enforces the retention
+    /// window, and redraws the graph (subject to redraw suppression).
     pub async fn ingest(&self, time: f64, value_f64: f64, text: &str) -> Result<()> {
         // store text as value
         self.set_value(text);

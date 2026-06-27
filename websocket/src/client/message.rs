@@ -80,6 +80,9 @@ impl AsRef<[u8]> for Message {
 //     // DispatcherShutdown,
 // }
 
+/// Optional acknowledgement channel attached to an outgoing message; when
+/// present, the sender is notified once the message has been handed off to
+/// the underlying WebSocket interface (or an error has occurred).
 pub type Ack = Option<Sender<Result<Arc<()>, Arc<Error>>>>;
 
 // impl DispatchMessage {

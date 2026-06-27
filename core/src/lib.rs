@@ -32,6 +32,7 @@ pub mod runtime;
 pub mod sendable;
 pub mod utils;
 
+/// Build- and compiler-version constants and helpers captured at build time.
 #[cfg(feature = "version")]
 pub mod version;
 

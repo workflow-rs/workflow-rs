@@ -1,9 +1,16 @@
+//! Procedural macros backing the `workflow-html` crate, providing the
+//! `tree!`, `html!`, and `html_str!` function-like macros for building HTML
+//! node trees, plus the `#[renderable]` attribute macro for deriving HTML
+//! rendering on custom structs.
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
+    DeriveInput, Meta, Token,
     ext::IdentExt,
     parse::{Parse, ParseStream},
-    parse_macro_input, DeriveInput, Meta, NestedMeta,
+    parse_macro_input,
+    punctuated::Punctuated,
 };
 mod element;
 //mod state;
@@ -11,8 +18,11 @@ mod attributes;
 use element::Nodes;
 //use state::set_attributes;
 use attributes::{AttributeName, AttributeNameString};
-use proc_macro_error::proc_macro_error;
+use proc_macro_error3::proc_macro_error;
 
+/// Parses an HTML node tree and expands to the constructed element object
+/// tree without rendering it, allowing the resulting structure to be
+/// inspected or rendered later.
 #[proc_macro]
 #[proc_macro_error]
 pub fn tree(input: TokenStream) -> TokenStream {
@@ -22,6 +32,9 @@ pub fn tree(input: TokenStream) -> TokenStream {
     ts.into()
 }
 
+/// Parses an HTML node tree and expands to an expression that builds the
+/// element tree and renders it via `render_tree()`, yielding the resulting
+/// `Html` collection of nodes.
 #[proc_macro]
 #[proc_macro_error]
 pub fn html(input: TokenStream) -> TokenStream {
@@ -36,6 +49,8 @@ pub fn html(input: TokenStream) -> TokenStream {
     .into()
 }
 
+/// Parses an HTML node tree and expands to an expression that builds the
+/// element tree and immediately renders it to an HTML `String` via `html()`.
 #[proc_macro]
 #[proc_macro_error]
 pub fn html_str(input: TokenStream) -> TokenStream {
@@ -63,6 +78,15 @@ impl Parse for RenderableAttributes {
     }
 }
 
+/// Attribute macro that turns a named struct into a renderable HTML element.
+///
+/// The macro argument supplies the HTML tag name (e.g. `#[renderable(div)]`),
+/// and each struct field becomes an attribute of that tag. It generates
+/// implementations of the `Render` and `ElementDefaults` traits so the struct
+/// can be emitted as `<tag attrs>children</tag>`. Fields named `children` hold
+/// nested content; `bool` fields render as boolean attributes and `Option`
+/// fields are omitted when `None`. A field-level `#[..(name = "...")]` attribute
+/// overrides the rendered attribute name.
 #[proc_macro_attribute]
 //#[proc_macro_derive(Renderable)]
 #[proc_macro_error]
@@ -116,18 +140,20 @@ pub fn renderable(attr: TokenStream, item: TokenStream) -> TokenStream {
 
             if !attrs.is_empty() {
                 let attr = attrs.remove(0);
-                let meta = attr.parse_meta().unwrap();
-                if let Meta::List(list) = meta {
-                    //println!("meta-list: {:#?}", list);
-                    //println!("meta-list.path: {:#?}", list.path.get_ident().unwrap().to_string());
-                    //println!("nested: {:?}", list.nested);
-                    for item in list.nested.iter() {
-                        if let NestedMeta::Meta(Meta::NameValue(name_value)) = item {
+                if let Meta::List(list) = &attr.meta {
+                    let nested = list
+                        .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                        .unwrap();
+                    for item in nested.iter() {
+                        if let Meta::NameValue(name_value) = item {
                             let key = name_value.path.get_ident().unwrap().to_string();
-                            let value: String = match &name_value.lit {
-                                syn::Lit::Int(v) => v.to_string(),
-                                syn::Lit::Str(v) => v.value(),
-                                syn::Lit::Bool(v) => v.value().to_string(),
+                            let value: String = match &name_value.value {
+                                syn::Expr::Lit(syn::ExprLit { lit, .. }) => match lit {
+                                    syn::Lit::Int(v) => v.to_string(),
+                                    syn::Lit::Str(v) => v.value(),
+                                    syn::Lit::Bool(v) => v.value().to_string(),
+                                    _ => "".to_string(),
+                                },
                                 _ => "".to_string(),
                             };
                             //println!("key: {}, value: {}", key, value);

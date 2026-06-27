@@ -33,7 +33,6 @@ default = ["native-tls"]
 
 [dependencies]
 async-channel.workspace = true
-async-std.workspace = true
 async-trait.workspace = true
 cfg-if.workspace = true
 downcast-rs.workspace = true

@@ -5,10 +5,10 @@ use regex::Regex;
 use sha2::{Digest, Sha256};
 use std::convert::Into;
 use syn::{
+    Error, Expr, Result, Token,
     parse::{Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
-    Error, Expr, Result, Token,
 };
 
 #[derive(Debug)]

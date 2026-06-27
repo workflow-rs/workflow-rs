@@ -1,4 +1,10 @@
+//! Umbrella crate that re-exports the individual `workflow-rs` crates as
+//! feature-gated submodules, letting consumers depend on a single crate and
+//! enable only the subsystems they need.
+
 #[cfg(feature = "core")]
+/// Core async runtime, time, and utility primitives, re-exported from the
+/// `workflow-core` crate.
 pub mod core {
     pub use workflow_core::*;
 }
@@ -19,6 +25,7 @@ pub mod i18n {
 }
 
 #[cfg(feature = "log")]
+/// Logging facilities, re-exported from the `workflow-log` crate.
 pub mod log {
     pub use workflow_log::*;
 }

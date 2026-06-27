@@ -34,6 +34,8 @@ impl FromStr for ConnectStrategy {
 }
 
 impl ConnectStrategy {
+    /// Creates a strategy from a boolean: `true` yields [`ConnectStrategy::Retry`],
+    /// `false` yields [`ConnectStrategy::Fallback`].
     pub fn new(retry: bool) -> Self {
         if retry {
             ConnectStrategy::Retry
@@ -42,6 +44,7 @@ impl ConnectStrategy {
         }
     }
 
+    /// Returns `true` if this strategy is [`ConnectStrategy::Fallback`].
     pub fn is_fallback(&self) -> bool {
         matches!(self, ConnectStrategy::Fallback)
     }
@@ -76,13 +79,15 @@ pub struct ConnectOptions {
     pub url: Option<String>,
     /// Optional `timeout` that will change the timeout of the WebSocket connection process.
     /// `Timeout` is the period after which the async connection attempt is aborted. `Timeout`
-    /// is followed by the retry delay if the [`ConnectionStrategy`] is set to `Retry`.
+    /// is followed by the retry delay if the `ConnectionStrategy` is set to `Retry`.
     pub connect_timeout: Option<Duration>,
     /// Retry interval denotes the time to wait before attempting to reconnect.
     pub retry_interval: Option<Duration>,
 }
 
+/// Default connection timeout in milliseconds used when none is specified.
 pub const DEFAULT_CONNECT_TIMEOUT_MILLIS: u64 = 5_000;
+/// Default retry interval in milliseconds used when none is specified.
 pub const DEFAULT_CONNECT_RETRY_MILLIS: u64 = 5_000;
 
 impl Default for ConnectOptions {
@@ -98,6 +103,8 @@ impl Default for ConnectOptions {
 }
 
 impl ConnectOptions {
+    /// Options that block `connect()` until the first connection attempt
+    /// completes, returning on failure using [`ConnectStrategy::Fallback`].
     pub fn blocking_fallback() -> Self {
         Self {
             block_async_connect: true,
@@ -107,6 +114,8 @@ impl ConnectOptions {
             retry_interval: None,
         }
     }
+    /// Options that block `connect()` until the connection is established,
+    /// continuously retrying using [`ConnectStrategy::Retry`].
     pub fn blocking_retry() -> Self {
         Self {
             block_async_connect: true,
@@ -117,6 +126,8 @@ impl ConnectOptions {
         }
     }
 
+    /// Options that return from `connect()` immediately while retrying
+    /// the connection in the background using [`ConnectStrategy::Retry`].
     pub fn non_blocking_retry() -> Self {
         Self {
             block_async_connect: false,
@@ -127,6 +138,7 @@ impl ConnectOptions {
         }
     }
 
+    /// Sets a custom URL that overrides the current WebSocket URL (and the resolver).
     pub fn with_url<S: Display>(self, url: S) -> Self {
         Self {
             url: Some(url.to_string()),
@@ -134,6 +146,7 @@ impl ConnectOptions {
         }
     }
 
+    /// Sets the connection timeout after which a connection attempt is aborted.
     pub fn with_connect_timeout(self, timeout: Duration) -> Self {
         Self {
             connect_timeout: Some(timeout),
@@ -141,6 +154,7 @@ impl ConnectOptions {
         }
     }
 
+    /// Sets the retry interval to wait before attempting to reconnect.
     pub fn with_retry_interval(self, interval: Duration) -> Self {
         Self {
             retry_interval: Some(interval),
@@ -148,11 +162,15 @@ impl ConnectOptions {
         }
     }
 
+    /// Returns the configured connection timeout, or the default
+    /// ([`DEFAULT_CONNECT_TIMEOUT_MILLIS`]) if none was set.
     pub fn connect_timeout(&self) -> Duration {
         self.connect_timeout
             .unwrap_or(Duration::from_millis(DEFAULT_CONNECT_TIMEOUT_MILLIS))
     }
 
+    /// Returns the configured retry interval, or the default
+    /// ([`DEFAULT_CONNECT_RETRY_MILLIS`]) if none was set.
     pub fn retry_interval(&self) -> Duration {
         self.retry_interval
             .unwrap_or(Duration::from_millis(DEFAULT_CONNECT_RETRY_MILLIS))

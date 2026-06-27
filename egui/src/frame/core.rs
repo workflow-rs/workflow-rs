@@ -1,6 +1,8 @@
 use crate::frame::app::App;
 use crate::imports::*;
 
+/// The eframe application wrapper that drives an [`App`], bridging eframe's
+/// update loop with runtime event dispatch, keyboard handling, and rendering.
 pub struct Core<T>
 where
     T: App,
@@ -59,7 +61,12 @@ where
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    //
+    // eframe 0.32+ made `ui(&mut self, &mut Ui, ...)` the required `App` method
+    // and deprecated `update(&mut self, &Context, ...)`. We recover the `Context`
+    // from the root `Ui` so the existing ctx-based rendering keeps working.
+    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        let ctx = &ui.ctx().clone();
         log_info!("--- update ---");
 
         for event in self.events.iter() {
@@ -90,7 +97,7 @@ where
         });
 
         if let Some(device) = self.app.device() {
-            device.set_screen_size(&ctx.screen_rect())
+            device.set_screen_size(&ctx.content_rect())
         }
 
         self.render(ctx, frame);
@@ -151,6 +158,8 @@ where
     //     }
     // }
 
+    /// Processes a single runtime event, marking shutdown as pending on
+    /// [`RuntimeEvent::Exit`] and forwarding the event to the application.
     pub fn handle_events(
         &mut self,
         event: RuntimeEvent,

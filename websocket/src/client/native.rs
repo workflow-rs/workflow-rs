@@ -1,11 +1,10 @@
 use super::{
-    error::Error, message::Message, result::Result, Ack, ConnectOptions, ConnectResult,
-    ConnectStrategy, Handshake, Resolver, WebSocketConfig,
+    Ack, ConnectOptions, ConnectResult, ConnectStrategy, Handshake, Resolver, WebSocketConfig,
+    error::Error, message::Message, result::Result,
 };
 use futures::{
-    select_biased,
+    FutureExt, select_biased,
     stream::{SplitSink, SplitStream},
-    FutureExt,
 };
 use futures_util::{SinkExt, StreamExt};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -15,8 +14,8 @@ use std::time::Instant;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_tungstenite::{
-    connect_async_with_config, tungstenite::protocol::Message as TsMessage, MaybeTlsStream,
-    WebSocketStream,
+    MaybeTlsStream, WebSocketStream, connect_async_with_config,
+    tungstenite::protocol::Message as TsMessage,
 };
 use tungstenite::protocol::WebSocketConfig as TsWebSocketConfig;
 pub use workflow_core as core;
@@ -38,8 +37,8 @@ impl From<Message> for tungstenite::Message {
 impl From<tungstenite::Message> for Message {
     fn from(message: tungstenite::Message) -> Self {
         match message {
-            TsMessage::Text(text) => Message::Text(text),
-            TsMessage::Binary(data) => Message::Binary(data),
+            TsMessage::Text(text) => Message::Text(text.to_string()),
+            TsMessage::Binary(data) => Message::Binary(data.to_vec()),
             TsMessage::Close(_) => Message::Close,
             _ => panic!(
                 "TryFrom<tungstenite::Message> for Message - invalid message type: {message:?}",
@@ -50,14 +49,12 @@ impl From<tungstenite::Message> for Message {
 
 impl From<WebSocketConfig> for TsWebSocketConfig {
     fn from(config: WebSocketConfig) -> Self {
-        TsWebSocketConfig {
-            write_buffer_size: config.write_buffer_size,
-            max_write_buffer_size: config.max_write_buffer_size,
-            max_message_size: config.max_message_size,
-            max_frame_size: config.max_frame_size,
-            accept_unmasked_frames: config.accept_unmasked_frames,
-            ..Default::default()
-        }
+        TsWebSocketConfig::default()
+            .write_buffer_size(config.write_buffer_size)
+            .max_write_buffer_size(config.max_write_buffer_size)
+            .max_message_size(config.max_message_size)
+            .max_frame_size(config.max_frame_size)
+            .accept_unmasked_frames(config.accept_unmasked_frames)
     }
 }
 
@@ -149,10 +146,13 @@ impl WebSocketInterface {
     async fn resolve_url(self: &Arc<Self>, options: &ConnectOptions) -> Result<String> {
         let url = if let Some(url) = options.url.as_ref().or(self.default_url().as_ref()) {
             url.clone()
-        } else if let Some(resolver) = self.resolver() {
-            resolver.resolve_url().await?
         } else {
-            return Err(Error::MissingUrl);
+            match self.resolver() {
+                Some(resolver) => resolver.resolve_url().await?,
+                _ => {
+                    return Err(Error::MissingUrl);
+                }
+            }
         };
         self.set_current_url(&url);
         Ok(url)

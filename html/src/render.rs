@@ -1,25 +1,31 @@
-use crate::interface::Hooks;
-use crate::utils::{document, Element, ElementResult};
 use crate::Html;
+use crate::interface::Hooks;
+use crate::utils::{Element, ElementResult, document};
 use std::collections::BTreeMap;
 pub use std::fmt::{Result, Write};
 pub use std::sync::Arc;
 
+/// A collection of retained renderables kept alive for the lifetime of an [`Html`].
 pub type Renderables = Vec<Arc<dyn Render>>;
 
 //pub type RenderPtr = Arc<dyn Render>;
 
+/// Implemented by values that can be rendered both to an HTML string and to
+/// live DOM nodes, optionally exposing `@name` hooks and retained renderables.
 pub trait Render {
     //type Type;
     //fn on(&mut self, _event:&str, _cb: Box<dyn Fn(dyn Render) -> ElementResult<()>>){
 
     //}
+    /// Renders this value to an HTML string by concatenating its markup fragments.
     fn html(&self) -> String {
         let mut buf = vec![];
         self.render(&mut buf).unwrap();
         buf.join("")
     }
     // fn render_tree(self)->ElementResult<(Vec<Element>, BTreeMap<String, Element>)>{
+    /// Renders this value into a detached container and returns an [`Html`]
+    /// holding the resulting root elements, hooks and retained renderables.
     fn render_tree(self) -> ElementResult<Html>
     where
         Self: Sized,
@@ -40,6 +46,9 @@ pub trait Render {
 
         Html::new(list, map, renderable)
     }
+    /// Renders this value's DOM nodes into the existing `parent` element,
+    /// collecting retained renderables and returning the resulting map of
+    /// `@name` hook bindings.
     fn render_tree_into(
         self,
         parent: &mut Element,
@@ -53,6 +62,9 @@ pub trait Render {
         Ok(map)
     }
 
+    /// Builds the live DOM nodes for this value under `_parent`, recording any
+    /// `@name` hooks into `_map` and pushing retained renderables onto
+    /// `_renderables`. The default implementation does nothing.
     fn render_node(
         self,
         _parent: &mut Element,
@@ -65,8 +77,11 @@ pub trait Render {
         Ok(())
     }
 
+    /// Renders this value as HTML markup, appending fragments to `_w`.
     fn render(&self, _w: &mut Vec<String>) -> ElementResult<()>;
 
+    /// Releases any retained event-listener closures held by this value and its
+    /// children. The default implementation does nothing.
     fn remove_event_listeners(&self) -> ElementResult<()> {
         Ok(())
     }

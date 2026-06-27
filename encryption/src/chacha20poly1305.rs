@@ -1,8 +1,8 @@
 use crate::error::Error;
 use crate::imports::*;
 use chacha20poly1305::{
-    aead::{AeadCore, AeadInPlace, KeyInit, OsRng},
     Key, XChaCha20Poly1305,
+    aead::{AeadCore, AeadInPlace, KeyInit, OsRng},
 };
 
 /// Encrypts the given data using `XChaCha20Poly1305` algorithm.
@@ -15,6 +15,9 @@ where
     encrypt_slice(&buffer, secret)
 }
 
+/// Encrypts a raw byte slice with `XChaCha20Poly1305`, deriving the key from
+/// `secret` via Argon2 and appending the randomly generated 24-byte nonce to
+/// the returned ciphertext.
 pub fn encrypt_slice(data: &[u8], secret: &Secret) -> Result<Vec<u8>> {
     let private_key_bytes = argon2_sha256(secret.as_ref(), 32)?;
     let key = Key::from_slice(private_key_bytes.as_ref());
@@ -27,6 +30,8 @@ pub fn encrypt_slice(data: &[u8], secret: &Secret) -> Result<Vec<u8>> {
     Ok(buffer)
 }
 
+/// Decrypts `XChaCha20Poly1305` ciphertext and deserializes the recovered bytes
+/// into a value of type `T` using the Borsh deserializer.
 pub fn decrypt<T>(data: &[u8], secret: &Secret) -> Result<T>
 where
     T: Deserializer,

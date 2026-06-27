@@ -8,11 +8,17 @@ use crate::error::Error;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 
+/// Extension trait converting a [`JsValue`] into native Rust integer and byte types.
 pub trait JsValueExtension {
+    /// Convert the value to a `u8`, erroring if it is not a number or is out of range.
     fn try_as_u8(&self) -> Result<u8, Error>;
+    /// Convert the value to a `u16`, erroring if it is not a number or is out of range.
     fn try_as_u16(&self) -> Result<u16, Error>;
+    /// Convert the value to a `u32`, erroring if it is not a number or is out of range.
     fn try_as_u32(&self) -> Result<u32, Error>;
+    /// Convert the value to a `u64`, accepting a hex string, a `BigInt`, or a number.
     fn try_as_u64(&self) -> Result<u64, Error>;
+    /// Convert the value to a `Vec<u8>`, accepting a hex string or a byte array.
     fn try_as_vec_u8(&self) -> Result<Vec<u8>, Error>;
 }
 

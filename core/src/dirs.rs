@@ -6,6 +6,8 @@
 use cfg_if::cfg_if;
 use std::path::PathBuf;
 
+/// Returns the current user's home directory, resolved natively or via Node.js
+/// (`os.homedir()`), or `None` if it cannot be determined.
 pub fn home_dir() -> Option<PathBuf> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
@@ -20,6 +22,8 @@ pub fn home_dir() -> Option<PathBuf> {
     }
 }
 
+/// Returns the platform-appropriate user data directory (e.g. `LOCALAPPDATA`
+/// on Windows), resolved natively or via Node.js, or `None` if undetermined.
 pub fn data_dir() -> Option<PathBuf> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
@@ -48,8 +52,9 @@ cfg_if! {
 
             static mut HOME_DIR: Option<PathBuf> = None;
             pub fn home_dir() -> Option<PathBuf> {
+                let home_dir_ptr = &raw mut HOME_DIR;
                 unsafe {
-                    HOME_DIR.get_or_insert_with(|| {
+                    (*home_dir_ptr).get_or_insert_with(|| {
                         Reflect::get(&require("os"), &JsValue::from_str("homedir"))
                             .expect("Unable to get homedir")
                             .dyn_into::<js_sys::Function>()
@@ -62,14 +67,15 @@ cfg_if! {
                             .map(PathBuf::from)
                             .expect("Unable to get nodejs homedir")
                     });
-                    HOME_DIR.clone()
+                    (*home_dir_ptr).clone()
                 }
             }
 
             static mut DATA_DIR: Option<PathBuf> = None;
             pub fn data_dir() -> Option<PathBuf> {
+                let data_dir_ptr = &raw mut DATA_DIR;
                 unsafe {
-                    DATA_DIR.get_or_insert_with(|| {
+                    (*data_dir_ptr).get_or_insert_with(|| {
                         if crate::runtime::is_windows() {
                             crate::env::var("LOCALAPPDATA")
                                 .ok()
@@ -81,7 +87,7 @@ cfg_if! {
                                 .expect("Unable to get nodejs data_dir (unable to get home_dir)")
                         }
                     });
-                    DATA_DIR.clone()
+                    (*data_dir_ptr).clone()
                 }
             }
         }

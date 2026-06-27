@@ -13,7 +13,7 @@ pub type MethodFn<Req, Resp> =
     Arc<Box<dyn Send + Sync + Fn(Req) -> MethodFnReturn<Resp> + 'static>>;
 
 /// IPC method function return type
-pub type MethodFnReturn<T> = Pin<Box<(dyn Send + 'static + Future<Output = ResponseResult<T>>)>>;
+pub type MethodFnReturn<T> = Pin<Box<dyn Send + 'static + Future<Output = ResponseResult<T>>>>;
 
 /// IPC method wrapper. Contains the method closure function.
 pub struct Method<Req, Resp>
@@ -29,6 +29,8 @@ where
     Req: MsgT,
     Resp: MsgT,
 {
+    /// Wraps the given async closure into a [`Method`] that deserializes a
+    /// request, invokes the closure, and serializes its response.
     pub fn new<FN>(method_fn: FN) -> Method<Req, Resp>
     where
         FN: Send + Sync + Fn(Req) -> MethodFnReturn<Resp> + 'static,

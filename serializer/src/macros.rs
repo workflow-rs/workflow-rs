@@ -7,39 +7,32 @@
 /// for storing and loading items into a `Vec<u8>` buffer.
 #[macro_export]
 macro_rules! payload {
-    () => {{
-        $crate::payload::Payload::default()
-    }};
-    ($value:expr) => {{
-        $crate::payload::Payload::with_capacity($value)
-    }};
+    () => {{ $crate::payload::Payload::default() }};
+    ($value:expr_2021) => {{ $crate::payload::Payload::with_capacity($value) }};
 }
 
+/// Construct a `crate::payload::Version` from major and minor version numbers.
 #[macro_export]
 macro_rules! version {
-    ($major:expr, $minor:expr) => {{
-        $crate::payload::Version::new($major, $minor)
-    }};
+    ($major:expr_2021, $minor:expr_2021) => {{ $crate::payload::Version::new($major, $minor) }};
 }
 
+/// Borrow a `crate::payload::Payload` as a mutable `Cursor<Vec<u8>>` writer.
 #[macro_export]
 macro_rules! writer {
-    ($value:expr) => {{
-        ($value.as_mut() as &mut std::io::Cursor<Vec<u8>>)
-    }};
+    ($value:expr_2021) => {{ ($value.as_mut() as &mut std::io::Cursor<Vec<u8>>) }};
 }
 
+/// Consume a `crate::payload::Payload` and produce a `Cursor<Vec<u8>>` reader over its bytes.
 #[macro_export]
 macro_rules! reader {
-    ($value:expr) => {{
-        &mut std::io::Cursor::new($value.into_inner())
-    }};
+    ($value:expr_2021) => {{ &mut std::io::Cursor::new($value.into_inner()) }};
 }
 
 /// Store item using Borsh serialization
 #[macro_export]
 macro_rules! store {
-    ($type:ty, $value:expr, $writer:expr) => {
+    ($type:ty, $value:expr_2021, $writer:expr_2021) => {
         <$type as borsh::BorshSerialize>::serialize($value, $writer)
     };
 }
@@ -47,7 +40,7 @@ macro_rules! store {
 /// Load item using Borsh deserialization
 #[macro_export]
 macro_rules! load {
-    ($type:ty, $reader:expr) => {
+    ($type:ty, $reader:expr_2021) => {
         <$type as borsh::BorshDeserialize>::deserialize_reader($reader)
     };
 }
@@ -57,7 +50,7 @@ macro_rules! load {
 /// metadata such as struct version.
 #[macro_export]
 macro_rules! serialize {
-    ($type:ty, $value:expr, $writer:expr) => {
+    ($type:ty, $value:expr_2021, $writer:expr_2021) => {
         $crate::payload::ser::Payload::<$type>($value).serialize($writer)
     };
 }
@@ -67,7 +60,7 @@ macro_rules! serialize {
 /// metadata such as struct version.
 #[macro_export]
 macro_rules! deserialize {
-    ($type:ty, $reader:expr) => {
+    ($type:ty, $reader:expr_2021) => {
         $crate::payload::de::Payload::<$type>::deserialize($reader).map(|x| x.into_inner())
     };
 }

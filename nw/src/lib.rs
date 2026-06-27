@@ -105,13 +105,18 @@
 //!
 //! ```
 pub mod application;
+/// Error types produced by this crate.
 pub mod error;
+/// Access to the JavaScript `global` / `globalThis` objects.
 pub mod global;
+/// Inter-process (inter-window) communication primitives.
 pub mod ipc;
 pub mod media;
 pub mod menu;
 pub mod prelude;
+/// Crate `Result` type alias.
 pub mod result;
 pub mod shortcut;
 pub mod tray;
+/// Helpers for enumerating and interacting with NW.js windows.
 pub mod window;

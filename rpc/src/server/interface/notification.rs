@@ -33,8 +33,7 @@ pub type NotificationFn<ServerContext, ConnectionContext, Msg> = Arc<
 >;
 
 /// Notification closure return type
-pub type NotificationFnReturn<T> =
-    Pin<Box<(dyn Send + 'static + Future<Output = ServerResult<T>>)>>;
+pub type NotificationFnReturn<T> = Pin<Box<dyn Send + 'static + Future<Output = ServerResult<T>>>>;
 
 /// RPC notification wrapper. Contains the notification closure function.
 pub struct Notification<ServerContext, ConnectionContext, Msg>
@@ -50,6 +49,8 @@ where
     ServerContext: Send + Sync + 'static,
     Msg: BorshDeserialize + DeserializeOwned + Send + Sync + 'static,
 {
+    /// Wrap a notification handler closure into a [`Notification`], taking the
+    /// server and connection contexts plus a typed notification message.
     pub fn new<FN>(method_fn: FN) -> Notification<ServerContext, ConnectionContext, Msg>
     where
         FN: Send

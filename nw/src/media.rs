@@ -54,7 +54,7 @@ use js_sys::Object;
 use nw_sys::prelude::OptionsTrait;
 use std::fmt;
 use std::sync::Arc;
-use wasm_bindgen::{prelude::*, JsCast};
+use wasm_bindgen::{JsCast, prelude::*};
 use web_sys::MediaStream;
 use workflow_dom::utils::{document, window};
 use workflow_log::{log_debug, log_error};
@@ -62,8 +62,11 @@ use workflow_wasm::prelude::*;
 
 /// MediaStream track kind
 pub enum MediaStreamTrackKind {
+    /// Video tracks only.
     Video,
+    /// Audio tracks only.
     Audio,
+    /// Both audio and video tracks.
     All,
 }
 
@@ -220,10 +223,13 @@ pub fn get_user_media(
     let callback_id = callback_.get_id();
     callback_.set_closure(move |value: JsValue| {
         let _ = app_clone.callbacks.remove(&callback_id);
-        if let Ok(media_stream) = value.dyn_into::<MediaStream>() {
-            callback(Some(media_stream));
-        } else {
-            callback(None);
+        match value.dyn_into::<MediaStream>() {
+            Ok(media_stream) => {
+                callback(Some(media_stream));
+            }
+            _ => {
+                callback(None);
+            }
         }
     });
 

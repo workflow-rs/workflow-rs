@@ -4,17 +4,17 @@
 
 #![allow(dead_code)]
 
-use futures::{task::AtomicWaker, Stream};
-use instant::Duration;
+use futures::{Stream, task::AtomicWaker};
 use std::{
     pin::Pin,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
     },
     task::{Context, Poll},
 };
 use wasm_bindgen::prelude::*;
+use web_time::Duration;
 
 use super::overrides::init_timer_overrides;
 
@@ -106,7 +106,7 @@ impl Interval {
     }
 
     /// Change period function will result in immediate cancellation of the underlying
-    /// timer and a restart of the timer starting from the moment of [`change_period()`] invocation.
+    /// timer and a restart of the timer starting from the moment of `change_period()` invocation.
     #[inline]
     pub fn change_period(&self, period: Duration) {
         if let Some(ctx) = self.inner.ctx.lock().unwrap().as_mut() {

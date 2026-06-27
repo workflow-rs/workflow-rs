@@ -30,12 +30,16 @@ pub trait Describe: Sized + 'static {
 #[derive(Clone, Debug, thiserror::Error)]
 #[allow(non_camel_case_types)]
 pub enum TryFromError {
+    /// A `u32` value (second field) is out of range for the named enum (first field).
     #[error("value for enum `{0}` is out of range: {1}")]
     u32(&'static str, u32),
+    /// A `u16` value (second field) is out of range for the named enum (first field).
     #[error("value for enum `{0}` is out of range: {1}")]
     u16(&'static str, u16),
+    /// A `u8` value (second field) is out of range for the named enum (first field).
     #[error("value for enum `{0}` is out of range: {1}")]
     u8(&'static str, u8),
+    /// A `usize` value (second field) is out of range for the named enum (first field).
     #[error("value for enum `{0}` is out of range: {1}")]
     usize(&'static str, usize),
 }
@@ -67,7 +71,7 @@ pub enum TryFromError {
 #[macro_export]
 macro_rules! u32_try_from {
         ($(#[$meta:meta])* $vis:vis enum $name:ident {
-        $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
+        $($(#[$vmeta:meta])* $vname:ident $(= $val:expr_2021)?,)*
     }) => {
         $(#[$meta])*
         $vis enum $name {
@@ -118,7 +122,7 @@ pub use u32_try_from;
 #[macro_export]
 macro_rules! u16_try_from {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {
-    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
+    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr_2021)?,)*
     }) => {
         $(#[$meta])*
         $vis enum $name {
@@ -175,7 +179,7 @@ pub use u16_try_from;
 #[macro_export]
 macro_rules! u8_try_from {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {
-    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
+    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr_2021)?,)*
     }) => {
         $(#[$meta])*
         $vis enum $name {
@@ -226,7 +230,7 @@ pub use u8_try_from;
 #[macro_export]
 macro_rules! usize_try_from {
     ($(#[$meta:meta])* $vis:vis enum $name:ident {
-    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr)?,)*
+    $($(#[$vmeta:meta])* $vname:ident $(= $val:expr_2021)?,)*
     }) => {
         $(#[$meta])*
         $vis enum $name {

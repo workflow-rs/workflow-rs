@@ -44,14 +44,17 @@ members = [
     "examples/websocket/server",
     "examples/terminal/cli",
     "examples/terminal/native",
-    "examples/terminal/wasm", 
+    "examples/terminal/wasm",
+    "tests/wasm32",
+    "tests/wasm32-cast",
 ]
 
 [workspace.package]
-version = "0.18.1"
+version = "0.19.0"
 authors = ["WORKFLOW-RS developers"]
 license = "MIT OR Apache-2.0"
-edition = "2021"
+edition = "2024"
+rust-version = "1.96"
 include = ["src/**/*.rs", "Cargo.toml"]
 repository = "https://github.com/workflow-rs/workflow-rs"
 
@@ -124,37 +127,37 @@ repository = "https://github.com/workflow-rs/workflow-rs"
 # workflow-wasm-macros = { version = "0.15.0"}
 # workflow-websocket = { version = "0.15.0"}
 
-workflow-chrome = { version = "0.18.1", path = "chrome" , default-features = false }
-workflow-core = { version = "0.18.1", path = "core" , default-features = false }
-workflow-core-macros = { version = "0.18.1", path = "core/macros" , default-features = false }
-workflow-d3 = { version = "0.18.1", path = "d3" , default-features = false }
-workflow-dom = { version = "0.18.1", path = "dom" , default-features = false }
-workflow-egui = { version = "0.18.1", path = "egui" , default-features = false }
-workflow-egui-macros = { version = "0.18.1", path = "egui/macros" , default-features = false }
-workflow-encryption = { version = "0.18.1", path = "encryption" , default-features = false }
-workflow-gpt = { version = "0.18.1", path = "gpt" , default-features = false }
-workflow-html = { version = "0.18.1", path = "html" , default-features = false }
-workflow-html-macros = { version = "0.18.1", path = "html/macros" , default-features = false }
-workflow-http = { version = "0.18.1", path = "http" , default-features = false }
-workflow-i18n = { version = "0.18.1", path = "i18n" , default-features = false }
-workflow-log = { version = "0.18.1", path = "log" , default-features = false }
-workflow-macro-tools = { version = "0.18.1", path = "macro-tools" , default-features = false }
-workflow-node = { version = "0.18.1", path = "node" , default-features = false }
-workflow-nw = { version = "0.18.1", path = "nw" , default-features = false }
-workflow-panic-hook = { version = "0.18.1", path = "panic-hook" , default-features = false }
-workflow-rpc = { version = "0.18.1", path = "rpc" , default-features = false }
-workflow-rpc-macros = { version = "0.18.1", path = "rpc/macros" , default-features = false }
-workflow-rs = { version = "0.18.1", path = "features" , default-features = false }
-workflow-store = { version = "0.18.1", path = "store" , default-features = false }
-workflow-serializer = { version = "0.18.1", path = "serializer" , default-features = false }
-workflow-task = { version = "0.18.1", path = "task" , default-features = false }
-workflow-task-macros = { version = "0.18.1", path = "task/macros" , default-features = false }
-workflow-terminal = { version = "0.18.1", path = "terminal" , default-features = false }
-workflow-terminal-macros = { version = "0.18.1", path = "terminal/macros" , default-features = false }
-workflow-utils = { version = "0.18.1", path = "utils" , default-features = false }
-workflow-wasm = { version = "0.18.1", path = "wasm" , default-features = false }
-workflow-wasm-macros = { version = "0.18.1", path = "wasm/macros" , default-features = false }
-workflow-websocket = { version = "0.18.1", path = "websocket" , default-features = false }
+workflow-chrome = { version = "0.19.0", path = "chrome" , default-features = false }
+workflow-core = { version = "0.19.0", path = "core" , default-features = false }
+workflow-core-macros = { version = "0.19.0", path = "core/macros" , default-features = false }
+workflow-d3 = { version = "0.19.0", path = "d3" , default-features = false }
+workflow-dom = { version = "0.19.0", path = "dom" , default-features = false }
+workflow-egui = { version = "0.19.0", path = "egui" , default-features = false }
+workflow-egui-macros = { version = "0.19.0", path = "egui/macros" , default-features = false }
+workflow-encryption = { version = "0.19.0", path = "encryption" , default-features = false }
+workflow-gpt = { version = "0.19.0", path = "gpt" , default-features = false }
+workflow-html = { version = "0.19.0", path = "html" , default-features = false }
+workflow-html-macros = { version = "0.19.0", path = "html/macros" , default-features = false }
+workflow-http = { version = "0.19.0", path = "http" , default-features = false }
+workflow-i18n = { version = "0.19.0", path = "i18n" , default-features = false }
+workflow-log = { version = "0.19.0", path = "log" , default-features = false }
+workflow-macro-tools = { version = "0.19.0", path = "macro-tools" , default-features = false }
+workflow-node = { version = "0.19.0", path = "node" , default-features = false }
+workflow-nw = { version = "0.19.0", path = "nw" , default-features = false }
+workflow-panic-hook = { version = "0.19.0", path = "panic-hook" , default-features = false }
+workflow-rpc = { version = "0.19.0", path = "rpc" , default-features = false }
+workflow-rpc-macros = { version = "0.19.0", path = "rpc/macros" , default-features = false }
+workflow-rs = { version = "0.19.0", path = "features" , default-features = false }
+workflow-store = { version = "0.19.0", path = "store" , default-features = false }
+workflow-serializer = { version = "0.19.0", path = "serializer" , default-features = false }
+workflow-task = { version = "0.19.0", path = "task" , default-features = false }
+workflow-task-macros = { version = "0.19.0", path = "task/macros" , default-features = false }
+workflow-terminal = { version = "0.19.0", path = "terminal" , default-features = false }
+workflow-terminal-macros = { version = "0.19.0", path = "terminal/macros" , default-features = false }
+workflow-utils = { version = "0.19.0", path = "utils" , default-features = false }
+workflow-wasm = { version = "0.19.0", path = "wasm" , default-features = false }
+workflow-wasm-macros = { version = "0.19.0", path = "wasm/macros" , default-features = false }
+workflow-websocket = { version = "0.19.0", path = "websocket" , default-features = false }
 
 # external dependencies
 
@@ -162,49 +165,48 @@ ahash = "0.8.6"
 arc-swap = "1.6.0"
 argon2 = "0.5.2"
 async-channel = "2.0.0"
-async-std = { version = "1.12.0", features = ['attributes'] }
 async-trait = "0.1.74"
 atomic_float = "1.0.0"
 base64 = "0.22.1"
-borsh = { version = "1.5.1", features = ["derive", "rc"] }
+borsh = { version = "1.7", features = ["derive", "rc"] }
 bs58 = "0.5.0"
 cfg-if = "1.0.0"
 chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["derive","cargo"] }
-cliclack = "0.3.1"
+cliclack = "0.5"
 console = "0.15.7"
-convert_case = "0.6.0"
-crossterm = "0.27.0"
+convert_case = "0.11"
+crossterm = "0.29"
 ctrlc = { version = "3.2", features = ["termination"] }
-dirs = "5.0.1"
+dirs = "6.0"
 downcast = "0.11.0"
 downcast-rs = "1.2.0"
 faster-hex = "0.10.0"
 filetime = "0.2.25"
 futures = "0.3.31"
 futures-util = { version = "0.3.29", default-features = false, features = ["sink", "std"] }
-getrandom = {version = "0.2.10", features=["js"]}
-hexplay = "0.3.0"
+getrandom = { version = "0.4", features = ["wasm_js"] }
+getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
+getrandom_03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
 home = "0.5.11"
-instant = { version ="0.1.12", features = ['wasm-bindgen'] }
-itertools = "0.14.0"
+web-time = "1.1.0"
+itertools = "0.15"
 js-sys = "0.3.77"
 lazy_static = "1.4.0"
 log = "0.4.20"
 manual_future = "0.1.1"
 node-child-process = "0.1.1"
-node-sys = "0.4.2"
 numtoa = "0.2.4"
 # nw-sys= { path = "../nw-sys" }
 nw-sys = { version = "0.1.6" }
 pad = "0.1.6"
 parse-variants = "1.0.4"
-proc-macro-error = { version = "1.0.4", default-features = false }
+proc-macro-error3 = { version = "3", default-features = false }
 proc-macro2 = { version = "1.0.50" }
 quote = "1.0.38"
-rand = { version = "0.8.5", features = ["getrandom"] }
+rand = "0.10"
 regex = "1.10.2"
-reqwest = { version = "0.12.4", default-features = false }
+reqwest = { version = "0.13", default-features = false }
 ritehash = "0.2.0"
 rlimit = "0.10.1"
 safer_owning_ref = "0.5.0"
@@ -213,15 +215,14 @@ serde = { version = "1.0.190" , features = ["derive","rc"] }
 serde_json = "1.0.108"
 serde-wasm-bindgen = "0.6.1"
 sha2 = "0.10.8"
-# syn = {version="2.0",features=["full","fold","extra-traits","parsing","proc-macro"]}
-syn = {version="1.0.107",features=["full","fold","extra-traits","parsing","proc-macro"]}
+syn = {version="2.0",features=["full","fold","extra-traits","parsing","proc-macro"]}
 termcolor="1.3.0"
 termion = "4.0.3"
 textwrap = "0.16.0"
 thiserror = "2.0.11"
 tokio = { version = "1.33.0", default-features = false, features = ['io-util','time','sync','macros','rt','rt-multi-thread'] }
-tokio-tungstenite = { version = "0.23.1", default-features = false, features = ["handshake", "connect"] }
-tungstenite = { version = "0.23.0", default-features = false }
+tokio-tungstenite = { version = "0.29.0", default-features = false, features = ["handshake", "connect"] }
+tungstenite = { version = "0.29.0", default-features = false }
 triggered = "0.1.2"
 wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
@@ -233,15 +234,17 @@ zeroize = { version = "1.6.0", default-features = false, features = ["alloc"] }
 
 
 
-egui = "0.31.0"
+egui = "0.34.3"
 # epaint = "=0.28.1"
 # egui_plot = "=0.28.1"
 # egui_extras = { version = "=0.28.1", features = ["svg","image"] }
 # eframe = "0.28.1"
-eframe = { version = "0.31.0", default-features = false, features = [
+eframe = { version = "0.34.3", default-features = false, features = [
 #     # "accesskit",     # Make egui compatible with screen readers. NOTE: adds a lot of dependencies.
 #     # "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+    "x11",           # Linux X11 backend (winit errors with no backend selected when default-features = false).
+    "wayland",       # Linux Wayland backend.
 #     # "persistence",   # Enable restoring app state when restarting the app.
 ] }
 

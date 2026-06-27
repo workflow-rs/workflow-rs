@@ -5,16 +5,16 @@
 #![allow(dead_code)]
 
 use crate::channel::Channel;
-use futures::{task::AtomicWaker, Stream};
-use instant::Duration;
+use futures::{Stream, task::AtomicWaker};
 use std::{
     pin::Pin,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
     },
     task::{Context, Poll},
 };
+use web_time::Duration;
 
 struct Inner {
     ready: AtomicBool,

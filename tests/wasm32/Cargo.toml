@@ -1,0 +1,40 @@
+[package]
+name = "workflow-wasm32-test"
+description = "Aggregator crate that links every wasm-bindgen workflow-rs crate so the wasm-bindgen CLI can be run over all of their bindings at once (codegen smoke test)."
+publish = false
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+doctest = false
+test = false
+
+# Every workflow-rs crate that emits wasm-bindgen bindings is linked here so a
+# single `wasm-pack build tests/wasm32` exercises the wasm-bindgen CLI codegen
+# pass across all of them. This catches errors the compiler/clippy cannot (the
+# CLI is never invoked by `cargo check`) -- e.g. duplicate JS class names or a
+# `#[wasm_bindgen] impl` on an imported extern type.
+[dependencies]
+workflow-chrome = { workspace = true }
+workflow-core = { workspace = true }
+workflow-d3 = { workspace = true }
+workflow-dom = { workspace = true }
+workflow-egui = { workspace = true }
+workflow-html = { workspace = true }
+workflow-http = { workspace = true }
+workflow-i18n = { workspace = true }
+workflow-log = { workspace = true }
+workflow-node = { workspace = true }
+workflow-nw = { workspace = true }
+workflow-panic-hook = { workspace = true }
+workflow-rpc = { workspace = true }
+workflow-store = { workspace = true }
+workflow-task = { workspace = true }
+workflow-terminal = { workspace = true }
+workflow-wasm = { workspace = true }
+workflow-websocket = { workspace = true }

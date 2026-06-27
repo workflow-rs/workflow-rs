@@ -8,8 +8,8 @@ use crate::media::MediaStreamTrackKind;
 use crate::result::Result;
 use nw_sys::{prelude::*, utils};
 use std::rc::Rc;
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 use web_sys::{MediaStream, MediaStreamTrack, MouseEvent};
 use workflow_core::channel::*;
 use workflow_wasm::prelude::*;
@@ -18,7 +18,8 @@ static mut APP: Option<Arc<Application>> = None;
 
 /// get saved [Application](Application) instance.
 pub fn app() -> Option<Arc<Application>> {
-    unsafe { APP.clone() }
+    let app_ptr = &raw const APP;
+    unsafe { (*app_ptr).clone() }
 }
 
 /// Application helper. This struct contains a map of callbacks that
@@ -144,6 +145,9 @@ impl Application {
     //     Ok(receiver.recv().await?)
     // }
 
+    /// Opens a new window for the given `url` with the supplied
+    /// [Options](nw_sys::window::Options) and resolves once the window
+    /// has been created, returning its [`Window`](nw_sys::window::Window) handle.
     pub async fn create_window_async(
         url: &str,
         option: &nw_sys::window::Options,
@@ -216,12 +220,11 @@ impl Application {
     {
         let callback_ = Callback::new(move |value: JsValue| -> std::result::Result<(), JsValue> {
             let mut stream_id = None;
-            if value.is_string() {
-                if let Some(id) = value.as_string() {
-                    if !id.is_empty() {
-                        stream_id = Some(id);
-                    }
-                }
+            if value.is_string()
+                && let Some(id) = value.as_string()
+                && !id.is_empty()
+            {
+                stream_id = Some(id);
             }
 
             callback(stream_id)?;

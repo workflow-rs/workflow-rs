@@ -30,6 +30,7 @@ pub trait ObjectExtension {
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display;
 
+    /// Obtain an owned-reference [`Cast`] captured from a property of the [`Object`].
     fn cast_from<T>(&self, prop: &str) -> Result<Cast<'static, T>, Error>
     where
         T: TryCastFromJs,
@@ -42,6 +43,8 @@ pub trait ObjectExtension {
         T: TryCastFromJs,
         <T as TryCastFromJs>::Error: std::fmt::Display;
 
+    /// Try to obtain an owned-reference [`Cast`] captured from a property of the [`Object`].
+    /// Returns `Ok(None)` if the property does not exist.
     fn try_cast_from<T>(&self, prop: &str) -> Result<Option<Cast<'static, T>>, Error>
     where
         T: TryCastFromJs,
@@ -71,6 +74,7 @@ pub trait ObjectExtension {
     fn get_f64(&self, prop: &str) -> Result<f64, Error>;
     /// get `Boolean` property as `bool`
     fn get_bool(&self, prop: &str) -> Result<bool, Error>;
+    /// try get `Boolean` property as `bool`, returning `None` if absent or not a boolean
     fn try_get_bool(&self, prop: &str) -> Result<Option<bool>, Error>;
     /// get property as `Vec<JsValue>`
     fn get_vec(&self, prop: &str) -> Result<Vec<JsValue>, Error>;

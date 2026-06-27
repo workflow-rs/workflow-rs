@@ -41,12 +41,10 @@ workflow-wasm.workspace = true
 workflow-dom.workspace = true
 
 async-channel.workspace = true
-async-std.workspace = true
 async-trait.workspace = true
 futures.workspace = true
-getrandom.workspace = true
-instant.workspace = true
-rand.workspace = true
+getrandom_02.workspace = true
+getrandom_03.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 triggered.workspace = true

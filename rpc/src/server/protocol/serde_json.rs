@@ -6,9 +6,9 @@
 use super::Encoding;
 use crate::imports::*;
 use crate::messages::serde_json::*;
-pub use crate::server::result::Result;
 use crate::server::Interface;
 use crate::server::ProtocolHandler;
+pub use crate::server::result::Result;
 use workflow_websocket::server::{
     Error as WebSocketError, Message, Result as WebSocketResult, WebSocketSink,
 };
@@ -74,10 +74,9 @@ where
                         Some(req.method),
                         Some(payload),
                         None,
-                    )) {
-                        if let Err(e) = sink.send(msg.into()) {
-                            log_trace!("Sink error: {:?}", e);
-                        }
+                    )) && let Err(e) = sink.send(msg.into())
+                    {
+                        log_trace!("Sink error: {:?}", e);
                     }
                 }
                 Err(err) => {
@@ -90,10 +89,9 @@ where
                             Some(req.method),
                             None,
                             Some(server_err),
-                        )) {
-                            if let Err(e) = sink.send(msg.into()) {
-                                log_trace!("Sink error: {:?}", e);
-                            }
+                        )) && let Err(e) = sink.send(msg.into())
+                        {
+                            log_trace!("Sink error: {:?}", e);
                         }
                     }
                 }
@@ -117,6 +115,8 @@ where
     }
 }
 
+/// Build a JSON-encoded notification WebSocket message for the given operation
+/// and message payload.
 pub fn create_serialized_notification_message<Ops, Msg>(op: Ops, msg: Msg) -> Result<Message>
 where
     Ops: OpsT,
@@ -129,5 +129,5 @@ where
         Some(payload),
         None,
     ))?;
-    Ok(Message::Text(json))
+    Ok(Message::Text(json.into()))
 }

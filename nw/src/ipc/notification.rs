@@ -14,7 +14,7 @@ pub type NotificationFn<Msg> =
 
 /// Notification closure return type
 pub type NotificationFnReturn<T> =
-    Pin<Box<(dyn Send + 'static + Future<Output = ResponseResult<T>>)>>;
+    Pin<Box<dyn Send + 'static + Future<Output = ResponseResult<T>>>>;
 
 /// IPC notification wrapper. Contains the notification closure function.
 pub struct Notification<Msg>
@@ -28,6 +28,8 @@ impl<Msg> Notification<Msg>
 where
     Msg: BorshDeserialize + DeserializeOwned + Send + Sync + 'static,
 {
+    /// Wraps the given async closure into a [`Notification`] that deserializes
+    /// an incoming message and invokes the closure with it.
     pub fn new<FN>(method_fn: FN) -> Notification<Msg>
     where
         FN: Send + Sync + Fn(Msg) -> NotificationFnReturn<()> + 'static,

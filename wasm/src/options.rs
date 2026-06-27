@@ -40,6 +40,9 @@
 use js_sys::Object;
 use wasm_bindgen::prelude::*;
 
+/// Trait for building JavaScript options objects, providing convenience
+/// methods to construct an empty object and set (optionally nested) values
+/// on it in a builder style.
 pub trait OptionsTrait {
     /// "Construct a new `Options`.
     ///
@@ -53,6 +56,9 @@ pub trait OptionsTrait {
         ret
     }
 
+    /// Hook for initializing a freshly constructed options object. The
+    /// default implementation returns `self` unchanged; implementors may
+    /// override it to set default values.
     fn initialize(self) -> Self
     where
         Self: wasm_bindgen::JsCast,
@@ -60,6 +66,9 @@ pub trait OptionsTrait {
         self
     }
 
+    /// Sets a value on the options object under the given key. Dot-separated
+    /// keys (e.g. `"a.b.c"`) traverse and create nested objects as needed.
+    /// Returns `self` to allow builder-style chaining.
     fn set(self, mut key: &str, value: JsValue) -> Self
     where
         Self: wasm_bindgen::JsCast,

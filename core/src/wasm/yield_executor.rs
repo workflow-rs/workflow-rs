@@ -11,8 +11,8 @@ use std::future::Future;
 use std::{
     pin::Pin,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
     },
     task::{Context as FutureContext, Poll},
 };
@@ -27,7 +27,7 @@ extern "C" {
     fn cancel_animation_frame(request_id: JsValue);
 }
 
-pub use async_std::task::yield_now;
+pub use crate::task::__yield::yield_now;
 
 pub async fn yield_executor() {
     if !is_chrome_extension() {

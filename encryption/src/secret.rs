@@ -9,18 +9,23 @@ use crate::imports::*;
 pub struct Secret(Vec<u8>);
 
 impl Secret {
+    /// Creates a new [`Secret`] taking ownership of the given bytes.
     pub fn new(data: Vec<u8>) -> Self {
         Self(data)
     }
 
+    /// Returns the secret interpreted as a UTF-8 string slice, erroring if the
+    /// bytes are not valid UTF-8.
     pub fn as_str(&self) -> Result<&str> {
         Ok(std::str::from_utf8(&self.0)?)
     }
 
+    /// Returns a shared view of the secret's raw bytes.
     pub fn as_slice(&self) -> &[u8] {
         &self.0
     }
 
+    /// Returns a mutable view of the secret's raw bytes.
     pub fn as_slice_mut(&mut self) -> &mut [u8] {
         &mut self.0
     }

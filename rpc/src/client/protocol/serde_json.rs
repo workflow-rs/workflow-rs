@@ -1,14 +1,14 @@
 use core::marker::PhantomData;
 
 use super::{Pending, PendingMap, ProtocolHandler};
+use crate::client::Interface;
 pub use crate::client::error::Error;
 pub use crate::client::result::Result;
-use crate::client::Interface;
 use crate::imports::*;
 use crate::messages::serde_json::*;
 
 pub type JsonResponseFn =
-    Arc<Box<(dyn Fn(Result<Value>, Option<&Duration>) -> Result<()> + Sync + Send)>>;
+    Arc<Box<dyn Fn(Result<Value>, Option<&Duration>) -> Result<()> + Sync + Send>>;
 
 /// Serde JSON RPC message handler and dispatcher
 pub struct JsonProtocol<Ops, Id>
@@ -64,6 +64,9 @@ where
         }
     }
 
+    /// Send a JSON-encoded request for `op` and await the deserialized
+    /// response, returning an error on transport or (de)serialization failure
+    /// or if the server responds with an error.
     pub async fn request<Req, Resp>(&self, op: Ops, req: Req) -> Result<Resp>
     where
         Req: MsgT,
@@ -96,6 +99,7 @@ where
         Ok(resp)
     }
 
+    /// Send a JSON-encoded notification for `op` without awaiting a response.
     pub async fn notify<Msg>(&self, op: Ops, data: Msg) -> Result<()>
     where
         Msg: Serialize + Send + Sync + 'static,
@@ -151,10 +155,9 @@ where
         if let WebSocketMessage::Text(server_message) = message {
             let (id, method, result) = self.decode(server_message.as_str())?;
             if let Some(id) = id {
-                if let Some(pending) = self.pending.lock().unwrap().remove(&id) {
-                    (pending.callback)(result, Some(&pending.timestamp.elapsed()))
-                } else {
-                    Err(Error::ResponseHandler(format!("{id:?}")))
+                match self.pending.lock().unwrap().remove(&id) {
+                    Some(pending) => (pending.callback)(result, Some(&pending.timestamp.elapsed())),
+                    _ => Err(Error::ResponseHandler(format!("{id:?}"))),
                 }
             } else if let Some(method) = method {
                 match result {

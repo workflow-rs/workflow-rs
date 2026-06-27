@@ -10,9 +10,9 @@ use std::{
 };
 use thiserror::Error;
 use wasm_bindgen::{
+    JsCast, JsValue,
     closure::{Closure, IntoWasmClosure, WasmClosure},
     convert::{FromWasmAbi, ReturnWasmAbi},
-    JsCast, JsValue,
 };
 use workflow_core::id::Id;
 
@@ -60,6 +60,7 @@ impl From<String> for CallbackError {
     }
 }
 
+/// Result type returned by [`callback`](self) module operations, using [`CallbackError`].
 pub type CallbackResult<T> = std::result::Result<T, CallbackError>;
 
 /// Callback Closure that produces a [`wasm_bindgen::JsValue`] error
@@ -70,7 +71,9 @@ pub type CallbackClosureWithoutResult<T> = dyn FnMut(T);
 /// Trait allowing to bind a generic [`Callback`] struct
 /// with a [`CallbackId`] identifier.
 pub trait AsCallback: Send + Sync {
+    /// Returns the unique [`CallbackId`] identifying this callback.
     fn get_id(&self) -> CallbackId;
+    /// Returns the underlying JavaScript [`Function`] bound to this callback.
     fn get_fn(&self) -> &Function;
 }
 
@@ -134,6 +137,7 @@ macro_rules! create_fns {
     ($(
         ($name: ident, $($var:ident)*)
     )*) => ($(
+        /// Create a new [`Callback`] from a closure taking a fixed number of arguments.
         pub fn $name<$($var,)* R>(callback:T)->Callback<dyn FnMut($($var,)*)->R>
         where
             T: 'static + FnMut($($var,)*)->R,
@@ -292,12 +296,13 @@ impl CallbackMap {
         }
     }
 
+    /// Remove all callbacks from the collection.
     pub fn clear(&self) {
         self.inner.lock().unwrap().clear();
     }
 
     /// Get access to the [`std::sync::MutexGuard`] owning the inner [`std::collections::HashMap`].
-    pub fn inner(&self) -> MutexGuard<HashMap<CallbackId, Arc<dyn AsCallback>>> {
+    pub fn inner(&self) -> MutexGuard<'_, HashMap<CallbackId, Arc<dyn AsCallback>>> {
         self.inner.lock().unwrap()
     }
 

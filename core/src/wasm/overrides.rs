@@ -6,7 +6,7 @@ use std::{
 
 use js_sys::Reflect;
 use wasm_bindgen::prelude::*;
-use web_sys::{window, Blob, BlobPropertyBag, Url, Worker};
+use web_sys::{Blob, BlobPropertyBag, Url, Worker, window};
 
 use crate::runtime::{is_chrome_extension, is_cross_origin_isolated, is_web};
 

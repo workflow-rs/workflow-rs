@@ -15,6 +15,7 @@ extern crate self as workflow_wasm;
 pub mod callback;
 pub mod convert;
 pub mod error;
+/// Extension traits adding ergonomic helpers to `JsValue` and `Object`.
 pub mod extensions;
 pub mod init;
 pub mod jserror;

@@ -11,29 +11,38 @@ use wasm_bindgen::JsValue;
 use workflow_core::channel::{RecvError, SendError, TrySendError};
 pub use workflow_websocket::client::error::Error as WebSocketError;
 
+/// Errors produced by the wRPC client.
 #[derive(Error, Debug)]
 pub enum Error {
+    /// A control event string could not be parsed into a known [`super::Ctl`] value.
     #[error("Invalid event '{0}'")]
     InvalidEvent(String),
 
+    /// The supplied endpoint URL is malformed or unsupported.
     #[error("Invalid URL {0}")]
     InvalidUrl(String),
 
+    /// An error originating from the shared RPC error type.
     #[error(transparent)]
     RpcError(#[from] crate::error::Error),
 
+    /// No pending response handler was registered for the given message id.
     #[error("response handler for id {0} not found")]
     ResponseHandler(String),
 
+    /// The WebSocket connection was disconnected.
     #[error("WebSocket disconnected")]
     Disconnect,
 
+    /// A notification message did not include a method identifier.
     #[error("Missing method in notification message")]
     NotificationMethod,
 
+    /// The received WebSocket message type is incompatible with the active protocol.
     #[error("invalid WebSocket message type for protocol")]
     WebSocketMessageType,
 
+    /// A notification was received but no notification handler is configured.
     #[error("RPC client is missing notification handler")]
     MissingNotificationHandler,
 
@@ -49,6 +58,7 @@ pub enum Error {
     /// RPC call succeeded but no data was received in success response
     #[error("RPC has no data in success response")]
     NoDataInSuccessResponse,
+    /// A notification message arrived without any payload data.
     #[error("RPC has no data in notification")]
     NoDataInNotificationMessage,
     /// RPC call failed but no data was received in error response
@@ -82,24 +92,31 @@ pub enum Error {
     #[error("RPC borsh error deserializing response: {0}")]
     BorshResponseDeserialize(String),
 
+    /// Failure receiving from an internal channel.
     #[error("RPC: channel receive error")]
     ChannelRecvError,
 
+    /// Failure sending to an internal channel.
     #[error("RPC: channel send error")]
     ChannelSendError,
 
+    /// A byte sequence could not be interpreted as valid UTF-8.
     #[error("Utf8 error: {0}")]
     Utf8Error(#[from] std::str::Utf8Error),
 
+    /// An error from JSON serialization or deserialization.
     #[error("SerdeJSON error: {0}")]
     SerdeJSON(#[from] serde_json::Error),
 
+    /// An error originating from the underlying async task subsystem.
     #[error(transparent)]
     Task(#[from] workflow_task::TaskError),
 
+    /// A server-side error returned over the Borsh protocol.
     #[error("{0}")]
     ServerError(ServerError),
 
+    /// A server-side error returned over the JSON protocol.
     #[error("{0}")]
     JsonServerError(JsonServerError),
     // #[error("{0}")]

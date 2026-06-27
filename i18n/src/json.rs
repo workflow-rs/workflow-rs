@@ -2,6 +2,8 @@
 
 use itertools;
 
+/// Serialize a JSON value into a pretty-printed string with object keys
+/// emitted in sorted order, producing stable, diff-friendly output.
 pub fn to_json(v: &serde_json::Value) -> String {
     let s = String::new();
     to_json_(v, s, "")
@@ -200,7 +202,7 @@ fn write_char_escape(char_escape: CharEscape) -> String {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::{json, value::Number, Value};
+    use serde_json::{Value, json, value::Number};
 
     fn a(v: Value, out: &'static str) {
         assert_eq!(super::to_json(&v), out);

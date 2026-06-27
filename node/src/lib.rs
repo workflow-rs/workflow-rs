@@ -9,13 +9,18 @@
 //! Framework compoents for using Node.js and NWJS in WASM environment
 //!
 
+/// Bindings to the Node.js `child_process` module for spawning child processes.
 pub mod child_process;
 pub mod error;
+/// Bindings to the Node.js `fs` and `fs/promises` modules for file system access.
 pub mod fs;
+pub mod node_sys;
 pub mod process;
+/// Wrapper around the Node.js `require` function for loading native modules.
 pub mod require;
 pub mod result;
 
+/// Re-exports the most commonly used items of this crate for convenient glob import.
 pub mod prelude {
     pub use crate::process::*;
 }

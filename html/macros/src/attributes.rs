@@ -1,11 +1,10 @@
 use proc_macro2::{Ident, Literal, Span, TokenStream};
-use quote::{quote, ToTokens};
-use rand::Rng;
+use quote::{ToTokens, quote};
 use syn::{
+    Block, Result, Token,
     ext::IdentExt,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    Block, Result, Token,
 };
 //use std::sync::Arc;
 
@@ -220,8 +219,7 @@ impl<'a> Attribute<'a> {
             },
             None => match self.attr_type {
                 AttributeType::Ref => {
-                    let mut rng = rand::thread_rng();
-                    let code = format!("ref_{}", rng.gen::<u32>());
+                    let code = format!("ref_{}", rand::random::<u32>());
                     quote!(#code)
                 }
                 _ => self.name.to_token_stream(),

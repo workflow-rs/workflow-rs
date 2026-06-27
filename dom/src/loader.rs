@@ -1,11 +1,11 @@
 use crate::error::Error;
 use crate::result::Result;
-use futures::future::{join_all, BoxFuture, FutureExt};
+use futures::future::{BoxFuture, FutureExt, join_all};
 use js_sys::{Array, Uint8Array};
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use web_sys::{Blob, Document, Url};
 use workflow_core::channel::oneshot;
 use workflow_core::lookup::*;
@@ -13,19 +13,26 @@ use workflow_core::time::*;
 use workflow_log::*;
 use workflow_wasm::callback::*;
 
+/// Unique identifier of a [`Content`] entry within a [`Context`].
 pub type Id = u64;
+/// Map of content entries keyed by their [`Id`].
 pub type ContentMap = HashMap<Id, Arc<Content>>;
+/// Borrowed slice of `(id, content)` pairs used to declare content entries.
 pub type ContentList<'l> = &'l [(Id, Arc<Content>)];
 
 static mut DOCUMENT_ROOT: Option<web_sys::Element> = None;
 
+/// Return the current browser [`web_sys::Document`].
 pub fn document() -> Document {
     web_sys::window().unwrap().document().unwrap()
 }
 
+/// Return (lazily caching) the root element into which content is injected,
+/// preferring the document `<head>` and falling back to `<body>`.
 pub fn root() -> web_sys::Element {
+    let document_root_ptr = &raw const DOCUMENT_ROOT;
     unsafe {
-        match DOCUMENT_ROOT.as_ref() {
+        match (*document_root_ptr).as_ref() {
             Some(root) => root.clone(),
             None => {
                 let root = {
@@ -44,41 +51,67 @@ pub fn root() -> web_sys::Element {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// The kind of resource a [`Content`] entry holds.
 pub enum ContentType {
+    /// A JavaScript module (injected as `<script type="module">`).
     Module,
+    /// A classic JavaScript script.
     Script,
+    /// A CSS stylesheet.
     Style,
 }
 
 impl ContentType {
+    /// Return `true` if this content type is JavaScript (a module or script).
     pub fn is_js(&self) -> bool {
         self == &ContentType::Script || self == &ContentType::Module
     }
 }
 
 #[allow(dead_code)]
+/// The kind of dependency one [`Content`] entry declares on another,
+/// determining how the reference is emitted into the generated source.
 pub enum Reference {
+    /// An `import` of another JavaScript module.
     Module,
+    /// A reference to another script.
     Script,
+    /// A reference to a stylesheet.
     Style,
+    /// An `export ... from` re-export of another module.
     Export,
 }
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
+/// Outcome of attempting to load a [`Content`] entry.
 pub enum ContentStatus {
+    /// The content was freshly loaded and injected into the DOM.
     Loaded,
+    /// The content was already loaded; nothing was done.
     Exists,
+    /// Loading failed.
     Error,
 }
 
+/// A single loadable DOM resource (JavaScript module, script or CSS
+/// stylesheet) together with its identity, embedded source and the other
+/// content entries it references.
 pub struct Content {
+    /// The kind of resource this content represents.
     pub content_type: ContentType,
+    /// Object URL of the generated blob, set once the content is loaded.
     pub url: Mutex<Option<String>>,
+    /// Unique identifier of this content entry.
     pub id: Id,
+    /// Human-readable identifier, used as the injected element's `id`.
     pub ident: &'static str,
+    /// The embedded source text of the resource.
     pub content: &'static str,
+    /// Other content entries this resource imports from or exports, each as a
+    /// reference kind, optional detail string and target content id.
     pub references: Option<&'static [(Reference, Option<&'static str>, Id)]>,
+    /// Whether this content has already been injected into the DOM.
     pub is_loaded: AtomicBool,
 }
 
@@ -86,6 +119,8 @@ pub struct Content {
 // unsafe impl Sync for Module {}
 
 impl Content {
+    /// Return the object URL of this content's blob once it has been created,
+    /// or `None` if it has not yet been loaded.
     pub fn url(&self) -> Option<String> {
         self.url.lock().unwrap().clone()
     }
@@ -139,6 +174,7 @@ impl Content {
         }
     }
 
+    /// Return `true` if this content has already been injected into the DOM.
     pub fn is_loaded(&self) -> bool {
         self.is_loaded.load(Ordering::SeqCst)
     }
@@ -148,14 +184,15 @@ impl Content {
             if let Some(references) = &self.references {
                 let futures = references
                     .iter()
-                    .filter_map(|(_, _, id)| {
-                        if let Some(content) = ctx.get(id) {
+                    .filter_map(|(_, _, id)| match ctx.get(id) {
+                        Some(content) => {
                             if !content.is_loaded.load(Ordering::SeqCst) {
                                 Some(content.load(&ctx))
                             } else {
                                 None
                             }
-                        } else {
+                        }
+                        _ => {
                             log_error!("Unable to locate module {}", id);
                             None
                         }
@@ -173,6 +210,8 @@ impl Content {
         .boxed()
     }
 
+    /// Load this content (and its dependencies) into the DOM through the
+    /// given [`Context`], returning the resulting [`ContentStatus`].
     pub async fn load(self: Arc<Self>, ctx: &Arc<Context>) -> Result<ContentStatus> {
         ctx.load_content(self).await
     }
@@ -273,9 +312,15 @@ impl Content {
     }
 }
 
+/// Registry and loading context for DOM content, tracking declared content
+/// entries, de-duplicating in-flight load requests and counting loaded items.
 pub struct Context {
+    /// Map of registered content entries keyed by their id.
     pub content: Arc<Mutex<ContentMap>>,
+    /// Coordinates concurrent load requests so that each content id is only
+    /// loaded once while other callers await the shared result.
     pub lookup_handler: LookupHandler<Id, ContentStatus, Error>,
+    /// Running count of content entries that have been loaded.
     pub loaded: AtomicUsize,
 }
 
@@ -298,6 +343,8 @@ impl Context {
     //     }
     // }
 
+    /// Register the given content entries with this context, making them
+    /// available for later loading by id.
     pub fn declare(&self, content: ContentList) {
         self.content.lock().unwrap().extend(content.iter().cloned());
         // let mut map = self.content.lock().unwrap();
@@ -306,10 +353,14 @@ impl Context {
         // }
     }
 
+    /// Return the registered [`Content`] entry for the given id, if any.
     pub fn get(&self, id: &Id) -> Option<Arc<Content>> {
         self.content.lock().unwrap().get(id).cloned()
     }
 
+    /// Load a single content entry, injecting it into the DOM. Concurrent
+    /// requests for the same content are de-duplicated via the lookup handler,
+    /// and already-loaded content resolves immediately as [`ContentStatus::Exists`].
     pub async fn load_content(self: &Arc<Self>, content: Arc<Content>) -> Result<ContentStatus> {
         if content.is_loaded() {
             Ok(ContentStatus::Exists)
@@ -326,6 +377,9 @@ impl Context {
         }
     }
 
+    /// Load all content entries identified by the given list of ids,
+    /// resolving and injecting each into the DOM, and log the total number
+    /// of references loaded along with the elapsed time.
     pub async fn load_ids(self: &Arc<Self>, list: &[Id]) -> Result<()> {
         let start = Instant::now();
 
@@ -338,12 +392,13 @@ impl Context {
         let futures = list
             .iter()
             .filter_map(|id| {
-                if let Some(module) = self.get(id) {
-                    Some(module.load(self))
-                } else {
-                    log_error!("Unable to locate module {}", id);
-                    // TODO: panic
-                    None
+                match self.get(id) {
+                    Some(module) => Some(module.load(self)),
+                    _ => {
+                        log_error!("Unable to locate module {}", id);
+                        // TODO: panic
+                        None
+                    }
                 }
             })
             .collect::<Vec<_>>();
@@ -371,9 +426,11 @@ impl Context {
 
 static mut CONTEXT: Option<Arc<Context>> = None;
 
+/// Return the global, lazily-initialized loader [`Context`] singleton.
 pub fn context() -> Arc<Context> {
+    let context_ptr = &raw const CONTEXT;
     unsafe {
-        if let Some(context) = CONTEXT.as_ref() {
+        if let Some(context) = (*context_ptr).as_ref() {
             context.clone()
         } else {
             let context = Arc::new(Context::default());
@@ -383,6 +440,8 @@ pub fn context() -> Arc<Context> {
     }
 }
 
+/// Declare the given content entries on the global loader [`Context`],
+/// registering them for subsequent loading, and return that context.
 pub fn declare(content: ContentList) -> Arc<Context> {
     let ctx = context();
     ctx.declare(content);

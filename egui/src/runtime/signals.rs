@@ -1,11 +1,15 @@
 use crate::imports::*;
 
+/// Installs and tracks a Ctrl-C / SIGTERM handler that escalates from a
+/// graceful shutdown, to an abort, to an immediate process exit on repeated
+/// signals.
 pub struct Signals {
     runtime: Runtime,
     iterations: AtomicU64,
 }
 
 impl Signals {
+    /// Registers the OS signal handler bound to the given runtime.
     pub fn bind(runtime: &Runtime) {
         let signals = Arc::new(Signals {
             runtime: runtime.clone(),

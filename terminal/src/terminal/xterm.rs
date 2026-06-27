@@ -1,12 +1,12 @@
 use super::bindings::*;
 use super::{LinkMatcherHandlerFn, Modifiers};
+use crate::Result;
 use crate::keys::Key;
 use crate::terminal::Event;
 use crate::terminal::EventHandlerFn;
 use crate::terminal::Options;
 use crate::terminal::TargetElement;
 use crate::terminal::Terminal;
-use crate::Result;
 use std::cell::{RefCell, RefMut};
 use std::fmt::Debug;
 use std::rc::Rc;
@@ -15,8 +15,8 @@ use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use wasm_bindgen::JsValue;
 use web_sys::Element;
-use workflow_core::channel::{unbounded, Receiver, Sender};
-use workflow_core::runtime::{self, platform, Platform};
+use workflow_core::channel::{Receiver, Sender, unbounded};
+use workflow_core::runtime::{self, Platform, platform};
 use workflow_dom::clipboard;
 use workflow_dom::inject::*;
 use workflow_dom::utils::body;
@@ -26,21 +26,33 @@ use workflow_wasm::jserror::*;
 use workflow_wasm::prelude::*;
 use workflow_wasm::utils::*;
 
+/// Color theme for the terminal, with each element given as an optional CSS
+/// color string. Unset fields leave the corresponding color unchanged.
 #[derive(Default)]
 pub struct Theme {
+    /// Background color, as a CSS color string.
     pub background: Option<String>,
+    /// Foreground (text) color, as a CSS color string.
     pub foreground: Option<String>,
+    /// Selection highlight color, as a CSS color string.
     pub selection: Option<String>,
+    /// Cursor color, as a CSS color string.
     pub cursor: Option<String>,
 }
 
+/// Identifies an individual themeable terminal color.
 pub enum ThemeOption {
+    /// The terminal background color.
     Background,
+    /// The terminal foreground (text) color.
     Foreground,
+    /// The selection highlight color.
     Selection,
+    /// The cursor color.
     Cursor,
 }
 impl ThemeOption {
+    /// Returns all theme options as a vector.
     pub fn list() -> Vec<Self> {
         Vec::from([
             Self::Background,
@@ -63,11 +75,13 @@ impl std::fmt::Display for ThemeOption {
 }
 
 impl Theme {
+    /// Creates a new theme with all colors unset.
     pub fn new() -> Self {
         Self {
             ..Default::default()
         }
     }
+    /// Returns the color string for the given theme option, if set.
     pub fn get(&self, key: &ThemeOption) -> Option<String> {
         match key {
             ThemeOption::Background => self.background.clone(),
@@ -76,6 +90,7 @@ impl Theme {
             ThemeOption::Cursor => self.cursor.clone(),
         }
     }
+    /// Sets the color for the given theme option.
     pub fn set(&mut self, key: ThemeOption, value: Option<String>) {
         match key {
             ThemeOption::Background => {
@@ -101,6 +116,8 @@ enum Ctl {
     Close,
 }
 
+/// A keyboard event captured from xterm.js and forwarded through the input
+/// sink, carrying both the resolved key and modifier state.
 #[derive(Debug)]
 pub struct SinkEvent {
     key: String,
@@ -122,6 +139,8 @@ impl SinkEvent {
     }
 }
 
+/// Channel pair used to forward terminal control events (key input, copy,
+/// paste and close) from the DOM callbacks to the intake loop.
 #[derive(Clone)]
 pub struct Sink {
     receiver: Receiver<Ctl>,
@@ -135,6 +154,8 @@ impl Default for Sink {
     }
 }
 
+/// Holds a [`ResizeObserver`] together with its callback to keep both alive
+/// for the lifetime of the terminal.
 pub struct ResizeObserverInfo {
     #[allow(dead_code)]
     observer: ResizeObserver,
@@ -143,14 +164,19 @@ pub struct ResizeObserverInfo {
 }
 
 impl ResizeObserverInfo {
+    /// Creates a new `ResizeObserverInfo`, retaining the observer and its callback.
     pub fn new(observer: ResizeObserver, callback: Callback<CallbackClosure<JsValue>>) -> Self {
         Self { observer, callback }
     }
 }
 
+/// Subset of terminal options applied when initializing the xterm.js instance.
 pub struct XtermOptions {
+    /// Font family name, or `None` to use the platform default.
     pub font_family: Option<String>,
+    /// Font size in pixels.
     pub font_size: Option<f64>,
+    /// Number of scrollback lines to retain.
     pub scrollback: Option<u32>,
 }
 
@@ -163,6 +189,7 @@ pub struct XtermOptions {
 ///
 ///
 pub struct Xterm {
+    /// The DOM element that hosts the terminal.
     pub element: Element,
     xterm: Rc<RefCell<Option<XtermImpl>>>,
     terminal: Arc<Mutex<Option<Arc<Terminal>>>>,
@@ -182,10 +209,13 @@ unsafe impl Send for Xterm {}
 unsafe impl Sync for Xterm {}
 
 impl Xterm {
+    /// Creates a new terminal using default [`Options`].
     pub fn try_new() -> Result<Self> {
         Self::try_new_with_options(&Options::default())
     }
 
+    /// Creates a new terminal using the given options, resolving the target
+    /// parent element from [`Options::element`].
     pub fn try_new_with_options(options: &Options) -> Result<Self> {
         let el = match &options.element {
             TargetElement::Body => body().expect("Unable to get 'body' element"),
@@ -201,6 +231,7 @@ impl Xterm {
         Self::try_new_with_element(&el, options)
     }
 
+    /// Creates a new terminal rendered as a child `div` of the given parent element.
     pub fn try_new_with_element(parent: &Element, options: &Options) -> Result<Self> {
         let element = document().create_element("div")?;
         element.set_attribute("class", "terminal")?;
@@ -274,12 +305,15 @@ impl Xterm {
     }
 
     // pub fn xterm(&self) -> MutexGuard<Option<XtermImpl>> {
+    /// Returns a mutable borrow of the underlying xterm.js instance, if initialized.
     pub fn xterm(&self) -> RefMut<'_, Option<XtermImpl>> {
         //MutexGuard<Option<XtermImpl>> {
         // self.xterm.lock().unwrap()
         self.xterm.borrow_mut()
     }
 
+    /// Updates the terminal theme from the host element's computed CSS custom
+    /// properties (`--workflow-terminal-*`).
     pub fn update_theme(&self) -> Result<()> {
         let el = self
             .xterm
@@ -316,6 +350,8 @@ impl Xterm {
 
         Ok(())
     }
+    /// Applies the given [`Theme`] to the terminal, setting only the colors
+    /// that are present.
     pub fn set_theme(&self, theme: Theme) -> Result<()> {
         let theme_obj = js_sys::Object::new();
         let properties = ThemeOption::list();
@@ -343,6 +379,9 @@ impl Xterm {
         Ok(())
     }
 
+    /// Loads xterm.js, constructs the underlying terminal, attaches addons and
+    /// keyboard/resize/clipboard listeners, and binds it to the given
+    /// [`Terminal`].
     pub async fn init(self: &Arc<Self>, terminal: &Arc<Terminal>) -> Result<()> {
         load_scripts().await?;
 
@@ -365,6 +404,7 @@ impl Xterm {
         Ok(())
     }
 
+    /// Sets the named xterm.js option to the given value.
     pub fn set_option(&self, name: &str, option: JsValue) -> Result<()> {
         let xterm = self.xterm();
         let xterm = xterm.as_ref().expect("unable to get xterm");
@@ -372,12 +412,14 @@ impl Xterm {
         Ok(())
     }
 
+    /// Returns the value of the named xterm.js option.
     pub fn get_option(&self, name: &str) -> Result<JsValue> {
         let xterm = self.xterm();
         let xterm = xterm.as_ref().expect("unable to get xterm");
         Ok(xterm.get_option(name))
     }
 
+    /// Redraws the terminal rows in the inclusive range `start..=stop`.
     pub fn refresh(&self, start: u32, stop: u32) {
         let xterm = self.xterm();
         let xterm = xterm.as_ref().expect("unable to get xterm");
@@ -422,6 +464,7 @@ impl Xterm {
         Ok(())
     }
 
+    /// Queues a paste of the given text, or of the clipboard contents when `None`.
     pub fn paste(&self, text: Option<String>) -> Result<()> {
         self.sink
             .sender
@@ -521,15 +564,20 @@ impl Xterm {
         Ok(())
     }
 
+    /// Returns the [`Terminal`] this xterm instance is bound to.
     pub fn terminal(&self) -> Arc<Terminal> {
         self.terminal.lock().unwrap().as_ref().unwrap().clone()
     }
 
+    /// Runs the terminal input intake loop until the terminal exits.
     pub async fn run(self: &Arc<Self>) -> Result<()> {
         self.intake(&self.terminate).await?;
         Ok(())
     }
 
+    /// Processes queued key, copy, paste and close events, dispatching them to
+    /// the bound terminal and clipboard, until `terminate` is set or a close
+    /// event is received.
     pub async fn intake(self: &Arc<Self>, terminate: &Arc<AtomicBool>) -> Result<()> {
         loop {
             if terminate.load(Ordering::SeqCst) {
@@ -547,8 +595,10 @@ impl Xterm {
                     if runtime::is_nw() {
                         let clipboard = nw_sys::clipboard::get();
                         clipboard.set(&text);
-                    } else if let Err(err) = clipboard::write_text(&text).await {
-                        log_error!("{}", JsErrorData::from(err));
+                    } else {
+                        if let Err(err) = clipboard::write_text(&text).await {
+                            log_error!("{}", JsErrorData::from(err));
+                        }
                     }
 
                     if let Some(handler) = self.event_handler() {
@@ -584,6 +634,7 @@ impl Xterm {
         Ok(())
     }
 
+    /// Signals the input intake loop to terminate.
     pub fn exit(&self) {
         self.terminate.store(true, Ordering::SeqCst);
         self.sink
@@ -631,6 +682,7 @@ impl Xterm {
         Ok(())
     }
 
+    /// Writes the given text to the terminal display.
     pub fn write<S>(&self, s: S)
     where
         S: ToString,
@@ -642,6 +694,8 @@ impl Xterm {
             .write(s);
     }
 
+    /// Forces xterm.js to recompute character dimensions when its cached size
+    /// is invalid (e.g. after the terminal becomes visible).
     pub fn measure(&self) -> Result<()> {
         let xterm = self.xterm.borrow_mut();
         let xterm = xterm.as_ref().unwrap();
@@ -657,6 +711,7 @@ impl Xterm {
         Ok(())
     }
 
+    /// Refits the terminal to the current size of its container element.
     pub fn resize(&self) -> Result<()> {
         //self.measure()?;
         if let Some(xterm) = self.xterm.borrow_mut().as_ref() {
@@ -679,19 +734,23 @@ impl Xterm {
         Ok(())
     }
 
+    /// Returns the current terminal font size in pixels, if available.
     pub fn get_font_size(&self) -> Result<Option<f64>> {
         let font_size = self.get_option("fontSize")?;
         Ok(font_size.as_f64())
     }
 
+    /// Sets the terminal font size, in pixels.
     pub fn set_font_size(&self, font_size: f64) -> Result<()> {
         self.set_option("fontSize", JsValue::from_f64(font_size))
     }
 
+    /// Returns the number of terminal columns, or `None` if not yet initialized.
     pub fn cols(&self) -> Option<usize> {
         self.xterm().as_ref().map(|xterm| xterm.cols() as usize)
     }
 
+    /// Returns the number of terminal rows, or `None` if not yet initialized.
     pub fn rows(&self) -> Option<usize> {
         self.xterm().as_ref().map(|xterm| xterm.rows() as usize)
     }
@@ -709,14 +768,17 @@ impl Xterm {
         Ok(Some(font_size))
     }
 
+    /// Increases the terminal font size by one pixel, returning the new size.
     pub fn increase_font_size(&self) -> Result<Option<f64>> {
         self.adjust_font_size(1.0)
     }
 
+    /// Decreases the terminal font size by one pixel, returning the new size.
     pub fn decrease_font_size(&self) -> Result<Option<f64>> {
         self.adjust_font_size(-1.0)
     }
 
+    /// Copies the terminal's current selection to the clipboard.
     pub fn clipboard_copy(&self) -> Result<()> {
         let text = self.xterm().as_ref().unwrap().get_selection();
         self.sink
@@ -730,6 +792,7 @@ impl Xterm {
         Ok(())
     }
 
+    /// Pastes the current clipboard contents into the terminal.
     pub fn clipboard_paste(&self) -> Result<()> {
         self.sink
             .sender
@@ -747,6 +810,8 @@ impl Xterm {
 
 static mut XTERM_LOADED: bool = false;
 
+/// Injects the bundled xterm.js scripts, its fit and web-links addons, and
+/// stylesheet into the document. Subsequent calls are a no-op once loaded.
 pub async fn load_scripts() -> Result<()> {
     if unsafe { XTERM_LOADED } {
         return Ok(());

@@ -7,9 +7,9 @@
 use super::Encoding;
 use crate::imports::*;
 use crate::messages::borsh::*;
-pub use crate::server::result::Result;
 use crate::server::Interface;
 use crate::server::ProtocolHandler;
+pub use crate::server::result::Result;
 use workflow_websocket::server::{
     Error as WebSocketError, Message, Result as WebSocketResult, WebSocketSink,
 };
@@ -58,8 +58,9 @@ where
         msg: Message,
         sink: &WebSocketSink,
     ) -> WebSocketResult<()> {
-        let data = &msg.into_data();
+        let data = msg.into_data();
         let req: BorshClientMessage<Ops, Id> = data
+            .as_ref()
             .try_into()
             .map_err(|_| WebSocketError::MalformedMessage)?;
 
@@ -80,18 +81,17 @@ where
                         &data,
                     )
                     .try_to_vec()
+                        && let Err(e) = sink.send(msg.into())
                     {
-                        if let Err(e) = sink.send(msg.into()) {
-                            log_trace!("Sink error: {:?}", e);
-                        }
+                        log_trace!("Sink error: {:?}", e);
                     }
                 }
                 Err(err) => {
                     // log_trace!("RPC server error: {:?} req: {:#?}", err, req);
                     if err == ServerError::Close {
                         return Err(WebSocketError::ServerClose);
-                    } else if let Ok(err_vec) = borsh::to_vec(&err) {
-                        if let Ok(msg) = BorshServerMessage::new(
+                    } else if let Ok(err_vec) = borsh::to_vec(&err)
+                        && let Ok(msg) = BorshServerMessage::new(
                             BorshServerMessageHeader::<Ops, Id>::new(
                                 req.header.id,
                                 ServerMessageKind::Error,
@@ -100,11 +100,9 @@ where
                             &err_vec,
                         )
                         .try_to_vec()
-                        {
-                            if let Err(e) = sink.send(msg.into()) {
-                                log_trace!("Sink error: {:?}", e);
-                            }
-                        }
+                        && let Err(e) = sink.send(msg.into())
+                    {
+                        log_trace!("Sink error: {:?}", e);
                     }
                 }
             }
@@ -128,6 +126,8 @@ where
     }
 }
 
+/// Build a Borsh-encoded notification WebSocket message for the given operation
+/// and message payload.
 pub fn create_serialized_notification_message<Ops, Msg>(op: Ops, msg: Msg) -> Result<Message>
 where
     Ops: OpsT,
@@ -139,5 +139,5 @@ where
         &payload,
     )
     .try_to_vec()?;
-    Ok(Message::Binary(data))
+    Ok(Message::Binary(data.into()))
 }

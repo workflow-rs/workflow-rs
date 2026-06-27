@@ -8,7 +8,6 @@ publish = false
 terminal-example-cli = { path = "../cli" }
 workflow-terminal.workspace = true
 workflow-log.workspace = true
-async-std.workspace = true
 async-trait.workspace = true
 cfg-if.workspace = true
 

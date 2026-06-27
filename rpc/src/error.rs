@@ -8,18 +8,22 @@ use std::sync::PoisonError;
 use thiserror::Error;
 use workflow_core::channel::{RecvError, SendError, TrySendError};
 
+/// Errors shared by the wRPC client and server message-handling layers.
 #[derive(Error, Debug)]
 pub enum Error {
     /// Received message is smaller than the minimum header size
     #[error("Invalid header size")]
     HeaderSize,
 
+    /// An underlying I/O error.
     #[error(transparent)]
     Io(#[from] std::io::Error),
 
+    /// An error originating from the underlying async task subsystem.
     #[error(transparent)]
     Task(#[from] workflow_task::TaskError),
 
+    /// The requested message encoding is unknown or unsupported.
     #[error("invalid encoding {0}")]
     Encoding(String),
 }
@@ -35,39 +39,55 @@ pub enum Error {
     Error, Debug, Clone, Eq, PartialEq, BorshSerialize, BorshDeserialize, Serialize, Deserialize,
 )]
 pub enum ServerError {
+    /// The connection has been closed.
     #[error("connection is closed")]
     Close,
+    /// The RPC call did not complete within the allotted time.
     #[error("RPC call timed out")]
     Timeout,
+    /// No data was available where data was expected.
     #[error("no data")]
     NoData,
+    /// No handler was registered for the requested RPC method.
     #[error("RPC method not found")]
     NotFound,
+    /// A lock was poisoned by a panic in another thread.
     #[error("resource lock error")]
     PoisonError,
+    /// The request was expected to use the Borsh protocol but did not.
     #[error("not a borsh request")]
     NonBorshRequest,
+    /// The request was expected to use the serde/JSON protocol but did not.
     #[error("not a serde request")]
     NonSerdeRequest,
+    /// The request could not be serialized.
     #[error("request serialization error")]
     ReqSerialize,
+    /// The request could not be deserialized.
     #[error("request deserialization error")]
     ReqDeserialize,
+    /// The response could not be serialized.
     #[error("response serialization error")]
     RespSerialize,
+    /// A notification payload could not be deserialized.
     #[error("request deserialization error")]
     NotificationDeserialize(String),
+    /// A response payload could not be deserialized.
     #[error("response deserialization error")]
     RespDeserialize(String),
+    /// Opaque binary error payload.
     #[error("data")]
     Data(Vec<u8>),
+    /// Free-form textual error message.
     #[error("{0}")]
     Text(String),
     /// Underlying WebSocket error
     #[error("WebSocket -> {0}")]
     WebSocketError(String),
+    /// Failure receiving from an internal receiver channel.
     #[error("Receiver channel")]
     ReceiveChannelRx,
+    /// Failure sending to an internal receiver channel.
     #[error("Receiver channel send")]
     ReceiveChannelTx,
 }

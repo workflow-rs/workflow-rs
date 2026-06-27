@@ -5,12 +5,17 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::ops::Deref;
 
+/// Blanket marker trait for any [`Serializer`] that is also `Send` and `Sync`.
 pub trait SerializerT: Serializer + Send + Sync {}
 impl<T> SerializerT for T where T: Serializer + Send + Sync {}
 
+/// Blanket marker trait for any [`Deserializer`] that is also `Send` and `Sync`.
 pub trait DeserializerT: Deserializer + Send + Sync {}
 impl<T> DeserializerT for T where T: Deserializer + Send + Sync {}
 
+/// Wrapper that routes Borsh serialization of the inner value through the
+/// [`Serializer`]/[`Deserializer`] traits, enabling custom metadata while
+/// preventing direct Borsh serialization of the wrapped type.
 #[derive(Debug, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct Serializable<T>(pub T)
@@ -21,6 +26,7 @@ impl<T> Serializable<T>
 where
     T: SerializerT + DeserializerT,
 {
+    /// Consumes the wrapper, returning the inner value.
     pub fn into_inner(self) -> T {
         self.0
     }
@@ -85,8 +91,10 @@ where
 /// [`Serializer`] is a complimentary trait for [`Serializable`] struct
 /// and can be used to prevent direct Borsh serialization of a struct.
 pub trait Serializer: Sized {
+    /// Writes the serialized representation of `self` to the given writer.
     fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()>;
 
+    /// Serializes `self` into a newly allocated byte vector.
     fn try_to_vec(&self) -> std::io::Result<Vec<u8>> {
         let mut buf = Vec::new();
         self.serialize(&mut buf)?;
@@ -94,9 +102,13 @@ pub trait Serializer: Sized {
     }
 }
 
+/// Counterpart to [`Serializer`] that reconstructs a value from its custom
+/// serialized representation, complementing the [`Serializable`] wrapper.
 pub trait Deserializer: Sized {
+    /// Reads and reconstructs a value of `Self` from the given reader.
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self>;
 
+    /// Reconstructs a value of `Self` from a byte slice.
     fn try_from_slice(slice: &[u8]) -> std::io::Result<Self> {
         let mut buf = slice;
         Self::deserialize(&mut buf)

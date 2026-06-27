@@ -17,7 +17,6 @@ crate-type = ["cdylib", "lib"]
 doctest = false
 
 [dependencies]
-async-std.workspace = true
 base64.workspace = true
 cfg-if.workspace = true
 chrome-sys.workspace = true
@@ -36,7 +35,7 @@ workflow-node.workspace = true
 workflow-wasm.workspace = true
 
 [target.'cfg(not(any(target_arch = "wasm32", target_os="solana")))'.dependencies]
-async-std.workspace = true
+tokio = { workspace = true, features = ["fs"] }
 home.workspace = true
 filetime.workspace = true
 

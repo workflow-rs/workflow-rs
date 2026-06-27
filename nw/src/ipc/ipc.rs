@@ -3,6 +3,7 @@ use crate::ipc::method::*;
 use crate::ipc::notification::*;
 use crate::ipc::target::*;
 
+/// Identifier type used to correlate IPC requests with their responses.
 pub type IpcId = Id64;
 
 struct Pending<F> {
@@ -20,8 +21,10 @@ impl<F> Pending<F> {
 
 type PendingMap<Id, F> = Arc<Mutex<AHashMap<Id, Pending<F>>>>;
 
+/// Callback type invoked to deliver a Borsh-encoded response (or error) back
+/// to the originator of a pending IPC request.
 pub type BorshResponseFn = Arc<
-    Box<(dyn Fn(Vec<u8>, ResponseResult<Vec<u8>>, Option<&Duration>) -> Result<()> + Sync + Send)>,
+    Box<dyn Fn(Vec<u8>, ResponseResult<Vec<u8>>, Option<&Duration>) -> Result<()> + Sync + Send>,
 >;
 
 struct Inner<Ops>
@@ -35,6 +38,9 @@ where
     notifications: Mutex<AHashMap<Ops, Arc<dyn NotificationTrait>>>,
 }
 
+/// IPC endpoint that handles inbound messages for a target context and
+/// maintains the registered method and notification handlers, keyed by the
+/// operation type `Ops`.
 pub struct Ipc<Ops>
 where
     Ops: OpsT,
@@ -59,6 +65,9 @@ impl<Ops> Ipc<Ops>
 where
     Ops: OpsT,
 {
+    /// Creates an IPC binding bound to the global context, registering it as
+    /// the global IPC handler source. Panics if a handler source is already
+    /// registered.
     pub fn try_new_global_binding<Ident>(identifier: Ident) -> Result<Arc<Self>>
     where
         Ident: ToString,
@@ -66,16 +75,21 @@ where
         let target = IpcTarget::new(global::global().as_ref());
         let ipc = Self::try_new_binding(&target, identifier)?;
 
+        let ipc_handler_source_ptr = &raw mut IPC_HANDLER_SOURCE;
+
         unsafe {
-            if IPC_HANDLER_SOURCE.is_some() {
+            if (*ipc_handler_source_ptr).is_some() {
                 panic!("global ipc handler already registered");
             }
-            IPC_HANDLER_SOURCE.replace(target);
+            (*ipc_handler_source_ptr).replace(target);
         }
 
         Ok(ipc)
     }
 
+    /// Creates an IPC binding bound to the given window's context, registering
+    /// it as the global IPC handler source. Panics if a handler source is
+    /// already registered.
     pub fn try_new_window_binding<Ident>(
         window: &Arc<Window>,
         identifier: Ident,
@@ -87,11 +101,13 @@ where
         let target = IpcTarget::new(window.as_ref());
         let ipc = Self::try_new_binding(&target, identifier)?;
 
+        let ipc_handler_source_ptr = &raw mut IPC_HANDLER_SOURCE;
+
         unsafe {
-            if IPC_HANDLER_SOURCE.is_some() {
+            if (*ipc_handler_source_ptr).is_some() {
                 panic!("global ipc handler already registered");
             }
-            IPC_HANDLER_SOURCE.replace(target);
+            (*ipc_handler_source_ptr).replace(target);
         }
 
         Ok(ipc)
@@ -171,6 +187,9 @@ where
         Ok(())
     }
 
+    /// Processes an incoming Borsh-encoded IPC message, dispatching it to the
+    /// appropriate registered method or notification handler, or resolving a
+    /// pending outbound call when the message is a response.
     pub async fn handle_message(
         &self,
         message: BorshMessage<'_, IpcId>,
@@ -224,11 +243,14 @@ where
                 let id = id.expect("ipc missing success response id");
                 // let id = Id64::from(id);
                 let mut pending = pending().lock().unwrap();
-                if let Some(pending) = pending.remove(&id) {
-                    let resp = ResponseResult::<Vec<u8>>::try_from_slice(payload)?;
-                    (pending.callback)(op, resp, None)?;
-                } else {
-                    log_error!("ipc response id not found: {:?}", id);
+                match pending.remove(&id) {
+                    Some(pending) => {
+                        let resp = ResponseResult::<Vec<u8>>::try_from_slice(payload)?;
+                        (pending.callback)(op, resp, None)?;
+                    }
+                    _ => {
+                        log_error!("ipc response id not found: {:?}", id);
+                    }
                 }
             }
         }
@@ -236,6 +258,8 @@ where
         Ok(())
     }
 
+    /// Registers a request/response method handler for the given operation.
+    /// Panics if a handler for the same operation has already been registered.
     pub fn method<Req, Resp>(&self, op: Ops, method: Method<Req, Resp>)
     where
         Ops: Debug + Clone,
@@ -255,6 +279,8 @@ where
         }
     }
 
+    /// Registers a notification handler for the given operation. Panics if a
+    /// handler for the same operation has already been registered.
     pub fn notification<Msg>(&self, op: Ops, method: Notification<Msg>)
     where
         Ops: Debug + Clone,
@@ -300,20 +326,28 @@ impl IpcHandler for IpcTarget {
 
 static mut PENDING: Option<PendingMap<IpcId, BorshResponseFn>> = None; //PendingMap::default();
 fn pending() -> &'static mut PendingMap<IpcId, BorshResponseFn> {
+    let pending_ptr = &raw mut PENDING;
     unsafe {
-        if PENDING.is_none() {
+        if (*pending_ptr).is_none() {
             PENDING = Some(PendingMap::default());
         }
-        PENDING.as_mut().unwrap()
+        (*pending_ptr).as_mut().unwrap()
     }
 }
 
 static mut IPC_HANDLER_SOURCE: Option<IpcTarget> = None;
 
+/// Trait implemented by types that can act as an IPC peer, providing the
+/// ability to send notifications and issue request/response calls to a
+/// target context (a window or the global object).
 #[async_trait]
 pub trait IpcDispatch {
+    /// Returns the [`IpcTarget`] that messages dispatched through this peer
+    /// should be delivered to.
     fn as_target(&self) -> IpcTarget;
 
+    /// Sends a one-way notification carrying `op` and a Borsh-serialized
+    /// `payload` to the target context, without awaiting a response.
     async fn notify<Ops, Msg>(&self, op: Ops, payload: Msg) -> Result<()>
     where
         Ops: OpsT,
@@ -327,14 +361,18 @@ pub trait IpcDispatch {
         Ok(())
     }
 
+    /// Issues a request/response call carrying `op` and `req`, awaiting and
+    /// deserializing the response. Uses the registered local IPC object as the
+    /// reply source.
     async fn call<Ops, Req, Resp>(&self, op: Ops, req: Req) -> Result<Resp>
     where
         Ops: OpsT,
         Req: MsgT,
         Resp: MsgT,
     {
+        let ipc_handler_source_ptr = &raw const IPC_HANDLER_SOURCE;
         let source = unsafe {
-            IPC_HANDLER_SOURCE
+            (*ipc_handler_source_ptr)
                 .as_ref()
                 .cloned()
                 .expect("missing ipc handler source (please register a local IPC object)")
@@ -342,6 +380,8 @@ pub trait IpcDispatch {
         self.call_with_source(op, req, &source).await
     }
 
+    /// Like [`call`](Self::call), but routes the response to an explicit
+    /// `source` [`IpcTarget`] instead of the registered local IPC object.
     async fn call_with_source<Ops, Req, Resp>(
         &self,
         op: Ops,
@@ -404,6 +444,9 @@ impl IpcDispatch for nw_sys::Window {
     }
 }
 
+/// Locates an [`IpcTarget`] (the global context or one of the open windows)
+/// whose registered IPC handler matches the given identifier, returning
+/// `Ok(None)` if no such target exists.
 pub async fn get_ipc_target<Ident>(identifier: Ident) -> crate::result::Result<Option<IpcTarget>>
 where
     Ident: ToString,
@@ -412,10 +455,9 @@ where
 
     if let Some(ipc_ident) =
         Reflect::get(&global::global(), &JsValue::from("ipc_identifier"))?.as_string()
+        && ipc_ident == ident
     {
-        if ipc_ident == ident {
-            return Ok(Some(IpcTarget::new(global::global().as_ref())));
-        }
+        return Ok(Some(IpcTarget::new(global::global().as_ref())));
     }
 
     let windows = crate::window::get_all_async().await?;
@@ -423,10 +465,10 @@ where
     for window in windows.iter() {
         let prop =
             js_sys::Reflect::get(window.window().as_ref(), &JsValue::from("ipc_identifier"))?;
-        if let Some(ipc_ident) = prop.as_string() {
-            if ipc_ident == ident {
-                return Ok(Some(IpcTarget::new(window.window().as_ref())));
-            }
+        if let Some(ipc_ident) = prop.as_string()
+            && ipc_ident == ident
+        {
+            return Ok(Some(IpcTarget::new(window.window().as_ref())));
         }
     }
     Ok(None)

@@ -9,9 +9,10 @@ pub trait NotificationTrait: Send + Sync + 'static {
 pub type NotificationFn<Msg> =
     Arc<Box<dyn Send + Sync + Fn(Msg) -> NotificationFnReturn<()> + 'static>>;
 
-pub type NotificationFnReturn<T> =
-    Pin<Box<(dyn Send + 'static + Future<Output = ServerResult<T>>)>>;
+pub type NotificationFnReturn<T> = Pin<Box<dyn Send + 'static + Future<Output = ServerResult<T>>>>;
 
+/// A typed notification handler that deserializes an inbound `Msg` payload
+/// (from Borsh or JSON) and invokes the wrapped async callback with it.
 pub struct Notification<Msg>
 where
     Msg: BorshDeserialize + DeserializeOwned + Send + Sync + 'static,
@@ -23,6 +24,7 @@ impl<Msg> Notification<Msg>
 where
     Msg: BorshDeserialize + DeserializeOwned + Send + Sync + 'static,
 {
+    /// Wrap the given async callback into a typed notification handler.
     pub fn new<FN>(method_fn: FN) -> Notification<Msg>
     where
         FN: Send + Sync + Fn(Msg) -> NotificationFnReturn<()> + 'static,

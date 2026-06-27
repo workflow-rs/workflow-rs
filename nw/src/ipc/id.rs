@@ -42,6 +42,7 @@ impl<T> IdT for T where
 /// generator for a cusom message `Id`, but you can also define it to use
 /// a sequential generation.
 pub trait Generator {
+    /// Generates a new message `Id`.
     fn generate() -> Self;
 }
 

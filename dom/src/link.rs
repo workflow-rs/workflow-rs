@@ -2,6 +2,8 @@ use web_sys::MouseEvent;
 
 use crate::utils::*;
 
+/// Open the given URL in a new browser tab by synthesizing a click on a
+/// transient anchor element with `target="_blank"`.
 pub fn open(url: &str) {
     let document = document();
     // let body = body().expect("open_link(): unable to obtain document body");

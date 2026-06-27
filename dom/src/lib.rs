@@ -23,11 +23,17 @@
 //! inject_blob(Content::Script(None, data)).await?;
 //! ```
 
+/// Bindings to the browser `navigator.clipboard` API for reading from
+/// and writing to the system clipboard.
 pub mod clipboard;
+/// Utilities for triggering browser file downloads from in-memory data.
 pub mod download;
 pub mod error;
 pub mod inject;
+/// Utilities for opening URLs in a new browser tab.
 pub mod link;
+/// Runtime loader for injecting JavaScript modules, scripts and CSS
+/// stylesheets into the DOM and resolving dependencies between them.
 pub mod loader;
 pub mod result;
 pub mod utils;

@@ -1,17 +1,30 @@
 use crate::imports::*;
 
+/// A selectable OpenAI model; its [`Display`](std::fmt::Display)
+/// representation yields the API model identifier sent in requests.
 #[derive(Debug)]
 pub enum Model {
+    /// Codex Cushman model (`cushman-codex`).
     CushmanCodex,
+    /// Codex Davinci model (`davinci-codex`).
     DavinciCodex,
+    /// GPT-3.5 Turbo chat model (`gpt-3.5-turbo`).
     Gpt35Turbo,
+    /// GPT-4 chat model (`gpt-4`).
     Gpt4,
+    /// GPT-4o chat model (`gpt-4o`).
     Gpt4o,
+    /// Text Ada completion model (`text-ada-001`).
     TextAda001,
+    /// Text Babbage completion model (`text-babbage-001`).
     TextBabbage001,
+    /// Text Curie completion model (`text-curie-001`).
     TextCurie001,
+    /// Text Davinci completion model, version 2 (`text-davinci-002`).
     TextDavinci002,
+    /// Text Davinci completion model, version 3 (`text-davinci-003`).
     TextDavinci003,
+    /// An arbitrary model identifier passed through verbatim.
     Custom(String),
 }
 
@@ -39,12 +52,16 @@ struct Inner {
     client: Client,
 }
 
+/// Cheaply clonable handle to an OpenAI chat completions client, holding the
+/// API key, target model, and shared HTTP client.
 #[derive(Clone)]
 pub struct ChatGPT {
     inner: Arc<Inner>,
 }
 
 impl ChatGPT {
+    /// Creates a client that authenticates with the given API key and issues
+    /// requests against the specified `model`.
     pub fn new(api_key: String, model: Model) -> Self {
         ChatGPT {
             inner: Arc::new(Inner {
@@ -55,6 +72,9 @@ impl ChatGPT {
         }
     }
 
+    /// Calls [`query`](Self::query) repeatedly until it succeeds or `retries`
+    /// attempts have failed, waiting `delay` between attempts. Returns
+    /// [`Error::RetryFailure`] carrying the last error if all attempts fail.
     pub async fn query_with_retries(
         &self,
         text: String,
@@ -78,6 +98,9 @@ impl ChatGPT {
         }
     }
 
+    /// Sends a single user message to the chat completions endpoint and
+    /// returns the content of the first response choice, or an empty string
+    /// if the model returned no choices.
     pub async fn query(&self, text: String) -> Result<String> {
         let response = self
             .inner
@@ -103,6 +126,10 @@ impl ChatGPT {
             .unwrap_or_default())
     }
 
+    /// Translates each entry into `target_language`, returning each original
+    /// string paired with its translation. The entries are submitted as a
+    /// single line-by-line request and the response lines are zipped back
+    /// onto the inputs.
     pub async fn translate(
         &self,
         entries: Vec<String>,

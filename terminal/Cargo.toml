@@ -24,7 +24,6 @@ doctest = false
 termion = ["dep:termion"]
 
 [dependencies]
-async-std.workspace = true
 async-trait.workspace = true
 cfg-if.workspace = true
 downcast.workspace = true
